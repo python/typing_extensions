@@ -1,0 +1,17 @@
+MANIFEST
+
+__pycache__/
+build/
+dist/
+tmp/
+venv*/
+
+.cache/
+.idea/
+.tox/
+.venv*/
+.vscode/
+
+*.swp
+*.pyc
+*.egg-info/
