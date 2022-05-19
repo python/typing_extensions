@@ -42,11 +42,11 @@ classifiers = [
 ]
 
 [project.urls]
-Home = "https://github.com/python/typing/tree/master/typing_extensions"
-Repository = "https://github.com/python/typing"
-Changes = "https://github.com/python/typing/blob/master/typing_extensions/CHANGELOG.md"
+Home = "https://github.com/python/typing_extensions"
+Repository = "https://github.com/python/typing_extensions"
+Changes = "https://github.com/python/typing_extensions/blob/main/CHANGELOG.md"
 Documentation = "https://typing.readthedocs.io/"
-"Bug Tracker" = "https://github.com/python/typing/issues"
+"Bug Tracker" = "https://github.com/python/typing_extensions/issues"
 "Q & A" = "https://github.com/python/typing/discussions"
 
 # Project metadata -- authors. Flit stores this as a list of dicts, so it can't
