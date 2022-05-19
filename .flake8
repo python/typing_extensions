@@ -1,0 +1,15 @@
+[flake8]
+
+max-line-length = 90
+ignore =
+  # irrelevant plugins
+  B3,
+  DW12,
+  # code is sometimes better without this
+  E129,
+  # consistency with mypy
+  W504
+exclude =
+  # tests have more relaxed formatting rules
+  # and its own specific config in .flake8-tests
+  src/test_typing_extensions.py,

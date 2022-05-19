@@ -29,7 +29,6 @@ jobs:
 
       - name: Build and install wheel
         run: |
-          cd typing_extensions
           python -m build .
           export path_to_file=$(find dist -type f -name "typing_extensions-*.whl")
           echo "::notice::Installing wheel: $path_to_file"
@@ -60,7 +59,6 @@ jobs:
 
       - name: Build and install sdist
         run: |
-          cd typing_extensions
           python -m build .
           export path_to_file=$(find dist -type f -name "typing_extensions-*.tar.gz")
           echo "::notice::Installing sdist: $path_to_file"
