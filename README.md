@@ -35,13 +35,14 @@ This module currently contains the following:
 
 - Experimental features
 
-  - `@dataclass_transform()` (see PEP 681)
+  - (Currently none)
 
 - In `typing` since Python 3.11
 
   - `assert_never`
   - `assert_type`
   - `clear_overloads`
+  - `@dataclass_transform()` (see PEP 681)
   - `get_overloads`
   - `LiteralString` (see PEP 675)
   - `Never`
