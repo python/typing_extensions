@@ -5,6 +5,7 @@ import contextlib
 import collections
 from collections import defaultdict
 import collections.abc
+import copy
 from functools import lru_cache
 import inspect
 import pickle
@@ -17,7 +18,7 @@ import typing
 from typing import TypeVar, Optional, Union, Any, AnyStr
 from typing import T, KT, VT  # Not in __all__.
 from typing import Tuple, List, Dict, Iterable, Iterator, Callable
-from typing import Generic, NamedTuple
+from typing import Generic
 from typing import no_type_check
 import typing_extensions
 from typing_extensions import NoReturn, ClassVar, Final, IntVar, Literal, Type, NewType, TypedDict, Self
@@ -27,6 +28,7 @@ from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, f
 from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_type, Never, assert_never, LiteralString
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args
 from typing_extensions import clear_overloads, get_overloads, overload
+from typing_extensions import NamedTuple
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
@@ -2874,7 +2876,7 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 11):
-            exclude.add('final')
+            exclude |= {'final', 'NamedTuple'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
@@ -2891,6 +2893,241 @@ class AllTests(BaseTestCase):
         except subprocess.CalledProcessError:
             self.fail('Module does not compile with optimize=2 (-OO flag).')
 
+
+class CoolEmployee(NamedTuple):
+    name: str
+    cool: int
+
+
+class CoolEmployeeWithDefault(NamedTuple):
+    name: str
+    cool: int = 0
+
+
+class XMeth(NamedTuple):
+    x: int
+    def double(self):
+        return 2 * self.x
+
+
+class XRepr(NamedTuple):
+    x: int
+    y: int = 1
+    def __str__(self):
+        return f'{self.x} -> {self.y}'
+    def __add__(self, other):
+        return 0
+
+
+class NamedTupleTests(BaseTestCase):
+    class NestedEmployee(NamedTuple):
+        name: str
+        cool: int
+
+    def test_basics(self):
+        Emp = NamedTuple('Emp', [('name', str), ('id', int)])
+        self.assertIsSubclass(Emp, tuple)
+        joe = Emp('Joe', 42)
+        jim = Emp(name='Jim', id=1)
+        self.assertIsInstance(joe, Emp)
+        self.assertIsInstance(joe, tuple)
+        self.assertEqual(joe.name, 'Joe')
+        self.assertEqual(joe.id, 42)
+        self.assertEqual(jim.name, 'Jim')
+        self.assertEqual(jim.id, 1)
+        self.assertEqual(Emp.__name__, 'Emp')
+        self.assertEqual(Emp._fields, ('name', 'id'))
+        self.assertEqual(Emp.__annotations__,
+                         collections.OrderedDict([('name', str), ('id', int)]))
+
+    def test_annotation_usage(self):
+        tim = CoolEmployee('Tim', 9000)
+        self.assertIsInstance(tim, CoolEmployee)
+        self.assertIsInstance(tim, tuple)
+        self.assertEqual(tim.name, 'Tim')
+        self.assertEqual(tim.cool, 9000)
+        self.assertEqual(CoolEmployee.__name__, 'CoolEmployee')
+        self.assertEqual(CoolEmployee._fields, ('name', 'cool'))
+        self.assertEqual(CoolEmployee.__annotations__,
+                         collections.OrderedDict(name=str, cool=int))
+
+    def test_annotation_usage_with_default(self):
+        jelle = CoolEmployeeWithDefault('Jelle')
+        self.assertIsInstance(jelle, CoolEmployeeWithDefault)
+        self.assertIsInstance(jelle, tuple)
+        self.assertEqual(jelle.name, 'Jelle')
+        self.assertEqual(jelle.cool, 0)
+        cooler_employee = CoolEmployeeWithDefault('Sjoerd', 1)
+        self.assertEqual(cooler_employee.cool, 1)
+
+        self.assertEqual(CoolEmployeeWithDefault.__name__, 'CoolEmployeeWithDefault')
+        self.assertEqual(CoolEmployeeWithDefault._fields, ('name', 'cool'))
+        self.assertEqual(CoolEmployeeWithDefault.__annotations__,
+                         dict(name=str, cool=int))
+        self.assertEqual(CoolEmployeeWithDefault._field_defaults, dict(cool=0))
+
+        with self.assertRaises(TypeError):
+            class NonDefaultAfterDefault(NamedTuple):
+                x: int = 3
+                y: int
+
+    def test_annotation_usage_with_methods(self):
+        self.assertEqual(XMeth(1).double(), 2)
+        self.assertEqual(XMeth(42).x, XMeth(42)[0])
+        self.assertEqual(str(XRepr(42)), '42 -> 1')
+        self.assertEqual(XRepr(1, 2) + XRepr(3), 0)
+
+        with self.assertRaises(AttributeError):
+            class XMethBad(NamedTuple):
+                x: int
+                def _fields(self):
+                    return 'no chance for this'
+
+        with self.assertRaises(AttributeError):
+            class XMethBad2(NamedTuple):
+                x: int
+                def _source(self):
+                    return 'no chance for this as well'
+
+    def test_multiple_inheritance(self):
+        class A:
+            pass
+        with self.assertRaises(TypeError):
+            class X(NamedTuple, A):
+                x: int
+        with self.assertRaises(TypeError):
+            class X(NamedTuple, tuple):
+                x: int
+        with self.assertRaises(TypeError):
+            class X(NamedTuple, NamedTuple):
+                x: int
+        class A(NamedTuple):
+            x: int
+        with self.assertRaises(TypeError):
+            class X(NamedTuple, A):
+                y: str
+
+    def test_generic(self):
+        class X(NamedTuple, Generic[T]):
+            x: T
+        self.assertEqual(X.__bases__, (tuple, Generic))
+        self.assertEqual(X.__orig_bases__, (NamedTuple, Generic[T]))
+        self.assertEqual(X.__mro__, (X, tuple, Generic, object))
+
+        class Y(Generic[T], NamedTuple):
+            x: T
+        self.assertEqual(Y.__bases__, (Generic, tuple))
+        self.assertEqual(Y.__orig_bases__, (Generic[T], NamedTuple))
+        self.assertEqual(Y.__mro__, (Y, Generic, tuple, object))
+
+        for G in X, Y:
+            with self.subTest(type=G):
+                self.assertEqual(G.__parameters__, (T,))
+                A = G[int]
+                self.assertIs(A.__origin__, G)
+                self.assertEqual(A.__args__, (int,))
+                self.assertEqual(A.__parameters__, ())
+
+                a = A(3)
+                self.assertIs(type(a), G)
+                self.assertEqual(a.x, 3)
+
+                with self.assertRaises(TypeError):
+                    G[int, str]
+
+    if sys.version_info >= (3, 9):
+        def test_non_generic_subscript(self):
+            # For backward compatibility, subscription works
+            # on arbitrary NamedTuple types.
+            class Group(NamedTuple):
+                key: T
+                group: list[T]
+            A = Group[int]
+            self.assertEqual(A.__origin__, Group)
+            self.assertEqual(A.__parameters__, ())
+            self.assertEqual(A.__args__, (int,))
+            a = A(1, [2])
+            self.assertIs(type(a), Group)
+            self.assertEqual(a, (1, [2]))
+
+    def test_namedtuple_keyword_usage(self):
+        LocalEmployee = NamedTuple("LocalEmployee", name=str, age=int)
+        nick = LocalEmployee('Nick', 25)
+        self.assertIsInstance(nick, tuple)
+        self.assertEqual(nick.name, 'Nick')
+        self.assertEqual(LocalEmployee.__name__, 'LocalEmployee')
+        self.assertEqual(LocalEmployee._fields, ('name', 'age'))
+        self.assertEqual(LocalEmployee.__annotations__, dict(name=str, age=int))
+        with self.assertRaises(TypeError):
+            NamedTuple('Name', [('x', int)], y=str)
+
+    def test_namedtuple_special_keyword_names(self):
+        NT = NamedTuple("NT", cls=type, self=object, typename=str, fields=list)
+        self.assertEqual(NT.__name__, 'NT')
+        self.assertEqual(NT._fields, ('cls', 'self', 'typename', 'fields'))
+        a = NT(cls=str, self=42, typename='foo', fields=[('bar', tuple)])
+        self.assertEqual(a.cls, str)
+        self.assertEqual(a.self, 42)
+        self.assertEqual(a.typename, 'foo')
+        self.assertEqual(a.fields, [('bar', tuple)])
+
+    def test_empty_namedtuple(self):
+        NT = NamedTuple('NT')
+
+        class CNT(NamedTuple):
+            pass  # empty body
+
+        for struct in [NT, CNT]:
+            with self.subTest(struct=struct):
+                self.assertEqual(struct._fields, ())
+                self.assertEqual(struct._field_defaults, {})
+                self.assertEqual(struct.__annotations__, {})
+                self.assertIsInstance(struct(), struct)
+
+    def test_namedtuple_errors(self):
+        with self.assertRaises(TypeError):
+            NamedTuple.__new__()
+        with self.assertRaises(TypeError):
+            NamedTuple()
+        with self.assertRaises(TypeError):
+            NamedTuple('Emp', [('name', str)], None)
+        with self.assertRaises(ValueError):
+            NamedTuple('Emp', [('_name', str)])
+        with self.assertRaises(TypeError):
+            NamedTuple(typename='Emp', name=str, id=int)
+
+    def test_copy_and_pickle(self):
+        global Emp  # pickle wants to reference the class by name
+        Emp = NamedTuple('Emp', [('name', str), ('cool', int)])
+        for cls in Emp, CoolEmployee, self.NestedEmployee:
+            with self.subTest(cls=cls):
+                jane = cls('jane', 37)
+                for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+                    z = pickle.dumps(jane, proto)
+                    jane2 = pickle.loads(z)
+                    self.assertEqual(jane2, jane)
+                    self.assertIsInstance(jane2, cls)
+
+                jane2 = copy.copy(jane)
+                self.assertEqual(jane2, jane)
+                self.assertIsInstance(jane2, cls)
+
+                jane2 = copy.deepcopy(jane)
+                self.assertEqual(jane2, jane)
+                self.assertIsInstance(jane2, cls)
+
+    def test_compatibility(self):
+        self.assertEqual(NamedTuple.__doc__, typing.NamedTuple.__doc__)
+
+        if sys.version_info >= (3, 9):
+            self.assertEqual(set(dir(NamedTuple)), set(dir(typing.NamedTuple)))
+            self.assertIs(type(NamedTuple), type(typing.NamedTuple))
+        else:
+            # _field_types was removed in 3.9
+            self.assertEqual(
+                self.NestedEmployee.__annotations__,
+                self.NestedEmployee._field_types
+            )
 
 
 if __name__ == '__main__':
