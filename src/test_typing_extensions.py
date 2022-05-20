@@ -3094,6 +3094,8 @@ class NamedTupleTests(BaseTestCase):
                 self.assertEqual(struct._fields, ())
                 self.assertEqual(struct.__annotations__, {})
                 self.assertIsInstance(struct(), struct)
+                # Attribute was added in a micro version of 3.7
+                # and is tested more fully elsewhere
                 if hasattr(struct, "_field_defaults"):
                     self.assertEqual(struct._field_defaults, {})
 
