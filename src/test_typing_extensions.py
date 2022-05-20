@@ -3035,20 +3035,20 @@ class NamedTupleTests(BaseTestCase):
                 with self.assertRaises(TypeError):
                     G[int, str]
 
-    if sys.version_info >= (3, 9):
-        def test_non_generic_subscript(self):
-            # For backward compatibility, subscription works
-            # on arbitrary NamedTuple types.
-            class Group(NamedTuple):
-                key: T
-                group: list[T]
-            A = Group[int]
-            self.assertEqual(A.__origin__, Group)
-            self.assertEqual(A.__parameters__, ())
-            self.assertEqual(A.__args__, (int,))
-            a = A(1, [2])
-            self.assertIs(type(a), Group)
-            self.assertEqual(a, (1, [2]))
+    @skipIf(sys.version_info < (3, 9), "tuple.__class_getitem__ was added in 3.9")
+    def test_non_generic_subscript(self):
+        # For backward compatibility, subscription works
+        # on arbitrary NamedTuple types.
+        class Group(NamedTuple):
+            key: T
+            group: list[T]
+        A = Group[int]
+        self.assertEqual(A.__origin__, Group)
+        self.assertEqual(A.__parameters__, ())
+        self.assertEqual(A.__args__, (int,))
+        a = A(1, [2])
+        self.assertIs(type(a), Group)
+        self.assertEqual(a, (1, [2]))
 
     def test_namedtuple_keyword_usage(self):
         LocalEmployee = NamedTuple("LocalEmployee", name=str, age=int)
@@ -3116,19 +3116,24 @@ class NamedTupleTests(BaseTestCase):
                 self.assertEqual(jane2, jane)
                 self.assertIsInstance(jane2, cls)
 
-    def test_compatibility(self):
+    def test_docstring(self):
         self.assertEqual(NamedTuple.__doc__, typing.NamedTuple.__doc__)
 
-        if sys.version_info >= (3, 9):
-            self.assertEqual(set(dir(NamedTuple)), set(dir(typing.NamedTuple)))
-            self.assertEqual(inspect.signature(NamedTuple), inspect.signature(typing.NamedTuple))
-            self.assertIs(type(NamedTuple), type(typing.NamedTuple))
-        else:
-            # _field_types was removed in 3.9
-            self.assertEqual(
-                self.NestedEmployee.__annotations__,
-                self.NestedEmployee._field_types
-            )
+    @skipIf(sys.version_info < (3, 9), "NamedTuple was a class on 3.8 and lower")
+    def test_same_as_typing_NamedTuple(self):
+        self.assertEqual(
+            set(dir(NamedTuple)),
+            set(dir(typing.NamedTuple)) | {"__text_signature__"}
+        )
+        self.assertEqual(inspect.signature(NamedTuple), inspect.signature(typing.NamedTuple))
+        self.assertIs(type(NamedTuple), type(typing.NamedTuple))
+
+    @skipIf(sys.version_info >= (3, 9), "_field_types attribute was removed on 3.9")
+    def test__field_types(self):
+        self.assertEqual(
+            self.NestedEmployee.__annotations__,
+            self.NestedEmployee._field_types
+        )
 
 
 if __name__ == '__main__':

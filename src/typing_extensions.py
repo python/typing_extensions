@@ -2023,29 +2023,16 @@ else:
                 nm_tpl.__init_subclass__()
             return nm_tpl
 
-    _bad_args_error_message = (
-        "Either list of fields or keywords can be provided to NamedTuple, not both"
-    )
-
-    # Match the signature of typing.NamedTuple on 3.9+ exactly where possible,
-    # working around the fact that syntax for positional-only arguments
-    # is only available on 3.8+
-    if sys.version_info >= (3, 8):
-        def NamedTuple(typename, fields=None, /, **kwargs):
-            if fields is None:
-                fields = kwargs.items()
-            elif kwargs:
-                raise TypeError(_bad_args_error_message)
-            return _make_nmtuple(typename, fields, module=_caller())
-    else:
-        def NamedTuple(__typename, __fields=None, **kwargs):
-            if __fields is None:
-                __fields = kwargs.items()
-            elif kwargs:
-                raise TypeError(_bad_args_error_message)
-            return _make_nmtuple(__typename, __fields, module=_caller())
+    def NamedTuple(__typename, __fields=None, **kwargs):
+        if __fields is None:
+            __fields = kwargs.items()
+        elif kwargs:
+            raise TypeError("Either list of fields or keywords"
+                            " can be provided to NamedTuple, not both")
+        return _make_nmtuple(__typename, __fields, module=_caller())
 
     NamedTuple.__doc__ = typing.NamedTuple.__doc__
+    NamedTuple.__text_signature__ = '(typename, fields=None, /, **kwargs)'
     _NamedTuple = type.__new__(_NamedTupleMeta, 'NamedTuple', (), {})
 
     def _namedtuple_mro_entries(bases):
