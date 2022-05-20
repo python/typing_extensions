@@ -3121,6 +3121,7 @@ class NamedTupleTests(BaseTestCase):
 
         if sys.version_info >= (3, 9):
             self.assertEqual(set(dir(NamedTuple)), set(dir(typing.NamedTuple)))
+            self.assertEqual(inspect.signature(NamedTuple), inspect.signature(typing.NamedTuple))
             self.assertIs(type(NamedTuple), type(typing.NamedTuple))
         else:
             # _field_types was removed in 3.9
