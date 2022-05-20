@@ -3112,7 +3112,12 @@ class NamedTupleTests(BaseTestCase):
     def test_copy_and_pickle(self):
         global Emp  # pickle wants to reference the class by name
         Emp = NamedTuple('Emp', [('name', str), ('cool', int)])
-        for cls in Emp, CoolEmployee, self.NestedEmployee:
+        pickleable_classes = [Emp, CoolEmployee]
+        # support for pickling nested classes
+        # appears to have been added in 3.7.6
+        if sys.version_info >= (3, 7, 6):
+            pickleable_classes.append(self.NestedEmployee)
+        for cls in pickleable_classes:
             with self.subTest(cls=cls):
                 jane = cls('jane', 37)
                 for proto in range(pickle.HIGHEST_PROTOCOL + 1):
@@ -3141,7 +3146,7 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(inspect.signature(NamedTuple), inspect.signature(typing.NamedTuple))
         self.assertIs(type(NamedTuple), type(typing.NamedTuple))
 
-    @skipIf(sys.version_info >= (3, 9), "_field_types attribute was removed on 3.9")
+    @skipIf(sys.version_info >= (3, 9), "tests are only relevant to <=3.8")
     def test_same_as_typing_NamedTuple_38_minus(self):
         self.assertEqual(
             self.NestedEmployee.__annotations__,
