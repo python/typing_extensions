@@ -3133,7 +3133,7 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(NamedTuple.__doc__, typing.NamedTuple.__doc__)
 
     @skipIf(sys.version_info < (3, 9), "NamedTuple was a class on 3.8 and lower")
-    def test_same_as_typing_NamedTuple(self):
+    def test_same_as_typing_NamedTuple_39_plus(self):
         self.assertEqual(
             set(dir(NamedTuple)),
             set(dir(typing.NamedTuple)) | {"__text_signature__"}
@@ -3142,12 +3142,13 @@ class NamedTupleTests(BaseTestCase):
         self.assertIs(type(NamedTuple), type(typing.NamedTuple))
 
     @skipIf(sys.version_info >= (3, 9), "_field_types attribute was removed on 3.9")
-    def test__field_types(self):
+    def test_same_as_typing_NamedTuple_38_minus(self):
         self.assertEqual(
             self.NestedEmployee.__annotations__,
             self.NestedEmployee._field_types
         )
         self.assertIsInstance(inspect.signature(NamedTuple), inspect.Signature)
+        self.assertFalse(hasattr(NamedTuple, "__text_signature__"))
 
 
 if __name__ == '__main__':

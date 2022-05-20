@@ -2032,8 +2032,10 @@ else:
         return _make_nmtuple(__typename, __fields, module=_caller())
 
     NamedTuple.__doc__ = typing.NamedTuple.__doc__
-    NamedTuple.__text_signature__ = '(typename, fields=None, /, **kwargs)'
     _NamedTuple = type.__new__(_NamedTupleMeta, 'NamedTuple', (), {})
+
+    if sys.version_info >= (3, 9):
+        NamedTuple.__text_signature__ = '(typename, fields=None, /, **kwargs)'
 
     def _namedtuple_mro_entries(bases):
         assert NamedTuple in bases
