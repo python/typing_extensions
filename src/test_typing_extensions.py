@@ -2906,6 +2906,7 @@ class CoolEmployeeWithDefault(NamedTuple):
 
 class XMeth(NamedTuple):
     x: int
+
     def double(self):
         return 2 * self.x
 
@@ -2913,8 +2914,10 @@ class XMeth(NamedTuple):
 class XRepr(NamedTuple):
     x: int
     y: int = 1
+
     def __str__(self):
         return f'{self.x} -> {self.y}'
+
     def __add__(self, other):
         return 0
 
