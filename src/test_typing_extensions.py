@@ -2967,12 +2967,21 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(CoolEmployeeWithDefault._fields, ('name', 'cool'))
         self.assertEqual(CoolEmployeeWithDefault.__annotations__,
                          dict(name=str, cool=int))
-        self.assertEqual(CoolEmployeeWithDefault._field_defaults, dict(cool=0))
 
         with self.assertRaises(TypeError):
             class NonDefaultAfterDefault(NamedTuple):
                 x: int = 3
                 y: int
+
+    @skipUnless(
+        (
+            sys.version_info >= (3, 8)
+            or hasattr(CoolEmployeeWithDefault, '_field_defaults')
+        ),
+        '"_field_defaults" attribute was added in a micro version of 3.7'
+    )
+    def test_field_defaults(self):
+        self.assertEqual(CoolEmployeeWithDefault._field_defaults, dict(cool=0))
 
     def test_annotation_usage_with_methods(self):
         self.assertEqual(XMeth(1).double(), 2)
@@ -3083,9 +3092,10 @@ class NamedTupleTests(BaseTestCase):
         for struct in [NT, CNT]:
             with self.subTest(struct=struct):
                 self.assertEqual(struct._fields, ())
-                self.assertEqual(struct._field_defaults, {})
                 self.assertEqual(struct.__annotations__, {})
                 self.assertIsInstance(struct(), struct)
+                if hasattr(struct, "_field_defaults"):
+                    self.assertEqual(struct._field_defaults, {})
 
     def test_namedtuple_errors(self):
         with self.assertRaises(TypeError):
@@ -3137,6 +3147,7 @@ class NamedTupleTests(BaseTestCase):
             self.NestedEmployee.__annotations__,
             self.NestedEmployee._field_types
         )
+        self.assertIsInstance(inspect.signature(NamedTuple), inspect.Signature)
 
 
 if __name__ == '__main__':
