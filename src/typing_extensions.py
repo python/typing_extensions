@@ -1970,7 +1970,7 @@ else:
         except (AttributeError, ValueError):  # For platforms without _getframe()
             return None
 
-    def _make_nmtuple(name, types, module, defaults = ()):
+    def _make_nmtuple(name, types, module, defaults=()):
         fields = [n for n, t in types]
         types = {n: typing._type_check(t, f"field {n} annotation must be a type")
                  for n, t in types}
