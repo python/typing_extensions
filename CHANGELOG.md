@@ -1,3 +1,22 @@
+# UNRELEASED
+
+- Add the `typing\_extensions.ext` module, which contains useful protocols
+  and type aliases that are not scheduled for inclusion in `typing`.
+    - `SupportsAnext`
+    - `SupportsDivMod`
+    - `SupportsGetItem`
+    - `SupportsNext`
+    - `SupportsRDivMod`
+    - `SupportsTrunc`
+    - `SupportsKeys`
+    - `SupportsItems`
+    - `SupportsKeysAndGetItem`
+    - `SupportsRead`
+    - `SupportsReadline`
+    - `SupportsWrite`
+    - `StrPath`
+    - `BytesPath`
+
 # Release 4.2.0 (April 17, 2022)
 
 - Re-export `typing.Unpack` and `typing.TypeVarTuple` on Python 3.11.
