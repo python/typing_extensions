@@ -141,4 +141,4 @@ These types are only guaranteed to work for static type checking.
 ## Running tests
 
 To run tests, navigate into the appropriate source directory and run
-`test_typing_extensions.py`.
+`test_typing_extensions/__init__.py`.

@@ -2883,7 +2883,7 @@ class AllTests(BaseTestCase):
 
     def test_typing_extensions_compiles_with_opt(self):
         file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                 'typing_extensions.py')
+                                 '../typing_extensions/__init__.py')
         try:
             subprocess.check_output(f'{sys.executable} -OO {file_path}',
                                     stderr=subprocess.STDOUT,
