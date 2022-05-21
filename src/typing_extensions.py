@@ -1964,23 +1964,23 @@ if not hasattr(typing, "TypeVarTuple"):
 if sys.version_info >= (3, 11):
     NamedTuple = typing.NamedTuple
 else:
-    def _caller(depth=1, default='__main__'):
+    def _caller():
         try:
-            return sys._getframe(depth + 1).f_globals.get('__name__', default)
+            return sys._getframe(2).f_globals.get('__name__', '__main__')
         except (AttributeError, ValueError):  # For platforms without _getframe()
             return None
 
     def _make_nmtuple(name, types, module, defaults=()):
         fields = [n for n, t in types]
-        types = {n: typing._type_check(t, f"field {n} annotation must be a type")
-                 for n, t in types}
+        annotations = {n: typing._type_check(t, f"field {n} annotation must be a type")
+                       for n, t in types}
         nm_tpl = collections.namedtuple(name, fields,
                                         defaults=defaults, module=module)
-        nm_tpl.__annotations__ = nm_tpl.__new__.__annotations__ = types
+        nm_tpl.__annotations__ = nm_tpl.__new__.__annotations__ = annotations
         # The `_field_types` attribute was removed in 3.9;
         # in earlier versions, it is the same as the `__annotations__` attribute
         if sys.version_info < (3, 9):
-            nm_tpl._field_types = nm_tpl.__annotations__
+            nm_tpl._field_types = annotations
         return nm_tpl
 
     _prohibited_namedtuple_fields = typing._prohibited
