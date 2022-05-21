@@ -3138,7 +3138,7 @@ class NamedTupleTests(BaseTestCase):
     def test_signature_is_same_as_typing_NamedTuple(self):
         self.assertEqual(inspect.signature(NamedTuple), inspect.signature(typing.NamedTuple))
 
-    @skipIf(sys.version_info >= (3, 8), "tests are only relveant to <=3.7")
+    @skipIf(sys.version_info >= (3, 8), "tests are only relevant to <=3.7")
     def test_signature_on_37(self):
         self.assertIsInstance(inspect.signature(NamedTuple), inspect.Signature)
         self.assertFalse(hasattr(NamedTuple, "__text_signature__"))
