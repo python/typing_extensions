@@ -3134,13 +3134,21 @@ class NamedTupleTests(BaseTestCase):
     def test_docstring(self):
         self.assertEqual(NamedTuple.__doc__, typing.NamedTuple.__doc__)
 
+    @skipIf(sys.version_info < (3, 8), "NamedTuple had a bad signature on <=3.7")
+    def test_signature_is_same_as_typing_NamedTuple(self):
+        self.assertEqual(inspect.signature(NamedTuple), inspect.signature(typing.NamedTuple))
+
+    @skipIf(sys.version_info >= (3, 8), "tests are only relveant to <=3.7")
+    def test_signature_on_37(self):
+        self.assertIsInstance(inspect.signature(NamedTuple), inspect.Signature)
+        self.assertFalse(hasattr(NamedTuple, "__text_signature__"))
+
     @skipIf(sys.version_info < (3, 9), "NamedTuple was a class on 3.8 and lower")
     def test_same_as_typing_NamedTuple_39_plus(self):
         self.assertEqual(
             set(dir(NamedTuple)),
             set(dir(typing.NamedTuple)) | {"__text_signature__"}
         )
-        self.assertEqual(inspect.signature(NamedTuple), inspect.signature(typing.NamedTuple))
         self.assertIs(type(NamedTuple), type(typing.NamedTuple))
 
     @skipIf(sys.version_info >= (3, 9), "tests are only relevant to <=3.8")
@@ -3149,8 +3157,6 @@ class NamedTupleTests(BaseTestCase):
             self.NestedEmployee.__annotations__,
             self.NestedEmployee._field_types
         )
-        self.assertIsInstance(inspect.signature(NamedTuple), inspect.Signature)
-        self.assertFalse(hasattr(NamedTuple, "__text_signature__"))
 
 
 if __name__ == '__main__':

@@ -2037,7 +2037,10 @@ else:
     NamedTuple.__doc__ = typing.NamedTuple.__doc__
     _NamedTuple = type.__new__(_NamedTupleMeta, 'NamedTuple', (), {})
 
-    if sys.version_info >= (3, 9):
+    # On 3.8+, alter the signature so that it matches typing.NamedTuple.
+    # The signature of typing.NamedTuple on >=3.8 is invalid syntax in Python 3.7,
+    # so just leave the signature as it is on 3.7.
+    if sys.version_info >= (3, 8):
         NamedTuple.__text_signature__ = '(typename, fields=None, /, **kwargs)'
 
     def _namedtuple_mro_entries(bases):
