@@ -1984,7 +1984,7 @@ else:
         return nm_tpl
 
     _prohibited_namedtuple_fields = typing._prohibited
-    _special_namedtuple_fields = typing._special
+    _special_namedtuple_fields = frozenset({'__module__', '__name__', '__annotations__'})
 
     class _NamedTupleMeta(type):
         def __new__(cls, typename, bases, ns):

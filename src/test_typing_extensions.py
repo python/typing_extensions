@@ -3114,12 +3114,7 @@ class NamedTupleTests(BaseTestCase):
     def test_copy_and_pickle(self):
         global Emp  # pickle wants to reference the class by name
         Emp = NamedTuple('Emp', [('name', str), ('cool', int)])
-        pickleable_classes = [Emp, CoolEmployee]
-        # support for pickling nested classes
-        # appears to have been added in 3.7.6
-        if sys.version_info >= (3, 7, 6):
-            pickleable_classes.append(self.NestedEmployee)
-        for cls in pickleable_classes:
+        for cls in Emp, CoolEmployee, self.NestedEmployee:
             with self.subTest(cls=cls):
                 jane = cls('jane', 37)
                 for proto in range(pickle.HIGHEST_PROTOCOL + 1):
