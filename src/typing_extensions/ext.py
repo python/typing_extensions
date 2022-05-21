@@ -95,5 +95,5 @@ class SupportsWrite(Protocol[_T_contra]):
 # Path aliases
 #
 
-StrPath: TypeAlias = Union[str, PathLike[str]]
-BytesPath: TypeAlias = Union[bytes, PathLike[bytes]]
+StrPath: TypeAlias = Union[str, "PathLike[str]"]
+BytesPath: TypeAlias = Union[bytes, "PathLike[bytes]"]
