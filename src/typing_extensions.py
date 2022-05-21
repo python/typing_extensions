@@ -1961,6 +1961,9 @@ if not hasattr(typing, "TypeVarTuple"):
     typing._check_generic = _check_generic
 
 
+# Backport NamedTuple as it exists in 3.11
+# In 3.11, the ability to define generic `NamedTuple`s was supported.
+# This was explicitly disallowed in 3.9-3.10, and only half-worked in <=3.8.
 if sys.version_info >= (3, 11):
     NamedTuple = typing.NamedTuple
 else:
