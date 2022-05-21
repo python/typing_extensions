@@ -10,6 +10,7 @@ ignore =
   # consistency with mypy
   W504
 exclude =
+  .venv*,
   # tests have more relaxed formatting rules
   # and its own specific config in .flake8-tests
   src/test_typing_extensions,
