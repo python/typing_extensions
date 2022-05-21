@@ -28,7 +28,8 @@ from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args
 from typing_extensions import clear_overloads, get_overloads, overload
 
-from .ext import *
+# Importing so that the tests are run.
+from .ext import dummy  # noqa F401
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
