@@ -123,8 +123,7 @@ Certain objects were changed after they were added to `typing`, and
   `typing_extensions.get_overloads()`, you must use
   `@typing_extensions.overload`.
 - `NamedTuple` was changed in Python 3.11 to allow for multiple inheritance
-  with `typing.Generic`. The implementation of `NamedTuple` was also changed in
-  3.9 so that `NamedTuple` became a function rather than a class.
+  with `typing.Generic`.
 
 There are a few types whose interface was modified between different
 versions of typing. For example, `typing.Sequence` was modified to
