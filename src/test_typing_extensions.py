@@ -33,6 +33,7 @@ from typing_extensions import NamedTuple
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
 TYPING_3_8_0 = sys.version_info[:3] >= (3, 8, 0)
+TYPING_3_9_0 = sys.version_info[:3] >= (3, 9, 0)
 TYPING_3_10_0 = sys.version_info[:3] >= (3, 10, 0)
 
 # 3.11 makes runtime type checks (_type_check) more lenient.
@@ -2922,6 +2923,7 @@ class XRepr(NamedTuple):
         return 0
 
 
+@skipIf(TYPING_3_11_0, "These invariants should all be tested upstream on 3.11+")
 class NamedTupleTests(BaseTestCase):
     class NestedEmployee(NamedTuple):
         name: str
@@ -2968,14 +2970,17 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(CoolEmployeeWithDefault.__annotations__,
                          dict(name=str, cool=int))
 
-        with self.assertRaises(TypeError):
+        with self.assertRaisesRegex(
+            TypeError,
+            'Non-default namedtuple field y cannot follow default field x'
+        ):
             class NonDefaultAfterDefault(NamedTuple):
                 x: int = 3
                 y: int
 
     @skipUnless(
         (
-            sys.version_info >= (3, 8)
+            TYPING_3_8_0
             or hasattr(CoolEmployeeWithDefault, '_field_defaults')
         ),
         '"_field_defaults" attribute was added in a micro version of 3.7'
@@ -2989,13 +2994,15 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(str(XRepr(42)), '42 -> 1')
         self.assertEqual(XRepr(1, 2) + XRepr(3), 0)
 
-        with self.assertRaises(AttributeError):
+        bad_overwrite_error_message = 'Cannot overwrite NamedTuple attribute'
+
+        with self.assertRaisesRegex(AttributeError, bad_overwrite_error_message):
             class XMethBad(NamedTuple):
                 x: int
                 def _fields(self):
                     return 'no chance for this'
 
-        with self.assertRaises(AttributeError):
+        with self.assertRaisesRegex(AttributeError, bad_overwrite_error_message):
             class XMethBad2(NamedTuple):
                 x: int
                 def _source(self):
@@ -3004,18 +3011,30 @@ class NamedTupleTests(BaseTestCase):
     def test_multiple_inheritance(self):
         class A:
             pass
-        with self.assertRaises(TypeError):
+        with self.assertRaisesRegex(
+            TypeError,
+            'can only inherit from a NamedTuple type and Generic'
+        ):
             class X(NamedTuple, A):
                 x: int
-        with self.assertRaises(TypeError):
+
+        with self.assertRaisesRegex(
+            TypeError,
+            'can only inherit from a NamedTuple type and Generic'
+        ):
             class X(NamedTuple, tuple):
                 x: int
-        with self.assertRaises(TypeError):
+
+        with self.assertRaisesRegex(TypeError, 'duplicate base class'):
             class X(NamedTuple, NamedTuple):
                 x: int
+
         class A(NamedTuple):
             x: int
-        with self.assertRaises(TypeError):
+        with self.assertRaisesRegex(
+            TypeError,
+            'can only inherit from a NamedTuple type and Generic'
+        ):
             class X(NamedTuple, A):
                 y: str
 
@@ -3044,11 +3063,11 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIs(type(a), G)
                 self.assertEqual(a.x, 3)
 
-                with self.assertRaises(TypeError):
+                with self.assertRaisesRegex(TypeError, 'Too many parameters'):
                     G[int, str]
 
-    @skipIf(sys.version_info < (3, 9), "tuple.__class_getitem__ was added in 3.9")
-    def test_non_generic_subscript(self):
+    @skipUnless(TYPING_3_9_0, "tuple.__class_getitem__ was added in 3.9")
+    def test_non_generic_subscript_py39_plus(self):
         # For backward compatibility, subscription works
         # on arbitrary NamedTuple types.
         class Group(NamedTuple):
@@ -3062,6 +3081,19 @@ class NamedTupleTests(BaseTestCase):
         self.assertIs(type(a), Group)
         self.assertEqual(a, (1, [2]))
 
+    @skipIf(TYPING_3_9_0, "Test isn't relevant to 3.9+")
+    def test_non_generic_subscript_error_message_py38_minus(self):
+        class Group(NamedTuple):
+            key: T
+            group: List[T]
+
+        with self.assertRaisesRegex(TypeError, 'not subscriptable'):
+            Group[int]
+
+        for attr in ('__args__', '__origin__', '__parameters__'):
+            with self.subTest(attr=attr):
+                self.assertFalse(hasattr(Group, attr))
+
     def test_namedtuple_keyword_usage(self):
         LocalEmployee = NamedTuple("LocalEmployee", name=str, age=int)
         nick = LocalEmployee('Nick', 25)
@@ -3070,7 +3102,10 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(LocalEmployee.__name__, 'LocalEmployee')
         self.assertEqual(LocalEmployee._fields, ('name', 'age'))
         self.assertEqual(LocalEmployee.__annotations__, dict(name=str, age=int))
-        with self.assertRaises(TypeError):
+        with self.assertRaisesRegex(
+            TypeError,
+            'Either list of fields or keywords can be provided to NamedTuple, not both'
+        ):
             NamedTuple('Name', [('x', int)], y=str)
 
     def test_namedtuple_special_keyword_names(self):
@@ -3106,7 +3141,7 @@ class NamedTupleTests(BaseTestCase):
             NamedTuple()
         with self.assertRaises(TypeError):
             NamedTuple('Emp', [('name', str)], None)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, 'cannot start with an underscore'):
             NamedTuple('Emp', [('_name', str)])
         with self.assertRaises(TypeError):
             NamedTuple(typename='Emp', name=str, id=int)
@@ -3133,17 +3168,18 @@ class NamedTupleTests(BaseTestCase):
 
     def test_docstring(self):
         self.assertEqual(NamedTuple.__doc__, typing.NamedTuple.__doc__)
+        self.assertIsInstance(NamedTuple.__doc__, str)
 
-    @skipIf(sys.version_info < (3, 8), "NamedTuple had a bad signature on <=3.7")
+    @skipUnless(TYPING_3_8_0, "NamedTuple had a bad signature on <=3.7")
     def test_signature_is_same_as_typing_NamedTuple(self):
         self.assertEqual(inspect.signature(NamedTuple), inspect.signature(typing.NamedTuple))
 
-    @skipIf(sys.version_info >= (3, 8), "tests are only relevant to <=3.7")
+    @skipIf(TYPING_3_8_0, "tests are only relevant to <=3.7")
     def test_signature_on_37(self):
         self.assertIsInstance(inspect.signature(NamedTuple), inspect.Signature)
         self.assertFalse(hasattr(NamedTuple, "__text_signature__"))
 
-    @skipIf(sys.version_info < (3, 9), "NamedTuple was a class on 3.8 and lower")
+    @skipUnless(TYPING_3_9_0, "NamedTuple was a class on 3.8 and lower")
     def test_same_as_typing_NamedTuple_39_plus(self):
         self.assertEqual(
             set(dir(NamedTuple)),
@@ -3151,7 +3187,7 @@ class NamedTupleTests(BaseTestCase):
         )
         self.assertIs(type(NamedTuple), type(typing.NamedTuple))
 
-    @skipIf(sys.version_info >= (3, 9), "tests are only relevant to <=3.8")
+    @skipIf(TYPING_3_9_0, "tests are only relevant to <=3.8")
     def test_same_as_typing_NamedTuple_38_minus(self):
         self.assertEqual(
             self.NestedEmployee.__annotations__,
