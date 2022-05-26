@@ -37,6 +37,7 @@ __all__ = [
     'Counter',
     'Deque',
     'DefaultDict',
+    'NamedTuple',
     'OrderedDict',
     'TypedDict',
 
@@ -1958,3 +1959,92 @@ else:
 if not hasattr(typing, "TypeVarTuple"):
     typing._collect_type_vars = _collect_type_vars
     typing._check_generic = _check_generic
+
+
+# Backport typing.NamedTuple as it exists in Python 3.11.
+# In 3.11, the ability to define generic `NamedTuple`s was supported.
+# This was explicitly disallowed in 3.9-3.10, and only half-worked in <=3.8.
+if sys.version_info >= (3, 11):
+    NamedTuple = typing.NamedTuple
+else:
+    def _caller():
+        try:
+            return sys._getframe(2).f_globals.get('__name__', '__main__')
+        except (AttributeError, ValueError):  # For platforms without _getframe()
+            return None
+
+    def _make_nmtuple(name, types, module, defaults=()):
+        fields = [n for n, t in types]
+        annotations = {n: typing._type_check(t, f"field {n} annotation must be a type")
+                       for n, t in types}
+        nm_tpl = collections.namedtuple(name, fields,
+                                        defaults=defaults, module=module)
+        nm_tpl.__annotations__ = nm_tpl.__new__.__annotations__ = annotations
+        # The `_field_types` attribute was removed in 3.9;
+        # in earlier versions, it is the same as the `__annotations__` attribute
+        if sys.version_info < (3, 9):
+            nm_tpl._field_types = annotations
+        return nm_tpl
+
+    _prohibited_namedtuple_fields = typing._prohibited
+    _special_namedtuple_fields = frozenset({'__module__', '__name__', '__annotations__'})
+
+    class _NamedTupleMeta(type):
+        def __new__(cls, typename, bases, ns):
+            assert _NamedTuple in bases
+            for base in bases:
+                if base is not _NamedTuple and base is not typing.Generic:
+                    raise TypeError(
+                        'can only inherit from a NamedTuple type and Generic')
+            bases = tuple(tuple if base is _NamedTuple else base for base in bases)
+            types = ns.get('__annotations__', {})
+            default_names = []
+            for field_name in types:
+                if field_name in ns:
+                    default_names.append(field_name)
+                elif default_names:
+                    raise TypeError(f"Non-default namedtuple field {field_name} "
+                                    f"cannot follow default field"
+                                    f"{'s' if len(default_names) > 1 else ''} "
+                                    f"{', '.join(default_names)}")
+            nm_tpl = _make_nmtuple(
+                typename, types.items(),
+                defaults=[ns[n] for n in default_names],
+                module=ns['__module__']
+            )
+            nm_tpl.__bases__ = bases
+            if typing.Generic in bases:
+                class_getitem = typing.Generic.__class_getitem__.__func__
+                nm_tpl.__class_getitem__ = classmethod(class_getitem)
+            # update from user namespace without overriding special namedtuple attributes
+            for key in ns:
+                if key in _prohibited_namedtuple_fields:
+                    raise AttributeError("Cannot overwrite NamedTuple attribute " + key)
+                elif key not in _special_namedtuple_fields and key not in nm_tpl._fields:
+                    setattr(nm_tpl, key, ns[key])
+            if typing.Generic in bases:
+                nm_tpl.__init_subclass__()
+            return nm_tpl
+
+    def NamedTuple(__typename, __fields=None, **kwargs):
+        if __fields is None:
+            __fields = kwargs.items()
+        elif kwargs:
+            raise TypeError("Either list of fields or keywords"
+                            " can be provided to NamedTuple, not both")
+        return _make_nmtuple(__typename, __fields, module=_caller())
+
+    NamedTuple.__doc__ = typing.NamedTuple.__doc__
+    _NamedTuple = type.__new__(_NamedTupleMeta, 'NamedTuple', (), {})
+
+    # On 3.8+, alter the signature so that it matches typing.NamedTuple.
+    # The signature of typing.NamedTuple on >=3.8 is invalid syntax in Python 3.7,
+    # so just leave the signature as it is on 3.7.
+    if sys.version_info >= (3, 8):
+        NamedTuple.__text_signature__ = '(typename, fields=None, /, **kwargs)'
+
+    def _namedtuple_mro_entries(bases):
+        assert NamedTuple in bases
+        return (_NamedTuple,)
+
+    NamedTuple.__mro_entries__ = _namedtuple_mro_entries

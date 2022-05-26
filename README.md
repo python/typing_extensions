@@ -96,6 +96,7 @@ This module currently contains the following:
   - `Counter`
   - `DefaultDict`
   - `Deque`
+  - `NamedTuple`
   - `NewType`
   - `NoReturn`
   - `overload`
@@ -121,6 +122,8 @@ Certain objects were changed after they were added to `typing`, and
   introspectable at runtime. In order to access overloads with
   `typing_extensions.get_overloads()`, you must use
   `@typing_extensions.overload`.
+- `NamedTuple` was changed in Python 3.11 to allow for multiple inheritance
+  with `typing.Generic`.
 
 There are a few types whose interface was modified between different
 versions of typing. For example, `typing.Sequence` was modified to

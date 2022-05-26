@@ -1,3 +1,9 @@
+# Unreleased
+
+- Add `typing_extensions.NamedTuple`, allowing for generic `NamedTuple`s on
+  Python <3.11 (backport from python/cpython#92027, by Serhiy Storchaka). Patch
+  by Alex Waygood (@AlexWaygood).
+
 # Release 4.2.0 (April 17, 2022)
 
 - Re-export `typing.Unpack` and `typing.TypeVarTuple` on Python 3.11.
