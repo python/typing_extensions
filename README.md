@@ -113,7 +113,8 @@ Certain objects were changed after they were added to `typing`, and
 - `TypedDict` does not store runtime information
   about which (if any) keys are non-required in Python 3.8, and does not
   honor the `total` keyword with old-style `TypedDict()` in Python
-  3.9.0 and 3.9.1.
+  3.9.0 and 3.9.1. `TypedDict` also does not support multiple inheritance
+  with `typing.Generic` on Python <3.11.
 - `get_origin` and `get_args` lack support for `Annotated` in
   Python 3.8 and lack support for `ParamSpecArgs` and `ParamSpecKwargs`
   in 3.9.
