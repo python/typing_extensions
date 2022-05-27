@@ -30,6 +30,9 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 
+# Importing so that the tests are run.
+from .utils import dummy  # noqa F401
+
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
 TYPING_3_8_0 = sys.version_info[:3] >= (3, 8, 0)
@@ -2886,7 +2889,7 @@ class AllTests(BaseTestCase):
 
     def test_typing_extensions_compiles_with_opt(self):
         file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                 'typing_extensions.py')
+                                 '../typing_extensions/__init__.py')
         try:
             subprocess.check_output(f'{sys.executable} -OO {file_path}',
                                     stderr=subprocess.STDOUT,
