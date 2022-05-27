@@ -3,7 +3,7 @@ Protocols and type aliases that are not scheduled for inclusion in typing.
 """
 
 from os import PathLike
-from typing import AbstractSet, Awaitable, Container, Iterable, Tuple, TypeVar, Union
+from typing import AbstractSet, Awaitable, Iterable, Tuple, TypeVar, Union
 from typing_extensions import Protocol, TypeAlias
 
 _T_co = TypeVar("_T_co", covariant=True)
@@ -28,7 +28,7 @@ class SupportsDivMod(Protocol[_T_contra, _T_co]):
         ...
 
 
-class SupportsGetItem(Container[_KT_contra], Protocol[_KT_contra, _VT_co]):
+class SupportsGetItem(Protocol[_KT_contra, _VT_co]):
     def __getitem__(self, __k: _KT_contra) -> _VT_co:
         ...
 
