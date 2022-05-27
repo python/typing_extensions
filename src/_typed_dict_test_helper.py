@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TypeVar, Generic, Optional, T
 from typing_extensions import TypedDict
 
