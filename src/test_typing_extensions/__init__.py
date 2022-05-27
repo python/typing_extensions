@@ -31,7 +31,7 @@ from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 
 # Importing so that the tests are run.
-from .ext import dummy  # noqa F401
+from .utils import dummy  # noqa F401
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.

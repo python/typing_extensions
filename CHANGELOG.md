@@ -3,7 +3,7 @@
 - Add `typing_extensions.NamedTuple`, allowing for generic `NamedTuple`s on
   Python <3.11 (backport from python/cpython#92027, by Serhiy Storchaka). Patch
   by Alex Waygood (@AlexWaygood).
-- Add the `typing\_extensions.ext` module, which contains useful protocols
+- Add the `typing\_extensions.utils` module, which contains useful protocols
   and type aliases that are not scheduled for inclusion in `typing`.
     - `SupportsAnext`
     - `SupportsDivMod`
