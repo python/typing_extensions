@@ -613,13 +613,18 @@ else:
     @runtime_checkable
     class MappingAuxiliary(typing.Collection[KT_co], Protocol[KT_co, VT_co]):
         """Represents the covariant sub-protocol of the Mapping type.
-        
+
         This is useful for annotating function parameters where you really want a
         Mapping, but only interact with it covariantly with regards to keys.
         """
-        def items(self) -> typing.ItemsView[KT_co, VT_co]: ...
-        def keys(self) -> typing.KeysView[KT_co]: ...
-        def values(self) -> typing.ValuesView[VT_co]: ...
+        def items(self) -> typing.ItemsView[KT_co, VT_co]:
+            ...
+
+        def keys(self) -> typing.KeysView[KT_co]:
+            ...
+
+        def values(self) -> typing.ValuesView[VT_co]:
+            ...
 
 
 # 3.8+
