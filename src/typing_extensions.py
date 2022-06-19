@@ -135,7 +135,7 @@ def _collect_type_vars(types, typevar_types=None):
         ):
             tvars.append(t)
         if _should_collect_from_parameters(t):
-            tvars.extend(t for t in t.__parameters__ if t not in tvars)
+            tvars.extend([t for t in t.__parameters__ if t not in tvars])
     return tuple(tvars)
 
 
@@ -664,7 +664,7 @@ else:
                             "argument: '_typename'")
         if args:
             try:
-                fields = args[0]  # allow the "_fields" keyword be passed
+                fields, = args  # allow the "_fields" keyword be passed
             except ValueError:
                 raise TypeError('TypedDict.__new__() takes from 2 to 3 '
                                 f'positional arguments but {len(args) + 2} '
@@ -937,7 +937,7 @@ else:
 
         def __reduce__(self):
             return operator.getitem, (
-                Annotated, (self.__origin__, *self.__metadata__)
+                Annotated, (self.__origin__,) + self.__metadata__
             )
 
         def __eq__(self, other):
@@ -1321,7 +1321,7 @@ if not hasattr(typing, 'Concatenate'):
 # 3.7-3.9
 @typing._tp_cache
 def _concatenate_getitem(self, parameters):
-    if parameters is (): # empty tuple is singleton
+    if parameters == ():
         raise TypeError("Cannot take a Concatenate of no types.")
     if not isinstance(parameters, tuple):
         parameters = (parameters,)
@@ -1993,7 +1993,7 @@ else:
             return None
 
     def _make_nmtuple(name, types, module, defaults=()):
-        fields = (n for n, t in types)
+        fields = [n for n, t in types]
         annotations = {n: typing._type_check(t, f"field {n} annotation must be a type")
                        for n, t in types}
         nm_tpl = collections.namedtuple(name, fields,
@@ -2028,7 +2028,7 @@ else:
                                     f"{', '.join(default_names)}")
             nm_tpl = _make_nmtuple(
                 typename, types.items(),
-                defaults=(ns[n] for n in default_names),
+                defaults=[ns[n] for n in default_names],
                 module=ns['__module__']
             )
             nm_tpl.__bases__ = bases
