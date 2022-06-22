@@ -97,11 +97,9 @@ def _check_generic(cls, parameters, elen=_marker):
     alen = len(parameters)
     if alen != elen:
         if hasattr(cls, "__parameters__"):
-            num_tv_tuples = sum(
-                isinstance(parameter, TypeVarTuple)
-                for parameter in cls.__parameters__
-                if not _is_unpack(parameter))
-            if num_tv_tuples and alen >= elen - num_tv_tuples:
+            parameters = [p for p in cls.__parameters__ if not _is_unpack(p)]
+            num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
+            if (num_tv_tuples > 0) and (alen >= elen - num_tv_tuples):
                 return
         raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters for {cls};"
                         f" actual {alen}, expected {elen}")
@@ -366,7 +364,7 @@ def _get_protocol_attrs(cls):
         if base.__name__ in {'Protocol', 'Generic'}:
             continue
         annotations = getattr(base, '__annotations__', {})
-        for attr in (*base.__dict__.keys(), *annotations.keys()):
+        for attr in (*base.__dict__, *annotations):
             if (not attr.startswith('_abc_') and attr not in {
                     '__abstractmethods__', '__annotations__', '__weakref__',
                     '_is_protocol', '_is_runtime_protocol', '__dict__',
