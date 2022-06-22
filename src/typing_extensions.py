@@ -97,9 +97,11 @@ def _check_generic(cls, parameters, elen=_marker):
     alen = len(parameters)
     if alen != elen:
         if hasattr(cls, "__parameters__"):
-            parameters = (p for p in cls.__parameters__ if not _is_unpack(p))
-            num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
-            if (num_tv_tuples > 0) and (alen >= elen - num_tv_tuples):
+            num_tv_tuples = sum(
+                isinstance(parameter, TypeVarTuple)
+                for parameter in cls.__parameters__
+                if not _is_unpack(parameter))
+            if num_tv_tuples and alen >= elen - num_tv_tuples:
                 return
         raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters for {cls};"
                         f" actual {alen}, expected {elen}")
@@ -352,10 +354,10 @@ Text = typing.Text
 TYPE_CHECKING = typing.TYPE_CHECKING
 
 
-_PROTO_WHITELIST = {'Callable', 'Awaitable',
+_PROTO_WHITELIST = frozenset({'Callable', 'Awaitable',
                     'Iterable', 'Iterator', 'AsyncIterable', 'AsyncIterator',
                     'Hashable', 'Sized', 'Container', 'Collection', 'Reversible',
-                    'ContextManager', 'AsyncContextManager'}
+                    'ContextManager', 'AsyncContextManager'})
 
 
 def _get_protocol_attrs(cls):
