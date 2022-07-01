@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.3.0 (July 1, 2022)
 
 - Add `typing_extensions.NamedTuple`, allowing for generic `NamedTuple`s on
   Python <3.11 (backport from python/cpython#92027, by Serhiy Storchaka). Patch
