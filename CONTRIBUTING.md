@@ -41,7 +41,6 @@ backwards-incompatible changes.
 
 - Build the source and wheel distributions:
 
-  - `cd typing_extensions`
   - `rm -rf dist/`
   - `python -m build .`
 
