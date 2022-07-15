@@ -2985,11 +2985,13 @@ class AllTests(BaseTestCase):
         exclude = {
             'GenericMeta',
             'KT',
+            'KT_co',
             'PEP_560',
             'T',
             'T_co',
             'T_contra',
             'VT',
+            'VT_co',
         }
         actual_names = {
             name for name in dir(typing_extensions)

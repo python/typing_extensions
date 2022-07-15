@@ -42,6 +42,7 @@ __all__ = [
     'TypedDict',
 
     # Structural checks, a.k.a. protocols.
+    'MappingAuxiliary',
     'SupportsIndex',
 
     # One-off things.
@@ -145,7 +146,9 @@ NoReturn = typing.NoReturn
 # (These are not for export.)
 T = typing.TypeVar('T')  # Any type.
 KT = typing.TypeVar('KT')  # Key type.
+KT_co = typing.TypeVar('KT', covariant=True)  # Covariant key type.
 VT = typing.TypeVar('VT')  # Value type.
+VT_co = typing.TypeVar('VT', covariant=True)  # Value type.
 T_co = typing.TypeVar('T_co', covariant=True)  # Any type covariant containers.
 T_contra = typing.TypeVar('T_contra', contravariant=True)  # Ditto contravariant.
 
@@ -601,6 +604,27 @@ else:
 
 # Exists for backwards compatibility.
 runtime = runtime_checkable
+
+
+# Not yet ported to typing, but who knows
+if hasattr(typing, 'MappingAuxiliary'):
+    MappingAuxiliary = typing.MappingAuxiliary
+else:
+    @runtime_checkable
+    class MappingAuxiliary(typing.Collection[KT_co], Protocol[KT_co, VT_co]):
+        """Represents the covariant sub-protocol of the Mapping type.
+
+        This is useful for annotating function parameters where you really want a
+        Mapping, but only interact with it covariantly with regards to keys.
+        """
+        def items(self) -> typing.ItemsView[KT_co, VT_co]:
+            ...
+
+        def keys(self) -> typing.KeysView[KT_co]:
+            ...
+
+        def values(self) -> typing.ValuesView[VT_co]:
+            ...
 
 
 # 3.8+
