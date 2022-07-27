@@ -718,7 +718,10 @@ else:
                 _maybe_adjust_parameters(tp_dict)
 
             annotations = {}
-            own_annotations = ns.get('__annotations__', {})
+            if sys.version_info >= (3, 9):
+                own_annotations = typing.get_type_hints(tp_dict, include_extras=True)
+            else:
+                own_annotations = typing.get_type_hints(tp_dict)
             msg = "TypedDict('Name', {f0: t0, f1: t1, ...}); each t must be a type"
             own_annotations = {
                 n: typing._type_check(tp, msg) for n, tp in own_annotations.items()
@@ -727,7 +730,10 @@ else:
             optional_keys = set()
 
             for base in bases:
-                annotations.update(base.__dict__.get('__annotations__', {}))
+                if sys.version_info >= (3, 9):
+                    annotations.update(typing.get_type_hints(base, include_extras=True))
+                else:
+                    annotations.update(typing.get_type_hints(base))
                 required_keys.update(base.__dict__.get('__required_keys__', ()))
                 optional_keys.update(base.__dict__.get('__optional_keys__', ()))
 

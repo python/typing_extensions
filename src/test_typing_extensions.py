@@ -638,6 +638,10 @@ class AnnotatedMovie(TypedDict):
     title: Annotated[Required[str], "foobar"]
     year: NotRequired[Annotated[int, 2000]]
 
+class StringBasedMovie(TypedDict):
+    title: "str"
+    year: "NotRequired[int]"
+
 
 gth = get_type_hints
 
@@ -1828,6 +1832,9 @@ class TypedDictTests(BaseTestCase):
 
         assert TotalMovie.__required_keys__ == frozenset({'title'})
         assert TotalMovie.__optional_keys__ == frozenset({'year'})
+
+        assert StringBasedMovie.__required_keys__ == frozenset({'title'})
+        assert StringBasedMovie.__optional_keys__ == frozenset({'year'})
 
 
     def test_keys_inheritance(self):
