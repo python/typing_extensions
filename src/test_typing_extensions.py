@@ -160,6 +160,31 @@ class AssertNeverTests(BaseTestCase):
             assert_never(None)
 
 
+class AnyTests(BaseTestCase):
+    class SubclassesAny(Any):
+        ...
+
+    def test_repr(self):
+        if sys.version_info >= (3, 11):
+            mod_name = 'typing'
+        else:
+            mod_name = 'typing_extensions'
+        self.assertEqual(repr(Any), f"{mod_name}.Any")
+        self.assertEqual(repr(SubclassesAny), "<class __main__.AnyTests.SubclassesAny'>")
+
+    def test_instantiation(self):
+        with self.assertRaises(TypeError):
+            Any()
+        
+        self.SubclassesAny()
+
+    def test_isinstance(self):
+        with self.assertRaises(TypeError):
+            isinstance(object(), Any)
+
+        isinstance(object(), self.SubclassesAny)
+
+
 class ClassVarTests(BaseTestCase):
 
     def test_basics(self):

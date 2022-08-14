@@ -11,6 +11,7 @@ import typing
 # Please keep __all__ alphabetized within each category.
 __all__ = [
     # Super-special typing primitives.
+    'Any',
     'ClassVar',
     'Concatenate',
     'Final',
@@ -148,6 +149,38 @@ KT = typing.TypeVar('KT')  # Key type.
 VT = typing.TypeVar('VT')  # Value type.
 T_co = typing.TypeVar('T_co', covariant=True)  # Any type covariant containers.
 T_contra = typing.TypeVar('T_contra', contravariant=True)  # Ditto contravariant.
+
+
+if sys.version_info >= (3, 11):
+    from typing import Any
+else:
+
+    class _AnyMeta(type):
+        def __instancecheck__(self, obj):
+            if self is Any:
+                raise TypeError("typing.Any cannot be used with isinstance()")
+            return super().__instancecheck__(obj)
+
+        def __repr__(self):
+            if self is Any:
+                return "typing_extensions.Any"
+            return super().__repr__()
+
+
+    class Any(metaclass=_AnyMeta):
+        """Special type indicating an unconstrained type.
+        - Any is compatible with every type.
+        - Any assumed to have all methods.
+        - All values assumed to be instances of Any.
+        Note that all the above statements are true from the point of view of
+        static type checkers. At runtime, Any should not be used with instance
+        checks.
+        """
+        def __new__(cls, *args, **kwargs):
+            if cls is Any:
+                raise TypeError("Any cannot be instantiated")
+            return super().__new__(cls, *args, **kwargs)
+
 
 ClassVar = typing.ClassVar
 
