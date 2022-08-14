@@ -171,7 +171,7 @@ class AnyTests(BaseTestCase):
             mod_name = 'typing_extensions'
         self.assertEqual(repr(Any), f"{mod_name}.Any")
         if sys.version_info < (3, 11):  # skip for now on 3.11+ see python/cpython#95987
-            self.assertEqual(repr(self.SubclassesAny), "<class test_typing_extensions.AnyTests.SubclassesAny'>")
+            self.assertEqual(repr(self.SubclassesAny), "<class 'test_typing_extensions.AnyTests.SubclassesAny'>")
 
     def test_instantiation(self):
         with self.assertRaises(TypeError):
