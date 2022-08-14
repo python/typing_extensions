@@ -170,7 +170,7 @@ class AnyTests(BaseTestCase):
         else:
             mod_name = 'typing_extensions'
         self.assertEqual(repr(Any), f"{mod_name}.Any")
-        self.assertEqual(repr(SubclassesAny), "<class __main__.AnyTests.SubclassesAny'>")
+        self.assertEqual(repr(self.SubclassesAny), "<class __main__.AnyTests.SubclassesAny'>")
 
     def test_instantiation(self):
         with self.assertRaises(TypeError):
@@ -3040,7 +3040,7 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'NamedTuple'}
+            exclude |= {'final', 'NamedTuple', 'Any'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
