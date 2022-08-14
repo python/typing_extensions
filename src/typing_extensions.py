@@ -158,7 +158,7 @@ else:
     class _AnyMeta(type):
         def __instancecheck__(self, obj):
             if self is Any:
-                raise TypeError("typing.Any cannot be used with isinstance()")
+                raise TypeError("typing_extensions.Any cannot be used with isinstance()")
             return super().__instancecheck__(obj)
 
         def __repr__(self):
