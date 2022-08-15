@@ -176,7 +176,7 @@ class AnyTests(BaseTestCase):
     def test_instantiation(self):
         with self.assertRaises(TypeError):
             Any()
-        
+
         self.SubclassesAny()
 
     def test_isinstance(self):
