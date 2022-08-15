@@ -166,7 +166,6 @@ else:
                 return "typing_extensions.Any"
             return super().__repr__()
 
-
     class Any(metaclass=_AnyMeta):
         """Special type indicating an unconstrained type.
         - Any is compatible with every type.
