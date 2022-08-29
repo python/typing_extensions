@@ -431,7 +431,7 @@ else:
         if type(self)._is_protocol:
             raise TypeError('Protocols cannot be instantiated')
 
-    class _ProtocolMeta(abc.ABCMeta):
+    class _ProtocolMeta(abc.ABCMeta):  # noqa: B024
         # This metaclass is a bit unfortunate and exists only because of the lack
         # of __instancehook__.
         def __instancecheck__(cls, instance):
