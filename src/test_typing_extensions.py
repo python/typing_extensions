@@ -161,6 +161,22 @@ class AssertNeverTests(BaseTestCase):
 
 
 class AnyTests(BaseTestCase):
+    def test_can_subclass(self):
+        class Mock(Any): pass
+        self.assertTrue(issubclass(Mock, Any))
+        self.assertIsInstance(Mock(), Mock)
+
+        class Something: pass
+        self.assertFalse(issubclass(Something, Any))
+        self.assertNotIsInstance(Something(), Mock)
+
+        class MockSomething(Something, Mock): pass
+        self.assertTrue(issubclass(MockSomething, Any))
+        ms = MockSomething()
+        self.assertIsInstance(ms, MockSomething)
+        self.assertIsInstance(ms, Something)
+        self.assertIsInstance(ms, Mock)
+
     class SubclassesAny(Any):
         ...
 
