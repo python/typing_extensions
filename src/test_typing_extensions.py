@@ -15,13 +15,13 @@ from unittest import TestCase, main, skipUnless, skipIf
 from unittest.mock import patch
 from test import ann_module, ann_module2, ann_module3
 import typing
-from typing import TypeVar, Optional, Union, Any, AnyStr
+from typing import TypeVar, Optional, Union, AnyStr
 from typing import T, KT, VT  # Not in __all__.
 from typing import Tuple, List, Dict, Iterable, Iterator, Callable
 from typing import Generic
 from typing import no_type_check
 import typing_extensions
-from typing_extensions import NoReturn, ClassVar, Final, IntVar, Literal, Type, NewType, TypedDict, Self
+from typing_extensions import NoReturn, Any, ClassVar, Final, IntVar, Literal, Type, NewType, TypedDict, Self
 from typing_extensions import TypeAlias, ParamSpec, Concatenate, ParamSpecArgs, ParamSpecKwargs, TypeGuard
 from typing_extensions import Awaitable, AsyncIterator, AsyncContextManager, Required, NotRequired
 from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, final, is_typeddict
@@ -158,6 +158,48 @@ class AssertNeverTests(BaseTestCase):
     def test_exception(self):
         with self.assertRaises(AssertionError):
             assert_never(None)
+
+
+class AnyTests(BaseTestCase):
+    def test_can_subclass(self):
+        class Mock(Any): pass
+        self.assertTrue(issubclass(Mock, Any))
+        self.assertIsInstance(Mock(), Mock)
+
+        class Something: pass
+        self.assertFalse(issubclass(Something, Any))
+        self.assertNotIsInstance(Something(), Mock)
+
+        class MockSomething(Something, Mock): pass
+        self.assertTrue(issubclass(MockSomething, Any))
+        ms = MockSomething()
+        self.assertIsInstance(ms, MockSomething)
+        self.assertIsInstance(ms, Something)
+        self.assertIsInstance(ms, Mock)
+
+    class SubclassesAny(Any):
+        ...
+
+    def test_repr(self):
+        if sys.version_info >= (3, 11):
+            mod_name = 'typing'
+        else:
+            mod_name = 'typing_extensions'
+        self.assertEqual(repr(Any), f"{mod_name}.Any")
+        if sys.version_info < (3, 11):  # skip for now on 3.11+ see python/cpython#95987
+            self.assertEqual(repr(self.SubclassesAny), "<class 'test_typing_extensions.AnyTests.SubclassesAny'>")
+
+    def test_instantiation(self):
+        with self.assertRaises(TypeError):
+            Any()
+
+        self.SubclassesAny()
+
+    def test_isinstance(self):
+        with self.assertRaises(TypeError):
+            isinstance(object(), Any)
+
+        isinstance(object(), self.SubclassesAny)
 
 
 class ClassVarTests(BaseTestCase):
@@ -3018,7 +3060,7 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'NamedTuple'}
+            exclude |= {'final', 'NamedTuple', 'Any'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
