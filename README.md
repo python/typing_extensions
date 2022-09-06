@@ -8,7 +8,7 @@ The `typing_extensions` module serves two related purposes:
 
 - Enable use of new type system features on older Python versions. For example,
   `typing.TypeGuard` is new in Python 3.10, but `typing_extensions` allows
-  users on Python 3.7 through 3.9 to use it too.
+  users on previous Python versions to use it too.
 - Enable experimentation with new type system PEPs before they are accepted and
   added to the `typing` module.
 
