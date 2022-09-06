@@ -492,6 +492,23 @@ class OverloadTests(BaseTestCase):
             pass
 
         blah()
+        
+    @patch(
+        f"{registry_holder.__name__}._overload_registry",
+        defaultdict(lambda: defaultdict(dict))
+    )
+    def test_overload_on_compiled_functions(self):
+        registry = registry_holder._overload_registry
+        # The registry starts out empty:
+        self.assertEqual(registry, {})
+
+        # This should just not fail:
+        overload(sum)
+        overload(print)
+
+        # No overloads are recorded:
+        self.assertEqual(get_overloads(sum), [])
+        self.assertEqual(get_overloads(print), [])
 
     def set_up_overloads(self):
         def blah():
