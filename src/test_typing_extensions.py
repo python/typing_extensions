@@ -492,7 +492,7 @@ class OverloadTests(BaseTestCase):
             pass
 
         blah()
-        
+
     @patch(
         f"{registry_holder.__name__}._overload_registry",
         defaultdict(lambda: defaultdict(dict))
