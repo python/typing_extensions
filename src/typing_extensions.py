@@ -1152,7 +1152,7 @@ class _DefaultMixin:
     """Mixin for TypeVarLike defaults."""
 
     def __init__(self, default):
-        if isinstance(default, tuple):
+        if isinstance(default, (tuple, list)):
             self.__default__ = tuple((typing._type_check(d, "Default must be a type")
                                       for d in default))
         elif default:
