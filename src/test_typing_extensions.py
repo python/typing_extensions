@@ -3067,8 +3067,11 @@ class AllTests(BaseTestCase):
     def test_typing_extensions_defers_when_possible(self):
         exclude = {
             'overload',
+            'ParamSpec',
             'Text',
             'TypedDict',
+            'TypeVar',
+            'TypeVarTuple',
             'TYPE_CHECKING',
             'Final',
             'get_type_hints',
@@ -3393,6 +3396,29 @@ class NamedTupleTests(BaseTestCase):
             self.NestedEmployee.__annotations__,
             self.NestedEmployee._field_types
         )
+
+
+class TypeVarLikeDefaultsTests(BaseTestCase):
+    def test_typevar(self):
+        T = typing_extensions.TypeVar("T", default=int)
+        self.assertEqual(T.__default__, int)
+
+        class A(Generic[T]): ...
+        Alias = Optional[T]
+
+    def test_paramspec(self):
+        P = ParamSpec("P", default=(str, int))
+        self.assertEqual(P.__default__, (str, int))
+
+        class A(Generic[P]): ...
+        Alias = typing.Callable[P, None]
+
+    def test_typevartuple(self):
+        Ts = TypeVarTuple("Ts", default=Unpack[Tuple[str, int]])
+        self.assertEqual(Ts.__default__, Unpack[Tuple[str, int]])
+
+        class A(Generic[Unpack[Ts]]): ...
+        Alias = Optional[Unpack[Ts]]
 
 
 if __name__ == '__main__':
