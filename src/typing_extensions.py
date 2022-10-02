@@ -1257,7 +1257,7 @@ if sys.version_info >= (3, 12):
     ParamSpec = typing.ParamSpec
 
 # 3.10+
-if hasattr(typing, 'ParamSpec'):
+elif hasattr(typing, 'ParamSpec'):
 
     # Add default Parameter - PEP 696
     class ParamSpec(typing.ParamSpec, _DefaultMixin, _root=True):
