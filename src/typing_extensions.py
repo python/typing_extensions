@@ -21,6 +21,7 @@ __all__ = [
     'ParamSpecKwargs',
     'Self',
     'Type',
+    'TypeVar',
     'TypeVarTuple',
     'Unpack',
 
@@ -1147,6 +1148,43 @@ else:
                                above.""")
 
 
+class _DefaultMixin:
+    """Mixin for TypeVarLike defaults."""
+
+    __slots__ = ()
+
+    def __init__(self, default):
+        if isinstance(default, (tuple, list)):
+            self.__default__ = tuple((typing._type_check(d, "Default must be a type")
+                                      for d in default))
+        elif default:
+            self.__default__ = typing._type_check(default, "Default must be a type")
+        else:
+            self.__default__ = None
+
+
+# Add default Parameter - PEP 696
+class TypeVar(typing.TypeVar, _DefaultMixin, _root=True):
+    """Type variable."""
+
+    __module__ = 'typing'
+
+    def __init__(self, name, *constraints, bound=None,
+                 covariant=False, contravariant=False,
+                 default=None):
+        super().__init__(name, *constraints, bound=bound, covariant=covariant,
+                         contravariant=contravariant)
+        _DefaultMixin.__init__(self, default)
+
+        # for pickling:
+        try:
+            def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
+        except (AttributeError, ValueError):
+            def_mod = None
+        if def_mod != 'typing_extensions':
+            self.__module__ = def_mod
+
+
 # Python 3.10+ has PEP 612
 if hasattr(typing, 'ParamSpecArgs'):
     ParamSpecArgs = typing.ParamSpecArgs
@@ -1211,12 +1249,32 @@ else:
 
 # 3.10+
 if hasattr(typing, 'ParamSpec'):
-    ParamSpec = typing.ParamSpec
+
+    # Add default Parameter - PEP 696
+    class ParamSpec(typing.ParamSpec, _DefaultMixin, _root=True):
+        """Parameter specification variable."""
+
+        __module__ = 'typing'
+
+        def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
+                     default=None):
+            super().__init__(name, bound=bound, covariant=covariant,
+                             contravariant=contravariant)
+            _DefaultMixin.__init__(self, default)
+
+            # for pickling:
+            try:
+                def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
+            except (AttributeError, ValueError):
+                def_mod = None
+            if def_mod != 'typing_extensions':
+                self.__module__ = def_mod
+
 # 3.7-3.9
 else:
 
     # Inherits from list as a workaround for Callable checks in Python < 3.9.2.
-    class ParamSpec(list):
+    class ParamSpec(list, _DefaultMixin):
         """Parameter specification variable.
 
         Usage::
@@ -1274,7 +1332,8 @@ else:
         def kwargs(self):
             return ParamSpecKwargs(self)
 
-        def __init__(self, name, *, bound=None, covariant=False, contravariant=False):
+        def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
+                     default=None):
             super().__init__([self])
             self.__name__ = name
             self.__covariant__ = bool(covariant)
@@ -1283,6 +1342,7 @@ else:
                 self.__bound__ = typing._type_check(bound, 'Bound must be a type.')
             else:
                 self.__bound__ = None
+            _DefaultMixin.__init__(self, default)
 
             # for pickling:
             try:
@@ -1784,9 +1844,25 @@ else:
 
 
 if hasattr(typing, "TypeVarTuple"):  # 3.11+
-    TypeVarTuple = typing.TypeVarTuple
+
+    # Add default Parameter - PEP 696
+    class TypeVarTuple(typing.TypeVarTuple, _DefaultMixin, _root=True):
+        """Type variable tuple."""
+
+        def __init__(self, name, *, default=None):
+            super().__init__(name)
+            _DefaultMixin.__init__(self, default)
+
+            # for pickling:
+            try:
+                def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
+            except (AttributeError, ValueError):
+                def_mod = None
+            if def_mod != 'typing_extensions':
+                self.__module__ = def_mod
+
 else:
-    class TypeVarTuple:
+    class TypeVarTuple(_DefaultMixin):
         """Type variable tuple.
 
         Usage::
@@ -1836,8 +1912,9 @@ else:
         def __iter__(self):
             yield self.__unpacked__
 
-        def __init__(self, name):
+        def __init__(self, name, *, default=None):
             self.__name__ = name
+            _DefaultMixin.__init__(self, default)
 
             # for pickling:
             try:

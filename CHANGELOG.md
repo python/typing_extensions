@@ -2,6 +2,8 @@
 - Add `typing_extensions.Any` a backport of python 3.11's Any class which is
   subclassable at runtime. (backport from python/cpython#31841, by Shantanu 
   and Jelle Zijlstra). Patch by James Hilton-Balfe (@Gobot1234).
+- Add initial support for TypeVarLike `default` parameter, PEP 696.
+  Patch by Marc Mueller (@cdce8p).
 
 # Release 4.3.0 (July 1, 2022)
 

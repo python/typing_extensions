@@ -2463,18 +2463,20 @@ class ParamSpecTests(BaseTestCase):
             pass
 
     def test_pickle(self):
-        global P, P_co, P_contra
+        global P, P_co, P_contra, P_default
         P = ParamSpec('P')
         P_co = ParamSpec('P_co', covariant=True)
         P_contra = ParamSpec('P_contra', contravariant=True)
+        P_default = ParamSpec('P_default', default=int)
         for proto in range(pickle.HIGHEST_PROTOCOL):
             with self.subTest(f'Pickle protocol {proto}'):
-                for paramspec in (P, P_co, P_contra):
+                for paramspec in (P, P_co, P_contra, P_default):
                     z = pickle.loads(pickle.dumps(paramspec, proto))
                     self.assertEqual(z.__name__, paramspec.__name__)
                     self.assertEqual(z.__covariant__, paramspec.__covariant__)
                     self.assertEqual(z.__contravariant__, paramspec.__contravariant__)
                     self.assertEqual(z.__bound__, paramspec.__bound__)
+                    self.assertEqual(z.__default__, paramspec.__default__)
 
     def test_eq(self):
         P = ParamSpec('P')
@@ -2840,6 +2842,17 @@ class TypeVarTupleTests(BaseTestCase):
         self.assertEqual(t.__args__, (Unpack[Ts],))
         self.assertEqual(t.__parameters__, (Ts,))
 
+    def test_pickle(self):
+        global Ts, Ts_default  # pickle wants to reference the class by name
+        Ts = TypeVarTuple('Ts')
+        Ts_default = TypeVarTuple('Ts_default', default=Unpack[Tuple[int, str]])
+
+        for proto in range(pickle.HIGHEST_PROTOCOL):
+            for typevartuple in (Ts, Ts_default):
+                z = pickle.loads(pickle.dumps(typevartuple, proto))
+                self.assertEqual(z.__name__, typevartuple.__name__)
+                self.assertEqual(z.__default__, typevartuple.__default__)
+
 
 class FinalDecoratorTests(BaseTestCase):
     def test_final_unmodified(self):
@@ -3067,8 +3080,11 @@ class AllTests(BaseTestCase):
     def test_typing_extensions_defers_when_possible(self):
         exclude = {
             'overload',
+            'ParamSpec',
             'Text',
             'TypedDict',
+            'TypeVar',
+            'TypeVarTuple',
             'TYPE_CHECKING',
             'Final',
             'get_type_hints',
@@ -3393,6 +3409,44 @@ class NamedTupleTests(BaseTestCase):
             self.NestedEmployee.__annotations__,
             self.NestedEmployee._field_types
         )
+
+
+class TypeVarLikeDefaultsTests(BaseTestCase):
+    def test_typevar(self):
+        T = typing_extensions.TypeVar('T', default=int)
+        self.assertEqual(T.__default__, int)
+
+        class A(Generic[T]): ...
+        Alias = Optional[T]
+
+    def test_paramspec(self):
+        P = ParamSpec('P', default=(str, int))
+        self.assertEqual(P.__default__, (str, int))
+
+        class A(Generic[P]): ...
+        Alias = typing.Callable[P, None]
+
+    def test_typevartuple(self):
+        Ts = TypeVarTuple('Ts', default=Unpack[Tuple[str, int]])
+        self.assertEqual(Ts.__default__, Unpack[Tuple[str, int]])
+
+        class A(Generic[Unpack[Ts]]): ...
+        Alias = Optional[Unpack[Ts]]
+
+    def test_pickle(self):
+        global U, U_co, U_contra, U_default  # pickle wants to reference the class by name
+        U = typing_extensions.TypeVar('U')
+        U_co = typing_extensions.TypeVar('U_co', covariant=True)
+        U_contra = typing_extensions.TypeVar('U_contra', contravariant=True)
+        U_default = typing_extensions.TypeVar('U_default', default=int)
+        for proto in range(pickle.HIGHEST_PROTOCOL):
+            for typevar in (U, U_co, U_contra, U_default):
+                z = pickle.loads(pickle.dumps(typevar, proto))
+                self.assertEqual(z.__name__, typevar.__name__)
+                self.assertEqual(z.__covariant__, typevar.__covariant__)
+                self.assertEqual(z.__contravariant__, typevar.__contravariant__)
+                self.assertEqual(z.__bound__, typevar.__bound__)
+                self.assertEqual(z.__default__, typevar.__default__)
 
 
 if __name__ == '__main__':
