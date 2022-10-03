@@ -2004,9 +2004,9 @@ else:
 if hasattr(typing, "override"):
     override = typing.override
 else:
-    _T = typing.TypeVar("_T", bound=typing.Callable[..., typing.Any])
+    _F = typing.TypeVar("_F", bound=typing.Callable[..., typing.Any])
 
-    def override(__arg: _T) -> _T:
+    def override(__arg: _F) -> _F:
         """Indicate that a method overrides a method in a base class.
 
         Usage:
