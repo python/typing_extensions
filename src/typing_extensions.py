@@ -1163,31 +1163,27 @@ class _DefaultMixin:
             self.__default__ = None
 
 
-if sys.version_info >= (3, 12):
-    TypeVar = typing.TypeVar
+# Add default Parameter - PEP 696
+class TypeVar(typing.TypeVar, _DefaultMixin, _root=True):
+    """Type variable."""
 
-else:
-    # Add default Parameter - PEP 696
-    class TypeVar(typing.TypeVar, _DefaultMixin, _root=True):
-        """Type variable."""
+    __slots__ = ('__default__',)
+    __module__ = 'typing'
 
-        __slots__ = ('__default__',)
-        __module__ = 'typing'
+    def __init__(self, name, *constraints, bound=None,
+                 covariant=False, contravariant=False,
+                 default=None):
+        super().__init__(name, *constraints, bound=bound, covariant=covariant,
+                         contravariant=contravariant)
+        _DefaultMixin.__init__(self, default)
 
-        def __init__(self, name, *constraints, bound=None,
-                     covariant=False, contravariant=False,
-                     default=None):
-            super().__init__(name, *constraints, bound=bound, covariant=covariant,
-                             contravariant=contravariant)
-            _DefaultMixin.__init__(self, default)
-
-            # for pickling:
-            try:
-                def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
-            except (AttributeError, ValueError):
-                def_mod = None
-            if def_mod != 'typing_extensions':
-                self.__module__ = def_mod
+        # for pickling:
+        try:
+            def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
+        except (AttributeError, ValueError):
+            def_mod = None
+        if def_mod != 'typing_extensions':
+            self.__module__ = def_mod
 
 
 # Python 3.10+ has PEP 612
@@ -1253,11 +1249,8 @@ else:
             return self.__origin__ == other.__origin__
 
 
-if sys.version_info >= (3, 12):
-    ParamSpec = typing.ParamSpec
-
 # 3.10+
-elif hasattr(typing, 'ParamSpec'):
+if hasattr(typing, 'ParamSpec'):
 
     # Add default Parameter - PEP 696
     class ParamSpec(typing.ParamSpec, _DefaultMixin, _root=True):
@@ -1851,10 +1844,8 @@ else:
     def _is_unpack(obj):
         return isinstance(obj, _UnpackAlias)
 
-if sys.version_info >= (3, 12):
-    TypeVarTuple = typing.TypeVarTuple
 
-elif hasattr(typing, "TypeVarTuple"):  # 3.11+
+if hasattr(typing, "TypeVarTuple"):  # 3.11+
 
     # Add default Parameter - PEP 696
     class TypeVarTuple(typing.TypeVarTuple, _DefaultMixin, _root=True):
