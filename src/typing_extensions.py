@@ -2025,6 +2025,8 @@ else:
         This helps prevent bugs that may occur when the base class is changed
         without an equivalent change to a child class.
 
+        See PEP 698 for details.
+
         """
         return __arg
 
