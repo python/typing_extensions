@@ -2022,7 +2022,7 @@ else:
 
         When this decorator is applied to a method, the type checker will
         validate that it overrides a method with the same name on a base class.
-        This helps prevent bugs that may occur when the base class is changed
+        This helps prevent bugs that may occur when a base class is changed
         without an equivalent change to a child class.
 
         See PEP 698 for details.
