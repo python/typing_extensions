@@ -1,7 +1,10 @@
 # Release 4.4.0 ()
+
 - Add `typing_extensions.Any` a backport of python 3.11's Any class which is
   subclassable at runtime. (backport from python/cpython#31841, by Shantanu 
   and Jelle Zijlstra). Patch by James Hilton-Balfe (@Gobot1234).
+- Runtime support for PEP 698, adding `typing_extensions.override`. Patch by
+  Jelle Zijlstra.
 
 # Release 4.3.0 (July 1, 2022)
 

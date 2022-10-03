@@ -29,6 +29,7 @@ from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
+from typing_extensions import override
 from _typed_dict_test_helper import FooGeneric
 
 # Flags used to mark tests that only apply after a specific
@@ -158,6 +159,20 @@ class AssertNeverTests(BaseTestCase):
     def test_exception(self):
         with self.assertRaises(AssertionError):
             assert_never(None)
+
+
+class OverrideTests(BaseTestCase):
+    def test_override(self):
+        class Base:
+            def foo(self): ...
+
+        class Derived(Base):
+            @override
+            def foo(self):
+                return 42
+
+        self.assertIsSubclass(Derived, Base)
+        self.assertEqual(Derived().foo(), 42)
 
 
 class AnyTests(BaseTestCase):

@@ -61,6 +61,7 @@ __all__ = [
     'Literal',
     'NewType',
     'overload',
+    'override',
     'Protocol',
     'reveal_type',
     'runtime',
@@ -1998,6 +1999,34 @@ else:
             }
             return cls_or_fn
         return decorator
+
+
+if hasattr(typing, "override"):
+    override = typing.override
+else:
+    _T = typing.TypeVar("_T", bound=typing.Callable[..., typing.Any])
+
+    def override(__arg: _T) -> _T:
+        """Indicate that a method overrides a method in a base class.
+
+        Usage:
+
+            class Base:
+                def method(self) -> None: ...
+                    pass
+
+            class Child(Base):
+                @override
+                def method(self) -> None:
+                    super().method()
+
+        When this decorator is applied to a method, the type checker will
+        validate that it overrides a method with the same name on a base class.
+        This helps prevent bugs that may occur when the base class is changed
+        without an equivalent change to a child class.
+
+        """
+        return __arg
 
 
 # We have to do some monkey patching to deal with the dual nature of
