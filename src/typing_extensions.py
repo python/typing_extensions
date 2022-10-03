@@ -1167,7 +1167,6 @@ class _DefaultMixin:
 class TypeVar(typing.TypeVar, _DefaultMixin, _root=True):
     """Type variable."""
 
-    __slots__ = ('__default__',)
     __module__ = 'typing'
 
     def __init__(self, name, *constraints, bound=None,
@@ -1247,7 +1246,6 @@ else:
             if not isinstance(other, ParamSpecKwargs):
                 return NotImplemented
             return self.__origin__ == other.__origin__
-
 
 # 3.10+
 if hasattr(typing, 'ParamSpec'):
