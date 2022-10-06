@@ -110,7 +110,7 @@ This module currently contains the following:
   additional features:
 
   - `Any` (supports inheritance since Python 3.11)
-  - `NamedTuple` (supports inheritance from `Generic` since Python 3.11)
+  - `NamedTuple` (supports multiple inheritance with `Generic` since Python 3.11)
   - `TypeVar` (see PEPs 695 and 696)
 
 # Other Notes and Limitations
