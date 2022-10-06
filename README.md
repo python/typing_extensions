@@ -36,7 +36,7 @@ This module currently contains the following:
 - Experimental features
 
   - `override` (see PEP 698)
-  - The `default=` argument to `TypeVar`, `ParamSpec`, and `TypeVarTuple` (see PEP 697)
+  - The `default=` argument to `TypeVar`, `ParamSpec`, and `TypeVarTuple` (see PEP 696)
   - The `infer_variance=` argument to `TypeVar` (see PEP 695)
 
 - In `typing` since Python 3.11
@@ -52,13 +52,13 @@ This module currently contains the following:
   - `reveal_type`
   - `Required` (see PEP 655)
   - `Self` (see PEP 673)
-  - `TypeVarTuple` (see PEP 646; the `typing_extensions` version supports the `default=` argument from PEP 697)
+  - `TypeVarTuple` (see PEP 646; the `typing_extensions` version supports the `default=` argument from PEP 696)
   - `Unpack` (see PEP 646)
 
 - In `typing` since Python 3.10
 
   - `Concatenate` (see PEP 612)
-  - `ParamSpec` (see PEP 612; the `typing_extensions` version supports the `default=` argument from PEP 697)
+  - `ParamSpec` (see PEP 612; the `typing_extensions` version supports the `default=` argument from PEP 696)
   - `ParamSpecArgs` (see PEP 612)
   - `ParamSpecKwargs` (see PEP 612)
   - `TypeAlias` (see PEP 613)
@@ -111,7 +111,7 @@ This module currently contains the following:
 
   - `Any` (supports inheritance since Python 3.11)
   - `NamedTuple` (supports inheritance from `Generic` since Python 3.11)
-  - `TypeVar` (see PEPs 695 and 697)
+  - `TypeVar` (see PEPs 695 and 696)
 
 # Other Notes and Limitations
 
@@ -136,7 +136,7 @@ Certain objects were changed after they were added to `typing`, and
 - Since Python 3.11, it has been possible to inherit from `Any` at
   runtime. `typing_extensions.Any` also provides this capability.
 - `TypeVar` gains two additional parameters, `default=` and `infer_variance=`,
-  in the draft PEPs 695 and 697, which are being considered for inclusion
+  in the draft PEPs 695 and 696, which are being considered for inclusion
   in Python 3.12.
 
 There are a few types whose interface was modified between different
