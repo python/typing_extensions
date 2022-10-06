@@ -127,6 +127,11 @@ Certain objects were changed after they were added to `typing`, and
   `@typing_extensions.overload`.
 - `NamedTuple` was changed in Python 3.11 to allow for multiple inheritance
   with `typing.Generic`.
+- Since Python 3.11, it has been possible to inherit from `Any` at
+  runtime. `typing_extensions.Any` also provides this capability.
+- `TypeVar` gains two additional parameters, `default=` and `infer_variance=`,
+  in the draft PEPs 695 and 697, which are being considered for inclusion
+  in Python 3.12.
 
 There are a few types whose interface was modified between different
 versions of typing. For example, `typing.Sequence` was modified to
