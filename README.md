@@ -35,7 +35,9 @@ This module currently contains the following:
 
 - Experimental features
 
-  - (Currently none)
+  - `override` (see PEP 698)
+  - The `default=` argument to `TypeVar`, `ParamSpec`, and `TypeVarTuple` (see PEP 697)
+  - The `infer_variance=` argument to `TypeVar` (see PEP 695)
 
 - In `typing` since Python 3.11
 
