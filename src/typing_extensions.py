@@ -8,7 +8,6 @@ import types as _types
 import typing
 
 
-# Please keep __all__ alphabetized within each category.
 __all__ = [
     # Super-special typing primitives.
     'Any',

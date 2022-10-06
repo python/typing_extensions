@@ -35,7 +35,9 @@ This module currently contains the following:
 
 - Experimental features
 
-  - (Currently none)
+  - `override` (see PEP 698)
+  - The `default=` argument to `TypeVar`, `ParamSpec`, and `TypeVarTuple` (see PEP 696)
+  - The `infer_variance=` argument to `TypeVar` (see PEP 695)
 
 - In `typing` since Python 3.11
 
@@ -50,13 +52,13 @@ This module currently contains the following:
   - `reveal_type`
   - `Required` (see PEP 655)
   - `Self` (see PEP 673)
-  - `TypeVarTuple` (see PEP 646)
+  - `TypeVarTuple` (see PEP 646; the `typing_extensions` version supports the `default=` argument from PEP 696)
   - `Unpack` (see PEP 646)
 
 - In `typing` since Python 3.10
 
   - `Concatenate` (see PEP 612)
-  - `ParamSpec` (see PEP 612)
+  - `ParamSpec` (see PEP 612; the `typing_extensions` version supports the `default=` argument from PEP 696)
   - `ParamSpecArgs` (see PEP 612)
   - `ParamSpecKwargs` (see PEP 612)
   - `TypeAlias` (see PEP 613)
@@ -96,7 +98,6 @@ This module currently contains the following:
   - `Counter`
   - `DefaultDict`
   - `Deque`
-  - `NamedTuple`
   - `NewType`
   - `NoReturn`
   - `overload`
@@ -104,6 +105,13 @@ This module currently contains the following:
   - `Type`
   - `TYPE_CHECKING`
   - `get_type_hints`
+
+- The following have always been present in `typing`, but the `typing_extensions` versions provide
+  additional features:
+
+  - `Any` (supports inheritance since Python 3.11)
+  - `NamedTuple` (supports multiple inheritance with `Generic` since Python 3.11)
+  - `TypeVar` (see PEPs 695 and 696)
 
 # Other Notes and Limitations
 
@@ -125,6 +133,11 @@ Certain objects were changed after they were added to `typing`, and
   `@typing_extensions.overload`.
 - `NamedTuple` was changed in Python 3.11 to allow for multiple inheritance
   with `typing.Generic`.
+- Since Python 3.11, it has been possible to inherit from `Any` at
+  runtime. `typing_extensions.Any` also provides this capability.
+- `TypeVar` gains two additional parameters, `default=` and `infer_variance=`,
+  in the draft PEPs 695 and 696, which are being considered for inclusion
+  in Python 3.12.
 
 There are a few types whose interface was modified between different
 versions of typing. For example, `typing.Sequence` was modified to
