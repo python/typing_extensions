@@ -1,4 +1,4 @@
-# Release 4.4.0 ()
+# Release 4.4.0 (October 6, 2022)
 
 - Add `typing_extensions.Any` a backport of python 3.11's Any class which is
   subclassable at runtime. (backport from python/cpython#31841, by Shantanu 
