@@ -3464,5 +3464,28 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
                 self.assertEqual(z.__default__, typevar.__default__)
 
 
+class TypeVarInferVarianceTests(BaseTestCase):
+    def test_typevar(self):
+        T = typing_extensions.TypeVar('T')
+        self.assertFalse(T.__infer_variance__)
+        T_infer = typing_extensions.TypeVar('T_infer', infer_variance=True)
+        self.assertTrue(T_infer.__infer_variance__)
+        T_noinfer = typing_extensions.TypeVar('T_noinfer', infer_variance=False)
+        self.assertFalse(T_noinfer.__infer_variance__)
+
+    def test_pickle(self):
+        global U, U_infer  # pickle wants to reference the class by name
+        U = typing_extensions.TypeVar('U')
+        U_infer = typing_extensions.TypeVar('U_infer', infer_variance=True)
+        for proto in range(pickle.HIGHEST_PROTOCOL):
+            for typevar in (U, U_infer):
+                z = pickle.loads(pickle.dumps(typevar, proto))
+                self.assertEqual(z.__name__, typevar.__name__)
+                self.assertEqual(z.__covariant__, typevar.__covariant__)
+                self.assertEqual(z.__contravariant__, typevar.__contravariant__)
+                self.assertEqual(z.__bound__, typevar.__bound__)
+                self.assertEqual(z.__infer_variance__, typevar.__infer_variance__)
+
+
 if __name__ == '__main__':
     main()

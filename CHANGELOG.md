@@ -7,6 +7,8 @@
   Patch by Marc Mueller (@cdce8p).
 - Runtime support for PEP 698, adding `typing_extensions.override`. Patch by
   Jelle Zijlstra.
+- Add the `infer_variance` parameter to `TypeVar`, as specified in PEP 695.
+  Patch by Jelle Zijlstra.
 
 # Release 4.3.0 (July 1, 2022)
 

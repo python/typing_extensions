@@ -1164,7 +1164,7 @@ class _DefaultMixin:
             self.__default__ = None
 
 
-# Add default Parameter - PEP 696
+# Add default and infer_variance parameters from PEP 696 and 695
 class TypeVar(typing.TypeVar, _DefaultMixin, _root=True):
     """Type variable."""
 
@@ -1172,10 +1172,11 @@ class TypeVar(typing.TypeVar, _DefaultMixin, _root=True):
 
     def __init__(self, name, *constraints, bound=None,
                  covariant=False, contravariant=False,
-                 default=None):
+                 default=None, infer_variance=False):
         super().__init__(name, *constraints, bound=bound, covariant=covariant,
                          contravariant=contravariant)
         _DefaultMixin.__init__(self, default)
+        self.__infer_variance__ = infer_variance
 
         # for pickling:
         try:
