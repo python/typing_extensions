@@ -173,6 +173,7 @@ class OverrideTests(BaseTestCase):
 
         self.assertIsSubclass(Derived, Base)
         self.assertEqual(Derived().foo(), 42)
+        self.assertEqual(dir(Base.foo), dir(Derived.foo))
 
 
 class AnyTests(BaseTestCase):

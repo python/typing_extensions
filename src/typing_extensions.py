@@ -2085,7 +2085,7 @@ else:
     _F = typing.TypeVar("_F", bound=typing.Callable[..., typing.Any])
 
     def override(__arg: _F) -> _F:
-        """Indicate that a method overrides a method in a base class.
+        """Indicate that a method is intended to override a method in a base class.
 
         Usage:
 
