@@ -5,6 +5,8 @@
   and Jelle Zijlstra). Patch by James Hilton-Balfe (@Gobot1234).
 - Add initial support for TypeVarLike `default` parameter, PEP 696.
   Patch by Marc Mueller (@cdce8p).
+- Runtime support for PEP 698, adding `typing_extensions.override`. Patch by
+  Jelle Zijlstra.
 - Add the `infer_variance` parameter to `TypeVar`, as specified in PEP 695.
   Patch by Jelle Zijlstra.
 
