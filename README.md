@@ -52,13 +52,13 @@ This module currently contains the following:
   - `reveal_type`
   - `Required` (see PEP 655)
   - `Self` (see PEP 673)
-  - `TypeVarTuple` (see PEP 646)
+  - `TypeVarTuple` (see PEP 646; the `typing_extensions` version supports the `default=` argument from PEP 697)
   - `Unpack` (see PEP 646)
 
 - In `typing` since Python 3.10
 
   - `Concatenate` (see PEP 612)
-  - `ParamSpec` (see PEP 612)
+  - `ParamSpec` (see PEP 612; the `typing_extensions` version supports the `default=` argument from PEP 697)
   - `ParamSpecArgs` (see PEP 612)
   - `ParamSpecKwargs` (see PEP 612)
   - `TypeAlias` (see PEP 613)
@@ -98,7 +98,6 @@ This module currently contains the following:
   - `Counter`
   - `DefaultDict`
   - `Deque`
-  - `NamedTuple`
   - `NewType`
   - `NoReturn`
   - `overload`
@@ -106,6 +105,13 @@ This module currently contains the following:
   - `Type`
   - `TYPE_CHECKING`
   - `get_type_hints`
+
+- The following have always been present in `typing`, but the `typing_extensions` versions provide
+  additional features:
+
+  - `Any` (supports inheritance since Python 3.11)
+  - `NamedTuple` (supports inheritance from `Generic` since Python 3.11)
+  - `TypeVar` (see PEPs 695 and 697)
 
 # Other Notes and Limitations
 
