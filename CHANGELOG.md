@@ -1,3 +1,8 @@
+# Release 4.4.1 (?)
+
+- Add better default value for TypeVar `default` parameter, PEP 696. Enables
+  runtime check if `None` was passed as default. Patch by Marc Mueller (@cdce8p).
+
 # Release 4.4.0 (October 6, 2022)
 
 - Add `typing_extensions.Any` a backport of python 3.11's Any class which is

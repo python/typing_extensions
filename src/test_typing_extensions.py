@@ -3439,6 +3439,12 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         class A(Generic[T]): ...
         Alias = Optional[T]
 
+    def test_typevar_none(self):
+        U = typing_extensions.TypeVar('U')
+        U_None = typing_extensions.TypeVar('U_None', default=None)
+        self.assertEqual(U.__default__, None)
+        self.assertEqual(U_None.__default__, type(None))
+
     def test_paramspec(self):
         P = ParamSpec('P', default=(str, int))
         self.assertEqual(P.__default__, (str, int))
