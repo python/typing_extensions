@@ -509,6 +509,10 @@ class OverloadTests(BaseTestCase):
 
         blah()
 
+    @skipIf(
+        sys.implementation.name == "pypy",
+        "sum() and print() are not compiled in pypy"
+    )
     @patch(
         f"{registry_holder.__name__}._overload_registry",
         defaultdict(lambda: defaultdict(dict))
