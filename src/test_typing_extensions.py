@@ -164,16 +164,38 @@ class AssertNeverTests(BaseTestCase):
 class OverrideTests(BaseTestCase):
     def test_override(self):
         class Base:
-            def foo(self): ...
+            def normal_method(self): ...
+            @staticmethod
+            def static_method_good_order(): ...
+            @staticmethod
+            def static_method_bad_order(): ...
+            @staticmethod
+            def decorator_with_slots(): ...
 
         class Derived(Base):
             @override
-            def foo(self):
+            def normal_method(self):
                 return 42
 
+            @staticmethod
+            @override
+            def static_method_good_order():
+                return 42
+
+            @override
+            @staticmethod
+            def static_method_bad_order():
+                return 42
+
+
         self.assertIsSubclass(Derived, Base)
-        self.assertEqual(Derived().foo(), 42)
-        self.assertEqual(dir(Base.foo), dir(Derived.foo))
+        instance = Derived()
+        self.assertEqual(instance.normal_method(), 42)
+        self.assertIs(True, instance.normal_method.__override__)
+        self.assertEqual(Derived.static_method_good_order(), 42)
+        self.assertIs(True, Derived.static_method_good_order.__override__)
+        self.assertEqual(Derived.static_method_bad_order(), 42)
+        self.assertIs(False, hasattr(Derived.static_method_bad_order, "__override__"))
 
 
 class AnyTests(BaseTestCase):
