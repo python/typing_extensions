@@ -1157,7 +1157,7 @@ class _DefaultMixin:
         if isinstance(default, (tuple, list)):
             self.__default__ = tuple((typing._type_check(d, "Default must be a type")
                                       for d in default))
-        elif default:
+        elif default != _marker:
             self.__default__ = typing._type_check(default, "Default must be a type")
         else:
             self.__default__ = None
@@ -1171,7 +1171,7 @@ class TypeVar(typing.TypeVar, _DefaultMixin, _root=True):
 
     def __init__(self, name, *constraints, bound=None,
                  covariant=False, contravariant=False,
-                 default=None, infer_variance=False):
+                 default=_marker, infer_variance=False):
         super().__init__(name, *constraints, bound=bound, covariant=covariant,
                          contravariant=contravariant)
         _DefaultMixin.__init__(self, default)
@@ -1258,7 +1258,7 @@ if hasattr(typing, 'ParamSpec'):
         __module__ = 'typing'
 
         def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
-                     default=None):
+                     default=_marker):
             super().__init__(name, bound=bound, covariant=covariant,
                              contravariant=contravariant)
             _DefaultMixin.__init__(self, default)
@@ -1334,7 +1334,7 @@ else:
             return ParamSpecKwargs(self)
 
         def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
-                     default=None):
+                     default=_marker):
             super().__init__([self])
             self.__name__ = name
             self.__covariant__ = bool(covariant)
@@ -1850,7 +1850,7 @@ if hasattr(typing, "TypeVarTuple"):  # 3.11+
     class TypeVarTuple(typing.TypeVarTuple, _DefaultMixin, _root=True):
         """Type variable tuple."""
 
-        def __init__(self, name, *, default=None):
+        def __init__(self, name, *, default=_marker):
             super().__init__(name)
             _DefaultMixin.__init__(self, default)
 
@@ -1913,7 +1913,7 @@ else:
         def __iter__(self):
             yield self.__unpacked__
 
-        def __init__(self, name, *, default=None):
+        def __init__(self, name, *, default=_marker):
             self.__name__ = name
             _DefaultMixin.__init__(self, default)
 
