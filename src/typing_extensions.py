@@ -758,7 +758,8 @@ else:
             msg = "TypedDict('Name', {f0: t0, f1: t1, ...}); each t must be a type"
             kwds = {"module": tp_dict.__module__} if _TAKES_MODULE else {}
             own_annotations = {
-                n: typing._type_check(tp, msg, **kwds) for n, tp in own_annotations.items()
+                n: typing._type_check(tp, msg, **kwds)
+                for n, tp in own_annotations.items()
             }
             required_keys = set()
             optional_keys = set()
