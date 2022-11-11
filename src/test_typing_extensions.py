@@ -30,7 +30,7 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override
-from _typed_dict_test_helper import FooGeneric
+from _typed_dict_test_helper import Foo, FooGeneric
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
@@ -1774,6 +1774,10 @@ class Point2DGeneric(Generic[T], TypedDict):
     b: T
 
 
+class Bar(Foo):
+    b: int
+
+
 class BarGeneric(FooGeneric[T], total=False):
     b: int
 
@@ -1977,6 +1981,15 @@ class TypedDictTests(BaseTestCase):
         assert is_typeddict(Point) is True
         assert is_typeddict(PointDict2D) is True
         assert is_typeddict(PointDict3D) is True
+
+    @skipUnless(TYPING_3_9_0, "ForwardRef.__forward_module__ was added in 3.9")
+    def test_get_type_hints_cross_module_subclass(self):
+        from _typed_dict_test_helper import _DoNotImport
+
+        self.assertEqual(
+            get_type_hints(Bar),
+            {'a': _DoNotImport, 'b': int}
+        )
 
     def test_get_type_hints_generic(self):
         self.assertEqual(

@@ -2,6 +2,7 @@ import abc
 import collections
 import collections.abc
 import functools
+import inspect
 import operator
 import sys
 import types as _types
@@ -728,6 +729,8 @@ else:
     _typeddict_new.__text_signature__ = ('($cls, _typename, _fields=None,'
                                          ' /, *, total=True, **kwargs)')
 
+    _TAKES_MODULE = "module" in inspect.signature(typing._type_check).parameters
+
     class _TypedDictMeta(type):
         def __init__(cls, name, bases, ns, total=True):
             super().__init__(name, bases, ns)
@@ -753,8 +756,9 @@ else:
             annotations = {}
             own_annotations = ns.get('__annotations__', {})
             msg = "TypedDict('Name', {f0: t0, f1: t1, ...}); each t must be a type"
+            kwds = {"module": tp_dict.__module__} if _TAKES_MODULE else {}
             own_annotations = {
-                n: typing._type_check(tp, msg) for n, tp in own_annotations.items()
+                n: typing._type_check(tp, msg, **kwds) for n, tp in own_annotations.items()
             }
             required_keys = set()
             optional_keys = set()
