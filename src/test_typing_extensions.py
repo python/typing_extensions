@@ -41,6 +41,10 @@ TYPING_3_10_0 = sys.version_info[:3] >= (3, 10, 0)
 # 3.11 makes runtime type checks (_type_check) more lenient.
 TYPING_3_11_0 = sys.version_info[:3] >= (3, 11, 0)
 
+# https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
+# versions, but not all
+HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
+
 
 class BaseTestCase(TestCase):
     def assertIsSubclass(self, cls, class_or_tuple, msg=None):
@@ -1982,7 +1986,7 @@ class TypedDictTests(BaseTestCase):
         assert is_typeddict(PointDict2D) is True
         assert is_typeddict(PointDict3D) is True
 
-    @skipUnless(TYPING_3_9_0, "ForwardRef.__forward_module__ was added in 3.9")
+    @skipUnless(HAS_FORWARD_MODULE, "ForwardRef.__forward_module__ was added in 3.9")
     def test_get_type_hints_cross_module_subclass(self):
         self.assertEqual(
             {k: v.__name__ for k, v in get_type_hints(Bar).items()},
