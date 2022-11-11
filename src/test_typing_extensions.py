@@ -1988,6 +1988,7 @@ class TypedDictTests(BaseTestCase):
 
     @skipUnless(HAS_FORWARD_MODULE, "ForwardRef.__forward_module__ was added in 3.9")
     def test_get_type_hints_cross_module_subclass(self):
+        self.assertNotIn("_DoNotImport", globals())
         self.assertEqual(
             {k: v.__name__ for k, v in get_type_hints(Bar).items()},
             {'a': "_DoNotImport", 'b': "int"}
