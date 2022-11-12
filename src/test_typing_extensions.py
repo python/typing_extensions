@@ -30,7 +30,7 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override
-from _typed_dict_test_helper import FooGeneric
+from _typed_dict_test_helper import Foo, FooGeneric
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
@@ -40,6 +40,10 @@ TYPING_3_10_0 = sys.version_info[:3] >= (3, 10, 0)
 
 # 3.11 makes runtime type checks (_type_check) more lenient.
 TYPING_3_11_0 = sys.version_info[:3] >= (3, 11, 0)
+
+# https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
+# versions, but not all
+HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
 
 
 class BaseTestCase(TestCase):
@@ -1774,6 +1778,10 @@ class Point2DGeneric(Generic[T], TypedDict):
     b: T
 
 
+class Bar(Foo):
+    b: int
+
+
 class BarGeneric(FooGeneric[T], total=False):
     b: int
 
@@ -1977,6 +1985,14 @@ class TypedDictTests(BaseTestCase):
         assert is_typeddict(Point) is True
         assert is_typeddict(PointDict2D) is True
         assert is_typeddict(PointDict3D) is True
+
+    @skipUnless(HAS_FORWARD_MODULE, "ForwardRef.__forward_module__ was added in 3.9")
+    def test_get_type_hints_cross_module_subclass(self):
+        self.assertNotIn("_DoNotImport", globals())
+        self.assertEqual(
+            {k: v.__name__ for k, v in get_type_hints(Bar).items()},
+            {'a': "_DoNotImport", 'b': "int"}
+        )
 
     def test_get_type_hints_generic(self):
         self.assertEqual(
