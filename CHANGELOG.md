@@ -1,4 +1,21 @@
-# Unreleased
+# Release 4.4.1 (?)
+
+- Add better default value for TypeVar `default` parameter, PEP 696. Enables
+  runtime check if `None` was passed as default. Patch by Marc Mueller (@cdce8p).
+
+# Release 4.4.0 (October 6, 2022)
+
+- Add `typing_extensions.Any` a backport of python 3.11's Any class which is
+  subclassable at runtime. (backport from python/cpython#31841, by Shantanu 
+  and Jelle Zijlstra). Patch by James Hilton-Balfe (@Gobot1234).
+- Add initial support for TypeVarLike `default` parameter, PEP 696.
+  Patch by Marc Mueller (@cdce8p).
+- Runtime support for PEP 698, adding `typing_extensions.override`. Patch by
+  Jelle Zijlstra.
+- Add the `infer_variance` parameter to `TypeVar`, as specified in PEP 695.
+  Patch by Jelle Zijlstra.
+
+# Release 4.3.0 (July 1, 2022)
 
 - Add `typing_extensions.NamedTuple`, allowing for generic `NamedTuple`s on
   Python <3.11 (backport from python/cpython#92027, by Serhiy Storchaka). Patch

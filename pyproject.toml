@@ -6,11 +6,11 @@ build-backend = "flit_core.buildapi"
 # Project metadata
 [project]
 name = "typing_extensions"
-version = "4.2.0"
+version = "4.4.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 readme = "README.md"
 requires-python = ">=3.7"
-license.file = "LICENSE"
+license = { file = "LICENSE" }
 keywords = [
     "annotations",
     "backport",
@@ -38,6 +38,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Software Development",
 ]
 

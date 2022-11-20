@@ -35,13 +35,12 @@ backwards-incompatible changes.
 
 - Make sure your environment is up to date
 
- - `git checkout master`
+ - `git checkout main`
  - `git pull`
  - `python -m pip install --upgrade build twine`
 
 - Build the source and wheel distributions:
 
-  - `cd typing_extensions`
   - `rm -rf dist/`
   - `python -m build .`
 

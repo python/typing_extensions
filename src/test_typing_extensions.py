@@ -15,13 +15,13 @@ from unittest import TestCase, main, skipUnless, skipIf
 from unittest.mock import patch
 from test import ann_module, ann_module2, ann_module3
 import typing
-from typing import TypeVar, Optional, Union, Any, AnyStr
+from typing import TypeVar, Optional, Union, AnyStr
 from typing import T, KT, VT  # Not in __all__.
 from typing import Tuple, List, Dict, Iterable, Iterator, Callable
 from typing import Generic
 from typing import no_type_check
 import typing_extensions
-from typing_extensions import NoReturn, ClassVar, Final, IntVar, Literal, Type, NewType, TypedDict, Self
+from typing_extensions import NoReturn, Any, ClassVar, Final, IntVar, Literal, Type, NewType, TypedDict, Self
 from typing_extensions import TypeAlias, ParamSpec, Concatenate, ParamSpecArgs, ParamSpecKwargs, TypeGuard
 from typing_extensions import Awaitable, AsyncIterator, AsyncContextManager, Required, NotRequired
 from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, final, is_typeddict
@@ -29,7 +29,8 @@ from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
-from _typed_dict_test_helper import FooGeneric
+from typing_extensions import override
+from _typed_dict_test_helper import Foo, FooGeneric
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
@@ -39,6 +40,10 @@ TYPING_3_10_0 = sys.version_info[:3] >= (3, 10, 0)
 
 # 3.11 makes runtime type checks (_type_check) more lenient.
 TYPING_3_11_0 = sys.version_info[:3] >= (3, 11, 0)
+
+# https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
+# versions, but not all
+HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
 
 
 class BaseTestCase(TestCase):
@@ -158,6 +163,85 @@ class AssertNeverTests(BaseTestCase):
     def test_exception(self):
         with self.assertRaises(AssertionError):
             assert_never(None)
+
+
+class OverrideTests(BaseTestCase):
+    def test_override(self):
+        class Base:
+            def normal_method(self): ...
+            @staticmethod
+            def static_method_good_order(): ...
+            @staticmethod
+            def static_method_bad_order(): ...
+            @staticmethod
+            def decorator_with_slots(): ...
+
+        class Derived(Base):
+            @override
+            def normal_method(self):
+                return 42
+
+            @staticmethod
+            @override
+            def static_method_good_order():
+                return 42
+
+            @override
+            @staticmethod
+            def static_method_bad_order():
+                return 42
+
+
+        self.assertIsSubclass(Derived, Base)
+        instance = Derived()
+        self.assertEqual(instance.normal_method(), 42)
+        self.assertIs(True, instance.normal_method.__override__)
+        self.assertEqual(Derived.static_method_good_order(), 42)
+        self.assertIs(True, Derived.static_method_good_order.__override__)
+        self.assertEqual(Derived.static_method_bad_order(), 42)
+        self.assertIs(False, hasattr(Derived.static_method_bad_order, "__override__"))
+
+
+class AnyTests(BaseTestCase):
+    def test_can_subclass(self):
+        class Mock(Any): pass
+        self.assertTrue(issubclass(Mock, Any))
+        self.assertIsInstance(Mock(), Mock)
+
+        class Something: pass
+        self.assertFalse(issubclass(Something, Any))
+        self.assertNotIsInstance(Something(), Mock)
+
+        class MockSomething(Something, Mock): pass
+        self.assertTrue(issubclass(MockSomething, Any))
+        ms = MockSomething()
+        self.assertIsInstance(ms, MockSomething)
+        self.assertIsInstance(ms, Something)
+        self.assertIsInstance(ms, Mock)
+
+    class SubclassesAny(Any):
+        ...
+
+    def test_repr(self):
+        if sys.version_info >= (3, 11):
+            mod_name = 'typing'
+        else:
+            mod_name = 'typing_extensions'
+        self.assertEqual(repr(Any), f"{mod_name}.Any")
+        if sys.version_info < (3, 11):  # skip for now on 3.11+ see python/cpython#95987
+            self.assertEqual(repr(self.SubclassesAny), "<class 'test_typing_extensions.AnyTests.SubclassesAny'>")
+
+    def test_instantiation(self):
+        with self.assertRaises(TypeError):
+            Any()
+
+        self.SubclassesAny()
+
+    def test_isinstance(self):
+        with self.assertRaises(TypeError):
+            isinstance(object(), Any)
+
+        isinstance(object(), self.SubclassesAny)
 
 
 class ClassVarTests(BaseTestCase):
@@ -451,6 +535,27 @@ class OverloadTests(BaseTestCase):
 
         blah()
 
+    @skipIf(
+        sys.implementation.name == "pypy",
+        "sum() and print() are not compiled in pypy"
+    )
+    @patch(
+        f"{registry_holder.__name__}._overload_registry",
+        defaultdict(lambda: defaultdict(dict))
+    )
+    def test_overload_on_compiled_functions(self):
+        registry = registry_holder._overload_registry
+        # The registry starts out empty:
+        self.assertEqual(registry, {})
+
+        # This should just not fail:
+        overload(sum)
+        overload(print)
+
+        # No overloads are recorded:
+        self.assertEqual(get_overloads(sum), [])
+        self.assertEqual(get_overloads(print), [])
+
     def set_up_overloads(self):
         def blah():
             pass
@@ -488,6 +593,9 @@ class OverloadTests(BaseTestCase):
         other_overload = some_other_func
         def some_other_func(): pass
         self.assertEqual(list(get_overloads(some_other_func)), [other_overload])
+        # Unrelated function still has no overloads:
+        def not_overloaded(): pass
+        self.assertEqual(list(get_overloads(not_overloaded)), [])
 
         # Make sure that after we clear all overloads, the registry is
         # completely empty.
@@ -1670,6 +1778,10 @@ class Point2DGeneric(Generic[T], TypedDict):
     b: T
 
 
+class Bar(Foo):
+    b: int
+
+
 class BarGeneric(FooGeneric[T], total=False):
     b: int
 
@@ -1873,6 +1985,14 @@ class TypedDictTests(BaseTestCase):
         assert is_typeddict(Point) is True
         assert is_typeddict(PointDict2D) is True
         assert is_typeddict(PointDict3D) is True
+
+    @skipUnless(HAS_FORWARD_MODULE, "ForwardRef.__forward_module__ was added in 3.9")
+    def test_get_type_hints_cross_module_subclass(self):
+        self.assertNotIn("_DoNotImport", globals())
+        self.assertEqual(
+            {k: v.__name__ for k, v in get_type_hints(Bar).items()},
+            {'a': "_DoNotImport", 'b': "int"}
+        )
 
     def test_get_type_hints_generic(self):
         self.assertEqual(
@@ -2401,18 +2521,20 @@ class ParamSpecTests(BaseTestCase):
             pass
 
     def test_pickle(self):
-        global P, P_co, P_contra
+        global P, P_co, P_contra, P_default
         P = ParamSpec('P')
         P_co = ParamSpec('P_co', covariant=True)
         P_contra = ParamSpec('P_contra', contravariant=True)
+        P_default = ParamSpec('P_default', default=int)
         for proto in range(pickle.HIGHEST_PROTOCOL):
             with self.subTest(f'Pickle protocol {proto}'):
-                for paramspec in (P, P_co, P_contra):
+                for paramspec in (P, P_co, P_contra, P_default):
                     z = pickle.loads(pickle.dumps(paramspec, proto))
                     self.assertEqual(z.__name__, paramspec.__name__)
                     self.assertEqual(z.__covariant__, paramspec.__covariant__)
                     self.assertEqual(z.__contravariant__, paramspec.__contravariant__)
                     self.assertEqual(z.__bound__, paramspec.__bound__)
+                    self.assertEqual(z.__default__, paramspec.__default__)
 
     def test_eq(self):
         P = ParamSpec('P')
@@ -2778,6 +2900,17 @@ class TypeVarTupleTests(BaseTestCase):
         self.assertEqual(t.__args__, (Unpack[Ts],))
         self.assertEqual(t.__parameters__, (Ts,))
 
+    def test_pickle(self):
+        global Ts, Ts_default  # pickle wants to reference the class by name
+        Ts = TypeVarTuple('Ts')
+        Ts_default = TypeVarTuple('Ts_default', default=Unpack[Tuple[int, str]])
+
+        for proto in range(pickle.HIGHEST_PROTOCOL):
+            for typevartuple in (Ts, Ts_default):
+                z = pickle.loads(pickle.dumps(typevartuple, proto))
+                self.assertEqual(z.__name__, typevartuple.__name__)
+                self.assertEqual(z.__default__, typevartuple.__default__)
+
 
 class FinalDecoratorTests(BaseTestCase):
     def test_final_unmodified(self):
@@ -3005,8 +3138,11 @@ class AllTests(BaseTestCase):
     def test_typing_extensions_defers_when_possible(self):
         exclude = {
             'overload',
+            'ParamSpec',
             'Text',
             'TypedDict',
+            'TypeVar',
+            'TypeVarTuple',
             'TYPE_CHECKING',
             'Final',
             'get_type_hints',
@@ -3015,7 +3151,7 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'NamedTuple'}
+            exclude |= {'final', 'NamedTuple', 'Any'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
@@ -3331,6 +3467,73 @@ class NamedTupleTests(BaseTestCase):
             self.NestedEmployee.__annotations__,
             self.NestedEmployee._field_types
         )
+
+
+class TypeVarLikeDefaultsTests(BaseTestCase):
+    def test_typevar(self):
+        T = typing_extensions.TypeVar('T', default=int)
+        self.assertEqual(T.__default__, int)
+
+        class A(Generic[T]): ...
+        Alias = Optional[T]
+
+    def test_typevar_none(self):
+        U = typing_extensions.TypeVar('U')
+        U_None = typing_extensions.TypeVar('U_None', default=None)
+        self.assertEqual(U.__default__, None)
+        self.assertEqual(U_None.__default__, type(None))
+
+    def test_paramspec(self):
+        P = ParamSpec('P', default=(str, int))
+        self.assertEqual(P.__default__, (str, int))
+
+        class A(Generic[P]): ...
+        Alias = typing.Callable[P, None]
+
+    def test_typevartuple(self):
+        Ts = TypeVarTuple('Ts', default=Unpack[Tuple[str, int]])
+        self.assertEqual(Ts.__default__, Unpack[Tuple[str, int]])
+
+        class A(Generic[Unpack[Ts]]): ...
+        Alias = Optional[Unpack[Ts]]
+
+    def test_pickle(self):
+        global U, U_co, U_contra, U_default  # pickle wants to reference the class by name
+        U = typing_extensions.TypeVar('U')
+        U_co = typing_extensions.TypeVar('U_co', covariant=True)
+        U_contra = typing_extensions.TypeVar('U_contra', contravariant=True)
+        U_default = typing_extensions.TypeVar('U_default', default=int)
+        for proto in range(pickle.HIGHEST_PROTOCOL):
+            for typevar in (U, U_co, U_contra, U_default):
+                z = pickle.loads(pickle.dumps(typevar, proto))
+                self.assertEqual(z.__name__, typevar.__name__)
+                self.assertEqual(z.__covariant__, typevar.__covariant__)
+                self.assertEqual(z.__contravariant__, typevar.__contravariant__)
+                self.assertEqual(z.__bound__, typevar.__bound__)
+                self.assertEqual(z.__default__, typevar.__default__)
+
+
+class TypeVarInferVarianceTests(BaseTestCase):
+    def test_typevar(self):
+        T = typing_extensions.TypeVar('T')
+        self.assertFalse(T.__infer_variance__)
+        T_infer = typing_extensions.TypeVar('T_infer', infer_variance=True)
+        self.assertTrue(T_infer.__infer_variance__)
+        T_noinfer = typing_extensions.TypeVar('T_noinfer', infer_variance=False)
+        self.assertFalse(T_noinfer.__infer_variance__)
+
+    def test_pickle(self):
+        global U, U_infer  # pickle wants to reference the class by name
+        U = typing_extensions.TypeVar('U')
+        U_infer = typing_extensions.TypeVar('U_infer', infer_variance=True)
+        for proto in range(pickle.HIGHEST_PROTOCOL):
+            for typevar in (U, U_infer):
+                z = pickle.loads(pickle.dumps(typevar, proto))
+                self.assertEqual(z.__name__, typevar.__name__)
+                self.assertEqual(z.__covariant__, typevar.__covariant__)
+                self.assertEqual(z.__contravariant__, typevar.__contravariant__)
+                self.assertEqual(z.__bound__, typevar.__bound__)
+                self.assertEqual(z.__infer_variance__, typevar.__infer_variance__)
 
 
 if __name__ == '__main__':

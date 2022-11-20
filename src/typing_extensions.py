@@ -2,15 +2,16 @@ import abc
 import collections
 import collections.abc
 import functools
+import inspect
 import operator
 import sys
 import types as _types
 import typing
 
 
-# Please keep __all__ alphabetized within each category.
 __all__ = [
     # Super-special typing primitives.
+    'Any',
     'ClassVar',
     'Concatenate',
     'Final',
@@ -20,6 +21,7 @@ __all__ = [
     'ParamSpecKwargs',
     'Self',
     'Type',
+    'TypeVar',
     'TypeVarTuple',
     'Unpack',
 
@@ -60,6 +62,7 @@ __all__ = [
     'Literal',
     'NewType',
     'overload',
+    'override',
     'Protocol',
     'reveal_type',
     'runtime',
@@ -148,6 +151,37 @@ KT = typing.TypeVar('KT')  # Key type.
 VT = typing.TypeVar('VT')  # Value type.
 T_co = typing.TypeVar('T_co', covariant=True)  # Any type covariant containers.
 T_contra = typing.TypeVar('T_contra', contravariant=True)  # Ditto contravariant.
+
+
+if sys.version_info >= (3, 11):
+    from typing import Any
+else:
+
+    class _AnyMeta(type):
+        def __instancecheck__(self, obj):
+            if self is Any:
+                raise TypeError("typing_extensions.Any cannot be used with isinstance()")
+            return super().__instancecheck__(obj)
+
+        def __repr__(self):
+            if self is Any:
+                return "typing_extensions.Any"
+            return super().__repr__()
+
+    class Any(metaclass=_AnyMeta):
+        """Special type indicating an unconstrained type.
+        - Any is compatible with every type.
+        - Any assumed to have all methods.
+        - All values assumed to be instances of Any.
+        Note that all the above statements are true from the point of view of
+        static type checkers. At runtime, Any should not be used with instance
+        checks.
+        """
+        def __new__(cls, *args, **kwargs):
+            if cls is Any:
+                raise TypeError("Any cannot be instantiated")
+            return super().__new__(cls, *args, **kwargs)
+
 
 ClassVar = typing.ClassVar
 
@@ -431,7 +465,7 @@ else:
         if type(self)._is_protocol:
             raise TypeError('Protocols cannot be instantiated')
 
-    class _ProtocolMeta(abc.ABCMeta):
+    class _ProtocolMeta(abc.ABCMeta):  # noqa: B024
         # This metaclass is a bit unfortunate and exists only because of the lack
         # of __instancehook__.
         def __instancecheck__(cls, instance):
@@ -695,6 +729,8 @@ else:
     _typeddict_new.__text_signature__ = ('($cls, _typename, _fields=None,'
                                          ' /, *, total=True, **kwargs)')
 
+    _TAKES_MODULE = "module" in inspect.signature(typing._type_check).parameters
+
     class _TypedDictMeta(type):
         def __init__(cls, name, bases, ns, total=True):
             super().__init__(name, bases, ns)
@@ -720,8 +756,10 @@ else:
             annotations = {}
             own_annotations = ns.get('__annotations__', {})
             msg = "TypedDict('Name', {f0: t0, f1: t1, ...}); each t must be a type"
+            kwds = {"module": tp_dict.__module__} if _TAKES_MODULE else {}
             own_annotations = {
-                n: typing._type_check(tp, msg) for n, tp in own_annotations.items()
+                n: typing._type_check(tp, msg, **kwds)
+                for n, tp in own_annotations.items()
             }
             required_keys = set()
             optional_keys = set()
@@ -1115,6 +1153,44 @@ else:
                                above.""")
 
 
+class _DefaultMixin:
+    """Mixin for TypeVarLike defaults."""
+
+    __slots__ = ()
+
+    def __init__(self, default):
+        if isinstance(default, (tuple, list)):
+            self.__default__ = tuple((typing._type_check(d, "Default must be a type")
+                                      for d in default))
+        elif default != _marker:
+            self.__default__ = typing._type_check(default, "Default must be a type")
+        else:
+            self.__default__ = None
+
+
+# Add default and infer_variance parameters from PEP 696 and 695
+class TypeVar(typing.TypeVar, _DefaultMixin, _root=True):
+    """Type variable."""
+
+    __module__ = 'typing'
+
+    def __init__(self, name, *constraints, bound=None,
+                 covariant=False, contravariant=False,
+                 default=_marker, infer_variance=False):
+        super().__init__(name, *constraints, bound=bound, covariant=covariant,
+                         contravariant=contravariant)
+        _DefaultMixin.__init__(self, default)
+        self.__infer_variance__ = infer_variance
+
+        # for pickling:
+        try:
+            def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
+        except (AttributeError, ValueError):
+            def_mod = None
+        if def_mod != 'typing_extensions':
+            self.__module__ = def_mod
+
+
 # Python 3.10+ has PEP 612
 if hasattr(typing, 'ParamSpecArgs'):
     ParamSpecArgs = typing.ParamSpecArgs
@@ -1179,12 +1255,32 @@ else:
 
 # 3.10+
 if hasattr(typing, 'ParamSpec'):
-    ParamSpec = typing.ParamSpec
+
+    # Add default Parameter - PEP 696
+    class ParamSpec(typing.ParamSpec, _DefaultMixin, _root=True):
+        """Parameter specification variable."""
+
+        __module__ = 'typing'
+
+        def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
+                     default=_marker):
+            super().__init__(name, bound=bound, covariant=covariant,
+                             contravariant=contravariant)
+            _DefaultMixin.__init__(self, default)
+
+            # for pickling:
+            try:
+                def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
+            except (AttributeError, ValueError):
+                def_mod = None
+            if def_mod != 'typing_extensions':
+                self.__module__ = def_mod
+
 # 3.7-3.9
 else:
 
     # Inherits from list as a workaround for Callable checks in Python < 3.9.2.
-    class ParamSpec(list):
+    class ParamSpec(list, _DefaultMixin):
         """Parameter specification variable.
 
         Usage::
@@ -1242,7 +1338,8 @@ else:
         def kwargs(self):
             return ParamSpecKwargs(self)
 
-        def __init__(self, name, *, bound=None, covariant=False, contravariant=False):
+        def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
+                     default=_marker):
             super().__init__([self])
             self.__name__ = name
             self.__covariant__ = bool(covariant)
@@ -1251,6 +1348,7 @@ else:
                 self.__bound__ = typing._type_check(bound, 'Bound must be a type.')
             else:
                 self.__bound__ = None
+            _DefaultMixin.__init__(self, default)
 
             # for pickling:
             try:
@@ -1752,9 +1850,25 @@ else:
 
 
 if hasattr(typing, "TypeVarTuple"):  # 3.11+
-    TypeVarTuple = typing.TypeVarTuple
+
+    # Add default Parameter - PEP 696
+    class TypeVarTuple(typing.TypeVarTuple, _DefaultMixin, _root=True):
+        """Type variable tuple."""
+
+        def __init__(self, name, *, default=_marker):
+            super().__init__(name)
+            _DefaultMixin.__init__(self, default)
+
+            # for pickling:
+            try:
+                def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
+            except (AttributeError, ValueError):
+                def_mod = None
+            if def_mod != 'typing_extensions':
+                self.__module__ = def_mod
+
 else:
-    class TypeVarTuple:
+    class TypeVarTuple(_DefaultMixin):
         """Type variable tuple.
 
         Usage::
@@ -1804,8 +1918,9 @@ else:
         def __iter__(self):
             yield self.__unpacked__
 
-        def __init__(self, name):
+        def __init__(self, name, *, default=_marker):
             self.__name__ = name
+            _DefaultMixin.__init__(self, default)
 
             # for pickling:
             try:
@@ -1966,6 +2081,47 @@ else:
             }
             return cls_or_fn
         return decorator
+
+
+if hasattr(typing, "override"):
+    override = typing.override
+else:
+    _F = typing.TypeVar("_F", bound=typing.Callable[..., typing.Any])
+
+    def override(__arg: _F) -> _F:
+        """Indicate that a method is intended to override a method in a base class.
+
+        Usage:
+
+            class Base:
+                def method(self) -> None: ...
+                    pass
+
+            class Child(Base):
+                @override
+                def method(self) -> None:
+                    super().method()
+
+        When this decorator is applied to a method, the type checker will
+        validate that it overrides a method with the same name on a base class.
+        This helps prevent bugs that may occur when a base class is changed
+        without an equivalent change to a child class.
+
+        There is no runtime checking of these properties. The decorator
+        sets the ``__override__`` attribute to ``True`` on the decorated object
+        to allow runtime introspection.
+
+        See PEP 698 for details.
+
+        """
+        try:
+            __arg.__override__ = True
+        except (AttributeError, TypeError):
+            # Skip the attribute silently if it is not writable.
+            # AttributeError happens if the object has __slots__ or a
+            # read-only property, TypeError if it's a builtin class.
+            pass
+        return __arg
 
 
 # We have to do some monkey patching to deal with the dual nature of
