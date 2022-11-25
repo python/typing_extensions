@@ -17,7 +17,7 @@ from test import ann_module, ann_module2, ann_module3
 import typing
 from typing import TypeVar, Optional, Union, AnyStr
 from typing import T, KT, VT  # Not in __all__.
-from typing import Tuple, List, Dict, Iterable, Iterator, Callable
+from typing import Tuple, List, Dict, Iterable, Callable
 from typing import Generic
 from typing import no_type_check
 import typing_extensions
