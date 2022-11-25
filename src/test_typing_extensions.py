@@ -930,14 +930,14 @@ class CollectionsAbcTests(BaseTestCase):
             pass
 
     def test_async_iterable(self):
-        base_it = range(10)  # type: Iterator[int]
+        base_it: Iterator[int] = range(10)
         it = AsyncIteratorWrapper(base_it)
         self.assertIsInstance(it, typing_extensions.AsyncIterable)
         self.assertIsInstance(it, typing_extensions.AsyncIterable)
         self.assertNotIsInstance(42, typing_extensions.AsyncIterable)
 
     def test_async_iterator(self):
-        base_it = range(10)  # type: Iterator[int]
+        base_it: Iterator[int] = range(10)
         it = AsyncIteratorWrapper(base_it)
         self.assertIsInstance(it, typing_extensions.AsyncIterator)
         self.assertNotIsInstance(42, typing_extensions.AsyncIterator)
@@ -1697,7 +1697,7 @@ class ProtocolTests(BaseTestCase):
     def test_none_treated_correctly(self):
         @runtime
         class P(Protocol):
-            x = None  # type: int
+            x: int = None
         class B(object): pass
         self.assertNotIsInstance(B(), P)
         class C:
@@ -1717,7 +1717,7 @@ class ProtocolTests(BaseTestCase):
 
     def test_protocols_in_unions(self):
         class P(Protocol):
-            x = None  # type: int
+            x: int = None
         Alias = typing.Union[typing.Iterable, P]
         Alias2 = typing.Union[P, typing.Iterable]
         self.assertEqual(Alias, Alias2)
@@ -2388,7 +2388,7 @@ class TypeAliasTests(BaseTestCase):
         exec('Alias: TypeAlias = Employee', globals(), ns)
 
     def test_canonical_usage_with_type_comment(self):
-        Alias = Employee  # type: TypeAlias
+        Alias: TypeAlias = Employee
 
     def test_cannot_instantiate(self):
         with self.assertRaises(TypeError):
