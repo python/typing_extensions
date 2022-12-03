@@ -3009,6 +3009,7 @@ class DataclassTransformTests(BaseTestCase):
                 "eq_default": True,
                 "order_default": False,
                 "kw_only_default": True,
+                "frozen_default": False,
                 "field_specifiers": (),
                 "kwargs": {},
             }
@@ -3039,6 +3040,7 @@ class DataclassTransformTests(BaseTestCase):
                 "eq_default": True,
                 "order_default": True,
                 "kw_only_default": False,
+                "frozen_default": False,
                 "field_specifiers": (),
                 "kwargs": {"make_everything_awesome": True},
             }
@@ -3070,6 +3072,7 @@ class DataclassTransformTests(BaseTestCase):
                 "eq_default": True,
                 "order_default": True,
                 "kw_only_default": False,
+                "frozen_default": False,
                 "field_specifiers": (Field,),
                 "kwargs": {},
             }
