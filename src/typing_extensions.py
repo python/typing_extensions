@@ -2130,7 +2130,7 @@ else:
 
 
 if hasattr(typing, "deprecated"):
-    override = typing.deprecated
+    deprecated = typing.deprecated
 else:
     _T = typing.TypeVar("_T")
 
