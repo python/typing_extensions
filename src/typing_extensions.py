@@ -1999,7 +1999,8 @@ else:
         raise AssertionError("Expected code to be unreachable")
 
 
-if hasattr(typing, 'dataclass_transform'):
+if sys.version_info >= (3, 12):
+    # dataclass_transform exists in 3.11 but lacks the frozen_default parameter
     dataclass_transform = typing.dataclass_transform
 else:
     def dataclass_transform(

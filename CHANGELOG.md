@@ -4,6 +4,11 @@
   by Jelle Zijlstra.
 - Add better default value for TypeVar `default` parameter, PEP 696. Enables
   runtime check if `None` was passed as default. Patch by Marc Mueller (@cdce8p).
+- The `@typing_extensions.override` decorator now sets the `.__override__`
+  attribute. Patch by Steven Troxler.
+- Fix `get_type_hints()` on cross-module inherited `TypedDict` in 3.9 and 3.10.
+  Patch by Carl Meyer.
+- Add `frozen_default` parameter on `dataclass_transform`. Patch by Erik De Bonte.
 
 # Release 4.4.0 (October 6, 2022)
 
