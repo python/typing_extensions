@@ -3140,6 +3140,7 @@ class AllTests(BaseTestCase):
 
     def test_typing_extensions_defers_when_possible(self):
         exclude = {
+            'dataclass_transform',
             'overload',
             'ParamSpec',
             'Text',
