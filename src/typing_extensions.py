@@ -2148,8 +2148,8 @@ else:
             def f():
                 pass
 
-            @deprecated("int support is deprecated")
             @overload
+            @deprecated("int support is deprecated")
             def g(x: int) -> int: ...
             @overload
             def g(x: str) -> int: ...
