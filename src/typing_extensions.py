@@ -2159,7 +2159,9 @@ else:
 
         No runtime warning is issued. The decorator sets the ``__deprecated__``
         attribute on the decorated object to the deprecation message
-        passed to the decorator.
+        passed to the decorator. If applied to an overload, the decorator
+        must be after the ``@overload`` decorator for the attribute to
+        exist on the overload as returned by ``get_overloads()``.
 
         See PEP 702 for details.
 
