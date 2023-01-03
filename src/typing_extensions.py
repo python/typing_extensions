@@ -52,6 +52,7 @@ __all__ = [
     'assert_type',
     'clear_overloads',
     'dataclass_transform',
+    'deprecated',
     'get_overloads',
     'final',
     'get_args',
@@ -2127,6 +2128,49 @@ else:
             # read-only property, TypeError if it's a builtin class.
             pass
         return __arg
+
+
+if hasattr(typing, "deprecated"):
+    deprecated = typing.deprecated
+else:
+    _T = typing.TypeVar("_T")
+
+    def deprecated(__msg: str) -> typing.Callable[[_T], _T]:
+        """Indicate that a class, function or overload is deprecated.
+
+        Usage:
+
+            @deprecated("Use B instead")
+            class A:
+                pass
+
+            @deprecated("Use g instead")
+            def f():
+                pass
+
+            @overload
+            @deprecated("int support is deprecated")
+            def g(x: int) -> int: ...
+            @overload
+            def g(x: str) -> int: ...
+
+        When this decorator is applied to an object, the type checker
+        will generate a diagnostic on usage of the deprecated object.
+
+        No runtime warning is issued. The decorator sets the ``__deprecated__``
+        attribute on the decorated object to the deprecation message
+        passed to the decorator. If applied to an overload, the decorator
+        must be after the ``@overload`` decorator for the attribute to
+        exist on the overload as returned by ``get_overloads()``.
+
+        See PEP 702 for details.
+
+        """
+        def decorator(__arg: _T) -> _T:
+            __arg.__deprecated__ = __msg
+            return __arg
+
+        return decorator
 
 
 # We have to do some monkey patching to deal with the dual nature of

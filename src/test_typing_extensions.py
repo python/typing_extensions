@@ -29,7 +29,7 @@ from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
-from typing_extensions import override
+from typing_extensions import override, deprecated
 from _typed_dict_test_helper import Foo, FooGeneric
 
 # Flags used to mark tests that only apply after a specific
@@ -200,6 +200,35 @@ class OverrideTests(BaseTestCase):
         self.assertIs(True, Derived.static_method_good_order.__override__)
         self.assertEqual(Derived.static_method_bad_order(), 42)
         self.assertIs(False, hasattr(Derived.static_method_bad_order, "__override__"))
+
+
+class DeprecatedTests(BaseTestCase):
+    def test_deprecated(self):
+        @deprecated("A will go away soon")
+        class A:
+            pass
+
+        self.assertEqual(A.__deprecated__, "A will go away soon")
+        self.assertIsInstance(A, type)
+
+        @deprecated("b will go away soon")
+        def b():
+            pass
+
+        self.assertEqual(b.__deprecated__, "b will go away soon")
+        self.assertIsInstance(b, types.FunctionType)
+
+        @overload
+        @deprecated("no more ints")
+        def h(x: int) -> int: ...
+        @overload
+        def h(x: str) -> str: ...
+        def h(x):
+            return x
+
+        overloads = get_overloads(h)
+        self.assertEqual(len(overloads), 2)
+        self.assertEqual(overloads[0].__deprecated__, "no more ints")
 
 
 class AnyTests(BaseTestCase):

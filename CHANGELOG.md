@@ -1,5 +1,7 @@
 # Unreleased
 
+- Runtime support for PEP 702, adding `typing_extensions.deprecated`. Patch
+  by Jelle Zijlstra.
 - Add better default value for TypeVar `default` parameter, PEP 696. Enables
   runtime check if `None` was passed as default. Patch by Marc Mueller (@cdce8p).
 - The `@typing_extensions.override` decorator now sets the `.__override__`
