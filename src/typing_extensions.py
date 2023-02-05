@@ -7,6 +7,7 @@ import operator
 import sys
 import types as _types
 import typing
+import warnings
 
 
 __all__ = [
@@ -2135,7 +2136,12 @@ if hasattr(typing, "deprecated"):
 else:
     _T = typing.TypeVar("_T")
 
-    def deprecated(__msg: str) -> typing.Callable[[_T], _T]:
+    def deprecated(
+        __msg: str,
+        *,
+        category: typing.Optional[typing.Type[Warning]] = DeprecationWarning,
+        stacklevel: int = 2,
+    ) -> typing.Callable[[_T], _T]:
         """Indicate that a class, function or overload is deprecated.
 
         Usage:
@@ -2167,8 +2173,40 @@ else:
 
         """
         def decorator(__arg: _T) -> _T:
-            __arg.__deprecated__ = __msg
-            return __arg
+            if category is None:
+                __arg.__deprecated__ = __msg
+                return __arg
+            elif isinstance(__arg, type):
+                original_new = __arg.__new__
+                has_init = __arg.__init__ is not object.__init__
+
+                @functools.wraps(original_new)
+                def __new__(cls, *args, **kwargs):
+                    warnings.warn(__msg, category=category, stacklevel=stacklevel)
+                    # Mirrors a similar check in object.__new__.
+                    if not has_init and (args or kwargs):
+                        raise TypeError(f"{cls.__name__}() takes no arguments")
+                    if original_new is not object.__new__:
+                        return original_new(cls, *args, **kwargs)
+                    else:
+                        return original_new(cls)
+
+                __arg.__new__ = staticmethod(__new__)
+                __arg.__deprecated__ = __new__.__deprecated__ = __msg
+                return __arg
+            elif callable(__arg):
+                @functools.wraps(__arg)
+                def wrapper(*args, **kwargs):
+                    warnings.warn(__msg, category=category, stacklevel=stacklevel)
+                    return __arg(*args, **kwargs)
+
+                __arg.__deprecated__ = wrapper.__deprecated__ = __msg
+                return wrapper
+            else:
+                raise TypeError(
+                    "@deprecated decorator with non-None category must be applied to "
+                    f"a class or callable, not {__arg!r}"
+                )
 
         return decorator
 
