@@ -294,6 +294,43 @@ class DeprecatedTests(BaseTestCase):
         with self.assertWarnsRegex(DeprecationWarning, "b will go away soon"):
             b()
 
+    def test_method(self):
+        class Capybara:
+            @deprecated("x will go away soon")
+            def x(self):
+                pass
+
+        instance = Capybara()
+        with self.assertWarnsRegex(DeprecationWarning, "x will go away soon"):
+            instance.x()
+
+    def test_property(self):
+        class Capybara:
+            @property
+            @deprecated("x will go away soon")
+            def x(self):
+                pass
+
+            @property
+            def no_more_setting(self):
+                return 42
+
+            @no_more_setting.setter
+            @deprecated("no more setting")
+            def no_more_setting(self, value):
+                pass
+
+        instance = Capybara()
+        with self.assertWarnsRegex(DeprecationWarning, "x will go away soon"):
+            instance.x
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            self.assertEqual(instance.no_more_setting, 42)
+
+        with self.assertWarnsRegex(DeprecationWarning, "no more setting"):
+            instance.no_more_setting = 42
+
     def test_category(self):
         @deprecated("c will go away soon", category=RuntimeWarning)
         def c():

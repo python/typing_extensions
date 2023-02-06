@@ -2140,7 +2140,7 @@ else:
         __msg: str,
         *,
         category: typing.Optional[typing.Type[Warning]] = DeprecationWarning,
-        stacklevel: int = 2,
+        stacklevel: int = 1,
     ) -> typing.Callable[[_T], _T]:
         """Indicate that a class, function or overload is deprecated.
 
@@ -2182,7 +2182,7 @@ else:
 
                 @functools.wraps(original_new)
                 def __new__(cls, *args, **kwargs):
-                    warnings.warn(__msg, category=category, stacklevel=stacklevel)
+                    warnings.warn(__msg, category=category, stacklevel=stacklevel + 1)
                     # Mirrors a similar check in object.__new__.
                     if not has_init and (args or kwargs):
                         raise TypeError(f"{cls.__name__}() takes no arguments")
@@ -2197,7 +2197,7 @@ else:
             elif callable(__arg):
                 @functools.wraps(__arg)
                 def wrapper(*args, **kwargs):
-                    warnings.warn(__msg, category=category, stacklevel=stacklevel)
+                    warnings.warn(__msg, category=category, stacklevel=stacklevel + 1)
                     return __arg(*args, **kwargs)
 
                 __arg.__deprecated__ = wrapper.__deprecated__ = __msg
