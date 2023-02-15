@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.5.0 (February 14, 2023)
 
 - Runtime support for PEP 702, adding `typing_extensions.deprecated`. Patch
   by Jelle Zijlstra.
@@ -13,7 +13,7 @@
 # Release 4.4.0 (October 6, 2022)
 
 - Add `typing_extensions.Any` a backport of python 3.11's Any class which is
-  subclassable at runtime. (backport from python/cpython#31841, by Shantanu 
+  subclassable at runtime. (backport from python/cpython#31841, by Shantanu
   and Jelle Zijlstra). Patch by James Hilton-Balfe (@Gobot1234).
 - Add initial support for TypeVarLike `default` parameter, PEP 696.
   Patch by Marc Mueller (@cdce8p).
