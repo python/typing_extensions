@@ -1427,6 +1427,32 @@ class ProtocolTests(BaseTestCase):
         class CG(PG[T]): pass
         self.assertIsInstance(CG[int](), CG)
 
+    def test_protocol_defining_init_does_not_get_overridden(self):
+        # check that P.__init__ doesn't get clobbered
+        # see https://bugs.python.org/issue44807
+
+        class P(Protocol):
+            x: int
+            def __init__(self, x: int) -> None:
+                self.x = x
+        class C: pass
+
+        c = C()
+        P.__init__(c, 1)
+        self.assertEqual(c.x, 1)
+
+    def test_concrete_class_inheriting_init_from_protocol(self):
+        class P(Protocol):
+            x: int
+            def __init__(self, x: int) -> None:
+                self.x = x
+
+        class C(P): pass
+
+        c = C(1)
+        self.assertIsInstance(c, C)
+        self.assertEqual(c.x, 1)
+
     def test_cannot_instantiate_abstract(self):
         @runtime
         class P(Protocol):
@@ -3302,7 +3328,7 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'NamedTuple', 'Any'}
+            exclude |= {'final', 'NamedTuple', 'Any', 'Protocol'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(

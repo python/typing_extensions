@@ -1,3 +1,9 @@
+# Unreleased
+
+- Backport `Protocol.__init__` behaviour from python 3.11. (see
+  python/cpython#31628, by Adrian Garcia Badaracco). Patch by James
+  Hilton-Balfe (@Gobot1234).
+
 # Release 4.5.0 (February 14, 2023)
 
 - Runtime support for PEP 702, adding `typing_extensions.deprecated`. Patch
