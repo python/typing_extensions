@@ -35,10 +35,14 @@ This module currently contains the following:
 
 - Experimental features
 
-  - `override` (see [PEP 698](https://peps.python.org/pep-0698/))
   - The `default=` argument to `TypeVar`, `ParamSpec`, and `TypeVarTuple` (see [PEP 696](https://peps.python.org/pep-0696/))
   - The `infer_variance=` argument to `TypeVar` (see [PEP 695](https://peps.python.org/pep-0695/))
   - The `@deprecated` decorator (see [PEP 702](https://peps.python.org/pep-0702/))
+
+- In the standard library since Python 3.12
+
+  - `override` (equivalent to `typing.override`; see [PEP 698](https://peps.python.org/pep-0698/))
+  - `Buffer` (equivalent to `collections.abc.Buffer`; see [PEP 688](https://peps.python.org/pep-0688/))
 
 - In `typing` since Python 3.11
 
