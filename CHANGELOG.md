@@ -1,3 +1,9 @@
+# Unreleased
+
+- Add `typing_extensions.Buffer`, a marker class for buffer types, as proposed
+  by PEP 688. Equivalent to `collections.abc.Buffer` in Python 3.12. Patch by
+  Jelle Zijlstra.
+
 # Release 4.5.0 (February 14, 2023)
 
 - Runtime support for PEP 702, adding `typing_extensions.deprecated`. Patch

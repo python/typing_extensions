@@ -29,7 +29,7 @@ from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
-from typing_extensions import override, deprecated
+from typing_extensions import override, deprecated, Buffer
 from _typed_dict_test_helper import Foo, FooGeneric
 import warnings
 
@@ -3675,6 +3675,36 @@ class TypeVarInferVarianceTests(BaseTestCase):
                 self.assertEqual(z.__contravariant__, typevar.__contravariant__)
                 self.assertEqual(z.__bound__, typevar.__bound__)
                 self.assertEqual(z.__infer_variance__, typevar.__infer_variance__)
+
+
+class BufferTests(BaseTestCase):
+    def test(self):
+        self.assertIsInstance(memoryview(b''), Buffer)
+        self.assertIsInstance(bytearray(), Buffer)
+        self.assertIsInstance(b"x", Buffer)
+        self.assertNotIsInstance(1, Buffer)
+
+        self.assertIsSubclass(bytearray, Buffer)
+        self.assertIsSubclass(memoryview, Buffer)
+        self.assertIsSubclass(bytes, Buffer)
+        self.assertNotIsSubclass(int, Buffer)
+
+        class MyRegisteredBuffer:
+            def __buffer__(self, flags: int) -> memoryview:
+                return memoryview(b'')
+
+        self.assertNotIsInstance(MyRegisteredBuffer(), Buffer)
+        self.assertNotIsSubclass(MyRegisteredBuffer, Buffer)
+        Buffer.register(MyRegisteredBuffer)
+        self.assertIsInstance(MyRegisteredBuffer(), Buffer)
+        self.assertIsSubclass(MyRegisteredBuffer, Buffer)
+
+        class MySubclassedBuffer(Buffer):
+            def __buffer__(self, flags: int) -> memoryview:
+                return memoryview(b'')
+
+        self.assertIsInstance(MySubclassedBuffer(), Buffer)
+        self.assertIsSubclass(MySubclassedBuffer, Buffer)
 
 
 if __name__ == '__main__':
