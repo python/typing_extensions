@@ -389,10 +389,13 @@ Text = typing.Text
 TYPE_CHECKING = typing.TYPE_CHECKING
 
 
-_PROTO_WHITELIST = ['Callable', 'Awaitable',
-                    'Iterable', 'Iterator', 'AsyncIterable', 'AsyncIterator',
-                    'Hashable', 'Sized', 'Container', 'Collection', 'Reversible',
-                    'ContextManager', 'AsyncContextManager']
+_PROTO_ALLOWLIST = {
+    'collections.abc': [
+        'Callable', 'Awaitable', 'Iterable', 'Iterator', 'AsyncIterable',
+        'Hashable', 'Sized', 'Container', 'Collection', 'Reversible',
+    ],
+    'contextlib': ['AbstractContextManager', 'AbstractAsyncContextManager'],
+}
 
 
 def _get_protocol_attrs(cls):
@@ -608,8 +611,8 @@ else:
             # Check consistency of bases.
             for base in cls.__bases__:
                 if not (base in (object, typing.Generic) or
-                        base.__module__ == 'collections.abc' and
-                        base.__name__ in _PROTO_WHITELIST or
+                        base.__module__ in _PROTO_ALLOWLIST and
+                        base.__name__ in _PROTO_ALLOWLIST[base.__module__] or
                         isinstance(base, _ProtocolMeta) and base._is_protocol):
                     raise TypeError('Protocols can only inherit from other'
                                     f' protocols, got {repr(base)}')
