@@ -1909,6 +1909,14 @@ class ProtocolTests(BaseTestCase):
 
         self.assertIsSubclass(B, Custom)
         self.assertNotIsSubclass(A, Custom)
+    
+    def test_builtin_protocol_allowlist(self):
+        with self.assertRaises(TypeError):
+            class CustomProtocol(TestCase, Protocol):
+                pass
+
+        class CustomContextManager(typing.ContextManager, Protocol):
+            pass
 
     def test_no_init_same_for_different_protocol_implementations(self):
         class CustomProtocolWithoutInitA(Protocol):
