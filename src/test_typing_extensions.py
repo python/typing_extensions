@@ -1909,7 +1909,6 @@ class ProtocolTests(BaseTestCase):
 
         self.assertIsSubclass(B, Custom)
         self.assertNotIsSubclass(A, Custom)
-    
     def test_builtin_protocol_allowlist(self):
         with self.assertRaises(TypeError):
             class CustomProtocol(TestCase, Protocol):
