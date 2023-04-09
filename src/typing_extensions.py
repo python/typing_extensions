@@ -472,6 +472,7 @@ def _caller(depth=2):
 # but we backport it to all versions
 if sys.version_info >= (3, 10):
     Protocol = typing.Protocol
+    runtime_checkable = typing.runtime_checkable
 else:
     def _allow_reckless_class_checks(depth=4):
         """Allow instance and class checks for special stdlib modules.
