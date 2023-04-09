@@ -461,6 +461,13 @@ def _maybe_adjust_parameters(cls):
     cls.__parameters__ = tuple(tvars)
 
 
+def _caller(depth=2):
+    try:
+        return sys._getframe(depth).f_globals.get('__name__', '__main__')
+    except (AttributeError, ValueError):  # For platforms without _getframe()
+        return None
+
+
 # 3.8+
 if hasattr(typing, 'Protocol'):
     Protocol = typing.Protocol
@@ -574,12 +581,12 @@ else:
                 if not cls.__dict__.get('_is_protocol', None):
                     return NotImplemented
                 if not getattr(cls, '_is_runtime_protocol', False):
-                    if sys._getframe(2).f_globals['__name__'] in ['abc', 'functools']:
+                    if _caller(depth=3) in {'abc', 'functools'}:
                         return NotImplemented
                     raise TypeError("Instance and class checks can only be used with"
                                     " @runtime protocols")
                 if not _is_callable_members_only(cls):
-                    if sys._getframe(2).f_globals['__name__'] in ['abc', 'functools']:
+                    if _caller(depth=3) in {'abc', 'functools'}:
                         return NotImplemented
                     raise TypeError("Protocols with non-method members"
                                     " don't support issubclass()")
@@ -671,9 +678,7 @@ if hasattr(typing, "Required"):
 else:
     def _check_fails(cls, other):
         try:
-            if sys._getframe(1).f_globals['__name__'] not in ['abc',
-                                                              'functools',
-                                                              'typing']:
+            if _caller() not in {'abc', 'functools', 'typing'}:
                 # Typed dicts are only for static structural subtyping.
                 raise TypeError('TypedDict does not support instance and class checks')
         except (AttributeError, ValueError):
@@ -724,11 +729,10 @@ else:
                             " but not both")
 
         ns = {'__annotations__': dict(fields)}
-        try:
+        module = _caller()
+        if module is not None:
             # Setting correct module is necessary to make typed dict classes pickleable.
-            ns['__module__'] = sys._getframe(1).f_globals.get('__name__', '__main__')
-        except (AttributeError, ValueError):
-            pass
+            ns['__module__'] = module
 
         return _TypedDictMeta(typename, (), ns, total=total)
 
@@ -1189,10 +1193,7 @@ class TypeVar(typing.TypeVar, _DefaultMixin, _root=True):
         self.__infer_variance__ = infer_variance
 
         # for pickling:
-        try:
-            def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
-        except (AttributeError, ValueError):
-            def_mod = None
+        def_mod = _caller()
         if def_mod != 'typing_extensions':
             self.__module__ = def_mod
 
@@ -1275,10 +1276,7 @@ if hasattr(typing, 'ParamSpec'):
             _DefaultMixin.__init__(self, default)
 
             # for pickling:
-            try:
-                def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
-            except (AttributeError, ValueError):
-                def_mod = None
+            def_mod = _caller()
             if def_mod != 'typing_extensions':
                 self.__module__ = def_mod
 
@@ -1357,10 +1355,7 @@ else:
             _DefaultMixin.__init__(self, default)
 
             # for pickling:
-            try:
-                def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
-            except (AttributeError, ValueError):
-                def_mod = None
+            def_mod = _caller()
             if def_mod != 'typing_extensions':
                 self.__module__ = def_mod
 
@@ -1866,10 +1861,7 @@ if hasattr(typing, "TypeVarTuple"):  # 3.11+
             _DefaultMixin.__init__(self, default)
 
             # for pickling:
-            try:
-                def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
-            except (AttributeError, ValueError):
-                def_mod = None
+            def_mod = _caller()
             if def_mod != 'typing_extensions':
                 self.__module__ = def_mod
 
@@ -1929,10 +1921,7 @@ else:
             _DefaultMixin.__init__(self, default)
 
             # for pickling:
-            try:
-                def_mod = sys._getframe(1).f_globals.get('__name__', '__main__')
-            except (AttributeError, ValueError):
-                def_mod = None
+            def_mod = _caller()
             if def_mod != 'typing_extensions':
                 self.__module__ = def_mod
 
@@ -2241,12 +2230,6 @@ if not hasattr(typing, "TypeVarTuple"):
 if sys.version_info >= (3, 11):
     NamedTuple = typing.NamedTuple
 else:
-    def _caller():
-        try:
-            return sys._getframe(2).f_globals.get('__name__', '__main__')
-        except (AttributeError, ValueError):  # For platforms without _getframe()
-            return None
-
     def _make_nmtuple(name, types, module, defaults=()):
         fields = [n for n, t in types]
         annotations = {n: typing._type_check(t, f"field {n} annotation must be a type")
