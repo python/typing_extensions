@@ -3319,7 +3319,7 @@ class AllTests(BaseTestCase):
             'is_typeddict',
         }
         if sys.version_info < (3, 10):
-            exclude |= {'get_args', 'get_origin', 'Protocol'}
+            exclude |= {'get_args', 'get_origin', 'Protocol', 'runtime_checkable'}
         if sys.version_info < (3, 11):
             exclude |= {'final', 'NamedTuple', 'Any'}
         for item in typing_extensions.__all__:
