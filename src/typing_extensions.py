@@ -640,7 +640,6 @@ else:
                                     f' protocols, got {repr(base)}')
             cls.__init__ = _no_init
 
-
     def runtime_checkable(cls):
         """Mark a protocol class as a runtime protocol, so that it
         can be used with isinstance() and issubclass(). Raise TypeError
