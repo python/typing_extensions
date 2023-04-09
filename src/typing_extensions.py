@@ -545,6 +545,7 @@ else:
         """
         __slots__ = ()
         _is_protocol = True
+        _is_runtime_protocol = False
 
         def __new__(cls, *args, **kwds):
             if cls is Protocol:
