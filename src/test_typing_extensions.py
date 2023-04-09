@@ -1,6 +1,7 @@
 import sys
 import os
 import abc
+import io
 import contextlib
 import collections
 from collections import defaultdict
@@ -61,6 +62,13 @@ class BaseTestCase(TestCase):
             if msg is not None:
                 message += f' : {msg}'
             raise self.failureException(message)
+
+    @contextlib.contextmanager
+    def assertWarnsIf(self, condition: bool, expected_warning: type[Warning]):
+        with contextlib.ExitStack() as stack:
+            if condition:
+                stack.enter_context(self.assertWarns(expected_warning))
+            yield
 
 
 class Employee:
@@ -238,8 +246,9 @@ class DeprecatedTests(BaseTestCase):
 
         with self.assertWarnsRegex(DeprecationWarning, "A will go away soon"):
             A()
-        with self.assertRaises(TypeError):
-            A(42)
+        with self.assertWarnsRegex(DeprecationWarning, "A will go away soon"):
+            with self.assertRaises(TypeError):
+                A(42)
 
         @deprecated("HasInit will go away soon")
         class HasInit:
@@ -1959,7 +1968,8 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Emp.__total__, True)
 
     def test_basics_keywords_syntax(self):
-        Emp = TypedDict('Emp', name=str, id=int)
+        with self.assertWarnsIf(sys.version_info >= (3, 11), DeprecationWarning):
+            Emp = TypedDict('Emp', name=str, id=int)
         self.assertIsSubclass(Emp, dict)
         self.assertIsSubclass(Emp, typing.MutableMapping)
         self.assertNotIsSubclass(Emp, collections.abc.Sequence)
@@ -1974,8 +1984,9 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Emp.__total__, True)
 
     def test_typeddict_special_keyword_names(self):
-        TD = TypedDict("TD", cls=type, self=object, typename=str, _typename=int,
-                       fields=list, _fields=dict)
+        with self.assertWarnsIf(sys.version_info >= (3, 11), DeprecationWarning):
+            TD = TypedDict("TD", cls=type, self=object, typename=str, _typename=int,
+                           fields=list, _fields=dict)
         self.assertEqual(TD.__name__, 'TD')
         self.assertEqual(TD.__annotations__, {'cls': type, 'self': object, 'typename': str,
                                               '_typename': int, 'fields': list, '_fields': dict})
@@ -2044,7 +2055,7 @@ class TypedDictTests(BaseTestCase):
 
     def test_pickle(self):
         global EmpD  # pickle wants to reference the class by name
-        EmpD = TypedDict('EmpD', name=str, id=int)
+        EmpD = TypedDict('EmpD', {"name": str, "id": int})
         jane = EmpD({'name': 'jane', 'id': 37})
         point = Point2DGeneric(a=5.0, b=3.0)
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
@@ -2066,7 +2077,7 @@ class TypedDictTests(BaseTestCase):
             self.assertEqual(Point2DGenericNew({'a': 5.0, 'b': 3.0}), point)
 
     def test_optional(self):
-        EmpD = TypedDict('EmpD', name=str, id=int)
+        EmpD = TypedDict('EmpD', {"name": str, "id": int})
 
         self.assertEqual(typing.Optional[EmpD], typing.Union[None, EmpD])
         self.assertNotEqual(typing.List[EmpD], typing.Tuple[EmpD])
@@ -3134,7 +3145,10 @@ class FinalDecoratorTests(BaseTestCase):
 class RevealTypeTests(BaseTestCase):
     def test_reveal_type(self):
         obj = object()
-        self.assertIs(obj, reveal_type(obj))
+
+        with contextlib.redirect_stderr(io.StringIO()) as stderr:
+            self.assertIs(obj, reveal_type(obj))
+            self.assertEqual("Runtime type is 'object'", stderr.getvalue().strip())
 
 
 class DataclassTransformTests(BaseTestCase):
