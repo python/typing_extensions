@@ -468,11 +468,17 @@ def _caller(depth=2):
         return None
 
 
-# 3.8+
-if hasattr(typing, 'Protocol'):
+# A bug in runtime-checkable protocols was fixed in 3.10+,
+# but we backport it to all versions
+if sys.version_info >= (3, 10):
     Protocol = typing.Protocol
-# 3.7
 else:
+    def _allow_reckless_class_checks(depth=4):
+        """Allow instance and class checks for special stdlib modules.
+        The abc and functools modules indiscriminately call isinstance() and
+        issubclass() on the whole MRO of a user class, which may contain protocols.
+        """
+        return _caller(depth) in {'abc', 'functools', None}
 
     def _no_init(self, *args, **kwargs):
         if type(self)._is_protocol:
@@ -484,11 +490,19 @@ else:
         def __instancecheck__(cls, instance):
             # We need this method for situations where attributes are
             # assigned in __init__.
-            if ((not getattr(cls, '_is_protocol', False) or
+            is_protocol_cls = getattr(cls, "_is_protocol", False)
+            if (
+                is_protocol_cls and
+                not getattr(cls, '_is_runtime_protocol', False) and
+                not _allow_reckless_class_checks(depth=2)
+            ):
+                raise TypeError("Instance and class checks can only be used with"
+                                " @runtime_checkable protocols")
+            if ((not is_protocol_cls or
                  _is_callable_members_only(cls)) and
                     issubclass(instance.__class__, cls)):
                 return True
-            if cls._is_protocol:
+            if is_protocol_cls:
                 if all(hasattr(instance, attr) and
                        (not callable(getattr(cls, attr, None)) or
                         getattr(instance, attr) is not None)
@@ -581,12 +595,12 @@ else:
                 if not cls.__dict__.get('_is_protocol', None):
                     return NotImplemented
                 if not getattr(cls, '_is_runtime_protocol', False):
-                    if _caller(depth=3) in {'abc', 'functools'}:
+                    if _allow_reckless_class_checks():
                         return NotImplemented
                     raise TypeError("Instance and class checks can only be used with"
                                     " @runtime protocols")
                 if not _is_callable_members_only(cls):
-                    if _caller(depth=3) in {'abc', 'functools'}:
+                    if _allow_reckless_class_checks():
                         return NotImplemented
                     raise TypeError("Protocols with non-method members"
                                     " don't support issubclass()")
