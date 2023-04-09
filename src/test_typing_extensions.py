@@ -64,7 +64,7 @@ class BaseTestCase(TestCase):
             raise self.failureException(message)
 
     @contextlib.contextmanager
-    def assertWarnsIf(self, condition: bool, expected_warning: type[Warning]):
+    def assertWarnsIf(self, condition: bool, expected_warning: Type[Warning]):
         with contextlib.ExitStack() as stack:
             if condition:
                 stack.enter_context(self.assertWarns(expected_warning))
