@@ -3,6 +3,7 @@ name: Test and lint
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
