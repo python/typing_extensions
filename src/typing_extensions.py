@@ -640,11 +640,6 @@ else:
             cls.__init__ = _no_init
 
 
-# 3.8+
-if hasattr(typing, 'runtime_checkable'):
-    runtime_checkable = typing.runtime_checkable
-# 3.7
-else:
     def runtime_checkable(cls):
         """Mark a protocol class as a runtime protocol, so that it
         can be used with isinstance() and issubclass(). Raise TypeError
