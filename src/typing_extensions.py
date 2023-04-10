@@ -398,6 +398,25 @@ _PROTO_ALLOWLIST = {
 }
 
 
+_EXCLUDED_ATTRS = {
+    "__abstractmethods__", "__annotations__", "__weakref__", "_is_protocol",
+    "_is_runtime_protocol", "__dict__", "__slots__", "__parameters__",
+    "__orig_bases__", "__module__", "_MutableMapping__marker", "__doc__",
+    "__subclasshook__", "__orig_class__", "__init__", "__new__",
+}
+
+if sys.version_info < (3, 8):
+    _EXCLUDED_ATTRS |= {
+        "_gorg", "__next_in_mro__", "__extra__", "__tree_hash__", "__args__",
+        "__origin__"
+    }
+
+if sys.version_info >= (3, 9):
+    _EXCLUDED_ATTRS.add("__class_getitem__")
+
+_EXCLUDED_ATTRS = frozenset(_EXCLUDED_ATTRS)
+
+
 def _get_protocol_attrs(cls):
     attrs = set()
     for base in cls.__mro__[:-1]:  # without object
@@ -405,14 +424,7 @@ def _get_protocol_attrs(cls):
             continue
         annotations = getattr(base, '__annotations__', {})
         for attr in list(base.__dict__.keys()) + list(annotations.keys()):
-            if (not attr.startswith('_abc_') and attr not in (
-                    '__abstractmethods__', '__annotations__', '__weakref__',
-                    '_is_protocol', '_is_runtime_protocol', '__dict__',
-                    '__args__', '__slots__',
-                    '__next_in_mro__', '__parameters__', '__origin__',
-                    '__orig_bases__', '__extra__', '__tree_hash__',
-                    '__doc__', '__subclasshook__', '__init__', '__new__',
-                    '__module__', '_MutableMapping__marker', '_gorg')):
+            if (not attr.startswith('_abc_') and attr not in _EXCLUDED_ATTRS):
                 attrs.add(attr)
     return attrs
 
