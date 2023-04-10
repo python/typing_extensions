@@ -26,3 +26,4 @@ ignore =
   DW12,
   # consistency with mypy
   W504
+noqa_require_code = true

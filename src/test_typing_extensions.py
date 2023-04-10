@@ -582,7 +582,7 @@ class NotRequiredTests(BaseTestCase):
 
 class IntVarTests(BaseTestCase):
     def test_valid(self):
-        T_ints = IntVar("T_ints")  # noqa
+        T_ints = IntVar("T_ints")
 
     def test_invalid(self):
         with self.assertRaises(TypeError):
@@ -590,7 +590,7 @@ class IntVarTests(BaseTestCase):
         with self.assertRaises(TypeError):
             T_ints = IntVar("T_ints", bound=int)
         with self.assertRaises(TypeError):
-            T_ints = IntVar("T_ints", covariant=True)  # noqa
+            T_ints = IntVar("T_ints", covariant=True)
 
 
 class LiteralTests(BaseTestCase):
@@ -936,7 +936,7 @@ class GetTypeHintTests(BaseTestCase):
         @no_type_check
         class NoTpCheck:
             class Inn:
-                def __init__(self, x: 'not a type'): ...  # noqa
+                def __init__(self, x: 'not a type'): ...
         self.assertTrue(NoTpCheck.__no_type_check__)
         self.assertTrue(NoTpCheck.Inn.__init__.__no_type_check__)
         self.assertEqual(gth(ann_module2.NTC.meth), {})
