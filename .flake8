@@ -13,3 +13,4 @@ exclude =
   # tests have more relaxed formatting rules
   # and its own specific config in .flake8-tests
   src/test_typing_extensions.py,
+noqa_require_code = true
