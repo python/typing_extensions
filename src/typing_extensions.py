@@ -289,7 +289,7 @@ else:
                            instead of a type.""")
 
 
-_overload_dummy = typing._overload_dummy  # noqa
+_overload_dummy = typing._overload_dummy
 
 
 if hasattr(typing, "get_overloads"):  # 3.11+
@@ -497,7 +497,7 @@ else:
         if type(self)._is_protocol:
             raise TypeError('Protocols cannot be instantiated')
 
-    class _ProtocolMeta(abc.ABCMeta):  # noqa: B024
+    class _ProtocolMeta(abc.ABCMeta):
         # This metaclass is a bit unfortunate and exists only because of the lack
         # of __instancehook__.
         def __instancecheck__(cls, instance):
@@ -573,7 +573,7 @@ else:
                 raise TypeError(
                     f"Parameter list to {cls.__qualname__}[...] cannot be empty")
             msg = "Parameters to generic types must be types."
-            params = tuple(typing._type_check(p, msg) for p in params)  # noqa
+            params = tuple(typing._type_check(p, msg) for p in params)
             if cls is Protocol:
                 # Generic can only be subscripted with unique type variables.
                 if not all(isinstance(p, typing.TypeVar) for p in params):
@@ -1460,7 +1460,7 @@ def _concatenate_getitem(self, parameters):
 # 3.10+
 if hasattr(typing, 'Concatenate'):
     Concatenate = typing.Concatenate
-    _ConcatenateGenericAlias = typing._ConcatenateGenericAlias # noqa
+    _ConcatenateGenericAlias = typing._ConcatenateGenericAlias  # noqa: F811
 # 3.9
 elif sys.version_info[:2] >= (3, 9):
     @_TypeAliasForm

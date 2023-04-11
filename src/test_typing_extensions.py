@@ -582,7 +582,7 @@ class NotRequiredTests(BaseTestCase):
 
 class IntVarTests(BaseTestCase):
     def test_valid(self):
-        T_ints = IntVar("T_ints")  # noqa
+        T_ints = IntVar("T_ints")
 
     def test_invalid(self):
         with self.assertRaises(TypeError):
@@ -590,7 +590,7 @@ class IntVarTests(BaseTestCase):
         with self.assertRaises(TypeError):
             T_ints = IntVar("T_ints", bound=int)
         with self.assertRaises(TypeError):
-            T_ints = IntVar("T_ints", covariant=True)  # noqa
+            T_ints = IntVar("T_ints", covariant=True)
 
 
 class LiteralTests(BaseTestCase):
@@ -850,7 +850,7 @@ class XRepr(NamedTuple):
     def __add__(self, other):
         return 0
 
-@runtime
+@runtime_checkable
 class HasCallProtocol(Protocol):
     __call__: typing.Callable
 
@@ -936,7 +936,7 @@ class GetTypeHintTests(BaseTestCase):
         @no_type_check
         class NoTpCheck:
             class Inn:
-                def __init__(self, x: 'not a type'): ...  # noqa
+                def __init__(self, x: 'not a type'): ...
         self.assertTrue(NoTpCheck.__no_type_check__)
         self.assertTrue(NoTpCheck.Inn.__init__.__no_type_check__)
         self.assertEqual(gth(ann_module2.NTC.meth), {})
@@ -1324,7 +1324,7 @@ class Coordinate(Protocol):
     x: int
     y: int
 
-@runtime
+@runtime_checkable
 class Point(Coordinate, Protocol):
     label: str
 
@@ -1339,11 +1339,11 @@ class XAxis(Protocol):
 class YAxis(Protocol):
     y: int
 
-@runtime
+@runtime_checkable
 class Position(XAxis, YAxis, Protocol):
     pass
 
-@runtime
+@runtime_checkable
 class Proto(Protocol):
     attr: int
 
@@ -1367,9 +1367,11 @@ class NT(NamedTuple):
 
 
 class ProtocolTests(BaseTestCase):
+    def test_runtime_alias(self):
+        self.assertIs(runtime, runtime_checkable)
 
     def test_basic_protocol(self):
-        @runtime
+        @runtime_checkable
         class P(Protocol):
             def meth(self):
                 pass
@@ -1387,7 +1389,7 @@ class ProtocolTests(BaseTestCase):
         self.assertNotIsInstance(f, P)
 
     def test_everything_implements_empty_protocol(self):
-        @runtime
+        @runtime_checkable
         class Empty(Protocol): pass
         class C: pass
         def f():
@@ -1453,7 +1455,7 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(CG[int](), CG)
 
     def test_cannot_instantiate_abstract(self):
-        @runtime
+        @runtime_checkable
         class P(Protocol):
             @abc.abstractmethod
             def ameth(self) -> int:
@@ -1471,7 +1473,7 @@ class ProtocolTests(BaseTestCase):
         class P1(Protocol):
             def meth1(self):
                 pass
-        @runtime
+        @runtime_checkable
         class P2(P1, Protocol):
             def meth2(self):
                 pass
@@ -1500,7 +1502,7 @@ class ProtocolTests(BaseTestCase):
         class P2(Protocol):
             def meth2(self):
                 pass
-        @runtime
+        @runtime_checkable
         class P(P1, P2, Protocol):
             pass
         class C:
@@ -1523,10 +1525,10 @@ class ProtocolTests(BaseTestCase):
 
     def test_protocols_issubclass(self):
         T = TypeVar('T')
-        @runtime
+        @runtime_checkable
         class P(Protocol):
             def x(self): ...
-        @runtime
+        @runtime_checkable
         class PG(Protocol[T]):
             def x(self): ...
         class BadP(Protocol):
@@ -1554,7 +1556,7 @@ class ProtocolTests(BaseTestCase):
     def test_protocols_issubclass_non_callable(self):
         class C:
             x = 1
-        @runtime
+        @runtime_checkable
         class PNonCall(Protocol):
             x = 1
         with self.assertRaises(TypeError):
@@ -1576,10 +1578,10 @@ class ProtocolTests(BaseTestCase):
 
     def test_protocols_isinstance(self):
         T = TypeVar('T')
-        @runtime
+        @runtime_checkable
         class P(Protocol):
             def meth(x): ...
-        @runtime
+        @runtime_checkable
         class PG(Protocol[T]):
             def meth(x): ...
         class BadP(Protocol):
@@ -1632,10 +1634,10 @@ class ProtocolTests(BaseTestCase):
 
     def test_protocols_isinstance_init(self):
         T = TypeVar('T')
-        @runtime
+        @runtime_checkable
         class P(Protocol):
             x = 1
-        @runtime
+        @runtime_checkable
         class PG(Protocol[T]):
             x = 1
         class C:
@@ -1645,7 +1647,7 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(C(1), PG)
 
     def test_protocols_support_register(self):
-        @runtime
+        @runtime_checkable
         class P(Protocol):
             x = 1
         class PM(Protocol):
@@ -1658,7 +1660,7 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(C(), D)
 
     def test_none_on_non_callable_doesnt_block_implementation(self):
-        @runtime
+        @runtime_checkable
         class P(Protocol):
             x = 1
         class A:
@@ -1672,7 +1674,7 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(C(), P)
 
     def test_none_on_callable_blocks_implementation(self):
-        @runtime
+        @runtime_checkable
         class P(Protocol):
             def x(self): ...
         class A:
@@ -1688,7 +1690,7 @@ class ProtocolTests(BaseTestCase):
     def test_non_protocol_subclasses(self):
         class P(Protocol):
             x = 1
-        @runtime
+        @runtime_checkable
         class PR(Protocol):
             def meth(self): pass
         class NonP(P):
@@ -1721,7 +1723,7 @@ class ProtocolTests(BaseTestCase):
         self.assertNotIsSubclass(BadClass, C)
 
     def test_issubclass_fails_correctly(self):
-        @runtime
+        @runtime_checkable
         class P(Protocol):
             x = 1
         class C: pass
@@ -1731,7 +1733,7 @@ class ProtocolTests(BaseTestCase):
     def test_defining_generic_protocols(self):
         T = TypeVar('T')
         S = TypeVar('S')
-        @runtime
+        @runtime_checkable
         class PR(Protocol[T, S]):
             def meth(self): pass
         class P(PR[int, T], Protocol[T]):
@@ -1755,7 +1757,7 @@ class ProtocolTests(BaseTestCase):
     def test_defining_generic_protocols_old_style(self):
         T = TypeVar('T')
         S = TypeVar('S')
-        @runtime
+        @runtime_checkable
         class PR(Protocol, Generic[T, S]):
             def meth(self): pass
         class P(PR[int, str], Protocol):
@@ -1772,7 +1774,7 @@ class ProtocolTests(BaseTestCase):
             def bar(self, x: T) -> str: ...
         class P2(Generic[T], Protocol):
             def bar(self, x: T) -> str: ...
-        @runtime
+        @runtime_checkable
         class PSub(P1[str], Protocol):
             x = 1
         class Test:
@@ -1829,7 +1831,7 @@ class ProtocolTests(BaseTestCase):
         self.assertIs(P[int].__origin__, P)
 
     def test_generic_protocols_special_from_protocol(self):
-        @runtime
+        @runtime_checkable
         class PR(Protocol):
             x = 1
         class P(Protocol):
@@ -1853,17 +1855,17 @@ class ProtocolTests(BaseTestCase):
 
     def test_no_runtime_deco_on_nominal(self):
         with self.assertRaises(TypeError):
-            @runtime
+            @runtime_checkable
             class C: pass
         class Proto(Protocol):
             x = 1
         with self.assertRaises(TypeError):
-            @runtime
+            @runtime_checkable
             class Concrete(Proto):
                 pass
 
     def test_none_treated_correctly(self):
-        @runtime
+        @runtime_checkable
         class P(Protocol):
             x: int = None
         class B(object): pass
@@ -1894,7 +1896,7 @@ class ProtocolTests(BaseTestCase):
         global P, CP  # pickle wants to reference the class by name
         T = TypeVar('T')
 
-        @runtime
+        @runtime_checkable
         class P(Protocol[T]):
             x = 1
         class CP(P[int]):

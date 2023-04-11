@@ -28,3 +28,4 @@ ignore =
   W503,
   # consistency with mypy
   W504
+noqa_require_code = true
