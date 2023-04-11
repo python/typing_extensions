@@ -7,6 +7,8 @@ ignore =
   DW12,
   # code is sometimes better without this
   E129,
+  # Contradicts PEP8 nowadays
+  W503,
   # consistency with mypy
   W504
 exclude =
