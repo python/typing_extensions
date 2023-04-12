@@ -57,6 +57,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r test-requirements.txt
+          pip install flake8-noqa  # not included in test-requirements.txt as it depends on typing-extensions
 
       - name: Lint implementation
         run: flake8
