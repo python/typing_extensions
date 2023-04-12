@@ -398,6 +398,25 @@ _PROTO_ALLOWLIST = {
 }
 
 
+_EXCLUDED_ATTRS = {
+    "__abstractmethods__", "__annotations__", "__weakref__", "_is_protocol",
+    "_is_runtime_protocol", "__dict__", "__slots__", "__parameters__",
+    "__orig_bases__", "__module__", "_MutableMapping__marker", "__doc__",
+    "__subclasshook__", "__orig_class__", "__init__", "__new__",
+}
+
+if sys.version_info < (3, 8):
+    _EXCLUDED_ATTRS |= {
+        "_gorg", "__next_in_mro__", "__extra__", "__tree_hash__", "__args__",
+        "__origin__"
+    }
+
+if sys.version_info >= (3, 9):
+    _EXCLUDED_ATTRS.add("__class_getitem__")
+
+_EXCLUDED_ATTRS = frozenset(_EXCLUDED_ATTRS)
+
+
 def _get_protocol_attrs(cls):
     attrs = set()
     for base in cls.__mro__[:-1]:  # without object
@@ -405,14 +424,7 @@ def _get_protocol_attrs(cls):
             continue
         annotations = getattr(base, '__annotations__', {})
         for attr in list(base.__dict__.keys()) + list(annotations.keys()):
-            if (not attr.startswith('_abc_') and attr not in (
-                    '__abstractmethods__', '__annotations__', '__weakref__',
-                    '_is_protocol', '_is_runtime_protocol', '__dict__',
-                    '__args__', '__slots__',
-                    '__next_in_mro__', '__parameters__', '__origin__',
-                    '__orig_bases__', '__extra__', '__tree_hash__',
-                    '__doc__', '__subclasshook__', '__init__', '__new__',
-                    '__module__', '_MutableMapping__marker', '_gorg')):
+            if (not attr.startswith('_abc_') and attr not in _EXCLUDED_ATTRS):
                 attrs.add(attr)
     return attrs
 
@@ -468,11 +480,18 @@ def _caller(depth=2):
         return None
 
 
-# 3.8+
-if hasattr(typing, 'Protocol'):
+# A bug in runtime-checkable protocols was fixed in 3.10+,
+# but we backport it to all versions
+if sys.version_info >= (3, 10):
     Protocol = typing.Protocol
-# 3.7
+    runtime_checkable = typing.runtime_checkable
 else:
+    def _allow_reckless_class_checks(depth=4):
+        """Allow instance and class checks for special stdlib modules.
+        The abc and functools modules indiscriminately call isinstance() and
+        issubclass() on the whole MRO of a user class, which may contain protocols.
+        """
+        return _caller(depth) in {'abc', 'functools', None}
 
     def _no_init(self, *args, **kwargs):
         if type(self)._is_protocol:
@@ -484,11 +503,19 @@ else:
         def __instancecheck__(cls, instance):
             # We need this method for situations where attributes are
             # assigned in __init__.
-            if ((not getattr(cls, '_is_protocol', False) or
+            is_protocol_cls = getattr(cls, "_is_protocol", False)
+            if (
+                is_protocol_cls and
+                not getattr(cls, '_is_runtime_protocol', False) and
+                not _allow_reckless_class_checks(depth=2)
+            ):
+                raise TypeError("Instance and class checks can only be used with"
+                                " @runtime_checkable protocols")
+            if ((not is_protocol_cls or
                  _is_callable_members_only(cls)) and
                     issubclass(instance.__class__, cls)):
                 return True
-            if cls._is_protocol:
+            if is_protocol_cls:
                 if all(hasattr(instance, attr) and
                        (not callable(getattr(cls, attr, None)) or
                         getattr(instance, attr) is not None)
@@ -530,6 +557,7 @@ else:
         """
         __slots__ = ()
         _is_protocol = True
+        _is_runtime_protocol = False
 
         def __new__(cls, *args, **kwds):
             if cls is Protocol:
@@ -581,12 +609,12 @@ else:
                 if not cls.__dict__.get('_is_protocol', None):
                     return NotImplemented
                 if not getattr(cls, '_is_runtime_protocol', False):
-                    if _caller(depth=3) in {'abc', 'functools'}:
+                    if _allow_reckless_class_checks():
                         return NotImplemented
                     raise TypeError("Instance and class checks can only be used with"
                                     " @runtime protocols")
                 if not _is_callable_members_only(cls):
-                    if _caller(depth=3) in {'abc', 'functools'}:
+                    if _allow_reckless_class_checks():
                         return NotImplemented
                     raise TypeError("Protocols with non-method members"
                                     " don't support issubclass()")
@@ -625,12 +653,6 @@ else:
                                     f' protocols, got {repr(base)}')
             cls.__init__ = _no_init
 
-
-# 3.8+
-if hasattr(typing, 'runtime_checkable'):
-    runtime_checkable = typing.runtime_checkable
-# 3.7
-else:
     def runtime_checkable(cls):
         """Mark a protocol class as a runtime protocol, so that it
         can be used with isinstance() and issubclass(). Raise TypeError
@@ -639,7 +661,10 @@ else:
         This allows a simple-minded structural check very similar to the
         one-offs in collections.abc such as Hashable.
         """
-        if not isinstance(cls, _ProtocolMeta) or not cls._is_protocol:
+        if not (
+            (isinstance(cls, _ProtocolMeta) or issubclass(cls, typing.Generic))
+            and getattr(cls, "_is_protocol", False)
+        ):
             raise TypeError('@runtime_checkable can be only applied to protocol classes,'
                             f' got {cls!r}')
         cls._is_runtime_protocol = True

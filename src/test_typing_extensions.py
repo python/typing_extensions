@@ -1421,6 +1421,22 @@ class ProtocolTests(BaseTestCase):
         self.assertNotIsInstance(D(), E)
         self.assertNotIsInstance(E(), D)
 
+    @skipUnless(
+        hasattr(typing, "Protocol"),
+        "Test is only relevant if typing.Protocol exists"
+    )
+    def test_runtimecheckable_on_typing_dot_Protocol(self):
+        @runtime_checkable
+        class Foo(typing.Protocol):
+            x: int
+
+        class Bar:
+            def __init__(self):
+                self.x = 42
+
+        self.assertIsInstance(Bar(), Foo)
+        self.assertNotIsInstance(object(), Foo)
+
     def test_no_instantiation(self):
         class P(Protocol): pass
         with self.assertRaises(TypeError):
@@ -1829,11 +1845,7 @@ class ProtocolTests(BaseTestCase):
         self.assertTrue(P._is_protocol)
         self.assertTrue(PR._is_protocol)
         self.assertTrue(PG._is_protocol)
-        if hasattr(typing, 'Protocol'):
-            self.assertFalse(P._is_runtime_protocol)
-        else:
-            with self.assertRaises(AttributeError):
-                self.assertFalse(P._is_runtime_protocol)
+        self.assertFalse(P._is_runtime_protocol)
         self.assertTrue(PR._is_runtime_protocol)
         self.assertTrue(PG[int]._is_protocol)
         self.assertEqual(typing_extensions._get_protocol_attrs(P), {'meth'})
@@ -1928,6 +1940,13 @@ class ProtocolTests(BaseTestCase):
 
         class CustomContextManager(typing.ContextManager, Protocol):
             pass
+
+    def test_non_runtime_protocol_isinstance_check(self):
+        class P(Protocol):
+            x: int
+
+        with self.assertRaisesRegex(TypeError, "@runtime_checkable"):
+            isinstance(1, P)
 
     def test_no_init_same_for_different_protocol_implementations(self):
         class CustomProtocolWithoutInitA(Protocol):
@@ -3314,7 +3333,7 @@ class AllTests(BaseTestCase):
             'is_typeddict',
         }
         if sys.version_info < (3, 10):
-            exclude |= {'get_args', 'get_origin'}
+            exclude |= {'get_args', 'get_origin', 'Protocol', 'runtime_checkable'}
         if sys.version_info < (3, 11):
             exclude |= {'final', 'NamedTuple', 'Any'}
         for item in typing_extensions.__all__:

@@ -3,6 +3,10 @@
 - Add `typing_extensions.Buffer`, a marker class for buffer types, as proposed
   by PEP 688. Equivalent to `collections.abc.Buffer` in Python 3.12. Patch by
   Jelle Zijlstra.
+- Backport [CPython PR 26067](https://github.com/python/cpython/pull/26067)
+  (originally by Yurii Karabas), ensuring that `isinstance()` calls on
+  protocols raise `TypeError` when the protocol is not decorated with
+  `@runtime_checkable`. Patch by Alex Waygood.
 
 # Release 4.5.0 (February 14, 2023)
 
