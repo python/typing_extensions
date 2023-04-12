@@ -19,6 +19,16 @@
   `isinstance()` checks comparing objects to the protocol. See
   ["What's New in Python 3.12"](https://docs.python.org/3.12/whatsnew/3.12.html#typing)
   for more details.
+- `isinstance()` checks against runtime-checkable protocols now use
+  `inspect.getattr_static()` rather than `hasattr()` to lookup whether
+  attributes exist (backporting https://github.com/python/cpython/pull/103034).
+  This means that descriptors and `__getattr__` methods are no longer
+  unexpectedly evaluated during `isinstance()` checks against runtime-checkable
+  protocols. However, it may also mean that some objects which used to be
+  considered instances of a runtime-checkable protocol on older versions of
+  `typing_extensions` may no longer be considered instances of that protocol
+  using the new release, and vice versa. Most users are unlikely to be affected
+  by this change. Patch by Alex Waygood.
 
 # Release 4.5.0 (February 14, 2023)
 
