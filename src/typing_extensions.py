@@ -403,6 +403,7 @@ _EXCLUDED_ATTRS = {
     "_is_runtime_protocol", "__dict__", "__slots__", "__parameters__",
     "__orig_bases__", "__module__", "_MutableMapping__marker", "__doc__",
     "__subclasshook__", "__orig_class__", "__init__", "__new__",
+    "__protocol_attrs__", "__callable_proto_members_only__",
 }
 
 if sys.version_info < (3, 8):
@@ -420,17 +421,13 @@ _EXCLUDED_ATTRS = frozenset(_EXCLUDED_ATTRS)
 def _get_protocol_attrs(cls):
     attrs = set()
     for base in cls.__mro__[:-1]:  # without object
-        if base.__name__ in ('Protocol', 'Generic'):
+        if base.__name__ in {'Protocol', 'Generic'}:
             continue
         annotations = getattr(base, '__annotations__', {})
-        for attr in list(base.__dict__.keys()) + list(annotations.keys()):
+        for attr in (*base.__dict__, *annotations):
             if (not attr.startswith('_abc_') and attr not in _EXCLUDED_ATTRS):
                 attrs.add(attr)
     return attrs
-
-
-def _is_callable_members_only(cls):
-    return all(callable(getattr(cls, attr, None)) for attr in _get_protocol_attrs(cls))
 
 
 def _maybe_adjust_parameters(cls):
@@ -480,9 +477,9 @@ def _caller(depth=2):
         return None
 
 
-# A bug in runtime-checkable protocols was fixed in 3.10+,
-# but we backport it to all versions
-if sys.version_info >= (3, 10):
+# The performance of runtime-checkable protocols is significantly improved on Python 3.12,
+# so we backport the 3.12 version of Protocol to Python <=3.11
+if sys.version_info >= (3, 12):
     Protocol = typing.Protocol
     runtime_checkable = typing.runtime_checkable
 else:
@@ -500,6 +497,15 @@ else:
     class _ProtocolMeta(abc.ABCMeta):
         # This metaclass is a bit unfortunate and exists only because of the lack
         # of __instancehook__.
+        def __init__(cls, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            cls.__protocol_attrs__ = _get_protocol_attrs(cls)
+            # PEP 544 prohibits using issubclass()
+            # with protocols that have non-method members.
+            cls.__callable_proto_members_only__ = all(
+                callable(getattr(cls, attr, None)) for attr in cls.__protocol_attrs__
+            )
+
         def __instancecheck__(cls, instance):
             # We need this method for situations where attributes are
             # assigned in __init__.
@@ -511,17 +517,22 @@ else:
             ):
                 raise TypeError("Instance and class checks can only be used with"
                                 " @runtime_checkable protocols")
-            if ((not is_protocol_cls or
-                 _is_callable_members_only(cls)) and
-                    issubclass(instance.__class__, cls)):
+
+            if super().__instancecheck__(instance):
                 return True
+
             if is_protocol_cls:
-                if all(hasattr(instance, attr) and
-                       (not callable(getattr(cls, attr, None)) or
-                        getattr(instance, attr) is not None)
-                       for attr in _get_protocol_attrs(cls)):
+                for attr in cls.__protocol_attrs__:
+                    try:
+                        val = getattr(instance, attr)
+                    except AttributeError:
+                        break
+                    if val is None and callable(getattr(cls, attr, None)):
+                        break
+                else:
                     return True
-            return super().__instancecheck__(instance)
+
+            return False
 
     class Protocol(metaclass=_ProtocolMeta):
         # There is quite a lot of overlapping code with typing.Generic.
@@ -613,7 +624,7 @@ else:
                         return NotImplemented
                     raise TypeError("Instance and class checks can only be used with"
                                     " @runtime protocols")
-                if not _is_callable_members_only(cls):
+                if not cls.__callable_proto_members_only__:
                     if _allow_reckless_class_checks():
                         return NotImplemented
                     raise TypeError("Protocols with non-method members"
@@ -621,7 +632,7 @@ else:
                 if not isinstance(other, type):
                     # Same error as for issubclass(1, int)
                     raise TypeError('issubclass() arg 1 must be a class')
-                for attr in _get_protocol_attrs(cls):
+                for attr in cls.__protocol_attrs__:
                     for base in other.__mro__:
                         if attr in base.__dict__:
                             if base.__dict__[attr] is None:
