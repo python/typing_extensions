@@ -439,7 +439,7 @@ def _maybe_adjust_parameters(cls):
     """
     tvars = []
     if '__orig_bases__' in cls.__dict__:
-        tvars = typing._collect_type_vars(cls.__orig_bases__)
+        tvars = _collect_type_vars(cls.__orig_bases__)
         # Look for Generic[T1, ..., Tn] or Protocol[T1, ..., Tn].
         # If found, tvars must be a subset of it.
         # If not found, tvars is it.
@@ -1830,6 +1830,10 @@ else:
 
 if hasattr(typing, "Unpack"):  # 3.11+
     Unpack = typing.Unpack
+
+    def _is_unpack(obj):
+        return get_origin(obj) is Unpack
+
 elif sys.version_info[:2] >= (3, 9):
     class _UnpackSpecialForm(typing._SpecialForm, _root=True):
         def __repr__(self):
