@@ -524,7 +524,7 @@ else:
             if is_protocol_cls:
                 for attr in cls.__protocol_attrs__:
                     try:
-                        val = getattr(instance, attr)
+                        val = inspect.getattr_static(instance, attr)
                     except AttributeError:
                         break
                     if val is None and callable(getattr(cls, attr, None)):
