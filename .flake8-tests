@@ -24,6 +24,8 @@ ignore =
   # irrelevant plugins
   B3,
   DW12,
+  # Contradicts PEP8 nowadays
+  W503,
   # consistency with mypy
   W504
 noqa_require_code = true
