@@ -7,6 +7,18 @@
   (originally by Yurii Karabas), ensuring that `isinstance()` calls on
   protocols raise `TypeError` when the protocol is not decorated with
   `@runtime_checkable`. Patch by Alex Waygood.
+- Backport several significant performance improvements to runtime-checkable
+  protocols that have been made in Python 3.12 (see
+  https://github.com/python/cpython/issues/74690 for details). Patch by Alex
+  Waygood.
+
+  A side effect of one of the performance improvements is that the members of
+  a runtime-checkable protocol are now considered “frozen” at runtime as soon
+  as the class has been created. Monkey-patching attributes onto a
+  runtime-checkable protocol will still work, but will have no impact on
+  `isinstance()` checks comparing objects to the protocol. See
+  ["What's New in Python 3.12"](https://docs.python.org/3.12/whatsnew/3.12.html#typing)
+  for more details.
 
 # Release 4.5.0 (February 14, 2023)
 

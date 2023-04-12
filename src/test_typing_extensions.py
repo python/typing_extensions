@@ -3452,9 +3452,11 @@ class AllTests(BaseTestCase):
             'is_typeddict',
         }
         if sys.version_info < (3, 10):
-            exclude |= {'get_args', 'get_origin', 'Protocol', 'runtime_checkable'}
+            exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 11):
             exclude |= {'final', 'NamedTuple', 'Any'}
+        if sys.version_info < (3, 12):
+            exclude |= {'Protocol', 'runtime_checkable'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
