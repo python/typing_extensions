@@ -24,7 +24,7 @@ ignore =
   # irrelevant plugins
   B3,
   DW12,
-  # contradicts PEP8 nowadays
+  # Contradicts PEP8 nowadays
   W503,
   # consistency with mypy
   W504
