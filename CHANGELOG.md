@@ -29,6 +29,10 @@
   `typing_extensions` may no longer be considered instances of that protocol
   using the new release, and vice versa. Most users are unlikely to be affected
   by this change. Patch by Alex Waygood.
+- Backport the ability to define `__init__` methods on Protocol classes, a
+  change made in Python 3.11 (originally implemented in 
+  https://github.com/python/cpython/pull/31628 by Adrian Garcia Badaracco).
+  Patch by Alex Waygood.
 - Speedup `isinstance(3, typing_extensions.SupportsIndex)` by >10x on Python
   <3.12. Patch by Alex Waygood.
 
