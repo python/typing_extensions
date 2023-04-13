@@ -3545,7 +3545,7 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 11):
             exclude |= {'final', 'NamedTuple', 'Any'}
         if sys.version_info < (3, 12):
-            exclude |= {'Protocol', 'runtime_checkable'}
+            exclude |= {'Protocol', 'runtime_checkable', 'SupportsIndex'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(

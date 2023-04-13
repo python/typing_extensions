@@ -686,10 +686,9 @@ else:
 runtime = runtime_checkable
 
 
-# 3.8+
-if hasattr(typing, 'SupportsIndex'):
+# Our version of runtime-checkable protocols is faster on Python 3.7-3.11
+if sys.version_info >= (3, 12):
     SupportsIndex = typing.SupportsIndex
-# 3.7
 else:
     @runtime_checkable
     class SupportsIndex(Protocol):
