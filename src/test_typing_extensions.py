@@ -615,7 +615,8 @@ class LiteralTests(BaseTestCase):
         List[Literal[("foo", "bar", "baz")]]
 
     def test_repr(self):
-        if hasattr(typing, 'Literal'):
+        # we backport various bugfixes that were added in 3.9.1
+        if sys.version_info >= (3, 9, 1):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
@@ -684,6 +685,10 @@ class LiteralTests(BaseTestCase):
         for l in l1, l2, l3:
             self.assertEqual(l, Literal[1, 2, 3])
             self.assertEqual(l.__args__, (1, 2, 3))
+
+    def test_caching_of_Literal_respects_type(self):
+        self.assertIs(type(Literal[1].__args__[0]), int)
+        self.assertIs(type(Literal[True].__args__[0]), bool)
 
 
 class MethodHolder:
@@ -3596,6 +3601,8 @@ class AllTests(BaseTestCase):
             'get_type_hints',
             'is_typeddict',
         }
+        if sys.version_info < (3, 9, 1):
+            exclude |= {"Literal"}
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 11):

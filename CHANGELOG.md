@@ -3,6 +3,16 @@
 - Add `typing_extensions.Buffer`, a marker class for buffer types, as proposed
   by PEP 688. Equivalent to `collections.abc.Buffer` in Python 3.12. Patch by
   Jelle Zijlstra.
+- Backport two CPython PRs fixing various issues with `typing.Literal`:
+  https://github.com/python/cpython/pull/23294 and
+  https://github.com/python/cpython/pull/23383. Both CPython PRs were
+  originally by Yurii Karabas, and both were backported to Python >=3.9.1, but
+  no earlier. Patch by Alex Waygood.
+
+  A side effect of one of the changes is that equality comparisons of `Literal`
+  objects will now raise a `TypeError` if one of the `Literal` objects being
+  compared has a mutable parameter. (Using mutable parameters with `Literal` is
+  not supported by PEP 586 or by any major static type checkers.)
 - Backport [CPython PR 26067](https://github.com/python/cpython/pull/26067)
   (originally by Yurii Karabas), ensuring that `isinstance()` calls on
   protocols raise `TypeError` when the protocol is not decorated with
