@@ -143,6 +143,9 @@ Certain objects were changed after they were added to `typing`, and
 - `TypeVar` gains two additional parameters, `default=` and `infer_variance=`,
   in the draft PEPs [695](https://peps.python.org/pep-0695/) and [696](https://peps.python.org/pep-0696/), which are being considered for inclusion
   in Python 3.12.
+- `Literal` does not flatten or deduplicate parameters on Python <3.9.1. The
+  `typing_extensions` version flattens and deduplicates parameters on all
+  Python versions.
 
 There are a few types whose interface was modified between different
 versions of typing. For example, `typing.Sequence` was modified to

@@ -615,7 +615,8 @@ class LiteralTests(BaseTestCase):
         List[Literal[("foo", "bar", "baz")]]
 
     def test_repr(self):
-        if hasattr(typing, 'Literal'):
+        # we backport various bugfixes that were added in 3.9.1
+        if sys.version_info >= (3, 9, 1):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
@@ -624,6 +625,7 @@ class LiteralTests(BaseTestCase):
         self.assertEqual(repr(Literal[int]), mod_name + ".Literal[int]")
         self.assertEqual(repr(Literal), mod_name + ".Literal")
         self.assertEqual(repr(Literal[None]), mod_name + ".Literal[None]")
+        self.assertEqual(repr(Literal[1, 2, 3, 3]), mod_name + ".Literal[1, 2, 3]")
 
     def test_cannot_init(self):
         with self.assertRaises(TypeError):
@@ -654,6 +656,39 @@ class LiteralTests(BaseTestCase):
     def test_no_multiple_subscripts(self):
         with self.assertRaises(TypeError):
             Literal[1][1]
+
+    def test_equal(self):
+        self.assertNotEqual(Literal[0], Literal[False])
+        self.assertNotEqual(Literal[True], Literal[1])
+        self.assertNotEqual(Literal[1], Literal[2])
+        self.assertNotEqual(Literal[1, True], Literal[1])
+        self.assertEqual(Literal[1], Literal[1])
+        self.assertEqual(Literal[1, 2], Literal[2, 1])
+        self.assertEqual(Literal[1, 2, 3], Literal[1, 2, 3, 3])
+
+    def test_hash(self):
+        self.assertEqual(hash(Literal[1]), hash(Literal[1]))
+        self.assertEqual(hash(Literal[1, 2]), hash(Literal[2, 1]))
+        self.assertEqual(hash(Literal[1, 2, 3]), hash(Literal[1, 2, 3, 3]))
+
+    def test_args(self):
+        self.assertEqual(Literal[1, 2, 3].__args__, (1, 2, 3))
+        self.assertEqual(Literal[1, 2, 3, 3].__args__, (1, 2, 3))
+        self.assertEqual(Literal[1, Literal[2], Literal[3, 4]].__args__, (1, 2, 3, 4))
+        # Mutable arguments will not be deduplicated
+        self.assertEqual(Literal[[], []].__args__, ([], []))
+
+    def test_flatten(self):
+        l1 = Literal[Literal[1], Literal[2], Literal[3]]
+        l2 = Literal[Literal[1, 2], 3]
+        l3 = Literal[Literal[1, 2, 3]]
+        for lit in l1, l2, l3:
+            self.assertEqual(lit, Literal[1, 2, 3])
+            self.assertEqual(lit.__args__, (1, 2, 3))
+
+    def test_caching_of_Literal_respects_type(self):
+        self.assertIs(type(Literal[1].__args__[0]), int)
+        self.assertIs(type(Literal[True].__args__[0]), bool)
 
 
 class MethodHolder:
@@ -3566,6 +3601,8 @@ class AllTests(BaseTestCase):
             'get_type_hints',
             'is_typeddict',
         }
+        if sys.version_info < (3, 9, 1):
+            exclude |= {"Literal"}
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 11):
