@@ -45,6 +45,11 @@
   Patch by Alex Waygood.
 - Speedup `isinstance(3, typing_extensions.SupportsIndex)` by >10x on Python
   <3.12. Patch by Alex Waygood.
+- Add `typing_extensions` versions of `SupportsInt`, `SupportsFloat`,
+  `SupportsComplex`, `SupportsBytes`, `SupportsAbs` and `SupportsRound`. These
+  have the same semantics as the versions from the `typing` module, but
+  `isinstance()` checks against the `typing_extensions versions are >10x faster
+  at runtime on Python <3.12. Patch by Alex Waygood.
 
 # Release 4.5.0 (February 14, 2023)
 
