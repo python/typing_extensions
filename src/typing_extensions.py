@@ -263,7 +263,7 @@ def IntVar(name):
 
 # Literal exists in 3.8 but it has several unresolved bugs
 # See https://github.com/python/cpython/pull/23294 and https://github.com/python/cpython/issues/103592
-if sys.version_info > (3, 9):
+if sys.version_info >= (3, 9):
     Literal = typing.Literal
 else:
     class _LiteralForm(typing._SpecialForm, _root=True):
