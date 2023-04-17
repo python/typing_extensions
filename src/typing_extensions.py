@@ -261,10 +261,10 @@ def IntVar(name):
     return typing.TypeVar(name)
 
 
-# 3.8+:
-if hasattr(typing, 'Literal'):
+# Literal exists in 3.8 but it has several unresolved bugs
+# See https://github.com/python/cpython/pull/23294 and https://github.com/python/cpython/issues/103592
+if sys.version_info > (3, 9):
     Literal = typing.Literal
-# 3.7:
 else:
     class _LiteralForm(typing._SpecialForm, _root=True):
 
