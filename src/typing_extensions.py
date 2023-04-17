@@ -291,6 +291,9 @@ else:
             return hash(frozenset(_value_and_type_iter(self.__args__)))
 
     class _LiteralForm(typing._SpecialForm, _root=True):
+        def __init__(self, doc: str):
+            self._name = 'Literal'
+            self._doc = self.__doc__ = doc
 
         def __repr__(self):
             return 'typing_extensions.' + self._name
@@ -320,8 +323,8 @@ else:
 
             return _LiteralGenericAlias(self, parameters)
 
-    Literal = _LiteralForm('Literal',
-                           doc="""A type that can be used to indicate to type checkers
+    Literal = _LiteralForm(doc="""\
+                           A type that can be used to indicate to type checkers
                            that the corresponding value has a value literally equivalent
                            to the provided parameter. For example:
 
