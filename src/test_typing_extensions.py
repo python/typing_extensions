@@ -14,13 +14,17 @@ import subprocess
 import types
 from unittest import TestCase, main, skipUnless, skipIf
 from unittest.mock import patch
-from test import ann_module, ann_module2, ann_module3
 import typing
 from typing import TypeVar, Optional, Union, AnyStr
 from typing import T, KT, VT  # Not in __all__.
 from typing import Tuple, List, Dict, Iterable, Iterator, Callable
 from typing import Generic
 from typing import no_type_check
+import warnings
+
+import _ann_module
+import _ann_module2
+import _ann_module3
 import typing_extensions
 from typing_extensions import NoReturn, Any, ClassVar, Final, IntVar, Literal, Type, NewType, TypedDict, Self
 from typing_extensions import TypeAlias, ParamSpec, Concatenate, ParamSpecArgs, ParamSpecKwargs, TypeGuard
@@ -32,7 +36,6 @@ from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override, deprecated, Buffer
 from _typed_dict_test_helper import Foo, FooGeneric
-import warnings
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
@@ -384,8 +387,13 @@ class AnyTests(BaseTestCase):
         else:
             mod_name = 'typing_extensions'
         self.assertEqual(repr(Any), f"{mod_name}.Any")
-        if sys.version_info < (3, 11):  # skip for now on 3.11+ see python/cpython#95987
-            self.assertEqual(repr(self.SubclassesAny), "<class 'test_typing_extensions.AnyTests.SubclassesAny'>")
+
+    @skipIf(sys.version_info[:3] == (3, 11, 0), "A bug was fixed in 3.11.1")
+    def test_repr_on_Any_subclass(self):
+        self.assertEqual(
+            repr(self.SubclassesAny),
+            f"<class '{self.SubclassesAny.__module__}.AnyTests.SubclassesAny'>"
+        )
 
     def test_instantiation(self):
         with self.assertRaises(TypeError):
@@ -944,26 +952,22 @@ gth = get_type_hints
 class GetTypeHintTests(BaseTestCase):
     def test_get_type_hints_modules(self):
         ann_module_type_hints = {1: 2, 'f': Tuple[int, int], 'x': int, 'y': str}
-        if (TYPING_3_11_0
-                or (TYPING_3_10_0 and sys.version_info.releaselevel in {'candidate', 'final'})):
-            # More tests were added in 3.10rc1.
-            ann_module_type_hints['u'] = int | float
-        self.assertEqual(gth(ann_module), ann_module_type_hints)
-        self.assertEqual(gth(ann_module2), {})
-        self.assertEqual(gth(ann_module3), {})
+        self.assertEqual(gth(_ann_module), ann_module_type_hints)
+        self.assertEqual(gth(_ann_module2), {})
+        self.assertEqual(gth(_ann_module3), {})
 
     def test_get_type_hints_classes(self):
-        self.assertEqual(gth(ann_module.C, ann_module.__dict__),
-                         {'y': Optional[ann_module.C]})
-        self.assertIsInstance(gth(ann_module.j_class), dict)
-        self.assertEqual(gth(ann_module.M), {'123': 123, 'o': type})
-        self.assertEqual(gth(ann_module.D),
-                         {'j': str, 'k': str, 'y': Optional[ann_module.C]})
-        self.assertEqual(gth(ann_module.Y), {'z': int})
-        self.assertEqual(gth(ann_module.h_class),
-                         {'y': Optional[ann_module.C]})
-        self.assertEqual(gth(ann_module.S), {'x': str, 'y': str})
-        self.assertEqual(gth(ann_module.foo), {'x': int})
+        self.assertEqual(gth(_ann_module.C, _ann_module.__dict__),
+                         {'y': Optional[_ann_module.C]})
+        self.assertIsInstance(gth(_ann_module.j_class), dict)
+        self.assertEqual(gth(_ann_module.M), {'123': 123, 'o': type})
+        self.assertEqual(gth(_ann_module.D),
+                         {'j': str, 'k': str, 'y': Optional[_ann_module.C]})
+        self.assertEqual(gth(_ann_module.Y), {'z': int})
+        self.assertEqual(gth(_ann_module.h_class),
+                         {'y': Optional[_ann_module.C]})
+        self.assertEqual(gth(_ann_module.S), {'x': str, 'y': str})
+        self.assertEqual(gth(_ann_module.foo), {'x': int})
         self.assertEqual(gth(NoneAndForward, globals()),
                          {'parent': NoneAndForward, 'meaning': type(None)})
 
@@ -974,7 +978,7 @@ class GetTypeHintTests(BaseTestCase):
                 def __init__(self, x: 'not a type'): ...
         self.assertTrue(NoTpCheck.__no_type_check__)
         self.assertTrue(NoTpCheck.Inn.__init__.__no_type_check__)
-        self.assertEqual(gth(ann_module2.NTC.meth), {})
+        self.assertEqual(gth(_ann_module2.NTC.meth), {})
         class ABase(Generic[T]):
             def meth(x: int): ...
         @no_type_check
@@ -982,8 +986,8 @@ class GetTypeHintTests(BaseTestCase):
         self.assertEqual(gth(ABase.meth), {'x': int})
 
     def test_get_type_hints_ClassVar(self):
-        self.assertEqual(gth(ann_module2.CV, ann_module2.__dict__),
-                         {'var': ClassVar[ann_module2.CV]})
+        self.assertEqual(gth(_ann_module2.CV, _ann_module2.__dict__),
+                         {'var': ClassVar[_ann_module2.CV]})
         self.assertEqual(gth(B, globals()),
                          {'y': int, 'x': ClassVar[Optional[B]], 'b': int})
         self.assertEqual(gth(CSub, globals()),
