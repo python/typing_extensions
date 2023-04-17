@@ -682,9 +682,9 @@ class LiteralTests(BaseTestCase):
         l1 = Literal[Literal[1], Literal[2], Literal[3]]
         l2 = Literal[Literal[1, 2], 3]
         l3 = Literal[Literal[1, 2, 3]]
-        for l in l1, l2, l3:
-            self.assertEqual(l, Literal[1, 2, 3])
-            self.assertEqual(l.__args__, (1, 2, 3))
+        for lit in l1, l2, l3:
+            self.assertEqual(lit, Literal[1, 2, 3])
+            self.assertEqual(lit.__args__, (1, 2, 3))
 
     def test_caching_of_Literal_respects_type(self):
         self.assertIs(type(Literal[1].__args__[0]), int)
