@@ -1,6 +1,6 @@
 """
-Correct syntax for variable annotation that should fail at runtime
-in a certain manner. More examples are in test_grammar and test_parser.
+Correct syntax for variable annotation that should fail at runtime in a certain manner.
+This file is for testing purposes, and is vendored from Lib/test/ann_module3.py in CPython.
 """
 
 def f_bad_ann():

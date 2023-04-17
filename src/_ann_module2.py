@@ -1,6 +1,7 @@
 """
 Some correct syntax for variable annotation here.
-More examples are in test_grammar and test_parser.
+This file is for testing purposes,
+and is vendored from Lib/test/ann_module2.py in CPython.
 """
 
 from typing import no_type_check, ClassVar

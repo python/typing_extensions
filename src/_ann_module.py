@@ -2,6 +2,7 @@
 
 """
 The module for testing variable annotations.
+Vendored from Lib/test/ann_module.py in CPython.
 Empty lines above are for good reason (testing for correct line numbers)
 """
 
