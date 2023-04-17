@@ -797,7 +797,9 @@ else:
 
     @runtime_checkable
     class SupportsAbs(Protocol[T_co]):
-        """An ABC with one abstract method __abs__ that is covariant in its return type."""
+        """
+        An ABC with one abstract method __abs__ that is covariant in its return type.
+        """
         __slots__ = ()
 
         @abc.abstractmethod
@@ -806,7 +808,9 @@ else:
 
     @runtime_checkable
     class SupportsRound(Protocol[T_co]):
-        """An ABC with one abstract method __round__ that is covariant in its return type."""
+        """
+        An ABC with one abstract method __round__ that is covariant in its return type.
+        """
         __slots__ = ()
 
         @abc.abstractmethod
