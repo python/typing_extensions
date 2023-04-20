@@ -144,7 +144,7 @@ Certain objects were changed after they were added to `typing`, and
   in the draft PEPs [695](https://peps.python.org/pep-0695/) and [696](https://peps.python.org/pep-0696/), which are being considered for inclusion
   in Python 3.12.
 - `Literal` does not flatten or deduplicate parameters on Python <3.9.1, and a
-  caching bug was fixed in 3.10.1/3.9.8 The `typing_extensions` version
+  caching bug was fixed in 3.10.1/3.9.8. The `typing_extensions` version
   flattens and deduplicates parameters on all Python versions, and the caching
   bug is also fixed on all versions.
 
