@@ -13,6 +13,10 @@
   objects will now raise a `TypeError` if one of the `Literal` objects being
   compared has a mutable parameter. (Using mutable parameters with `Literal` is
   not supported by PEP 586 or by any major static type checkers.)
+- `Literal` is now reimplemented on all Python versions <= 3.10.0. The
+  `typing_extensions` version does not suffer from the bug that was fixed in
+  https://github.com/python/cpython/pull/29334. (The CPython bugfix was
+  backported to CPython 3.10.1 and 3.9.8, but no earlier.)
 - Backport [CPython PR 26067](https://github.com/python/cpython/pull/26067)
   (originally by Yurii Karabas), ensuring that `isinstance()` calls on
   protocols raise `TypeError` when the protocol is not decorated with

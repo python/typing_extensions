@@ -261,8 +261,8 @@ def IntVar(name):
     return typing.TypeVar(name)
 
 
-# Various Literal bugs were fixed in 3.9.1, but not backported earlier than that
-if sys.version_info >= (3, 9, 1):
+# A Literal bug was fixed in 3.11.0, 3.10.1 and 3.9.8
+if sys.version_info >= (3, 10, 1):
     Literal = typing.Literal
 else:
     def _flatten_literal_params(parameters):
