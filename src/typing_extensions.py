@@ -111,17 +111,23 @@ def _check_generic(cls, parameters, elen=_marker):
                         f" actual {alen}, expected {elen}")
 
 
+def _is_generic_alias_like(t) -> bool:
+    return hasattr(t, "__args__") and hasattr(t, "__origin__") and hasattr(t, "__parameters__")
+
+
 if sys.version_info >= (3, 10):
     def _should_collect_from_parameters(t):
         return isinstance(
             t, (typing._GenericAlias, _types.GenericAlias, _types.UnionType)
-        )
+        ) or _is_generic_alias_like(t)
 elif sys.version_info >= (3, 9):
     def _should_collect_from_parameters(t):
-        return isinstance(t, (typing._GenericAlias, _types.GenericAlias))
+        return isinstance(t, (typing._GenericAlias, _types.GenericAlias)) or _is_generic_alias_like(t)
 else:
     def _should_collect_from_parameters(t):
-        return isinstance(t, typing._GenericAlias) and not t._special
+        return (
+            isinstance(t, typing._GenericAlias) and not t._special
+        )  or _is_generic_alias_like(t)
 
 
 def _collect_type_vars(types, typevar_types=None):

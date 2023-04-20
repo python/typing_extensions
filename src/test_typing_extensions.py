@@ -3986,5 +3986,23 @@ class BufferTests(BaseTestCase):
         self.assertIsSubclass(MySubclassedBuffer, Buffer)
 
 
+class TestGenericAliasLike(BaseTestCase):
+    def test(self):
+
+        T = TypeVar('T')
+
+        class GenericType(Generic[T]):
+            def __class_getitem__(cls, args: Union[Tuple[Type[Any], ...], Type[Any]]) -> 'GenericAliasLike':
+                return GenericAliasLike()
+
+        class GenericAliasLike:
+            __args__ = ()
+            __parameters__ = (T,)
+            __origin__ = GenericType
+
+        res = List[GenericAliasLike[T]][int]
+        self.assertEqual(getattr(res, '__parameters__'), (T,))
+
+
 if __name__ == '__main__':
     main()
