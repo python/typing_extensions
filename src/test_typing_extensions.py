@@ -615,8 +615,8 @@ class LiteralTests(BaseTestCase):
         List[Literal[("foo", "bar", "baz")]]
 
     def test_repr(self):
-        # we backport various bugfixes that were added in 3.9.1
-        if sys.version_info >= (3, 9, 1):
+        # we backport various bugfixes that were added in 3.10.1 and earlier
+        if sys.version_info >= (3, 10, 1):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
@@ -662,6 +662,8 @@ class LiteralTests(BaseTestCase):
         self.assertNotEqual(Literal[True], Literal[1])
         self.assertNotEqual(Literal[1], Literal[2])
         self.assertNotEqual(Literal[1, True], Literal[1])
+        self.assertNotEqual(Literal[1, True], Literal[1, 1])
+        self.assertNotEqual(Literal[1, 2], Literal[True, 2])
         self.assertEqual(Literal[1], Literal[1])
         self.assertEqual(Literal[1, 2], Literal[2, 1])
         self.assertEqual(Literal[1, 2, 3], Literal[1, 2, 3, 3])
@@ -3601,10 +3603,10 @@ class AllTests(BaseTestCase):
             'get_type_hints',
             'is_typeddict',
         }
-        if sys.version_info < (3, 9, 1):
-            exclude |= {"Literal"}
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
+        if sys.version_info < (3, 10, 1):
+            exclude |= {"Literal"}
         if sys.version_info < (3, 11):
             exclude |= {'final', 'NamedTuple', 'Any'}
         if sys.version_info < (3, 12):
