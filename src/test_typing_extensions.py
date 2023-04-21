@@ -2829,6 +2829,9 @@ class GetTypeHintsTests(BaseTestCase):
             'year': NotRequired[Annotated[int, 2000]],
         }
 
+    def test_orig_bases(self):
+        self.assertEqual(Cat.__orig_bases__, (Animal,))
+
 
 class TypeAliasTests(BaseTestCase):
     def test_canonical_usage_with_variable_annotation(self):

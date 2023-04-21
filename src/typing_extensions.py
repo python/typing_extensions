@@ -831,6 +831,7 @@ else:
             super().__init__(name, bases, ns)
 
         def __new__(cls, name, bases, ns, total=True):
+            ns['__orig_bases__'] = bases
             # Create new typed dict class object.
             # This method is called directly when TypedDict is subclassed,
             # or via _typeddict_new when TypedDict is instantiated. This way
