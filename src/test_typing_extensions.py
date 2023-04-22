@@ -4004,11 +4004,16 @@ class TestGenericAliasLike(BaseTestCase):
             __parameters__ = (T,)
             __origin__ = GenericType
 
-            # here would go a __getitem__ implementation that
-            # does the tracking of type var substitution
-            # omitted since it is not strictly necessary for this test
+            def __getitem__(self, args):
+                # here would go logic to do the tracking of type var substitution
+                # omitted since it is not strictly necessary for this test
+                return self
+            
+            # __call__ needs to be implemented for this to be considered a type
+            def __call__(self):
+                pass
 
-        res = List[GenericAliasLike[T]][int]
+        res = List[GenericType[T]][int]
         self.assertEqual(getattr(res, '__parameters__'), (T,))
 
 
