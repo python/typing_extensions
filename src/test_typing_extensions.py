@@ -3992,13 +3992,21 @@ class TestGenericAliasLike(BaseTestCase):
         T = TypeVar('T')
 
         class GenericType(Generic[T]):
-            def __class_getitem__(cls, args: Union[Tuple[Type[Any], ...], Type[Any]]) -> 'GenericAliasLike':
+            def __class_getitem__(cls, args):
+                # The goal is that the thing returned from here can
+                # act like a GenericAlias but also implement custom behavior
+                # In particular the original feature request involved tracking
+                # TypeVar substitutions at runtime for Pydantic
                 return GenericAliasLike()
 
         class GenericAliasLike:
             __args__ = ()
             __parameters__ = (T,)
             __origin__ = GenericType
+
+            # here would go a __getitem__ implementation that
+            # does the tracking of type var substitution
+            # omitted since it is not strictly necessary for this test
 
         res = List[GenericAliasLike[T]][int]
         self.assertEqual(getattr(res, '__parameters__'), (T,))
