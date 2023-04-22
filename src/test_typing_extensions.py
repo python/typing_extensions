@@ -63,13 +63,6 @@ class BaseTestCase(TestCase):
                 message += f' : {msg}'
             raise self.failureException(message)
 
-    @contextlib.contextmanager
-    def assertWarnsIf(self, condition: bool, expected_warning: Type[Warning]):
-        with contextlib.ExitStack() as stack:
-            if condition:
-                stack.enter_context(self.assertWarns(expected_warning))
-            yield
-
 
 class Employee:
     pass
@@ -2260,7 +2253,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Emp.__total__, True)
 
     def test_basics_keywords_syntax(self):
-        with self.assertWarnsIf(sys.version_info >= (3, 11), DeprecationWarning):
+        with self.assertWarns(DeprecationWarning):
             Emp = TypedDict('Emp', name=str, id=int)
         self.assertIsSubclass(Emp, dict)
         self.assertIsSubclass(Emp, typing.MutableMapping)
@@ -2276,7 +2269,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Emp.__total__, True)
 
     def test_typeddict_special_keyword_names(self):
-        with self.assertWarnsIf(sys.version_info >= (3, 11), DeprecationWarning):
+        with self.assertWarns(DeprecationWarning):
             TD = TypedDict("TD", cls=type, self=object, typename=str, _typename=int,
                            fields=list, _fields=dict)
         self.assertEqual(TD.__name__, 'TD')
@@ -2312,7 +2305,7 @@ class TypedDictTests(BaseTestCase):
 
     def test_typeddict_errors(self):
         Emp = TypedDict('Emp', {'name': str, 'id': int})
-        if hasattr(typing, "Required"):
+        if sys.version_info >= (3, 12):
             self.assertEqual(TypedDict.__module__, 'typing')
         else:
             self.assertEqual(TypedDict.__module__, 'typing_extensions')
@@ -2325,7 +2318,7 @@ class TypedDictTests(BaseTestCase):
             issubclass(dict, Emp)
 
         if not TYPING_3_11_0:
-            with self.assertRaises(TypeError):
+            with self.assertRaises(TypeError), self.assertWarns(DeprecationWarning):
                 TypedDict('Hi', x=1)
             with self.assertRaises(TypeError):
                 TypedDict('Hi', [('x', int), ('y', 1)])
@@ -3598,13 +3591,11 @@ class AllTests(BaseTestCase):
             'overload',
             'ParamSpec',
             'Text',
-            'TypedDict',
             'TypeVar',
             'TypeVarTuple',
             'TYPE_CHECKING',
             'Final',
             'get_type_hints',
-            'is_typeddict',
         }
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
@@ -3613,7 +3604,10 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 11):
             exclude |= {'final', 'NamedTuple', 'Any'}
         if sys.version_info < (3, 12):
-            exclude |= {'Protocol', 'runtime_checkable', 'SupportsIndex'}
+            exclude |= {
+                'Protocol', 'runtime_checkable', 'SupportsIndex', 'TypedDict',
+                'is_typeddict'
+            }
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(

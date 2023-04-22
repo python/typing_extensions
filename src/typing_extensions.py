@@ -749,7 +749,7 @@ else:
             pass
 
 
-if hasattr(typing, "Required"):
+if sys.version_info >= (3, 12):
     # The standard library TypedDict in Python 3.8 does not store runtime information
     # about which (if any) keys are optional.  See https://bugs.python.org/issue38834
     # The standard library TypedDict in Python 3.9.0/1 does not honour the "total"
@@ -757,6 +757,8 @@ if hasattr(typing, "Required"):
     # The standard library TypedDict below Python 3.11 does not store runtime
     # information about optional and required keys when using Required or NotRequired.
     # Generic TypedDicts are also impossible using typing.TypedDict on Python <3.11.
+    # Aaaand on 3.12 we add __orig_bases__ to TypedDict
+    # to enable better runtime introspection.
     TypedDict = typing.TypedDict
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
@@ -786,7 +788,6 @@ else:
             typename, args = args[0], args[1:]  # allow the "_typename" keyword be passed
         elif '_typename' in kwargs:
             typename = kwargs.pop('_typename')
-            import warnings
             warnings.warn("Passing '_typename' as keyword argument is deprecated",
                           DeprecationWarning, stacklevel=2)
         else:
@@ -801,7 +802,6 @@ else:
                                 'were given')
         elif '_fields' in kwargs and len(kwargs) == 1:
             fields = kwargs.pop('_fields')
-            import warnings
             warnings.warn("Passing '_fields' as keyword argument is deprecated",
                           DeprecationWarning, stacklevel=2)
         else:
@@ -812,6 +812,15 @@ else:
         elif kwargs:
             raise TypeError("TypedDict takes either a dict or keyword arguments,"
                             " but not both")
+
+        if kwargs:
+            warnings.warn(
+                "The kwargs-based syntax for TypedDict definitions is deprecated, "
+                "may be removed in a future version, and may not be "
+                "understood by third-party type checkers.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         ns = {'__annotations__': dict(fields)}
         module = _caller()
@@ -831,7 +840,6 @@ else:
             super().__init__(name, bases, ns)
 
         def __new__(cls, name, bases, ns, total=True):
-            ns['__orig_bases__'] = bases
             # Create new typed dict class object.
             # This method is called directly when TypedDict is subclassed,
             # or via _typeddict_new when TypedDict is instantiated. This way
@@ -886,6 +894,8 @@ else:
             tp_dict.__annotations__ = annotations
             tp_dict.__required_keys__ = frozenset(required_keys)
             tp_dict.__optional_keys__ = frozenset(optional_keys)
+            if not hasattr(tp_dict, '__orig_bases__'):
+                tp_dict.__orig_bases__ = bases
             if not hasattr(tp_dict, '__total__'):
                 tp_dict.__total__ = total
             return tp_dict
