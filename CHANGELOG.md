@@ -35,6 +35,17 @@
   Patch by Alex Waygood.
 - Speedup `isinstance(3, typing_extensions.SupportsIndex)` by >10x on Python
   <3.12. Patch by Alex Waygood.
+- Allow any class that has the following attributes to be treated
+  like `GenericAlias` for the purposes of being used in generic expressions
+  like `List[SomeGeneric[T]][int]`:
+  - `__parameters__`: a tuple of un-substituted generic parameters (as TypeVars).
+  - `__args__`: a tuple of concrete (substituted) generic parameters.
+  - `__origin__`: the original generic class.
+  This allows classes to return something from `__class_getitem__` that behaves
+  like a `GenericAlias` but also implements custom behavior, for example
+  tracking TypeVar substitutions at runtime and communicating them back
+  to the origin class.
+  Patch by Adrian Garcia Badaracco.
 
 # Release 4.5.0 (February 14, 2023)
 
