@@ -1063,9 +1063,9 @@ class GetTypeHintTests(BaseTestCase):
             Path(tempdir, "ann_module.py").write_text(ANN_MODULE_SOURCE)
             Path(tempdir, "ann_module2.py").write_text(ANN_MODULE_2_SOURCE)
             Path(tempdir, "ann_module3.py").write_text(ANN_MODULE_3_SOURCE)
-            cls.ann_module = importlib.import_module(f"ann_module")
-            cls.ann_module2 = importlib.import_module(f"ann_module2")
-            cls.ann_module3 = importlib.import_module(f"ann_module3")
+            cls.ann_module = importlib.import_module("ann_module")
+            cls.ann_module2 = importlib.import_module("ann_module2")
+            cls.ann_module3 = importlib.import_module("ann_module3")
 
     def test_get_type_hints_modules(self):
         ann_module_type_hints = {1: 2, 'f': Tuple[int, int], 'x': int, 'y': str}
