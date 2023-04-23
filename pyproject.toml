@@ -57,5 +57,5 @@ name = "Guido van Rossum, Jukka Lehtosalo, Łukasz Langa, Michael Lee"
 email = "levkivskyi@gmail.com"
 
 [tool.flit.sdist]
-include = ["CHANGELOG.md", "README.md", "tox.ini", "*/*test*.py", "*/_ann_module*.py"]
+include = ["CHANGELOG.md", "README.md", "tox.ini", "*/*test*.py"]
 exclude = []

@@ -15,6 +15,4 @@ exclude =
   # tests have more relaxed formatting rules
   # and its own specific config in .flake8-tests
   src/test_typing_extensions.py,
-  # these are just data files
-  src/_ann_module*.py,
 noqa_require_code = true
