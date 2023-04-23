@@ -52,6 +52,9 @@
 - Add `__orig_bases__` to non-generic TypedDicts, call-based TypedDicts, and
   call-based NamedTuples. Other TypedDicts and NamedTuples already had the attribute.
   Patch by Adrian Garcia Badaracco.
+- Constructing a call-based `TypedDict` using keyword arguments for the fields
+  now causes a `DeprecationWarning` to be emitted. This matches the behaviour
+  of `typing.TypedDict` on 3.11 and 3.12.
 
 # Release 4.5.0 (February 14, 2023)
 
