@@ -4008,7 +4008,7 @@ class TestGenericAliasLike(BaseTestCase):
                 # here would go logic to do the tracking of type var substitution
                 # omitted since it is not strictly necessary for this test
                 return self
-            
+
             # __call__ needs to be implemented for this to be considered a type
             def __call__(self):
                 pass
