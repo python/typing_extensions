@@ -2823,7 +2823,48 @@ class GetTypeHintsTests(BaseTestCase):
         }
 
     def test_orig_bases(self):
-        self.assertEqual(Cat.__orig_bases__, (Animal,))
+        T = TypeVar('T')
+
+        class Parent(TypedDict):
+            pass
+
+        class Child(Parent):
+            pass
+
+        class OtherChild(Parent):
+            pass
+
+        class MixedChild(Child, OtherChild, Parent):
+            pass
+
+        class GenericParent(TypedDict, Generic[T]):
+            pass
+
+        class GenericChild(GenericParent[int]):
+            pass
+
+        class OtherGenericChild(GenericParent[str]):
+            pass
+
+        class MixedGenericChild(GenericChild, OtherGenericChild, GenericParent[float]):
+            pass
+
+        class MultipleGenericBases(GenericParent[int], GenericParent[float]):
+            pass
+
+        CallTypedDict = TypedDict('CallTypedDict', {})
+
+        self.assertEqual(Parent.__orig_bases__, (TypedDict,))
+        self.assertEqual(Child.__orig_bases__, (Parent,))
+        self.assertEqual(OtherChild.__orig_bases__, (Parent,))
+        self.assertEqual(MixedChild.__orig_bases__, (Child, OtherChild, Parent,))
+        self.assertEqual(GenericParent.__orig_bases__, (TypedDict, Generic[T]))
+        self.assertEqual(GenericChild.__orig_bases__, (GenericParent[int],))
+        self.assertEqual(OtherGenericChild.__orig_bases__, (GenericParent[str],))
+        self.assertEqual(MixedGenericChild.__orig_bases__, (GenericChild, OtherGenericChild, GenericParent[float]))
+        self.assertEqual(MultipleGenericBases.__orig_bases__, (GenericParent[int], GenericParent[float]))
+        self.assertEqual(CallTypedDict.__orig_bases__, (TypedDict,))
+
 
 
 class TypeAliasTests(BaseTestCase):
@@ -3923,6 +3964,22 @@ class NamedTupleTests(BaseTestCase):
             self.NestedEmployee.__annotations__,
             self.NestedEmployee._field_types
         )
+
+    def test_orig_bases(self):
+        T = TypeVar('T')
+
+        class SimpleNamedTuple(NamedTuple):
+            pass
+
+        class GenericNamedTuple(NamedTuple, Generic[T]):
+            pass
+
+        self.assertEqual(SimpleNamedTuple.__orig_bases__, (NamedTuple,))
+        self.assertEqual(GenericNamedTuple.__orig_bases__, (NamedTuple, Generic[T]))
+
+        CallNamedTuple = NamedTuple('CallNamedTuple', [])
+
+        self.assertEqual(CallNamedTuple.__orig_bases__, (NamedTuple,))
 
 
 class TypeVarLikeDefaultsTests(BaseTestCase):

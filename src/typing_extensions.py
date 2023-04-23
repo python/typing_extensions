@@ -853,9 +853,14 @@ else:
             # Instead, monkey-patch __bases__ onto the class after it's been created.
             tp_dict = super().__new__(cls, name, (dict,), ns)
 
-            if any(issubclass(base, typing.Generic) for base in bases):
+            is_generic = any(issubclass(base, typing.Generic) for base in bases)
+
+            if is_generic:
                 tp_dict.__bases__ = (typing.Generic, dict)
                 _maybe_adjust_parameters(tp_dict)
+            else:
+                # generic TypedDicts get __orig_bases__ from Generic
+                tp_dict.__orig_bases__ = bases or (TypedDict,)
 
             annotations = {}
             own_annotations = ns.get('__annotations__', {})
@@ -894,8 +899,6 @@ else:
             tp_dict.__annotations__ = annotations
             tp_dict.__required_keys__ = frozenset(required_keys)
             tp_dict.__optional_keys__ = frozenset(optional_keys)
-            if not hasattr(tp_dict, '__orig_bases__'):
-                tp_dict.__orig_bases__ = bases
             if not hasattr(tp_dict, '__total__'):
                 tp_dict.__total__ = total
             return tp_dict
@@ -2389,7 +2392,9 @@ else:
         elif kwargs:
             raise TypeError("Either list of fields or keywords"
                             " can be provided to NamedTuple, not both")
-        return _make_nmtuple(__typename, __fields, module=_caller())
+        nt = _make_nmtuple(__typename, __fields, module=_caller())
+        nt.__orig_bases__ = (NamedTuple,)
+        return nt
 
     NamedTuple.__doc__ = typing.NamedTuple.__doc__
     _NamedTuple = type.__new__(_NamedTupleMeta, 'NamedTuple', (), {})
