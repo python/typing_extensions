@@ -1066,6 +1066,13 @@ class GetTypeHintTests(BaseTestCase):
             cls.ann_module = importlib.import_module("ann_module")
             cls.ann_module2 = importlib.import_module("ann_module2")
             cls.ann_module3 = importlib.import_module("ann_module3")
+        sys.path.pop()
+
+    @classmethod
+    def tearDownClass(cls):
+        for modname in "ann_module", "ann_module2", "ann_module3":
+            delattr(cls, modname)
+            del sys.modules[modname]
 
     def test_get_type_hints_modules(self):
         ann_module_type_hints = {1: 2, 'f': Tuple[int, int], 'x': int, 'y': str}
