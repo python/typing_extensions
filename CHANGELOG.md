@@ -49,6 +49,9 @@
   Patch by Alex Waygood.
 - Speedup `isinstance(3, typing_extensions.SupportsIndex)` by >10x on Python
   <3.12. Patch by Alex Waygood.
+- Add `__orig_bases__` to non-generic TypedDicts, call-based TypedDicts, and
+  call-based NamedTuples. Other TypedDicts and NamedTuples already had the attribute.
+  Patch by Adrian Garcia Badaracco.
 
 # Release 4.5.0 (February 14, 2023)
 
