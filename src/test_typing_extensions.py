@@ -31,7 +31,7 @@ from typing_extensions import TypeAlias, ParamSpec, Concatenate, ParamSpecArgs, 
 from typing_extensions import Awaitable, AsyncIterator, AsyncContextManager, Required, NotRequired
 from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, final, is_typeddict
 from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_type, Never, assert_never, LiteralString
-from typing_extensions import assert_type, get_type_hints, get_origin, get_args
+from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override, deprecated, Buffer
@@ -4151,6 +4151,73 @@ class BufferTests(BaseTestCase):
 
         self.assertIsInstance(MySubclassedBuffer(), Buffer)
         self.assertIsSubclass(MySubclassedBuffer, Buffer)
+
+
+class GetOriginalBasesTests(BaseTestCase):
+    def test_basics(self):
+        T = TypeVar('T')
+        class A: pass
+        class B(Generic[T]): pass
+        class C(B[int]): pass
+        class D(B[str], float): pass
+        self.assertEqual(get_original_bases(A), (object,))
+        self.assertEqual(get_original_bases(B), (Generic[T],))
+        self.assertEqual(get_original_bases(C), (B[int],))
+        self.assertEqual(get_original_bases(int), (object,))
+        self.assertEqual(get_original_bases(D), (B[str], float))
+
+        with self.assertRaisesRegex(TypeError, "Expected an instance of type"):
+            get_original_bases(object())
+
+    @skipUnless(TYPING_3_9_0, "PEP 585 is yet to be")
+    def test_builtin_generics(self):
+        class E(list[T]): pass
+        class F(list[int]): pass
+
+        self.assertEqual(get_original_bases(E), (list[T],))
+        self.assertEqual(get_original_bases(F), (list[int],))
+
+    def test_namedtuples(self):
+        class ClassBasedNamedTuple(NamedTuple):
+            x: int
+
+        class GenericNamedTuple(NamedTuple, Generic[T]):
+            x: T
+
+        CallBasedNamedTuple = NamedTuple("CallBasedNamedTuple", [("x", int)])
+
+        self.assertIs(
+            get_original_bases(ClassBasedNamedTuple)[0], NamedTuple
+        )
+        self.assertEqual(
+            get_original_bases(GenericNamedTuple),
+            (NamedTuple, Generic[T])
+        )
+        self.assertIs(
+            get_original_bases(CallBasedNamedTuple)[0], NamedTuple
+        )
+
+    def test_typeddicts(self):
+        class ClassBasedTypedDict(TypedDict):
+            x: int
+
+        class GenericTypedDict(TypedDict, Generic[T]):
+            x: T
+
+        CallBasedTypedDict = TypedDict("CallBasedTypedDict", {"x": int})
+
+        self.assertIs(
+            get_original_bases(ClassBasedTypedDict)[0],
+            TypedDict
+        )
+        self.assertEqual(
+            get_original_bases(GenericTypedDict),
+            (TypedDict, Generic[T])
+        )
+        self.assertIs(
+            get_original_bases(CallBasedTypedDict)[0],
+            TypedDict
+        )
 
 
 if __name__ == '__main__':

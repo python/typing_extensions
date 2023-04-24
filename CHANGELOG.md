@@ -49,6 +49,10 @@
   Patch by Alex Waygood.
 - Speedup `isinstance(3, typing_extensions.SupportsIndex)` by >10x on Python
   <3.12. Patch by Alex Waygood.
+- Add `typing_extensions.get_original_bases`, a backport of
+  `types.get_original_bases`, introduced in Python 3.12 (CPython PR
+  https://github.com/python/cpython/pull/101827, originally by James
+  Hilton-Balfe). Patch by Alex Waygood.
 
 # Release 4.5.0 (February 14, 2023)
 
