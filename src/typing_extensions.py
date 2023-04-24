@@ -2452,7 +2452,8 @@ else:
 
         Examples::
 
-            from typing import TypeVar, Generic, NamedTuple, TypedDict
+            from typing import TypeVar, Generic
+            from typing_extensions import NamedTuple, TypedDict
 
             T = TypeVar("T")
             class Foo(Generic[T]): ...
