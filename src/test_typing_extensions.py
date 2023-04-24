@@ -872,13 +872,13 @@ class LiteralTests(BaseTestCase):
             A = 1
             B = 2
 
-        l = Literal[
+        literal = Literal[
             Literal[Ints.A],
             Literal[Ints.B],
             Literal[1],
             Literal[2],
         ]
-        self.assertEqual(l.__args__, (Ints.A, Ints.B, 1, 2))
+        self.assertEqual(literal.__args__, (Ints.A, Ints.B, 1, 2))
 
     def test_caching_of_Literal_respects_type(self):
         self.assertIs(type(Literal[1].__args__[0]), int)
