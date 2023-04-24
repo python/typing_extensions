@@ -749,7 +749,7 @@ else:
             pass
 
 
-if hasattr(typing, "Required"):
+if sys.version_info >= (3, 12):
     # The standard library TypedDict in Python 3.8 does not store runtime information
     # about which (if any) keys are optional.  See https://bugs.python.org/issue38834
     # The standard library TypedDict in Python 3.9.0/1 does not honour the "total"
@@ -757,6 +757,8 @@ if hasattr(typing, "Required"):
     # The standard library TypedDict below Python 3.11 does not store runtime
     # information about optional and required keys when using Required or NotRequired.
     # Generic TypedDicts are also impossible using typing.TypedDict on Python <3.11.
+    # Aaaand on 3.12 we add __orig_bases__ to TypedDict
+    # to enable better runtime introspection.
     TypedDict = typing.TypedDict
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
@@ -786,7 +788,6 @@ else:
             typename, args = args[0], args[1:]  # allow the "_typename" keyword be passed
         elif '_typename' in kwargs:
             typename = kwargs.pop('_typename')
-            import warnings
             warnings.warn("Passing '_typename' as keyword argument is deprecated",
                           DeprecationWarning, stacklevel=2)
         else:
@@ -801,7 +802,6 @@ else:
                                 'were given')
         elif '_fields' in kwargs and len(kwargs) == 1:
             fields = kwargs.pop('_fields')
-            import warnings
             warnings.warn("Passing '_fields' as keyword argument is deprecated",
                           DeprecationWarning, stacklevel=2)
         else:
@@ -812,6 +812,15 @@ else:
         elif kwargs:
             raise TypeError("TypedDict takes either a dict or keyword arguments,"
                             " but not both")
+
+        if kwargs:
+            warnings.warn(
+                "The kwargs-based syntax for TypedDict definitions is deprecated, "
+                "may be removed in a future version, and may not be "
+                "understood by third-party type checkers.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         ns = {'__annotations__': dict(fields)}
         module = _caller()
@@ -844,9 +853,14 @@ else:
             # Instead, monkey-patch __bases__ onto the class after it's been created.
             tp_dict = super().__new__(cls, name, (dict,), ns)
 
-            if any(issubclass(base, typing.Generic) for base in bases):
+            is_generic = any(issubclass(base, typing.Generic) for base in bases)
+
+            if is_generic:
                 tp_dict.__bases__ = (typing.Generic, dict)
                 _maybe_adjust_parameters(tp_dict)
+            else:
+                # generic TypedDicts get __orig_bases__ from Generic
+                tp_dict.__orig_bases__ = bases or (TypedDict,)
 
             annotations = {}
             own_annotations = ns.get('__annotations__', {})
@@ -2313,10 +2327,11 @@ if not hasattr(typing, "TypeVarTuple"):
     typing._check_generic = _check_generic
 
 
-# Backport typing.NamedTuple as it exists in Python 3.11.
+# Backport typing.NamedTuple as it exists in Python 3.12.
 # In 3.11, the ability to define generic `NamedTuple`s was supported.
 # This was explicitly disallowed in 3.9-3.10, and only half-worked in <=3.8.
-if sys.version_info >= (3, 11):
+# On 3.12, we added __orig_bases__ to call-based NamedTuples
+if sys.version_info >= (3, 12):
     NamedTuple = typing.NamedTuple
 else:
     def _make_nmtuple(name, types, module, defaults=()):
@@ -2378,7 +2393,9 @@ else:
         elif kwargs:
             raise TypeError("Either list of fields or keywords"
                             " can be provided to NamedTuple, not both")
-        return _make_nmtuple(__typename, __fields, module=_caller())
+        nt = _make_nmtuple(__typename, __fields, module=_caller())
+        nt.__orig_bases__ = (NamedTuple,)
+        return nt
 
     NamedTuple.__doc__ = typing.NamedTuple.__doc__
     _NamedTuple = type.__new__(_NamedTupleMeta, 'NamedTuple', (), {})
