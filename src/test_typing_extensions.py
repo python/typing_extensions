@@ -2866,7 +2866,6 @@ class GetTypeHintsTests(BaseTestCase):
         self.assertEqual(CallTypedDict.__orig_bases__, (TypedDict,))
 
 
-
 class TypeAliasTests(BaseTestCase):
     def test_canonical_usage_with_variable_annotation(self):
         ns = {}
