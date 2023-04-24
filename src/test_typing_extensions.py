@@ -4318,7 +4318,7 @@ class GetOriginalBasesTests(BaseTestCase):
         else:
             namedtuple_classes = (typing_extensions.NamedTuple,)
 
-        for NamedTuple in namedtuple_classes:
+        for NamedTuple in namedtuple_classes:  # noqa: F402
             with self.subTest(cls=NamedTuple):
                 class ClassBasedNamedTuple(NamedTuple):
                     x: int
@@ -4347,7 +4347,7 @@ class GetOriginalBasesTests(BaseTestCase):
         else:
             typeddict_classes = (typing_extensions.TypedDict,)
 
-        for TypedDict in typeddict_classes:
+        for TypedDict in typeddict_classes:  # noqa: F402
             with self.subTest(cls=TypedDict):
                 class ClassBasedTypedDict(TypedDict):
                     x: int
