@@ -830,6 +830,7 @@ class LiteralTests(BaseTestCase):
         self.assertEqual(Union[Literal[1], Literal[Ints.B], Literal[True]].__args__,
                          (Literal[1], Literal[Ints.B], Literal[True]))
 
+    @skipUnless(TYPING_3_10_0, "Python 3.10+ required")
     def test_or_type_operator_with_Literal(self):
         self.assertEqual((Literal[1] | Literal[2]).__args__,
                          (Literal[1], Literal[2]))
