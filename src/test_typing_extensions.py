@@ -3643,11 +3643,11 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 10, 1):
             exclude |= {"Literal"}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'NamedTuple', 'Any'}
+            exclude |= {'final', 'Any'}
         if sys.version_info < (3, 12):
             exclude |= {
                 'Protocol', 'runtime_checkable', 'SupportsIndex', 'TypedDict',
-                'is_typeddict'
+                'is_typeddict', 'NamedTuple',
             }
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
@@ -3694,7 +3694,6 @@ class XRepr(NamedTuple):
         return 0
 
 
-@skipIf(TYPING_3_11_0, "These invariants should all be tested upstream on 3.11+")
 class NamedTupleTests(BaseTestCase):
     class NestedEmployee(NamedTuple):
         name: str
@@ -3834,7 +3833,9 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIs(type(a), G)
                 self.assertEqual(a.x, 3)
 
-                with self.assertRaisesRegex(TypeError, 'Too many parameters'):
+                things = "arguments" if sys.version_info >= (3, 11) else "parameters"
+
+                with self.assertRaisesRegex(TypeError, f'Too many {things}'):
                     G[int, str]
 
     @skipUnless(TYPING_3_9_0, "tuple.__class_getitem__ was added in 3.9")
