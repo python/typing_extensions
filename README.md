@@ -43,6 +43,14 @@ This module currently contains the following:
 
   - `override` (equivalent to `typing.override`; see [PEP 698](https://peps.python.org/pep-0698/))
   - `Buffer` (equivalent to `collections.abc.Buffer`; see [PEP 688](https://peps.python.org/pep-0688/))
+  - `get_original_bases` (equivalent to
+    [`types.get_original_bases`](https://docs.python.org/3.12/library/types.html#types.get_original_bases)
+    on 3.12+).
+
+    This function should always produce correct results when called on classes
+    constructed using features from `typing_extensions`. However, it may
+    produce incorrect results when called on some `NamedTuple` or `TypedDict`
+    classes that use `typing.{NamedTuple,TypedDict}` on Python <=3.11.
 
 - In `typing` since Python 3.11
 

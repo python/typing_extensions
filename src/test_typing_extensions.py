@@ -4311,46 +4311,64 @@ class GetOriginalBasesTests(BaseTestCase):
         self.assertEqual(get_original_bases(F), (list[int],))
 
     def test_namedtuples(self):
-        class ClassBasedNamedTuple(NamedTuple):
-            x: int
+        # On 3.12, this should work well with typing.NamedTuple and typing_extensions.NamedTuple
+        # On lower versions, it will only work fully with typing_extensions.NamedTuple
+        if sys.version_info >= (3, 12):
+            namedtuple_classes = (typing.NamedTuple, typing_extensions.NamedTuple)
+        else:
+            namedtuple_classes = (typing_extensions.NamedTuple,)
 
-        class GenericNamedTuple(NamedTuple, Generic[T]):
-            x: T
+        for NamedTuple in namedtuple_classes:
+            with self.subTest(cls=NamedTuple):
+                class ClassBasedNamedTuple(NamedTuple):
+                    x: int
 
-        CallBasedNamedTuple = NamedTuple("CallBasedNamedTuple", [("x", int)])
+                class GenericNamedTuple(NamedTuple, Generic[T]):
+                    x: T
 
-        self.assertIs(
-            get_original_bases(ClassBasedNamedTuple)[0], NamedTuple
-        )
-        self.assertEqual(
-            get_original_bases(GenericNamedTuple),
-            (NamedTuple, Generic[T])
-        )
-        self.assertIs(
-            get_original_bases(CallBasedNamedTuple)[0], NamedTuple
-        )
+                CallBasedNamedTuple = NamedTuple("CallBasedNamedTuple", [("x", int)])
+
+                self.assertIs(
+                    get_original_bases(ClassBasedNamedTuple)[0], NamedTuple
+                )
+                self.assertEqual(
+                    get_original_bases(GenericNamedTuple),
+                    (NamedTuple, Generic[T])
+                )
+                self.assertIs(
+                    get_original_bases(CallBasedNamedTuple)[0], NamedTuple
+                )
 
     def test_typeddicts(self):
-        class ClassBasedTypedDict(TypedDict):
-            x: int
+        # On 3.12, this should work well with typing.TypedDict and typing_extensions.TypedDict
+        # On lower versions, it will only work fully with typing_extensions.TypedDict
+        if sys.version_info >= (3, 12):
+            typeddict_classes = (typing.TypedDict, typing_extensions.TypedDict)
+        else:
+            typeddict_classes = (typing_extensions.TypedDict,)
 
-        class GenericTypedDict(TypedDict, Generic[T]):
-            x: T
+        for TypedDict in typeddict_classes:
+            with self.subTest(cls=TypedDict):
+                class ClassBasedTypedDict(TypedDict):
+                    x: int
 
-        CallBasedTypedDict = TypedDict("CallBasedTypedDict", {"x": int})
+                class GenericTypedDict(TypedDict, Generic[T]):
+                    x: T
 
-        self.assertIs(
-            get_original_bases(ClassBasedTypedDict)[0],
-            TypedDict
-        )
-        self.assertEqual(
-            get_original_bases(GenericTypedDict),
-            (TypedDict, Generic[T])
-        )
-        self.assertIs(
-            get_original_bases(CallBasedTypedDict)[0],
-            TypedDict
-        )
+                CallBasedTypedDict = TypedDict("CallBasedTypedDict", {"x": int})
+
+                self.assertIs(
+                    get_original_bases(ClassBasedTypedDict)[0],
+                    TypedDict
+                )
+                self.assertEqual(
+                    get_original_bases(GenericTypedDict),
+                    (TypedDict, Generic[T])
+                )
+                self.assertIs(
+                    get_original_bases(CallBasedTypedDict)[0],
+                    TypedDict
+                )
 
 
 if __name__ == '__main__':
