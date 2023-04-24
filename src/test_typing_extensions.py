@@ -831,7 +831,6 @@ class LiteralTests(BaseTestCase):
                          (Literal[1], Literal[Ints.B], Literal[True]))
 
     def test_or_type_operator_with_Literal(self):
-        Literal = typing.Literal
         self.assertEqual((Literal[1] | Literal[2]).__args__,
                          (Literal[1], Literal[2]))
 
