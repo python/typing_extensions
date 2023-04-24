@@ -172,13 +172,6 @@ class BaseTestCase(TestCase):
                 message += f' : {msg}'
             raise self.failureException(message)
 
-    @contextlib.contextmanager
-    def assertWarnsIf(self, condition: bool, expected_warning: Type[Warning]):
-        with contextlib.ExitStack() as stack:
-            if condition:
-                stack.enter_context(self.assertWarns(expected_warning))
-            yield
-
 
 class Employee:
     pass
@@ -714,6 +707,13 @@ class LiteralTests(BaseTestCase):
         Literal["x", "y", "z"]
         Literal[None]
 
+    def test_enum(self):
+        import enum
+        class My(enum.Enum):
+            A = 'A'
+
+        self.assertEqual(Literal[My.A].__args__, (My.A,))
+
     def test_illegal_parameters_do_not_raise_runtime_errors(self):
         # Type checkers should reject these types, but we do not
         # raise errors at runtime to maintain maximum flexibility
@@ -794,6 +794,64 @@ class LiteralTests(BaseTestCase):
         # Mutable arguments will not be deduplicated
         self.assertEqual(Literal[[], []].__args__, ([], []))
 
+    def test_union_of_literals(self):
+        self.assertEqual(Union[Literal[1], Literal[2]].__args__,
+                         (Literal[1], Literal[2]))
+        self.assertEqual(Union[Literal[1], Literal[1]],
+                         Literal[1])
+
+        self.assertEqual(Union[Literal[False], Literal[0]].__args__,
+                         (Literal[False], Literal[0]))
+        self.assertEqual(Union[Literal[True], Literal[1]].__args__,
+                         (Literal[True], Literal[1]))
+
+        import enum
+        class Ints(enum.IntEnum):
+            A = 0
+            B = 1
+
+        self.assertEqual(Union[Literal[Ints.A], Literal[Ints.B]].__args__,
+                         (Literal[Ints.A], Literal[Ints.B]))
+
+        self.assertEqual(Union[Literal[Ints.A], Literal[Ints.A]],
+                         Literal[Ints.A])
+        self.assertEqual(Union[Literal[Ints.B], Literal[Ints.B]],
+                         Literal[Ints.B])
+
+        self.assertEqual(Union[Literal[0], Literal[Ints.A], Literal[False]].__args__,
+                         (Literal[0], Literal[Ints.A], Literal[False]))
+        self.assertEqual(Union[Literal[1], Literal[Ints.B], Literal[True]].__args__,
+                         (Literal[1], Literal[Ints.B], Literal[True]))
+
+    @skipUnless(TYPING_3_10_0, "Python 3.10+ required")
+    def test_or_type_operator_with_Literal(self):
+        self.assertEqual((Literal[1] | Literal[2]).__args__,
+                         (Literal[1], Literal[2]))
+
+        self.assertEqual((Literal[0] | Literal[False]).__args__,
+                         (Literal[0], Literal[False]))
+        self.assertEqual((Literal[1] | Literal[True]).__args__,
+                         (Literal[1], Literal[True]))
+
+        self.assertEqual(Literal[1] | Literal[1], Literal[1])
+        self.assertEqual(Literal['a'] | Literal['a'], Literal['a'])
+
+        import enum
+        class Ints(enum.IntEnum):
+            A = 0
+            B = 1
+
+        self.assertEqual(Literal[Ints.A] | Literal[Ints.A], Literal[Ints.A])
+        self.assertEqual(Literal[Ints.B] | Literal[Ints.B], Literal[Ints.B])
+
+        self.assertEqual((Literal[Ints.B] | Literal[Ints.A]).__args__,
+                         (Literal[Ints.B], Literal[Ints.A]))
+
+        self.assertEqual((Literal[0] | Literal[Ints.A]).__args__,
+                         (Literal[0], Literal[Ints.A]))
+        self.assertEqual((Literal[1] | Literal[Ints.B]).__args__,
+                         (Literal[1], Literal[Ints.B]))
+
     def test_flatten(self):
         l1 = Literal[Literal[1], Literal[2], Literal[3]]
         l2 = Literal[Literal[1, 2], 3]
@@ -801,6 +859,20 @@ class LiteralTests(BaseTestCase):
         for lit in l1, l2, l3:
             self.assertEqual(lit, Literal[1, 2, 3])
             self.assertEqual(lit.__args__, (1, 2, 3))
+
+    def test_does_not_flatten_enum(self):
+        import enum
+        class Ints(enum.IntEnum):
+            A = 1
+            B = 2
+
+        literal = Literal[
+            Literal[Ints.A],
+            Literal[Ints.B],
+            Literal[1],
+            Literal[2],
+        ]
+        self.assertEqual(literal.__args__, (Ints.A, Ints.B, 1, 2))
 
     def test_caching_of_Literal_respects_type(self):
         self.assertIs(type(Literal[1].__args__[0]), int)
@@ -2388,7 +2460,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Emp.__total__, True)
 
     def test_basics_keywords_syntax(self):
-        with self.assertWarnsIf(sys.version_info >= (3, 11), DeprecationWarning):
+        with self.assertWarns(DeprecationWarning):
             Emp = TypedDict('Emp', name=str, id=int)
         self.assertIsSubclass(Emp, dict)
         self.assertIsSubclass(Emp, typing.MutableMapping)
@@ -2404,7 +2476,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Emp.__total__, True)
 
     def test_typeddict_special_keyword_names(self):
-        with self.assertWarnsIf(sys.version_info >= (3, 11), DeprecationWarning):
+        with self.assertWarns(DeprecationWarning):
             TD = TypedDict("TD", cls=type, self=object, typename=str, _typename=int,
                            fields=list, _fields=dict)
         self.assertEqual(TD.__name__, 'TD')
@@ -2440,7 +2512,7 @@ class TypedDictTests(BaseTestCase):
 
     def test_typeddict_errors(self):
         Emp = TypedDict('Emp', {'name': str, 'id': int})
-        if hasattr(typing, "Required"):
+        if sys.version_info >= (3, 12):
             self.assertEqual(TypedDict.__module__, 'typing')
         else:
             self.assertEqual(TypedDict.__module__, 'typing_extensions')
@@ -2453,7 +2525,7 @@ class TypedDictTests(BaseTestCase):
             issubclass(dict, Emp)
 
         if not TYPING_3_11_0:
-            with self.assertRaises(TypeError):
+            with self.assertRaises(TypeError), self.assertWarns(DeprecationWarning):
                 TypedDict('Hi', x=1)
             with self.assertRaises(TypeError):
                 TypedDict('Hi', [('x', int), ('y', 1)])
@@ -2956,6 +3028,49 @@ class GetTypeHintsTests(BaseTestCase):
             'title': Annotated[Required[str], "foobar"],
             'year': NotRequired[Annotated[int, 2000]],
         }
+
+    def test_orig_bases(self):
+        T = TypeVar('T')
+
+        class Parent(TypedDict):
+            pass
+
+        class Child(Parent):
+            pass
+
+        class OtherChild(Parent):
+            pass
+
+        class MixedChild(Child, OtherChild, Parent):
+            pass
+
+        class GenericParent(TypedDict, Generic[T]):
+            pass
+
+        class GenericChild(GenericParent[int]):
+            pass
+
+        class OtherGenericChild(GenericParent[str]):
+            pass
+
+        class MixedGenericChild(GenericChild, OtherGenericChild, GenericParent[float]):
+            pass
+
+        class MultipleGenericBases(GenericParent[int], GenericParent[float]):
+            pass
+
+        CallTypedDict = TypedDict('CallTypedDict', {})
+
+        self.assertEqual(Parent.__orig_bases__, (TypedDict,))
+        self.assertEqual(Child.__orig_bases__, (Parent,))
+        self.assertEqual(OtherChild.__orig_bases__, (Parent,))
+        self.assertEqual(MixedChild.__orig_bases__, (Child, OtherChild, Parent,))
+        self.assertEqual(GenericParent.__orig_bases__, (TypedDict, Generic[T]))
+        self.assertEqual(GenericChild.__orig_bases__, (GenericParent[int],))
+        self.assertEqual(OtherGenericChild.__orig_bases__, (GenericParent[str],))
+        self.assertEqual(MixedGenericChild.__orig_bases__, (GenericChild, OtherGenericChild, GenericParent[float]))
+        self.assertEqual(MultipleGenericBases.__orig_bases__, (GenericParent[int], GenericParent[float]))
+        self.assertEqual(CallTypedDict.__orig_bases__, (TypedDict,))
 
 
 class TypeAliasTests(BaseTestCase):
@@ -3723,22 +3838,23 @@ class AllTests(BaseTestCase):
             'overload',
             'ParamSpec',
             'Text',
-            'TypedDict',
             'TypeVar',
             'TypeVarTuple',
             'TYPE_CHECKING',
             'Final',
             'get_type_hints',
-            'is_typeddict',
         }
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 10, 1):
             exclude |= {"Literal"}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'NamedTuple', 'Any'}
+            exclude |= {'final', 'Any'}
         if sys.version_info < (3, 12):
-            exclude |= {'Protocol', 'runtime_checkable', 'SupportsIndex'}
+            exclude |= {
+                'Protocol', 'runtime_checkable', 'SupportsIndex', 'TypedDict',
+                'is_typeddict', 'NamedTuple',
+            }
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
@@ -3784,7 +3900,6 @@ class XRepr(NamedTuple):
         return 0
 
 
-@skipIf(TYPING_3_11_0, "These invariants should all be tested upstream on 3.11+")
 class NamedTupleTests(BaseTestCase):
     class NestedEmployee(NamedTuple):
         name: str
@@ -3924,7 +4039,9 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIs(type(a), G)
                 self.assertEqual(a.x, 3)
 
-                with self.assertRaisesRegex(TypeError, 'Too many parameters'):
+                things = "arguments" if sys.version_info >= (3, 11) else "parameters"
+
+                with self.assertRaisesRegex(TypeError, f'Too many {things}'):
                     G[int, str]
 
     @skipUnless(TYPING_3_9_0, "tuple.__class_getitem__ was added in 3.9")
@@ -4054,6 +4171,22 @@ class NamedTupleTests(BaseTestCase):
             self.NestedEmployee.__annotations__,
             self.NestedEmployee._field_types
         )
+
+    def test_orig_bases(self):
+        T = TypeVar('T')
+
+        class SimpleNamedTuple(NamedTuple):
+            pass
+
+        class GenericNamedTuple(NamedTuple, Generic[T]):
+            pass
+
+        self.assertEqual(SimpleNamedTuple.__orig_bases__, (NamedTuple,))
+        self.assertEqual(GenericNamedTuple.__orig_bases__, (NamedTuple, Generic[T]))
+
+        CallNamedTuple = NamedTuple('CallNamedTuple', [])
+
+        self.assertEqual(CallNamedTuple.__orig_bases__, (NamedTuple,))
 
 
 class TypeVarLikeDefaultsTests(BaseTestCase):
