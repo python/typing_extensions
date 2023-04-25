@@ -261,21 +261,70 @@ def IntVar(name):
     return typing.TypeVar(name)
 
 
-# 3.8+:
-if hasattr(typing, 'Literal'):
+# A Literal bug was fixed in 3.11.0, 3.10.1 and 3.9.8
+if sys.version_info >= (3, 10, 1):
     Literal = typing.Literal
-# 3.7:
 else:
+    def _flatten_literal_params(parameters):
+        """An internal helper for Literal creation: flatten Literals among parameters"""
+        params = []
+        for p in parameters:
+            if isinstance(p, _LiteralGenericAlias):
+                params.extend(p.__args__)
+            else:
+                params.append(p)
+        return tuple(params)
+
+    def _value_and_type_iter(params):
+        for p in params:
+            yield p, type(p)
+
+    class _LiteralGenericAlias(typing._GenericAlias, _root=True):
+        def __eq__(self, other):
+            if not isinstance(other, _LiteralGenericAlias):
+                return NotImplemented
+            these_args_deduped = set(_value_and_type_iter(self.__args__))
+            other_args_deduped = set(_value_and_type_iter(other.__args__))
+            return these_args_deduped == other_args_deduped
+
+        def __hash__(self):
+            return hash(frozenset(_value_and_type_iter(self.__args__)))
+
     class _LiteralForm(typing._SpecialForm, _root=True):
+        def __init__(self, doc: str):
+            self._name = 'Literal'
+            self._doc = self.__doc__ = doc
 
         def __repr__(self):
             return 'typing_extensions.' + self._name
 
         def __getitem__(self, parameters):
-            return typing._GenericAlias(self, parameters)
+            if not isinstance(parameters, tuple):
+                parameters = (parameters,)
 
-    Literal = _LiteralForm('Literal',
-                           doc="""A type that can be used to indicate to type checkers
+            parameters = _flatten_literal_params(parameters)
+
+            val_type_pairs = list(_value_and_type_iter(parameters))
+            try:
+                deduped_pairs = set(val_type_pairs)
+            except TypeError:
+                # unhashable parameters
+                pass
+            else:
+                # similar logic to typing._deduplicate on Python 3.9+
+                if len(deduped_pairs) < len(val_type_pairs):
+                    new_parameters = []
+                    for pair in val_type_pairs:
+                        if pair in deduped_pairs:
+                            new_parameters.append(pair[0])
+                            deduped_pairs.remove(pair)
+                    assert not deduped_pairs, deduped_pairs
+                    parameters = tuple(new_parameters)
+
+            return _LiteralGenericAlias(self, parameters)
+
+    Literal = _LiteralForm(doc="""\
+                           A type that can be used to indicate to type checkers
                            that the corresponding value has a value literally equivalent
                            to the provided parameter. For example:
 
@@ -662,7 +711,8 @@ else:
                         isinstance(base, _ProtocolMeta) and base._is_protocol):
                     raise TypeError('Protocols can only inherit from other'
                                     f' protocols, got {repr(base)}')
-            cls.__init__ = _no_init
+            if cls.__init__ is Protocol.__init__:
+                cls.__init__ = _no_init
 
     def runtime_checkable(cls):
         """Mark a protocol class as a runtime protocol, so that it
@@ -699,7 +749,7 @@ else:
             pass
 
 
-if hasattr(typing, "Required"):
+if sys.version_info >= (3, 12):
     # The standard library TypedDict in Python 3.8 does not store runtime information
     # about which (if any) keys are optional.  See https://bugs.python.org/issue38834
     # The standard library TypedDict in Python 3.9.0/1 does not honour the "total"
@@ -707,6 +757,8 @@ if hasattr(typing, "Required"):
     # The standard library TypedDict below Python 3.11 does not store runtime
     # information about optional and required keys when using Required or NotRequired.
     # Generic TypedDicts are also impossible using typing.TypedDict on Python <3.11.
+    # Aaaand on 3.12 we add __orig_bases__ to TypedDict
+    # to enable better runtime introspection.
     TypedDict = typing.TypedDict
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
@@ -736,7 +788,6 @@ else:
             typename, args = args[0], args[1:]  # allow the "_typename" keyword be passed
         elif '_typename' in kwargs:
             typename = kwargs.pop('_typename')
-            import warnings
             warnings.warn("Passing '_typename' as keyword argument is deprecated",
                           DeprecationWarning, stacklevel=2)
         else:
@@ -751,7 +802,6 @@ else:
                                 'were given')
         elif '_fields' in kwargs and len(kwargs) == 1:
             fields = kwargs.pop('_fields')
-            import warnings
             warnings.warn("Passing '_fields' as keyword argument is deprecated",
                           DeprecationWarning, stacklevel=2)
         else:
@@ -762,6 +812,15 @@ else:
         elif kwargs:
             raise TypeError("TypedDict takes either a dict or keyword arguments,"
                             " but not both")
+
+        if kwargs:
+            warnings.warn(
+                "The kwargs-based syntax for TypedDict definitions is deprecated, "
+                "may be removed in a future version, and may not be "
+                "understood by third-party type checkers.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         ns = {'__annotations__': dict(fields)}
         module = _caller()
@@ -794,9 +853,14 @@ else:
             # Instead, monkey-patch __bases__ onto the class after it's been created.
             tp_dict = super().__new__(cls, name, (dict,), ns)
 
-            if any(issubclass(base, typing.Generic) for base in bases):
+            is_generic = any(issubclass(base, typing.Generic) for base in bases)
+
+            if is_generic:
                 tp_dict.__bases__ = (typing.Generic, dict)
                 _maybe_adjust_parameters(tp_dict)
+            else:
+                # generic TypedDicts get __orig_bases__ from Generic
+                tp_dict.__orig_bases__ = bases or (TypedDict,)
 
             annotations = {}
             own_annotations = ns.get('__annotations__', {})
@@ -2263,10 +2327,11 @@ if not hasattr(typing, "TypeVarTuple"):
     typing._check_generic = _check_generic
 
 
-# Backport typing.NamedTuple as it exists in Python 3.11.
+# Backport typing.NamedTuple as it exists in Python 3.12.
 # In 3.11, the ability to define generic `NamedTuple`s was supported.
 # This was explicitly disallowed in 3.9-3.10, and only half-worked in <=3.8.
-if sys.version_info >= (3, 11):
+# On 3.12, we added __orig_bases__ to call-based NamedTuples
+if sys.version_info >= (3, 12):
     NamedTuple = typing.NamedTuple
 else:
     def _make_nmtuple(name, types, module, defaults=()):
@@ -2328,7 +2393,9 @@ else:
         elif kwargs:
             raise TypeError("Either list of fields or keywords"
                             " can be provided to NamedTuple, not both")
-        return _make_nmtuple(__typename, __fields, module=_caller())
+        nt = _make_nmtuple(__typename, __fields, module=_caller())
+        nt.__orig_bases__ = (NamedTuple,)
+        return nt
 
     NamedTuple.__doc__ = typing.NamedTuple.__doc__
     _NamedTuple = type.__new__(_NamedTupleMeta, 'NamedTuple', (), {})

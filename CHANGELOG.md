@@ -3,6 +3,20 @@
 - Add `typing_extensions.Buffer`, a marker class for buffer types, as proposed
   by PEP 688. Equivalent to `collections.abc.Buffer` in Python 3.12. Patch by
   Jelle Zijlstra.
+- Backport two CPython PRs fixing various issues with `typing.Literal`:
+  https://github.com/python/cpython/pull/23294 and
+  https://github.com/python/cpython/pull/23383. Both CPython PRs were
+  originally by Yurii Karabas, and both were backported to Python >=3.9.1, but
+  no earlier. Patch by Alex Waygood.
+
+  A side effect of one of the changes is that equality comparisons of `Literal`
+  objects will now raise a `TypeError` if one of the `Literal` objects being
+  compared has a mutable parameter. (Using mutable parameters with `Literal` is
+  not supported by PEP 586 or by any major static type checkers.)
+- `Literal` is now reimplemented on all Python versions <= 3.10.0. The
+  `typing_extensions` version does not suffer from the bug that was fixed in
+  https://github.com/python/cpython/pull/29334. (The CPython bugfix was
+  backported to CPython 3.10.1 and 3.9.8, but no earlier.)
 - Backport [CPython PR 26067](https://github.com/python/cpython/pull/26067)
   (originally by Yurii Karabas), ensuring that `isinstance()` calls on
   protocols raise `TypeError` when the protocol is not decorated with
@@ -29,8 +43,18 @@
   `typing_extensions` may no longer be considered instances of that protocol
   using the new release, and vice versa. Most users are unlikely to be affected
   by this change. Patch by Alex Waygood.
+- Backport the ability to define `__init__` methods on Protocol classes, a
+  change made in Python 3.11 (originally implemented in 
+  https://github.com/python/cpython/pull/31628 by Adrian Garcia Badaracco).
+  Patch by Alex Waygood.
 - Speedup `isinstance(3, typing_extensions.SupportsIndex)` by >10x on Python
   <3.12. Patch by Alex Waygood.
+- Add `__orig_bases__` to non-generic TypedDicts, call-based TypedDicts, and
+  call-based NamedTuples. Other TypedDicts and NamedTuples already had the attribute.
+  Patch by Adrian Garcia Badaracco.
+- Constructing a call-based `TypedDict` using keyword arguments for the fields
+  now causes a `DeprecationWarning` to be emitted. This matches the behaviour
+  of `typing.TypedDict` on 3.11 and 3.12.
 
 # Release 4.5.0 (February 14, 2023)
 
