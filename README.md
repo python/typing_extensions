@@ -127,7 +127,10 @@ Certain objects were changed after they were added to `typing`, and
   about which (if any) keys are non-required in Python 3.8, and does not
   honor the `total` keyword with old-style `TypedDict()` in Python
   3.9.0 and 3.9.1. `TypedDict` also does not support multiple inheritance
-  with `typing.Generic` on Python <3.11.
+  with `typing.Generic` on Python <3.11, and `TypedDict` classes do not
+  consistently have the `__orig_bases__` attribute on Python <3.12. The
+  `typing_extensions` backport provides all of these features and bugfixes on
+  all Python versions.
 - `get_origin` and `get_args` lack support for `Annotated` in
   Python 3.8 and lack support for `ParamSpecArgs` and `ParamSpecKwargs`
   in 3.9.
@@ -137,15 +140,18 @@ Certain objects were changed after they were added to `typing`, and
   `typing_extensions.get_overloads()`, you must use
   `@typing_extensions.overload`.
 - `NamedTuple` was changed in Python 3.11 to allow for multiple inheritance
-  with `typing.Generic`.
+  with `typing.Generic`. Call-based `NamedTuple`s were changed in Python 3.12
+  so that they have an `__orig_bases__` attribute, the same as class-based
+  `NamedTuple`s.
 - Since Python 3.11, it has been possible to inherit from `Any` at
   runtime. `typing_extensions.Any` also provides this capability.
 - `TypeVar` gains two additional parameters, `default=` and `infer_variance=`,
   in the draft PEPs [695](https://peps.python.org/pep-0695/) and [696](https://peps.python.org/pep-0696/), which are being considered for inclusion
   in Python 3.12.
-- `Literal` does not flatten or deduplicate parameters on Python <3.9.1. The
-  `typing_extensions` version flattens and deduplicates parameters on all
-  Python versions.
+- `Literal` does not flatten or deduplicate parameters on Python <3.9.1, and a
+  caching bug was fixed in 3.10.1/3.9.8. The `typing_extensions` version
+  flattens and deduplicates parameters on all Python versions, and the caching
+  bug is also fixed on all versions.
 
 There are a few types whose interface was modified between different
 versions of typing. For example, `typing.Sequence` was modified to
