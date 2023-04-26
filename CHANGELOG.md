@@ -49,6 +49,11 @@
   Patch by Alex Waygood.
 - Speedup `isinstance(3, typing_extensions.SupportsIndex)` by >10x on Python
   <3.12. Patch by Alex Waygood.
+- Add `typing_extensions` versions of `SupportsInt`, `SupportsFloat`,
+  `SupportsComplex`, `SupportsBytes`, `SupportsAbs` and `SupportsRound`. These
+  have the same semantics as the versions from the `typing` module, but
+  `isinstance()` checks against the `typing_extensions` versions are >10x faster
+  at runtime on Python <3.12. Patch by Alex Waygood.
 - Add `__orig_bases__` to non-generic TypedDicts, call-based TypedDicts, and
   call-based NamedTuples. Other TypedDicts and NamedTuples already had the attribute.
   Patch by Adrian Garcia Badaracco.

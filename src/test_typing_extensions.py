@@ -3852,8 +3852,9 @@ class AllTests(BaseTestCase):
             exclude |= {'final', 'Any'}
         if sys.version_info < (3, 12):
             exclude |= {
-                'Protocol', 'runtime_checkable', 'SupportsIndex', 'TypedDict',
-                'is_typeddict', 'NamedTuple',
+                'Protocol', 'runtime_checkable', 'SupportsAbs', 'SupportsBytes',
+                'SupportsComplex', 'SupportsFloat', 'SupportsIndex', 'SupportsInt',
+                'SupportsRound', 'TypedDict', 'is_typeddict', 'NamedTuple',
             }
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
