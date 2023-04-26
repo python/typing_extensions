@@ -49,9 +49,24 @@
   Patch by Alex Waygood.
 - Speedup `isinstance(3, typing_extensions.SupportsIndex)` by >10x on Python
   <3.12. Patch by Alex Waygood.
+- Add `typing_extensions` versions of `SupportsInt`, `SupportsFloat`,
+  `SupportsComplex`, `SupportsBytes`, `SupportsAbs` and `SupportsRound`. These
+  have the same semantics as the versions from the `typing` module, but
+  `isinstance()` checks against the `typing_extensions` versions are >10x faster
+  at runtime on Python <3.12. Patch by Alex Waygood.
 - Add `__orig_bases__` to non-generic TypedDicts, call-based TypedDicts, and
   call-based NamedTuples. Other TypedDicts and NamedTuples already had the attribute.
   Patch by Adrian Garcia Badaracco.
+- Add `typing_extensions.get_original_bases`, a backport of
+  [`types.get_original_bases`](https://docs.python.org/3.12/library/types.html#types.get_original_bases),
+  introduced in Python 3.12 (CPython PR
+  https://github.com/python/cpython/pull/101827, originally by James
+  Hilton-Balfe). Patch by Alex Waygood.
+
+  This function should always produce correct results when called on classes
+  constructed using features from `typing_extensions`. However, it may
+  produce incorrect results when called on some `NamedTuple` or `TypedDict`
+  classes that use `typing.{NamedTuple,TypedDict}` on Python <=3.11.
 - Constructing a call-based `TypedDict` using keyword arguments for the fields
   now causes a `DeprecationWarning` to be emitted. This matches the behaviour
   of `typing.TypedDict` on 3.11 and 3.12.

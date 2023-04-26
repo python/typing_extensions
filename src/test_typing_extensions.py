@@ -31,7 +31,7 @@ from typing_extensions import TypeAlias, ParamSpec, Concatenate, ParamSpecArgs, 
 from typing_extensions import Awaitable, AsyncIterator, AsyncContextManager, Required, NotRequired
 from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, final, is_typeddict
 from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_type, Never, assert_never, LiteralString
-from typing_extensions import assert_type, get_type_hints, get_origin, get_args
+from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override, deprecated, Buffer
@@ -3852,8 +3852,9 @@ class AllTests(BaseTestCase):
             exclude |= {'final', 'Any'}
         if sys.version_info < (3, 12):
             exclude |= {
-                'Protocol', 'runtime_checkable', 'SupportsIndex', 'TypedDict',
-                'is_typeddict', 'NamedTuple',
+                'Protocol', 'runtime_checkable', 'SupportsAbs', 'SupportsBytes',
+                'SupportsComplex', 'SupportsFloat', 'SupportsIndex', 'SupportsInt',
+                'SupportsRound', 'TypedDict', 'is_typeddict', 'NamedTuple',
             }
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
@@ -4284,6 +4285,91 @@ class BufferTests(BaseTestCase):
 
         self.assertIsInstance(MySubclassedBuffer(), Buffer)
         self.assertIsSubclass(MySubclassedBuffer, Buffer)
+
+
+class GetOriginalBasesTests(BaseTestCase):
+    def test_basics(self):
+        T = TypeVar('T')
+        class A: pass
+        class B(Generic[T]): pass
+        class C(B[int]): pass
+        class D(B[str], float): pass
+        self.assertEqual(get_original_bases(A), (object,))
+        self.assertEqual(get_original_bases(B), (Generic[T],))
+        self.assertEqual(get_original_bases(C), (B[int],))
+        self.assertEqual(get_original_bases(int), (object,))
+        self.assertEqual(get_original_bases(D), (B[str], float))
+
+        with self.assertRaisesRegex(TypeError, "Expected an instance of type"):
+            get_original_bases(object())
+
+    @skipUnless(TYPING_3_9_0, "PEP 585 is yet to be")
+    def test_builtin_generics(self):
+        class E(list[T]): pass
+        class F(list[int]): pass
+
+        self.assertEqual(get_original_bases(E), (list[T],))
+        self.assertEqual(get_original_bases(F), (list[int],))
+
+    def test_namedtuples(self):
+        # On 3.12, this should work well with typing.NamedTuple and typing_extensions.NamedTuple
+        # On lower versions, it will only work fully with typing_extensions.NamedTuple
+        if sys.version_info >= (3, 12):
+            namedtuple_classes = (typing.NamedTuple, typing_extensions.NamedTuple)
+        else:
+            namedtuple_classes = (typing_extensions.NamedTuple,)
+
+        for NamedTuple in namedtuple_classes:  # noqa: F402
+            with self.subTest(cls=NamedTuple):
+                class ClassBasedNamedTuple(NamedTuple):
+                    x: int
+
+                class GenericNamedTuple(NamedTuple, Generic[T]):
+                    x: T
+
+                CallBasedNamedTuple = NamedTuple("CallBasedNamedTuple", [("x", int)])
+
+                self.assertIs(
+                    get_original_bases(ClassBasedNamedTuple)[0], NamedTuple
+                )
+                self.assertEqual(
+                    get_original_bases(GenericNamedTuple),
+                    (NamedTuple, Generic[T])
+                )
+                self.assertIs(
+                    get_original_bases(CallBasedNamedTuple)[0], NamedTuple
+                )
+
+    def test_typeddicts(self):
+        # On 3.12, this should work well with typing.TypedDict and typing_extensions.TypedDict
+        # On lower versions, it will only work fully with typing_extensions.TypedDict
+        if sys.version_info >= (3, 12):
+            typeddict_classes = (typing.TypedDict, typing_extensions.TypedDict)
+        else:
+            typeddict_classes = (typing_extensions.TypedDict,)
+
+        for TypedDict in typeddict_classes:  # noqa: F402
+            with self.subTest(cls=TypedDict):
+                class ClassBasedTypedDict(TypedDict):
+                    x: int
+
+                class GenericTypedDict(TypedDict, Generic[T]):
+                    x: T
+
+                CallBasedTypedDict = TypedDict("CallBasedTypedDict", {"x": int})
+
+                self.assertIs(
+                    get_original_bases(ClassBasedTypedDict)[0],
+                    TypedDict
+                )
+                self.assertEqual(
+                    get_original_bases(GenericTypedDict),
+                    (TypedDict, Generic[T])
+                )
+                self.assertIs(
+                    get_original_bases(CallBasedTypedDict)[0],
+                    TypedDict
+                )
 
 
 if __name__ == '__main__':
