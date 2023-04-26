@@ -127,6 +127,17 @@ This module currently contains the following:
   - `NamedTuple` (supports multiple inheritance with `Generic` since Python 3.11)
   - `TypeVar` (see PEPs [695](https://peps.python.org/pep-0695/) and [696](https://peps.python.org/pep-0696/))
 
+The following runtime-checkable protocols have always been present in `typing`,
+but the `isinstance()` checks against the `typing_extensions` versions are much
+faster on Python <3.12:
+
+  - `SupportsInt`
+  - `SupportsFloat`
+  - `SupportsComplex`
+  - `SupportsBytes`
+  - `SupportsAbs`
+  - `SupportsRound`
+
 # Other Notes and Limitations
 
 Certain objects were changed after they were added to `typing`, and
@@ -161,9 +172,12 @@ Certain objects were changed after they were added to `typing`, and
   subsequent releases, as well as significant performance improvements to
   runtime-checkable protocols in Python 3.12. `typing_extensions` backports the
   3.12+ version to Python 3.7+.
-- `SupportsIndex` was added in Python 3.8, but `isinstance()` checks against
-  the protocol were sped up significantly on Python 3.12. `typing_extensions`
-  backports the faster version to Python 3.7+.
+- `SupportsInt`, `SupportsFloat`, `SupportsComplex`, `SupportsBytes`,
+  `SupportsAbs` and `SupportsRound` have always been present in the `typing`
+  module. Meanwhile, `SupportsIndex` was added in Python 3.8. However,
+  `isinstance()` checks against all these protocols were sped up significantly
+  on Python 3.12. `typing_extensions` backports the faster versions to Python
+  3.7+.
 - `Literal` does not flatten or deduplicate parameters on Python <3.9.1, and a
   caching bug was fixed in 3.10.1/3.9.8. The `typing_extensions` version
   flattens and deduplicates parameters on all Python versions, and the caching
