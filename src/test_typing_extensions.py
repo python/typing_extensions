@@ -11,6 +11,7 @@ from functools import lru_cache
 import importlib
 import inspect
 import pickle
+import re
 import subprocess
 import tempfile
 import types
@@ -1539,22 +1540,89 @@ class TypeTests(BaseTestCase):
 
 
 class NewTypeTests(BaseTestCase):
+    @classmethod
+    def setUpClass(cls):
+        global UserId
+        UserId = NewType('UserId', int)
+        cls.UserName = NewType(cls.__qualname__ + '.UserName', str)
+
+    @classmethod
+    def tearDownClass(cls):
+        global UserId
+        del UserId
+        del cls.UserName
 
     def test_basic(self):
-        UserId = NewType('UserId', int)
-        UserName = NewType('UserName', str)
         self.assertIsInstance(UserId(5), int)
-        self.assertIsInstance(UserName('Joe'), str)
+        self.assertIsInstance(self.UserName('Joe'), str)
         self.assertEqual(UserId(5) + 1, 6)
 
     def test_errors(self):
-        UserId = NewType('UserId', int)
-        UserName = NewType('UserName', str)
         with self.assertRaises(TypeError):
             issubclass(UserId, int)
         with self.assertRaises(TypeError):
-            class D(UserName):
+            class D(UserId):
                 pass
+
+    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
+    def test_or(self):
+        for cls in (int, self.UserName):
+            with self.subTest(cls=cls):
+                self.assertEqual(UserId | cls, Union[UserId, cls])
+                self.assertEqual(cls | UserId, Union[cls, UserId])
+
+                self.assertEqual(get_args(UserId | cls), (UserId, cls))
+                self.assertEqual(get_args(cls | UserId), (cls, UserId))
+
+    def test_special_attrs(self):
+        self.assertEqual(UserId.__name__, 'UserId')
+        self.assertEqual(UserId.__qualname__, 'UserId')
+        self.assertEqual(UserId.__module__, __name__)
+        self.assertEqual(UserId.__supertype__, int)
+
+        UserName = self.UserName
+        self.assertEqual(UserName.__name__, 'UserName')
+        self.assertEqual(UserName.__qualname__,
+                         self.__class__.__qualname__ + '.UserName')
+        self.assertEqual(UserName.__module__, __name__)
+        self.assertEqual(UserName.__supertype__, str)
+
+    def test_repr(self):
+        self.assertEqual(repr(UserId), f'{__name__}.UserId')
+        self.assertEqual(repr(self.UserName),
+                         f'{__name__}.{self.__class__.__qualname__}.UserName')
+
+    def test_pickle(self):
+        UserAge = NewType('UserAge', float)
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            with self.subTest(proto=proto):
+                pickled = pickle.dumps(UserId, proto)
+                loaded = pickle.loads(pickled)
+                self.assertIs(loaded, UserId)
+
+                pickled = pickle.dumps(self.UserName, proto)
+                loaded = pickle.loads(pickled)
+                self.assertIs(loaded, self.UserName)
+
+                with self.assertRaises(pickle.PicklingError):
+                    pickle.dumps(UserAge, proto)
+
+    def test_missing__name__(self):
+        code = ("import typing_extensions\n"
+                "NT = typing_extensions.NewType('NT', int)\n"
+                )
+        exec(code, {})
+
+    def test_error_message_when_subclassing(self):
+        with self.assertRaisesRegex(
+            TypeError,
+            re.escape(
+                "Cannot subclass an instance of NewType. Perhaps you were looking for: "
+                "`ProUserId = NewType('ProUserId', UserId)`"
+            )
+        ):
+            class ProUserId(UserId):
+                ...
 
 
 class Coordinate(Protocol):
@@ -3845,7 +3913,7 @@ class AllTests(BaseTestCase):
             'get_type_hints',
         }
         if sys.version_info < (3, 10):
-            exclude |= {'get_args', 'get_origin'}
+            exclude |= {'get_args', 'get_origin', 'NewType'}
         if sys.version_info < (3, 10, 1):
             exclude |= {"Literal"}
         if sys.version_info < (3, 11):

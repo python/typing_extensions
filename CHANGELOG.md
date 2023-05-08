@@ -70,6 +70,9 @@
 - Constructing a call-based `TypedDict` using keyword arguments for the fields
   now causes a `DeprecationWarning` to be emitted. This matches the behaviour
   of `typing.TypedDict` on 3.11 and 3.12.
+- Backport the implementation of `NewType` from 3.10 (where it is implemented
+  as a class rather than a function). This allows user-defined `NewType`s to be
+  pickled. Patch by Alex Waygood.
 
 # Release 4.5.0 (February 14, 2023)
 
