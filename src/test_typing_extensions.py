@@ -3913,11 +3913,11 @@ class AllTests(BaseTestCase):
             'get_type_hints',
         }
         if sys.version_info < (3, 10):
-            exclude |= {'get_args', 'get_origin', 'NewType'}
+            exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 10, 1):
             exclude |= {"Literal"}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'Any'}
+            exclude |= {'final', 'Any', 'NewType'}
         if sys.version_info < (3, 12):
             exclude |= {
                 'Protocol', 'runtime_checkable', 'SupportsAbs', 'SupportsBytes',

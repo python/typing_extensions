@@ -2548,7 +2548,8 @@ else:
 
 
 # NewType is a class on Python 3.10+, making it pickleable
-if sys.version_info >= (3, 10):
+# The error message for subclassing instances of NewType was improved on 3.11+
+if sys.version_info >= (3, 11):
     NewType = typing.NewType
 else:
     class NewType:
@@ -2599,3 +2600,13 @@ else:
 
         def __reduce__(self):
             return self.__qualname__
+
+        if sys.version_info >= (3, 10):
+            # PEP 604 methods
+            # It doesn't make sense to have these methods on Python <3.10
+
+            def __or__(self, other):
+                return typing.Union[self, other]
+
+            def __ror__(self, other):
+                return typing.Union[other, self]
