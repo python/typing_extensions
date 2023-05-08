@@ -182,6 +182,9 @@ Certain objects were changed after they were added to `typing`, and
   caching bug was fixed in 3.10.1/3.9.8. The `typing_extensions` version
   flattens and deduplicates parameters on all Python versions, and the caching
   bug is also fixed on all versions.
+- `NewType` has been in the `typing` module since Python 3.5.2, but
+  user-defined `NewType`s are only pickleable on Python 3.10+.
+  `typing_extensions.NewType` backports this feature to all Python versions.
 
 There are a few types whose interface was modified between different
 versions of typing. For example, `typing.Sequence` was modified to
