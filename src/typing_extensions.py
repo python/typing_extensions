@@ -2667,12 +2667,21 @@ else:
         def __getitem__(self, parameters):
             if not isinstance(parameters, tuple):
                 parameters = (parameters,)
-            parameters = [typing._type_check(item, f'Subscripting {self.__name__} requires a type.')
-                          for item in parameters]
+            parameters = [
+                typing._type_check(
+                    item, f'Subscripting {self.__name__} requires a type.'
+                )
+                for item in parameters
+            ]
             return typing._GenericAlias(self, tuple(parameters))
 
         def __reduce__(self):
             return self.__name__
+
+        # The presence of this method convinces typing._type_check
+        # that TypeAliasTypes are types.
+        def __call__(self):
+            raise TypeError("Type alias is not callable")
 
         if sys.version_info >= (3, 10):
             def __or__(self, right):
