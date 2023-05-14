@@ -44,7 +44,7 @@
   using the new release, and vice versa. Most users are unlikely to be affected
   by this change. Patch by Alex Waygood.
 - Backport the ability to define `__init__` methods on Protocol classes, a
-  change made in Python 3.11 (originally implemented in 
+  change made in Python 3.11 (originally implemented in
   https://github.com/python/cpython/pull/31628 by Adrian Garcia Badaracco).
   Patch by Alex Waygood.
 - Speedup `isinstance(3, typing_extensions.SupportsIndex)` by >10x on Python
@@ -73,6 +73,8 @@
 - Backport the implementation of `NewType` from 3.10 (where it is implemented
   as a class rather than a function). This allows user-defined `NewType`s to be
   pickled. Patch by Alex Waygood.
+- Add `typing_extensions.TypeAliasType`, a backport of `typing.TypeAliasType`
+  from PEP 695. Patch by Jelle Zijlstra.
 
 # Release 4.5.0 (February 14, 2023)
 
