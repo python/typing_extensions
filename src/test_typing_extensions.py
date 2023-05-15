@@ -4494,6 +4494,11 @@ class TypeAliasTypeTests(BaseTestCase):
                 unpickled = pickle.loads(pickled)
                 self.assertIs(unpickled, Alias)
 
+    def test_no_instance_subclassing(self):
+        with self.assertRaises(TypeError):
+            class MyAlias(TypeAliasType):
+                pass
+
 
 if __name__ == '__main__':
     main()

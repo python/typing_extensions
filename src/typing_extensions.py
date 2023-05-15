@@ -2678,6 +2678,11 @@ else:
         def __reduce__(self):
             return self.__name__
 
+        def __init_subclass__(cls, *args, **kwargs):
+            raise TypeError(
+                "type 'typing_extensions.TypeAliasType' is not an acceptable base type"
+            )
+
         # The presence of this method convinces typing._type_check
         # that TypeAliasTypes are types.
         def __call__(self):
