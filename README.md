@@ -42,7 +42,7 @@ This module currently contains the following:
 - In the standard library since Python 3.12
 
   - `override` (equivalent to `typing.override`; see [PEP 698](https://peps.python.org/pep-0698/))
-  - `TypeAliasType` (equivalent to `typing.TypeAliasType`; see [PEP 695](https://peps.python.org/pep-0698/))
+  - `TypeAliasType` (equivalent to `typing.TypeAliasType`; see [PEP 695](https://peps.python.org/pep-0695/))
   - `Buffer` (equivalent to `collections.abc.Buffer`; see [PEP 688](https://peps.python.org/pep-0688/))
   - `get_original_bases` (equivalent to
     [`types.get_original_bases`](https://docs.python.org/3.12/library/types.html#types.get_original_bases)
