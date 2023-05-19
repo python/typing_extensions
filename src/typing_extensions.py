@@ -1998,7 +1998,7 @@ The operator can also be used along with a `TypedDict` to annotate
 Note that there is only some runtime checking of this operator. Not
 everything the runtime allows may be accepted by static type checkers.
 
-For more information, see PEP 646.
+For more information, see PEP 646 and PEP 692.
 """
 
 
