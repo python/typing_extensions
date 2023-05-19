@@ -470,6 +470,9 @@ if sys.version_info < (3, 8):
 if sys.version_info >= (3, 9):
     _EXCLUDED_ATTRS.add("__class_getitem__")
 
+if sys.version_info >= (3, 12):
+    _EXCLUDED_ATTRS.add("__type_params__")
+
 _EXCLUDED_ATTRS = frozenset(_EXCLUDED_ATTRS)
 
 
@@ -550,23 +553,37 @@ else:
             raise TypeError('Protocols cannot be instantiated')
 
     class _ProtocolMeta(abc.ABCMeta):
-        # This metaclass is a bit unfortunate and exists only because of the lack
-        # of __instancehook__.
+        # This metaclass is somewhat unfortunate,
+        # but is necessary for several reasons...
         def __init__(cls, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            cls.__protocol_attrs__ = _get_protocol_attrs(cls)
-            # PEP 544 prohibits using issubclass()
-            # with protocols that have non-method members.
-            cls.__callable_proto_members_only__ = all(
-                callable(getattr(cls, attr, None)) for attr in cls.__protocol_attrs__
-            )
+            if getattr(cls, "_is_protocol", False):
+                cls.__protocol_attrs__ = _get_protocol_attrs(cls)
+                # PEP 544 prohibits using issubclass()
+                # with protocols that have non-method members.
+                cls.__callable_proto_members_only__ = all(
+                    callable(getattr(cls, attr, None)) for attr in cls.__protocol_attrs__
+                )
+
+        def __subclasscheck__(cls, other):
+            if (
+                getattr(cls, '_is_protocol', False)
+                and not cls.__callable_proto_members_only__
+                and not _allow_reckless_class_checks(depth=3)
+            ):
+                raise TypeError(
+                    "Protocols with non-method members don't support issubclass()"
+                )
+            return super().__subclasscheck__(other)
 
         def __instancecheck__(cls, instance):
             # We need this method for situations where attributes are
             # assigned in __init__.
-            is_protocol_cls = getattr(cls, "_is_protocol", False)
+            if not getattr(cls, "_is_protocol", False):
+                # i.e., it's a concrete subclass of a protocol
+                return super().__instancecheck__(instance)
+
             if (
-                is_protocol_cls and
                 not getattr(cls, '_is_runtime_protocol', False) and
                 not _allow_reckless_class_checks(depth=2)
             ):
@@ -576,16 +593,15 @@ else:
             if super().__instancecheck__(instance):
                 return True
 
-            if is_protocol_cls:
-                for attr in cls.__protocol_attrs__:
-                    try:
-                        val = inspect.getattr_static(instance, attr)
-                    except AttributeError:
-                        break
-                    if val is None and callable(getattr(cls, attr, None)):
-                        break
-                else:
-                    return True
+            for attr in cls.__protocol_attrs__:
+                try:
+                    val = inspect.getattr_static(instance, attr)
+                except AttributeError:
+                    break
+                if val is None and callable(getattr(cls, attr, None)):
+                    break
+            else:
+                return True
 
             return False
 
@@ -679,11 +695,6 @@ else:
                         return NotImplemented
                     raise TypeError("Instance and class checks can only be used with"
                                     " @runtime protocols")
-                if not cls.__callable_proto_members_only__:
-                    if _allow_reckless_class_checks():
-                        return NotImplemented
-                    raise TypeError("Protocols with non-method members"
-                                    " don't support issubclass()")
                 if not isinstance(other, type):
                     # Same error as for issubclass(1, int)
                     raise TypeError('issubclass() arg 1 must be a class')
@@ -1981,7 +1992,49 @@ else:
         """)
 
 
-if hasattr(typing, "Unpack"):  # 3.11+
+_UNPACK_DOC = """\
+Type unpack operator.
+
+The type unpack operator takes the child types from some container type,
+such as `tuple[int, str]` or a `TypeVarTuple`, and 'pulls them out'. For
+example:
+
+  # For some generic class `Foo`:
+  Foo[Unpack[tuple[int, str]]]  # Equivalent to Foo[int, str]
+
+  Ts = TypeVarTuple('Ts')
+  # Specifies that `Bar` is generic in an arbitrary number of types.
+  # (Think of `Ts` as a tuple of an arbitrary number of individual
+  #  `TypeVar`s, which the `Unpack` is 'pulling out' directly into the
+  #  `Generic[]`.)
+  class Bar(Generic[Unpack[Ts]]): ...
+  Bar[int]  # Valid
+  Bar[int, str]  # Also valid
+
+From Python 3.11, this can also be done using the `*` operator:
+
+    Foo[*tuple[int, str]]
+    class Bar(Generic[*Ts]): ...
+
+The operator can also be used along with a `TypedDict` to annotate
+`**kwargs` in a function signature. For instance:
+
+  class Movie(TypedDict):
+    name: str
+    year: int
+
+  # This function expects two keyword arguments - *name* of type `str` and
+  # *year* of type `int`.
+  def foo(**kwargs: Unpack[Movie]): ...
+
+Note that there is only some runtime checking of this operator. Not
+everything the runtime allows may be accepted by static type checkers.
+
+For more information, see PEP 646 and PEP 692.
+"""
+
+
+if sys.version_info >= (3, 12):  # PEP 692 changed the repr of Unpack[]
     Unpack = typing.Unpack
 
     def _is_unpack(obj):
@@ -1989,6 +2042,10 @@ if hasattr(typing, "Unpack"):  # 3.11+
 
 elif sys.version_info[:2] >= (3, 9):
     class _UnpackSpecialForm(typing._SpecialForm, _root=True):
+        def __init__(self, getitem):
+            super().__init__(getitem)
+            self.__doc__ = _UNPACK_DOC
+
         def __repr__(self):
             return 'typing_extensions.' + self._name
 
@@ -1997,16 +2054,6 @@ elif sys.version_info[:2] >= (3, 9):
 
     @_UnpackSpecialForm
     def Unpack(self, parameters):
-        """A special typing construct to unpack a variadic type. For example:
-
-            Shape = TypeVarTuple('Shape')
-            Batch = NewType('Batch', int)
-
-            def add_batch_axis(
-                x: Array[Unpack[Shape]]
-            ) -> Array[Batch, Unpack[Shape]]: ...
-
-        """
         item = typing._type_check(parameters, f'{self._name} accepts only a single type.')
         return _UnpackAlias(self, (item,))
 
@@ -2026,18 +2073,7 @@ else:
                                       f'{self._name} accepts only a single type.')
             return _UnpackAlias(self, (item,))
 
-    Unpack = _UnpackForm(
-        'Unpack',
-        doc="""A special typing construct to unpack a variadic type. For example:
-
-            Shape = TypeVarTuple('Shape')
-            Batch = NewType('Batch', int)
-
-            def add_batch_axis(
-                x: Array[Unpack[Shape]]
-            ) -> Array[Batch, Unpack[Shape]]: ...
-
-        """)
+    Unpack = _UnpackForm('Unpack', doc=_UNPACK_DOC)
 
     def _is_unpack(obj):
         return isinstance(obj, _UnpackAlias)

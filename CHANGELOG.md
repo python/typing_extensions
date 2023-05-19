@@ -74,7 +74,10 @@
   as a class rather than a function). This allows user-defined `NewType`s to be
   pickled. Patch by Alex Waygood.
 - Fix tests and import on Python 3.12, where `typing.TypeVar` can no longer be
-  subclassed.
+  subclassed. Patch by Jelle Zijlstra.
+- Backport changes to the repr of `typing.Unpack` that were made in order to
+  implement [PEP 692](https://peps.python.org/pep-0692/) (backport of
+  https://github.com/python/cpython/pull/104048). Patch by Alex Waygood.
 
 # Release 4.5.0 (February 14, 2023)
 
