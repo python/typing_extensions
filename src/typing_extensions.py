@@ -2643,6 +2643,10 @@ else:
           as is 'X, Y = TypeAliasType("X", int), TypeAliasType("Y", int)').
 
         """
+        __slots__ = (
+            "__name__", "__value__", "__type_params__", "__parameters__", "__module__"
+        )
+
         def __init__(self, name: str, value, *, type_params=()):
             if not isinstance(name, str):
                 raise TypeError("TypeAliasType name must be a string")
