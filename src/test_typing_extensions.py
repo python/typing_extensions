@@ -3531,7 +3531,7 @@ class UnpackTests(BaseTestCase):
 
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
-        self.assertEqual(repr(Unpack[Ts]), 'typing_extensions.Unpack[Ts]')
+        self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
 
     def test_cannot_subclass_vars(self):
         with self.assertRaises(TypeError):
