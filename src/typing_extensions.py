@@ -7,6 +7,7 @@ import operator
 import sys
 import types as _types
 import typing
+from typing import Any
 import warnings
 
 
@@ -747,6 +748,7 @@ if sys.version_info >= (3, 12):
     SupportsInt = typing.SupportsInt
     SupportsFloat = typing.SupportsFloat
     SupportsComplex = typing.SupportsComplex
+    SupportsBytes = typing.SupportsBytes
     SupportsIndex = typing.SupportsIndex
     SupportsAbs = typing.SupportsAbs
     SupportsRound = typing.SupportsRound
@@ -1331,39 +1333,53 @@ else:
                                above.""")
 
 
+def _set_default(type_param, default):
+    if isinstance(default, (tuple, list)):
+        type_param.__default__ = tuple((typing._type_check(d, "Default must be a type")
+                                        for d in default))
+    elif default != _marker:
+        type_param.__default__ = typing._type_check(default, "Default must be a type")
+    else:
+        type_param.__default__ = None
+
+
 class _DefaultMixin:
     """Mixin for TypeVarLike defaults."""
 
     __slots__ = ()
-
-    def __init__(self, default):
-        if isinstance(default, (tuple, list)):
-            self.__default__ = tuple((typing._type_check(d, "Default must be a type")
-                                      for d in default))
-        elif default != _marker:
-            self.__default__ = typing._type_check(default, "Default must be a type")
-        else:
-            self.__default__ = None
+    __init__ = _set_default
 
 
 # Add default and infer_variance parameters from PEP 696 and 695
-class TypeVar(typing.TypeVar, _DefaultMixin, _root=True):
-    """Type variable."""
-
-    __module__ = 'typing'
-
-    def __init__(self, name, *constraints, bound=None,
+class _TypeVarMeta(type):
+    def __call__(self, name, *constraints, bound=None,
                  covariant=False, contravariant=False,
                  default=_marker, infer_variance=False):
-        super().__init__(name, *constraints, bound=bound, covariant=covariant,
-                         contravariant=contravariant)
-        _DefaultMixin.__init__(self, default)
-        self.__infer_variance__ = infer_variance
+        if hasattr(typing, "TypeAliasType"):
+            # PEP 695 implemented, can pass infer_variance to typing.TypeVar
+            typevar = typing.TypeVar(name, *constraints, bound=bound,
+                                     covariant=covariant, contravariant=contravariant,
+                                     infer_variance=infer_variance)
+        else:
+            typevar = typing.TypeVar(name, *constraints, bound=bound,
+                                     covariant=covariant, contravariant=contravariant)
+            typevar.__infer_variance__ = infer_variance
+        _set_default(typevar, default)
 
         # for pickling:
         def_mod = _caller()
         if def_mod != 'typing_extensions':
-            self.__module__ = def_mod
+            typevar.__module__ = def_mod
+        return typevar
+
+    def __instancecheck__(self, __instance: Any) -> bool:
+        return isinstance(__instance, typing.TypeVar)
+
+
+class TypeVar(metaclass=_TypeVarMeta):
+    """Type variable."""
+
+    __module__ = 'typing'
 
 
 # Python 3.10+ has PEP 612
@@ -1431,22 +1447,28 @@ else:
 # 3.10+
 if hasattr(typing, 'ParamSpec'):
 
-    # Add default Parameter - PEP 696
-    class ParamSpec(typing.ParamSpec, _DefaultMixin, _root=True):
-        """Parameter specification variable."""
-
-        __module__ = 'typing'
-
-        def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
-                     default=_marker):
-            super().__init__(name, bound=bound, covariant=covariant,
-                             contravariant=contravariant)
-            _DefaultMixin.__init__(self, default)
+    # Add default parameter - PEP 696
+    class _ParamSpecMeta(type):
+        def __call__(self, name, *, bound=None,
+                    covariant=False, contravariant=False,
+                    default=_marker):
+            paramspec = typing.ParamSpec(name, bound=bound,
+                                         covariant=covariant, contravariant=contravariant)
+            _set_default(paramspec, default)
 
             # for pickling:
             def_mod = _caller()
             if def_mod != 'typing_extensions':
-                self.__module__ = def_mod
+                paramspec.__module__ = def_mod
+            return paramspec
+
+        def __instancecheck__(self, __instance: Any) -> bool:
+            return isinstance(__instance, typing.ParamSpec)
+
+    class ParamSpec(metaclass=_ParamSpecMeta):
+        """Parameter specification."""
+
+        __module__ = 'typing'
 
 # 3.7-3.9
 else:
@@ -2024,18 +2046,28 @@ else:
 
 if hasattr(typing, "TypeVarTuple"):  # 3.11+
 
-    # Add default Parameter - PEP 696
-    class TypeVarTuple(typing.TypeVarTuple, _DefaultMixin, _root=True):
-        """Type variable tuple."""
-
-        def __init__(self, name, *, default=_marker):
-            super().__init__(name)
-            _DefaultMixin.__init__(self, default)
+    # Add default parameter - PEP 696
+    class _TypeVarTupleMeta(type):
+        def __call__(self, name, *, default=_marker):
+            tvt = typing.TypeVarTuple(name)
+            _set_default(tvt, default)
 
             # for pickling:
             def_mod = _caller()
             if def_mod != 'typing_extensions':
-                self.__module__ = def_mod
+                tvt.__module__ = def_mod
+            return tvt
+
+        def __instancecheck__(self, __instance: Any) -> bool:
+            return isinstance(__instance, typing.TypeVarTuple)
+
+    class TypeVarTuple(metaclass=_TypeVarTupleMeta):
+        """Type variable tuple."""
+
+        __module__ = 'typing'
+
+        def __init_subclass__(self, *args, **kwds):
+            raise TypeError("Cannot subclass special typing classes")
 
 else:
     class TypeVarTuple(_DefaultMixin):

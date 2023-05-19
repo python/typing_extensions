@@ -47,6 +47,9 @@ TYPING_3_10_0 = sys.version_info[:3] >= (3, 10, 0)
 # 3.11 makes runtime type checks (_type_check) more lenient.
 TYPING_3_11_0 = sys.version_info[:3] >= (3, 11, 0)
 
+# 3.12 changes the representation of Unpack[] (PEP 692)
+TYPING_3_12_0 = sys.version_info[:3] >= (3, 12, 0)
+
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
 HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
@@ -3531,7 +3534,9 @@ class UnpackTests(BaseTestCase):
 
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
-        if TYPING_3_11_0:
+        if TYPING_3_12_0:
+            self.assertEqual(repr(Unpack[Ts]), 'typing.Unpack[Ts]')
+        elif TYPING_3_11_0:
             self.assertEqual(repr(Unpack[Ts]), '*Ts')
         else:
             self.assertEqual(repr(Unpack[Ts]), 'typing_extensions.Unpack[Ts]')
@@ -4229,8 +4234,8 @@ class NamedTupleTests(BaseTestCase):
     @skipUnless(TYPING_3_9_0, "NamedTuple was a class on 3.8 and lower")
     def test_same_as_typing_NamedTuple_39_plus(self):
         self.assertEqual(
-            set(dir(NamedTuple)),
-            set(dir(typing.NamedTuple)) | {"__text_signature__"}
+            set(dir(NamedTuple)) - {"__text_signature__"},
+            set(dir(typing.NamedTuple))
         )
         self.assertIs(type(NamedTuple), type(typing.NamedTuple))
 
@@ -4341,9 +4346,11 @@ class BufferTests(BaseTestCase):
             def __buffer__(self, flags: int) -> memoryview:
                 return memoryview(b'')
 
-        self.assertNotIsInstance(MyRegisteredBuffer(), Buffer)
-        self.assertNotIsSubclass(MyRegisteredBuffer, Buffer)
-        Buffer.register(MyRegisteredBuffer)
+        # On 3.12, collections.abc.Buffer does a structural compatibility check
+        if not TYPING_3_12_0:
+            self.assertNotIsInstance(MyRegisteredBuffer(), Buffer)
+            self.assertNotIsSubclass(MyRegisteredBuffer, Buffer)
+            Buffer.register(MyRegisteredBuffer)
         self.assertIsInstance(MyRegisteredBuffer(), Buffer)
         self.assertIsSubclass(MyRegisteredBuffer, Buffer)
 
