@@ -185,6 +185,8 @@ Certain objects were changed after they were added to `typing`, and
 - `NewType` has been in the `typing` module since Python 3.5.2, but
   user-defined `NewType`s are only pickleable on Python 3.10+.
   `typing_extensions.NewType` backports this feature to all Python versions.
+- `Unpack` was added in Python 3.11, but the repr was changed in Python 3.12;
+  `typing_extensions.Unpack` has the newer repr on all versions.
 
 There are a few types whose interface was modified between different
 versions of typing. For example, `typing.Sequence` was modified to

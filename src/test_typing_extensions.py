@@ -3644,10 +3644,7 @@ class UnpackTests(BaseTestCase):
 
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
-        if TYPING_3_11_0:
-            self.assertEqual(repr(Unpack[Ts]), '*Ts')
-        else:
-            self.assertEqual(repr(Unpack[Ts]), 'typing_extensions.Unpack[Ts]')
+        self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
 
     def test_cannot_subclass_vars(self):
         with self.assertRaises(TypeError):
@@ -3769,7 +3766,10 @@ class TypeVarTupleTests(BaseTestCase):
         Ts = TypeVarTuple('Ts')
 
         t = Tuple[tuple(Ts)]
-        self.assertEqual(t.__args__, (Unpack[Ts],))
+        if sys.version_info >= (3, 11):
+            self.assertEqual(t.__args__, (typing.Unpack[Ts],))
+        else:
+            self.assertEqual(t.__args__, (Unpack[Ts],))
         self.assertEqual(t.__parameters__, (Ts,))
 
     def test_pickle(self):
@@ -4035,7 +4035,7 @@ class AllTests(BaseTestCase):
             exclude |= {
                 'Protocol', 'runtime_checkable', 'SupportsAbs', 'SupportsBytes',
                 'SupportsComplex', 'SupportsFloat', 'SupportsIndex', 'SupportsInt',
-                'SupportsRound', 'TypedDict', 'is_typeddict', 'NamedTuple',
+                'SupportsRound', 'TypedDict', 'is_typeddict', 'NamedTuple', 'Unpack',
             }
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
