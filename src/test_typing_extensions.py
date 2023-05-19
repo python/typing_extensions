@@ -4266,7 +4266,12 @@ class NamedTupleTests(BaseTestCase):
 class TypeVarLikeDefaultsTests(BaseTestCase):
     def test_typevar(self):
         T = typing_extensions.TypeVar('T', default=int)
+        typing_T = TypeVar('T')
         self.assertEqual(T.__default__, int)
+        self.assertIsInstance(T, typing_extensions.TypeVar)
+        self.assertIsInstance(T, typing.TypeVar)
+        self.assertIsInstance(typing_T, typing.TypeVar)
+        self.assertIsInstance(typing_T, typing_extensions.TypeVar)
 
         class A(Generic[T]): ...
         Alias = Optional[T]
@@ -4280,6 +4285,12 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
     def test_paramspec(self):
         P = ParamSpec('P', default=(str, int))
         self.assertEqual(P.__default__, (str, int))
+        self.assertIsInstance(P, ParamSpec)
+        if hasattr(typing, "ParamSpec"):
+            self.assertIsInstance(P, typing.ParamSpec)
+            typing_P = typing.ParamSpec('P')
+            self.assertIsInstance(typing_P, typing.ParamSpec)
+            self.assertIsInstance(typing_P, ParamSpec)
 
         class A(Generic[P]): ...
         Alias = typing.Callable[P, None]
@@ -4287,6 +4298,12 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
     def test_typevartuple(self):
         Ts = TypeVarTuple('Ts', default=Unpack[Tuple[str, int]])
         self.assertEqual(Ts.__default__, Unpack[Tuple[str, int]])
+        self.assertIsInstance(Ts, TypeVarTuple)
+        if hasattr(typing, "TypeVarTuple"):
+            self.assertIsInstance(Ts, typing.TypeVarTuple)
+            typing_Ts = typing.TypeVarTuple('Ts')
+            self.assertIsInstance(typing_Ts, typing.TypeVarTuple)
+            self.assertIsInstance(typing_Ts, TypeVarTuple)
 
         class A(Generic[Unpack[Ts]]): ...
         Alias = Optional[Unpack[Ts]]
