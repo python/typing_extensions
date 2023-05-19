@@ -2294,8 +2294,8 @@ class ProtocolTests(BaseTestCase):
         class NonPR(PR): pass
         class C(metaclass=abc.ABCMeta):
             x = 1
-        class D(metaclass=abc.ABCMeta):
-            def meth(self): pass
+        class D(metaclass=abc.ABCMeta):  # noqa: B024
+            def meth(self): pass  # noqa: B027
         self.assertNotIsInstance(C(), NonP)
         self.assertNotIsInstance(D(), NonPR)
         self.assertNotIsSubclass(C, NonP)
