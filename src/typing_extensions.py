@@ -1449,8 +1449,8 @@ if hasattr(typing, 'ParamSpec'):
     # Add default parameter - PEP 696
     class _ParamSpecMeta(type):
         def __call__(self, name, *, bound=None,
-                    covariant=False, contravariant=False,
-                    default=_marker):
+                     covariant=False, contravariant=False,
+                     default=_marker):
             paramspec = typing.ParamSpec(name, bound=bound,
                                          covariant=covariant, contravariant=contravariant)
             _set_default(paramspec, default)
