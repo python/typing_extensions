@@ -14,6 +14,7 @@ import pickle
 import re
 import subprocess
 import tempfile
+import textwrap
 import types
 from pathlib import Path
 from unittest import TestCase, main, skipUnless, skipIf
@@ -46,6 +47,9 @@ TYPING_3_10_0 = sys.version_info[:3] >= (3, 10, 0)
 
 # 3.11 makes runtime type checks (_type_check) more lenient.
 TYPING_3_11_0 = sys.version_info[:3] >= (3, 11, 0)
+
+# 3.12 changes the representation of Unpack[] (PEP 692)
+TYPING_3_12_0 = sys.version_info[:3] >= (3, 12, 0)
 
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
@@ -2396,7 +2400,7 @@ class ProtocolTests(BaseTestCase):
             with self.assertRaises(TypeError):
                 PR[int, ClassVar]
 
-    if sys.version_info >= (3, 12):
+    if hasattr(typing, "TypeAliasType"):
         exec(textwrap.dedent(
             """
             def test_pep695_generic_protocol_callable_members(self):
@@ -4342,8 +4346,8 @@ class NamedTupleTests(BaseTestCase):
     @skipUnless(TYPING_3_9_0, "NamedTuple was a class on 3.8 and lower")
     def test_same_as_typing_NamedTuple_39_plus(self):
         self.assertEqual(
-            set(dir(NamedTuple)),
-            set(dir(typing.NamedTuple)) | {"__text_signature__"}
+            set(dir(NamedTuple)) - {"__text_signature__"},
+            set(dir(typing.NamedTuple))
         )
         self.assertIs(type(NamedTuple), type(typing.NamedTuple))
 
@@ -4374,7 +4378,12 @@ class NamedTupleTests(BaseTestCase):
 class TypeVarLikeDefaultsTests(BaseTestCase):
     def test_typevar(self):
         T = typing_extensions.TypeVar('T', default=int)
+        typing_T = TypeVar('T')
         self.assertEqual(T.__default__, int)
+        self.assertIsInstance(T, typing_extensions.TypeVar)
+        self.assertIsInstance(T, typing.TypeVar)
+        self.assertIsInstance(typing_T, typing.TypeVar)
+        self.assertIsInstance(typing_T, typing_extensions.TypeVar)
 
         class A(Generic[T]): ...
         Alias = Optional[T]
@@ -4388,6 +4397,12 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
     def test_paramspec(self):
         P = ParamSpec('P', default=(str, int))
         self.assertEqual(P.__default__, (str, int))
+        self.assertIsInstance(P, ParamSpec)
+        if hasattr(typing, "ParamSpec"):
+            self.assertIsInstance(P, typing.ParamSpec)
+            typing_P = typing.ParamSpec('P')
+            self.assertIsInstance(typing_P, typing.ParamSpec)
+            self.assertIsInstance(typing_P, ParamSpec)
 
         class A(Generic[P]): ...
         Alias = typing.Callable[P, None]
@@ -4395,6 +4410,12 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
     def test_typevartuple(self):
         Ts = TypeVarTuple('Ts', default=Unpack[Tuple[str, int]])
         self.assertEqual(Ts.__default__, Unpack[Tuple[str, int]])
+        self.assertIsInstance(Ts, TypeVarTuple)
+        if hasattr(typing, "TypeVarTuple"):
+            self.assertIsInstance(Ts, typing.TypeVarTuple)
+            typing_Ts = typing.TypeVarTuple('Ts')
+            self.assertIsInstance(typing_Ts, typing.TypeVarTuple)
+            self.assertIsInstance(typing_Ts, TypeVarTuple)
 
         class A(Generic[Unpack[Ts]]): ...
         Alias = Optional[Unpack[Ts]]
@@ -4454,8 +4475,13 @@ class BufferTests(BaseTestCase):
             def __buffer__(self, flags: int) -> memoryview:
                 return memoryview(b'')
 
-        self.assertNotIsInstance(MyRegisteredBuffer(), Buffer)
-        self.assertNotIsSubclass(MyRegisteredBuffer, Buffer)
+        # On 3.12, collections.abc.Buffer does a structural compatibility check
+        if TYPING_3_12_0:
+            self.assertIsInstance(MyRegisteredBuffer(), Buffer)
+            self.assertIsSubclass(MyRegisteredBuffer, Buffer)
+        else:
+            self.assertNotIsInstance(MyRegisteredBuffer(), Buffer)
+            self.assertNotIsSubclass(MyRegisteredBuffer, Buffer)
         Buffer.register(MyRegisteredBuffer)
         self.assertIsInstance(MyRegisteredBuffer(), Buffer)
         self.assertIsSubclass(MyRegisteredBuffer, Buffer)

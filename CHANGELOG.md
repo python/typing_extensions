@@ -73,6 +73,8 @@
 - Backport the implementation of `NewType` from 3.10 (where it is implemented
   as a class rather than a function). This allows user-defined `NewType`s to be
   pickled. Patch by Alex Waygood.
+- Fix tests and import on Python 3.12, where `typing.TypeVar` can no longer be
+  subclassed. Patch by Jelle Zijlstra.
 - Add `typing_extensions.TypeAliasType`, a backport of `typing.TypeAliasType`
   from PEP 695. Patch by Jelle Zijlstra.
 - Backport changes to the repr of `typing.Unpack` that were made in order to
