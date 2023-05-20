@@ -4573,7 +4573,20 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(Variadic.__name__, "Variadic")
         self.assertEqual(Variadic.__value__, Tuple[int, Unpack[Ts]])
         self.assertEqual(Variadic.__type_params__, (Ts,))
-        self.assertEqual(Variadic.__parameters__, (Unpack[Ts],))
+        self.assertEqual(Variadic.__parameters__, tuple(iter(Ts)))
+
+    def test_immutable(self):
+        Simple = TypeAliasType("Simple", int)
+        with self.assertRaisesRegex(TypeError, "cannot be modified"):
+            Simple.__name__ = "NewName"
+        with self.assertRaisesRegex(TypeError, "cannot be modified"):
+            Simple.__value__ = str
+        with self.assertRaisesRegex(TypeError, "cannot be modified"):
+            Simple.__type_params__ = (T,)
+        with self.assertRaisesRegex(TypeError, "cannot be modified"):
+            Simple.__parameters__ = (T,)
+        with self.assertRaisesRegex(TypeError, "cannot be modified"):
+            Simple.some_attribute = "not allowed"
 
     def test_or(self):
         Alias = TypeAliasType("Alias", int)

@@ -7,6 +7,7 @@ import operator
 import sys
 import types as _types
 import typing
+from typing import Any
 import warnings
 
 
@@ -2679,14 +2680,10 @@ else:
           as is 'X, Y = TypeAliasType("X", int), TypeAliasType("Y", int)').
 
         """
-        __slots__ = (
-            "__name__", "__value__", "__type_params__", "__parameters__", "__module__"
-        )
 
         def __init__(self, name: str, value, *, type_params=()):
             if not isinstance(name, str):
                 raise TypeError("TypeAliasType name must be a string")
-            self.__name__ = name
             self.__value__ = value
             self.__type_params__ = type_params
 
@@ -2700,6 +2697,13 @@ else:
             def_mod = _caller()
             if def_mod != 'typing_extensions':
                 self.__module__ = def_mod
+            # Setting this attribute closes the TypeAliasType from further modification
+            self.__name__ = name
+
+        def __setattr__(self, __name: str, __value: Any) -> None:
+            if hasattr(self, "__name__"):
+                raise TypeError("TypeAliasType cannot be modified")
+            super().__setattr__(__name, __value)
 
         def __repr__(self) -> str:
             return self.__name__
