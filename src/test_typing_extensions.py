@@ -4577,16 +4577,20 @@ class TypeAliasTypeTests(BaseTestCase):
 
     def test_immutable(self):
         Simple = TypeAliasType("Simple", int)
-        with self.assertRaisesRegex(TypeError, "cannot be modified"):
+        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
             Simple.__name__ = "NewName"
-        with self.assertRaisesRegex(TypeError, "cannot be modified"):
+        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
             Simple.__value__ = str
-        with self.assertRaisesRegex(TypeError, "cannot be modified"):
+        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
             Simple.__type_params__ = (T,)
-        with self.assertRaisesRegex(TypeError, "cannot be modified"):
+        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
             Simple.__parameters__ = (T,)
-        with self.assertRaisesRegex(TypeError, "cannot be modified"):
+        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
             Simple.some_attribute = "not allowed"
+        with self.assertRaisesRegex(AttributeError, "Can't delete attribute"):
+            del Simple.__name__
+        with self.assertRaisesRegex(AttributeError, "Can't delete attribute"):
+            del Simple.nonexistent_attribute
 
     def test_or(self):
         Alias = TypeAliasType("Alias", int)
