@@ -2701,11 +2701,15 @@ else:
 
         def __setattr__(self, __name: str, __value: object) -> None:
             if hasattr(self, "__name__"):
-                raise AttributeError(f"Can't set attribute {__name!r} on an instance of TypeAliasType")
+                raise AttributeError(
+                    f"Can't set attribute {__name!r} on an instance of TypeAliasType"
+                )
             super().__setattr__(__name, __value)
 
         def __delattr__(self, __name: str) -> None:
-            raise AttributeError(f"Can't delete attribute {__name!r} on an instance of TypeAliasType")
+            raise AttributeError(
+                f"Can't delete attribute {__name!r} on an instance of TypeAliasType"
+            )
 
         def __repr__(self) -> str:
             return self.__name__
