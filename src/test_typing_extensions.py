@@ -4476,10 +4476,13 @@ class BufferTests(BaseTestCase):
                 return memoryview(b'')
 
         # On 3.12, collections.abc.Buffer does a structural compatibility check
-        if not TYPING_3_12_0:
+        if TYPING_3_12_0:
+            self.assertIsInstance(MyRegisteredBuffer(), Buffer)
+            self.assertIsSubclass(MyRegisteredBuffer, Buffer)
+        else:
             self.assertNotIsInstance(MyRegisteredBuffer(), Buffer)
             self.assertNotIsSubclass(MyRegisteredBuffer, Buffer)
-            Buffer.register(MyRegisteredBuffer)
+        Buffer.register(MyRegisteredBuffer)
         self.assertIsInstance(MyRegisteredBuffer(), Buffer)
         self.assertIsSubclass(MyRegisteredBuffer, Buffer)
 
