@@ -7,7 +7,6 @@ import operator
 import sys
 import types as _types
 import typing
-from typing import Any
 import warnings
 
 
@@ -2700,7 +2699,7 @@ else:
             # Setting this attribute closes the TypeAliasType from further modification
             self.__name__ = name
 
-        def __setattr__(self, __name: str, __value: Any) -> None:
+        def __setattr__(self, __name: str, __value: object) -> None:
             if hasattr(self, "__name__"):
                 raise TypeError("TypeAliasType cannot be modified")
             super().__setattr__(__name, __value)
