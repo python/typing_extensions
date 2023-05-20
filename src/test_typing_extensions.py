@@ -2400,7 +2400,7 @@ class ProtocolTests(BaseTestCase):
             with self.assertRaises(TypeError):
                 PR[int, ClassVar]
 
-    if sys.version_info >= (3, 12):
+    if hasattr(typing, "TypeAliasType"):
         exec(textwrap.dedent(
             """
             def test_pep695_generic_protocol_callable_members(self):
