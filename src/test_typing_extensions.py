@@ -14,6 +14,7 @@ import pickle
 import re
 import subprocess
 import tempfile
+import textwrap
 import types
 from pathlib import Path
 from unittest import TestCase, main, skipUnless, skipIf
