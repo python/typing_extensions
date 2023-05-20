@@ -79,6 +79,7 @@ __all__ = [
     'runtime_checkable',
     'Text',
     'TypeAlias',
+    'TypeAliasType',
     'TypeGuard',
     'TYPE_CHECKING',
     'Never',
@@ -2677,3 +2678,100 @@ else:
 
             def __ror__(self, other):
                 return typing.Union[other, self]
+
+
+if hasattr(typing, "TypeAliasType"):
+    TypeAliasType = typing.TypeAliasType
+else:
+    class TypeAliasType:
+        """Create named, parameterized type aliases.
+
+        This provides a backport of the new `type` statement in Python 3.12:
+
+            type ListOrSet[T] = list[T] | set[T]
+
+        is equivalent to:
+
+            T = TypeVar("T")
+            ListOrSet = TypeAliasType("ListOrSet", list[T] | set[T], type_params=(T,))
+
+        The name ListOrSet can then be used as an alias for the type it refers to.
+
+        The type_params argument should contain all the type parameters used
+        in the value of the type alias. If the alias is not generic, this
+        argument is omitted.
+
+        Static type checkers should only support type aliases declared using
+        TypeAliasType that follow these rules:
+
+        - The first argument (the name) must be a string literal.
+        - The TypeAliasType instance must be immediately assigned to a variable
+          of the same name. (For example, 'X = TypeAliasType("Y", int)' is invalid,
+          as is 'X, Y = TypeAliasType("X", int), TypeAliasType("Y", int)').
+
+        """
+
+        def __init__(self, name: str, value, *, type_params=()):
+            if not isinstance(name, str):
+                raise TypeError("TypeAliasType name must be a string")
+            self.__value__ = value
+            self.__type_params__ = type_params
+
+            parameters = []
+            for type_param in type_params:
+                if isinstance(type_param, TypeVarTuple):
+                    parameters.extend(type_param)
+                else:
+                    parameters.append(type_param)
+            self.__parameters__ = tuple(parameters)
+            def_mod = _caller()
+            if def_mod != 'typing_extensions':
+                self.__module__ = def_mod
+            # Setting this attribute closes the TypeAliasType from further modification
+            self.__name__ = name
+
+        def __setattr__(self, __name: str, __value: object) -> None:
+            if hasattr(self, "__name__"):
+                raise AttributeError(
+                    f"Can't set attribute {__name!r} on an instance of TypeAliasType"
+                )
+            super().__setattr__(__name, __value)
+
+        def __delattr__(self, __name: str) -> None:
+            raise AttributeError(
+                f"Can't delete attribute {__name!r} on an instance of TypeAliasType"
+            )
+
+        def __repr__(self) -> str:
+            return self.__name__
+
+        def __getitem__(self, parameters):
+            if not isinstance(parameters, tuple):
+                parameters = (parameters,)
+            parameters = [
+                typing._type_check(
+                    item, f'Subscripting {self.__name__} requires a type.'
+                )
+                for item in parameters
+            ]
+            return typing._GenericAlias(self, tuple(parameters))
+
+        def __reduce__(self):
+            return self.__name__
+
+        def __init_subclass__(cls, *args, **kwargs):
+            raise TypeError(
+                "type 'typing_extensions.TypeAliasType' is not an acceptable base type"
+            )
+
+        # The presence of this method convinces typing._type_check
+        # that TypeAliasTypes are types.
+        def __call__(self):
+            raise TypeError("Type alias is not callable")
+
+        if sys.version_info >= (3, 10):
+            def __or__(self, right):
+                return typing.Union[self, right]
+
+            def __ror__(self, left):
+                return typing.Union[left, self]

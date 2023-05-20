@@ -75,6 +75,8 @@
   pickled. Patch by Alex Waygood.
 - Fix tests and import on Python 3.12, where `typing.TypeVar` can no longer be
   subclassed. Patch by Jelle Zijlstra.
+- Add `typing_extensions.TypeAliasType`, a backport of `typing.TypeAliasType`
+  from PEP 695. Patch by Jelle Zijlstra.
 - Backport changes to the repr of `typing.Unpack` that were made in order to
   implement [PEP 692](https://peps.python.org/pep-0692/) (backport of
   https://github.com/python/cpython/pull/104048). Patch by Alex Waygood.

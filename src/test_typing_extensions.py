@@ -22,7 +22,7 @@ from unittest.mock import patch
 import typing
 from typing import TypeVar, Optional, Union, AnyStr
 from typing import T, KT, VT  # Not in __all__.
-from typing import Tuple, List, Dict, Iterable, Iterator, Callable
+from typing import Tuple, List, Set, Dict, Iterable, Iterator, Callable
 from typing import Generic
 from typing import no_type_check
 import warnings
@@ -36,7 +36,7 @@ from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
-from typing_extensions import override, deprecated, Buffer
+from typing_extensions import override, deprecated, Buffer, TypeAliasType
 from _typed_dict_test_helper import Foo, FooGeneric
 
 # Flags used to mark tests that only apply after a specific
@@ -4577,6 +4577,83 @@ class GetOriginalBasesTests(BaseTestCase):
                     get_original_bases(CallBasedTypedDict)[0],
                     TypedDict
                 )
+
+
+class TypeAliasTypeTests(BaseTestCase):
+    def test_attributes(self):
+        Simple = TypeAliasType("Simple", int)
+        self.assertEqual(Simple.__name__, "Simple")
+        self.assertIs(Simple.__value__, int)
+        self.assertEqual(Simple.__type_params__, ())
+        self.assertEqual(Simple.__parameters__, ())
+
+        T = TypeVar("T")
+        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
+        self.assertEqual(ListOrSetT.__name__, "ListOrSetT")
+        self.assertEqual(ListOrSetT.__value__, Union[List[T], Set[T]])
+        self.assertEqual(ListOrSetT.__type_params__, (T,))
+        self.assertEqual(ListOrSetT.__parameters__, (T,))
+
+        Ts = TypeVarTuple("Ts")
+        Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
+        self.assertEqual(Variadic.__name__, "Variadic")
+        self.assertEqual(Variadic.__value__, Tuple[int, Unpack[Ts]])
+        self.assertEqual(Variadic.__type_params__, (Ts,))
+        self.assertEqual(Variadic.__parameters__, tuple(iter(Ts)))
+
+    def test_immutable(self):
+        Simple = TypeAliasType("Simple", int)
+        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
+            Simple.__name__ = "NewName"
+        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
+            Simple.__value__ = str
+        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
+            Simple.__type_params__ = (T,)
+        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
+            Simple.__parameters__ = (T,)
+        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
+            Simple.some_attribute = "not allowed"
+        with self.assertRaisesRegex(AttributeError, "Can't delete attribute"):
+            del Simple.__name__
+        with self.assertRaisesRegex(AttributeError, "Can't delete attribute"):
+            del Simple.nonexistent_attribute
+
+    def test_or(self):
+        Alias = TypeAliasType("Alias", int)
+        if sys.version_info >= (3, 10):
+            self.assertEqual(Alias | "Ref", Union[Alias, typing.ForwardRef("Ref")])
+        else:
+            with self.assertRaises(TypeError):
+                Alias | "Ref"
+
+    def test_getitem(self):
+        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
+        subscripted = ListOrSetT[int]
+        self.assertEqual(get_args(subscripted), (int,))
+        self.assertIs(get_origin(subscripted), ListOrSetT)
+        with self.assertRaises(TypeError):
+            subscripted[str]
+
+        still_generic = ListOrSetT[Iterable[T]]
+        self.assertEqual(get_args(still_generic), (Iterable[T],))
+        self.assertIs(get_origin(still_generic), ListOrSetT)
+        fully_subscripted = still_generic[float]
+        self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
+        self.assertIs(get_origin(fully_subscripted), ListOrSetT)
+
+    def test_pickle(self):
+        global Alias
+        Alias = TypeAliasType("Alias", int)
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            with self.subTest(proto=proto):
+                pickled = pickle.dumps(Alias, proto)
+                unpickled = pickle.loads(pickled)
+                self.assertIs(unpickled, Alias)
+
+    def test_no_instance_subclassing(self):
+        with self.assertRaises(TypeError):
+            class MyAlias(TypeAliasType):
+                pass
 
 
 if __name__ == '__main__':
