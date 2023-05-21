@@ -361,7 +361,7 @@ Protocols
    See :py:class:`typing.SupportsBytes`.
 
    ``typing_extensions`` backports a more performant version of this
-   protocol in Python 3.11 and lower.
+   protocol on Python 3.11 and lower.
 
    .. versionadded:: 4.6.0
 
@@ -370,7 +370,7 @@ Protocols
    See :py:class:`typing.SupportsComplex`.
 
    ``typing_extensions`` backports a more performant version of this
-   protocol in Python 3.11 and lower.
+   protocol on Python 3.11 and lower.
 
    .. versionadded:: 4.6.0
 
@@ -379,7 +379,7 @@ Protocols
    See :py:class:`typing.SupportsFloat`.
 
    ``typing_extensions`` backports a more performant version of this
-   protocol in Python 3.11 and lower.
+   protocol on Python 3.11 and lower.
 
    .. versionadded:: 4.6.0
 
@@ -388,7 +388,7 @@ Protocols
    See :py:class:`typing.SupportsIndex`. In ``typing`` since 3.8.
 
    ``typing_extensions`` backports a more performant version of this
-   protocol in Python 3.11 and lower.
+   protocol on Python 3.11 and lower.
 
    .. versionchanged:: 4.6.0
 
@@ -399,7 +399,7 @@ Protocols
    See :py:class:`typing.SupportsInt`.
 
    ``typing_extensions`` backports a more performant version of this
-   protocol in Python 3.11 and lower.
+   protocol on Python 3.11 and lower.
 
    .. versionadded:: 4.6.0
 
@@ -408,7 +408,7 @@ Protocols
    See :py:class:`typing.SupportsRound`.
 
    ``typing_extensions`` backports a more performant version of this
-   protocol in Python 3.11 and lower.
+   protocol on Python 3.11 and lower.
 
    .. versionadded:: 4.6.0
 
@@ -451,7 +451,7 @@ Decorators
 
    .. versionchanged:: 4.1.0
 
-      The decorator now attempts to set the ``__final__`` attribute on decorated objects. 
+      The decorator now attempts to set the ``__final__`` attribute on decorated objects.
 
 .. decorator:: overload
 
