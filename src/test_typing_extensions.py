@@ -4498,6 +4498,9 @@ class TypeVarTests(BaseTestCase):
                                     r"Bound must be a type\. Got \(1, 2\)\."):
             TypeVar('X', bound=(1, 2))
 
+    # Technically we could run it on later versions of 3.7 and 3.8,
+    # but that's not worth the effort.
+    @skipUnless(TYPING_3_9_0, "Fix was not backported")
     def test_missing__name__(self):
         # See bpo-39942
         code = ("import typing\n"
