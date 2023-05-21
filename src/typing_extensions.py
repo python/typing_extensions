@@ -1351,6 +1351,13 @@ def _set_default(type_param, default):
         type_param.__default__ = None
 
 
+def _set_module(typevarlike):
+    # for pickling:
+    def_mod = _caller(depth=3)
+    if def_mod != 'typing_extensions':
+        typevarlike.__module__ = def_mod
+
+
 class _DefaultMixin:
     """Mixin for TypeVarLike defaults."""
 
@@ -1358,8 +1365,19 @@ class _DefaultMixin:
     __init__ = _set_default
 
 
+class _TypeVarLikeMeta(type):
+    def __init__(cls, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        cls.__module__ = 'typing'
+
+    def __instancecheck__(cls, __instance: Any) -> bool:
+        return isinstance(__instance, cls._backported_typevarlike)
+
+
 # Add default and infer_variance parameters from PEP 696 and 695
-class _TypeVarMeta(type):
+class _TypeVarMeta(_TypeVarLikeMeta):
+    _backported_typevarlike = typing.TypeVar
+
     def __call__(self, name, *constraints, bound=None,
                  covariant=False, contravariant=False,
                  default=_marker, infer_variance=False):
@@ -1375,21 +1393,12 @@ class _TypeVarMeta(type):
                 raise ValueError("Variance cannot be specified with infer_variance.")
             typevar.__infer_variance__ = infer_variance
         _set_default(typevar, default)
-
-        # for pickling:
-        def_mod = _caller()
-        if def_mod != 'typing_extensions':
-            typevar.__module__ = def_mod
+        _set_module(typevar)
         return typevar
-
-    def __instancecheck__(self, __instance: Any) -> bool:
-        return isinstance(__instance, typing.TypeVar)
 
 
 class TypeVar(metaclass=_TypeVarMeta):
     """Type variable."""
-
-    __module__ = 'typing'
 
     def __init_subclass__(cls) -> None:
         raise TypeError(f"type '{__name__}.TypeVar' is not an acceptable base type")
@@ -1461,27 +1470,20 @@ else:
 if hasattr(typing, 'ParamSpec'):
 
     # Add default parameter - PEP 696
-    class _ParamSpecMeta(type):
+    class _ParamSpecMeta(_TypeVarLikeMeta):
+        _backported_typevarlike = typing.ParamSpec
+
         def __call__(self, name, *, bound=None,
                      covariant=False, contravariant=False,
                      default=_marker):
             paramspec = typing.ParamSpec(name, bound=bound,
                                          covariant=covariant, contravariant=contravariant)
             _set_default(paramspec, default)
-
-            # for pickling:
-            def_mod = _caller()
-            if def_mod != 'typing_extensions':
-                paramspec.__module__ = def_mod
+            _set_module(paramspec)
             return paramspec
-
-        def __instancecheck__(self, __instance: Any) -> bool:
-            return isinstance(__instance, typing.ParamSpec)
 
     class ParamSpec(metaclass=_ParamSpecMeta):
         """Parameter specification."""
-
-        __module__ = 'typing'
 
         def __init_subclass__(cls) -> None:
             raise TypeError(f"type '{__name__}.ParamSpec' is not an acceptable base type")
@@ -2088,24 +2090,17 @@ else:
 if hasattr(typing, "TypeVarTuple"):  # 3.11+
 
     # Add default parameter - PEP 696
-    class _TypeVarTupleMeta(type):
+    class _TypeVarTupleMeta(_TypeVarLikeMeta):
+        _backported_typevarlike = typing.TypeVarTuple
+
         def __call__(self, name, *, default=_marker):
             tvt = typing.TypeVarTuple(name)
             _set_default(tvt, default)
-
-            # for pickling:
-            def_mod = _caller()
-            if def_mod != 'typing_extensions':
-                tvt.__module__ = def_mod
+            _set_module(tvt)
             return tvt
-
-        def __instancecheck__(self, __instance: Any) -> bool:
-            return isinstance(__instance, typing.TypeVarTuple)
 
     class TypeVarTuple(metaclass=_TypeVarTupleMeta):
         """Type variable tuple."""
-
-        __module__ = 'typing'
 
         def __init_subclass__(self, *args, **kwds):
             raise TypeError("Cannot subclass special typing classes")
