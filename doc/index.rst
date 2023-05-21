@@ -100,12 +100,12 @@ Special typing primitives
 
    ``typing_extensions`` backports several changes
    to ``NamedTuple`` on Python 3.11 and lower: in 3.11,
-   support for generic ``NamedTuple`` was added, and
+   support for generic ``NamedTuple``\ s was added, and
    in 3.12, the ``__orig_bases__`` attribute was added.
 
    .. versionadded:: 4.3.0
 
-      Added to provide support for generic ``NamedTuple``.
+      Added to provide support for generic ``NamedTuple``\ s.
 
    .. versionchanged:: 4.6.0
 
@@ -121,7 +121,7 @@ Special typing primitives
 
    See :py:class:`typing.NewType`. In ``typing`` since 3.5.2.
 
-   ``NewType`` was made picklable in 3.10 and an error message was
+   Instances of ``NewType`` were made picklable in 3.10 and an error message was
    improved in 3.11; ``typing_extensions`` backports these changes.
 
    .. versionchanged:: 4.6.0
@@ -173,7 +173,8 @@ Special typing primitives
 
    .. versionchanged:: 4.6.0
 
-      Backported changes to runtime-checkable protocols from Python 3.12.
+      Backported changes to runtime-checkable protocols from Python 3.12,
+      including :py:gh:`103034` and :py:gh:`26067`.
 
 .. data:: Required
 
@@ -222,7 +223,7 @@ Special typing primitives
 
    .. versionadded:: 4.3.0
 
-      Added to provide support for generic ``TypedDict``.
+      Added support for generic ``TypedDict``\ s.
 
    .. versionchanged:: 4.6.0
 
@@ -254,7 +255,7 @@ Special typing primitives
 
 .. class:: TypeVarTuple(name, *, default=...)
 
-   See :py:class:`typing.TypeVarTuple`. In ``typing`` since 3.10.
+   See :py:class:`typing.TypeVarTuple`. In ``typing`` since 3.11.
 
    The ``typing_extensions`` version adds support for the
    ``default=`` argument from :pep:`696`.
@@ -271,7 +272,7 @@ Special typing primitives
 
 .. data:: Unpack
 
-   See :py:data:`typing.Unpack`. In ``typing`` since 3.10.
+   See :py:data:`typing.Unpack`. In ``typing`` since 3.11.
 
    In Python 3.12, the ``repr()`` was changed as a result of :pep:`692`.
    ``typing_extensions`` backports this change.
@@ -351,7 +352,7 @@ Protocols
    See :py:class:`typing.SupportsAbs`.
 
    ``typing_extensions`` backports a more performant version of this
-   protocol in Python 3.11 and lower.
+   protocol on Python 3.11 and lower.
 
    .. versionadded:: 4.6.0
 
@@ -436,7 +437,7 @@ Decorators
 
 .. decorator:: deprecated(msg, *, category=DeprecationWarning, stacklevel=1)
 
-   See :pep:`702`.
+   See :pep:`702`. Experimental; not yet part of the standard library.
 
    .. versionadded:: 4.5.0
 
@@ -445,12 +446,12 @@ Decorators
    See :py:func:`typing.final`. In ``typing`` since 3.8.
 
    Since Python 3.11, this decorator supports runtime introspection
-   through the ``__final__`` attribute; ``typing_extensions.final``
+   by setting the ``__final__`` attribute wherever possible; ``typing_extensions.final``
    backports this feature.
 
    .. versionchanged:: 4.1.0
 
-      The ``__final__`` attribute is now set on decorated objects.
+      The decorator now attempts to set the ``__final__`` attribute on decorated objects. 
 
 .. decorator:: overload
 
@@ -472,7 +473,7 @@ Decorators
 
    .. versionchanged:: 4.5.0
 
-      The decorator now sets the ``__override__`` attribute on the decorated
+      The decorator now attempts to set the ``__override__`` attribute on the decorated
       object.
 
 .. decorator:: runtime_checkable
@@ -528,7 +529,7 @@ Functions
    This function should always produce correct results when called on classes
    constructed using features from ``typing_extensions``. However, it may
    produce incorrect results when called on some :py:class:`NamedTuple` or
-   :py:class:`TypedDict` on Python <=3.11.
+   :py:class:`TypedDict` classes on Python <=3.11.
 
    .. versionadded:: 4.6.0
 
@@ -559,7 +560,7 @@ Functions
 
    On versions where :class:`TypedDict` is not the same as
    :py:class:`typing.TypedDict`, this function recognizes
-   ``TypedDict`` classes created through either.
+   ``TypedDict`` classes created through either mechanism.
 
    .. versionadded:: 4.1.0
 
