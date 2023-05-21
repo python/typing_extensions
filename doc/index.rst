@@ -2,10 +2,9 @@
 Welcome to typing_extensions's documentation!
 =============================================
 
-``typing_extensions`` provides common building blocks for type annotations
-that are understood by static type checkers.
-
-The ``typing_extensions`` module serves two related purposes:
+``typing_extensions`` complements the standard-library :py:mod:`typing` module,
+providing runtime support for type hints as specified by :pep:`484` and subsequent
+PEPs. The module serves two related purposes:
 
 - Enable use of new type system features on older Python versions. For example,
   :py:data:`typing.TypeGuard` is new in Python 3.10, but ``typing_extensions`` allows
@@ -15,9 +14,10 @@ The ``typing_extensions`` module serves two related purposes:
 
 New features may be added to ``typing_extensions`` as soon as they are specified
 in a PEP that has been added to the `python/peps <https://github.com/python/peps>`_
-repository. If the PEP is accepted, the feature will then be added to :py:mod:`typing`
-for the next CPython release. No typing PEP that affected ``typing_extensions``
-has been rejected so far, so we haven't yet figured out how to deal with that possibility.
+repository. If the PEP is accepted, the feature will then be added to the
+:py:mod:`typing` module for the next CPython release. No typing PEP that
+affected ``typing_extensions`` has been rejected so far, so we haven't yet
+figured out how to deal with that possibility.
 
 Starting with version 4.0.0, ``typing_extensions`` uses
 `Semantic Versioning <https://semver.org>`_. The
@@ -461,7 +461,7 @@ Decorators
    through :func:`get_overloads`; ``typing_extensions.overload``
    backports this feature.
 
-   .. versionchanged:: 4.2.0
+   .. versionadded:: 4.2.0
 
       Added to provide support for introspection through :func:`get_overloads` was added.
 
@@ -547,8 +547,8 @@ Functions
    See :py:func:`typing.get_type_hints`.
 
    In Python 3.11, this function was changed to support the new
-   :py:data:`typing.Required`. ``typing_extensions`` backports these
-   fixes.
+   :py:data:`typing.Required` and :py:data:`typing.NotRequired`.
+   ``typing_extensions`` backports these fixes.
 
    .. versionchanged:: 4.1.0
 
@@ -584,7 +584,7 @@ Other
 Limitations
 -----------
 
-There are a few types whose interface was modified between different
+There are a few types where the interface was modified between different
 versions of typing. For example, :py:class:`typing.Sequence` was modified to
 subclass :py:class:`typing.Reversible` as of Python 3.5.3.
 
