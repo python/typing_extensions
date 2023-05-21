@@ -1061,9 +1061,6 @@ else:
 if hasattr(typing, "Required"):
     get_type_hints = typing.get_type_hints
 else:
-    import functools
-    import types
-
     # replaces _strip_annotations()
     def _strip_extras(t):
         """Strips Annotated, Required and NotRequired from a given type."""
@@ -1076,12 +1073,12 @@ else:
             if stripped_args == t.__args__:
                 return t
             return t.copy_with(stripped_args)
-        if hasattr(types, "GenericAlias") and isinstance(t, types.GenericAlias):
+        if hasattr(_types, "GenericAlias") and isinstance(t, _types.GenericAlias):
             stripped_args = tuple(_strip_extras(a) for a in t.__args__)
             if stripped_args == t.__args__:
                 return t
-            return types.GenericAlias(t.__origin__, stripped_args)
-        if hasattr(types, "UnionType") and isinstance(t, types.UnionType):
+            return _types.GenericAlias(t.__origin__, stripped_args)
+        if hasattr(_types, "UnionType") and isinstance(t, _types.UnionType):
             stripped_args = tuple(_strip_extras(a) for a in t.__args__)
             if stripped_args == t.__args__:
                 return t
@@ -1374,6 +1371,8 @@ class _TypeVarMeta(type):
         else:
             typevar = typing.TypeVar(name, *constraints, bound=bound,
                                      covariant=covariant, contravariant=contravariant)
+            if infer_variance and (covariant or contravariant):
+                raise ValueError("Variance cannot be specified with infer_variance.")
             typevar.__infer_variance__ = infer_variance
         _set_default(typevar, default)
 
@@ -1391,6 +1390,9 @@ class TypeVar(metaclass=_TypeVarMeta):
     """Type variable."""
 
     __module__ = 'typing'
+
+    def __init_subclass__(cls) -> None:
+        raise TypeError(f"type '{__name__}.TypeVar' is not an acceptable base type")
 
 
 # Python 3.10+ has PEP 612
@@ -1480,6 +1482,9 @@ if hasattr(typing, 'ParamSpec'):
         """Parameter specification."""
 
         __module__ = 'typing'
+
+        def __init_subclass__(cls) -> None:
+            raise TypeError(f"type '{__name__}.ParamSpec' is not an acceptable base type")
 
 # 3.7-3.9
 else:
@@ -2683,6 +2688,15 @@ else:
 if hasattr(typing, "TypeAliasType"):
     TypeAliasType = typing.TypeAliasType
 else:
+    def _is_unionable(obj):
+        """Corresponds to is_unionable() in unionobject.c in CPython."""
+        return obj is None or isinstance(obj, (
+            type,
+            _types.GenericAlias,
+            _types.UnionType,
+            TypeAliasType,
+        ))
+
     class TypeAliasType:
         """Create named, parameterized type aliases.
 
@@ -2732,15 +2746,25 @@ else:
 
         def __setattr__(self, __name: str, __value: object) -> None:
             if hasattr(self, "__name__"):
-                raise AttributeError(
-                    f"Can't set attribute {__name!r} on an instance of TypeAliasType"
-                )
+                self._raise_attribute_error(__name)
             super().__setattr__(__name, __value)
 
-        def __delattr__(self, __name: str) -> None:
-            raise AttributeError(
-                f"Can't delete attribute {__name!r} on an instance of TypeAliasType"
-            )
+        def __delattr__(self, __name: str) -> Never:
+            self._raise_attribute_error(__name)
+
+        def _raise_attribute_error(self, name: str) -> Never:
+            # Match the Python 3.12 error messages exactly
+            if name == "__name__":
+                raise AttributeError("readonly attribute")
+            elif name in {"__value__", "__type_params__", "__parameters__", "__module__"}:
+                raise AttributeError(
+                    f"attribute '{name}' of 'typing.TypeAliasType' objects "
+                    "is not writable"
+                )
+            else:
+                raise AttributeError(
+                    f"'typing.TypeAliasType' object has no attribute '{name}'"
+                )
 
         def __repr__(self) -> str:
             return self.__name__
@@ -2771,7 +2795,13 @@ else:
 
         if sys.version_info >= (3, 10):
             def __or__(self, right):
+                # For forward compatibility with 3.12, reject Unions
+                # that are not accepted by the built-in Union.
+                if not _is_unionable(right):
+                    return NotImplemented
                 return typing.Union[self, right]
 
             def __ror__(self, left):
+                if not _is_unionable(left):
+                    return NotImplemented
                 return typing.Union[left, self]
