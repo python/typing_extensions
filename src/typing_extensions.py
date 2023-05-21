@@ -1374,6 +1374,8 @@ class _TypeVarMeta(type):
         else:
             typevar = typing.TypeVar(name, *constraints, bound=bound,
                                      covariant=covariant, contravariant=contravariant)
+            if infer_variance and (covariant or contravariant):
+                raise ValueError("Variance cannot be specified with infer_variance.")
             typevar.__infer_variance__ = infer_variance
         _set_default(typevar, default)
 
@@ -1390,6 +1392,9 @@ class _TypeVarMeta(type):
 class TypeVar(metaclass=_TypeVarMeta):
     __doc__ = typing.TypeVar.__doc__
     __module__ = 'typing'
+
+    def __init_subclass__(cls) -> None:
+        raise TypeError(f"type '{__name__}.TypeVar' is not an acceptable base type")
 
 
 # Python 3.10+ has PEP 612
@@ -1478,6 +1483,9 @@ if hasattr(typing, 'ParamSpec'):
     class ParamSpec(metaclass=_ParamSpecMeta):
         __doc__ = typing.ParamSpec.__doc__
         __module__ = 'typing'
+
+        def __init_subclass__(cls) -> None:
+            raise TypeError(f"type '{__name__}.ParamSpec' is not an acceptable base type")
 
 # 3.7-3.9
 else:
