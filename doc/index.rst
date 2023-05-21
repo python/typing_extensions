@@ -221,7 +221,7 @@ Special typing primitives
    ``typing_extensions`` backport provides all of these features and bugfixes on
    all Python versions.
 
-   .. versionadded:: 4.3.0
+   .. versionchanged:: 4.3.0
 
       Added support for generic ``TypedDict``\ s.
 
