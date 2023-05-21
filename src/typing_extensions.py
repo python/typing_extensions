@@ -2750,7 +2750,8 @@ else:
                 raise AttributeError("readonly attribute")
             elif name in ("__value__", "__type_params__", "__parameters__", "__module__"):
                 raise AttributeError(
-                    f"attribute '{name}' of 'typing.TypeAliasType' objects is not writable"
+                    f"attribute '{name}' of 'typing.TypeAliasType' objects "
+                    "is not writable"
                 )
             else:
                 raise AttributeError(
