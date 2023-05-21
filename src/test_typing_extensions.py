@@ -4526,6 +4526,9 @@ class TypeVarTests(BaseTestCase):
         with self.assertRaises(ValueError):
             TypeVar('T', contravariant=True, infer_variance=True)
 
+    def test_docstring(self):
+        self.assertEqual(TypeVar.__doc__, typing.TypeVar.__doc__)
+
 
 class TypeVarLikeDefaultsTests(BaseTestCase):
     def test_typevar(self):
