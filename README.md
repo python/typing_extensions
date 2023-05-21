@@ -15,22 +15,14 @@ The `typing_extensions` module serves two related purposes:
 - Enable experimentation with new type system PEPs before they are accepted and
   added to the `typing` module.
 
-New features may be added to `typing_extensions` as soon as they are specified
-in a PEP that has been added to the [python/peps](https://github.com/python/peps)
-repository. If the PEP is accepted, the feature will then be added to `typing`
-for the next CPython release. No typing PEP has been rejected so far, so we
-haven't yet figured out how to deal with that possibility.
-
-Starting with version 4.0.0, `typing_extensions` uses
+`typing_extensions` uses
 [Semantic Versioning](https://semver.org/). The
-major version is incremented for all backwards-incompatible changes.
+major version will be incremented only for backwards-incompatible changes.
 Therefore, it's safe to depend
 on `typing_extensions` like this: `typing_extensions >=x.y, <(x+1)`,
 where `x.y` is the first version that includes all features you need.
 
-`typing_extensions` supports Python versions 3.7 and higher. In the future,
-support for older Python versions will be dropped some time after that version
-reaches end of life.
+`typing_extensions` supports Python versions 3.7 and higher.
 
 ## Included items
 
