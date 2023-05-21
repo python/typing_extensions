@@ -461,7 +461,7 @@ Decorators
    through :func:`get_overloads`; ``typing_extensions.overload``
    backports this feature.
 
-   .. versionadded:: 4.2.0
+   .. versionchanged:: 4.2.0
 
       Introspection support via :func:`get_overloads` was added.
 
