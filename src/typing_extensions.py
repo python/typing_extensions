@@ -2748,7 +2748,7 @@ else:
             # Match the Python 3.12 error messages exactly
             if name == "__name__":
                 raise AttributeError("readonly attribute")
-            elif name in ("__value__", "__type_params__", "__parameters__", "__module__"):
+            elif name in {"__value__", "__type_params__", "__parameters__", "__module__"}:
                 raise AttributeError(
                     f"attribute '{name}' of 'typing.TypeAliasType' objects "
                     "is not writable"
