@@ -4601,30 +4601,64 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(Variadic.__type_params__, (Ts,))
         self.assertEqual(Variadic.__parameters__, tuple(iter(Ts)))
 
-    def test_immutable(self):
+    def test_cannot_set_attributes(self):
         Simple = TypeAliasType("Simple", int)
-        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
+        with self.assertRaisesRegex(AttributeError, "readonly attribute"):
             Simple.__name__ = "NewName"
-        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
+        with self.assertRaisesRegex(
+            AttributeError,
+            "attribute '__value__' of 'typing.TypeAliasType' objects is not writable",
+        ):
             Simple.__value__ = str
-        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
+        with self.assertRaisesRegex(
+            AttributeError,
+            "attribute '__type_params__' of 'typing.TypeAliasType' objects is not writable",
+        ):
             Simple.__type_params__ = (T,)
-        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
+        with self.assertRaisesRegex(
+            AttributeError,
+            "attribute '__parameters__' of 'typing.TypeAliasType' objects is not writable",
+        ):
             Simple.__parameters__ = (T,)
-        with self.assertRaisesRegex(AttributeError, "Can't set attribute"):
+        with self.assertRaisesRegex(
+            AttributeError,
+            "attribute '__module__' of 'typing.TypeAliasType' objects is not writable",
+        ):
+            Simple.__module__ = 42
+        with self.assertRaisesRegex(
+            AttributeError,
+            "'typing.TypeAliasType' object has no attribute 'some_attribute'",
+        ):
             Simple.some_attribute = "not allowed"
-        with self.assertRaisesRegex(AttributeError, "Can't delete attribute"):
+
+    def test_cannot_delete_attributes(self):
+        Simple = TypeAliasType("Simple", int)
+        with self.assertRaisesRegex(AttributeError, "readonly attribute"):
             del Simple.__name__
-        with self.assertRaisesRegex(AttributeError, "Can't delete attribute"):
-            del Simple.nonexistent_attribute
+        with self.assertRaisesRegex(
+            AttributeError,
+            "attribute '__value__' of 'typing.TypeAliasType' objects is not writable",
+        ):
+            del Simple.__value__
+        with self.assertRaisesRegex(
+            AttributeError,
+            "'typing.TypeAliasType' object has no attribute 'some_attribute'",
+        ):
+            del Simple.some_attribute
 
     def test_or(self):
         Alias = TypeAliasType("Alias", int)
         if sys.version_info >= (3, 10):
-            self.assertEqual(Alias | "Ref", Union[Alias, typing.ForwardRef("Ref")])
+            self.assertEqual(Alias | int, Union[Alias, int])
+            self.assertEqual(Alias | None, Union[Alias, None])
+            self.assertEqual(Alias | (int | str), Union[Alias, int | str])
+            self.assertEqual(Alias | list[float], Union[Alias, list[float]])
         else:
             with self.assertRaises(TypeError):
-                Alias | "Ref"
+                Alias | int
+        # Rejected on all versions
+        with self.assertRaises(TypeError):
+            Alias | "Ref"
 
     def test_getitem(self):
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))

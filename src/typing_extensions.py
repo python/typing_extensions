@@ -2683,6 +2683,15 @@ else:
 if hasattr(typing, "TypeAliasType"):
     TypeAliasType = typing.TypeAliasType
 else:
+    def _is_unionable(obj):
+        """Corresponds to is_unionable() in unionobject.c in CPython."""
+        return obj is None or isinstance(obj, (
+            type,
+            types.GenericAlias,
+            types.UnionType,
+            TypeAliasType,
+        ))
+
     class TypeAliasType:
         """Create named, parameterized type aliases.
 
@@ -2732,15 +2741,24 @@ else:
 
         def __setattr__(self, __name: str, __value: object) -> None:
             if hasattr(self, "__name__"):
-                raise AttributeError(
-                    f"Can't set attribute {__name!r} on an instance of TypeAliasType"
-                )
+                self._raise_attribute_error(__name)
             super().__setattr__(__name, __value)
 
-        def __delattr__(self, __name: str) -> None:
-            raise AttributeError(
-                f"Can't delete attribute {__name!r} on an instance of TypeAliasType"
-            )
+        def __delattr__(self, __name: str) -> Never:
+            self._raise_attribute_error(__name)
+
+        def _raise_attribute_error(self, name: str) -> Never:
+            # Match the Python 3.12 error messages exactly
+            if name == "__name__":
+                raise AttributeError("readonly attribute")
+            elif name in ("__value__", "__type_params__", "__parameters__", "__module__"):
+                raise AttributeError(
+                    f"attribute '{name}' of 'typing.TypeAliasType' objects is not writable"
+                )
+            else:
+                raise AttributeError(
+                    f"'typing.TypeAliasType' object has no attribute '{name}'"
+                )
 
         def __repr__(self) -> str:
             return self.__name__
@@ -2771,7 +2789,13 @@ else:
 
         if sys.version_info >= (3, 10):
             def __or__(self, right):
+                # For forward compatibility with 3.12, reject Unions
+                # that are not accepted by the built-in Union.
+                if not _is_unionable(right):
+                    return NotImplemented
                 return typing.Union[self, right]
 
             def __ror__(self, left):
+                if not _is_unionable(left):
+                    return NotImplemented
                 return typing.Union[left, self]
