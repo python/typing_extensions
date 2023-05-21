@@ -1369,7 +1369,7 @@ class _TypeVarLikeMeta(type):
     def __init__(cls, *args, **kwargs):
         super().__init__(*args, **kwargs)
         cls.__module__ = 'typing'
-    
+
     def __instancecheck__(cls, __instance: Any) -> bool:
         return isinstance(__instance, cls._backported_typevarlike)
 
