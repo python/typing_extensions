@@ -9,7 +9,7 @@ PEPs. The module serves two related purposes:
 - Enable use of new type system features on older Python versions. For example,
   :py:data:`typing.TypeGuard` is new in Python 3.10, but ``typing_extensions`` allows
   users on previous Python versions to use it too.
-- Enable experimentation with new type system PEPs before they are accepted and
+- Enable experimentation with type system features proposed in new PEPs before they are accepted and
   added to the :py:mod:`typing` module.
 
 New features may be added to ``typing_extensions`` as soon as they are specified
