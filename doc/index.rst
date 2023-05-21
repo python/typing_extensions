@@ -463,7 +463,7 @@ Decorators
 
    .. versionadded:: 4.2.0
 
-      Added to provide support for introspection through :func:`get_overloads` was added.
+      Introspection support via :func:`get_overloads` was added.
 
 .. decorator:: override
 
