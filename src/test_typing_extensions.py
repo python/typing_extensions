@@ -3425,6 +3425,10 @@ class ParamSpecTests(BaseTestCase):
         # won't be the same.
         self.assertNotEqual(hash(ParamSpec('P')), hash(P))
 
+    @skipUnless(hasattr(typing, "ParamSpec"), "Only relevant if typing.ParamSpec exists")
+    def test_consistent_docstring(self):
+        self.assertEqual(ParamSpec.__doc__, typing.ParamSpec.__doc__)
+
 
 class ConcatenateTests(BaseTestCase):
     def test_basics(self):
@@ -3786,6 +3790,10 @@ class TypeVarTupleTests(BaseTestCase):
                 z = pickle.loads(pickle.dumps(typevartuple, proto))
                 self.assertEqual(z.__name__, typevartuple.__name__)
                 self.assertEqual(z.__default__, typevartuple.__default__)
+
+    @skipUnless(hasattr(typing, "TypeVarTuple"), "Only relevant if typing.TypeVarTuple exists")
+    def test_consistent_docstring(self):
+        self.assertEqual(TypeVarTuple.__doc__, typing.TypeVarTuple.__doc__)
 
 
 class FinalDecoratorTests(BaseTestCase):

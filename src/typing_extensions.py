@@ -1388,8 +1388,7 @@ class _TypeVarMeta(type):
 
 
 class TypeVar(metaclass=_TypeVarMeta):
-    """Type variable."""
-
+    __doc__ = typing.TypeVar.__doc__
     __module__ = 'typing'
 
 
@@ -1477,8 +1476,7 @@ if hasattr(typing, 'ParamSpec'):
             return isinstance(__instance, typing.ParamSpec)
 
     class ParamSpec(metaclass=_ParamSpecMeta):
-        """Parameter specification."""
-
+        __doc__ = typing.ParamSpec.__doc__
         __module__ = 'typing'
 
 # 3.7-3.9
@@ -2098,8 +2096,7 @@ if hasattr(typing, "TypeVarTuple"):  # 3.11+
             return isinstance(__instance, typing.TypeVarTuple)
 
     class TypeVarTuple(metaclass=_TypeVarTupleMeta):
-        """Type variable tuple."""
-
+        __doc__ = typing.TypeVarTuple.__doc__
         __module__ = 'typing'
 
         def __init_subclass__(self, *args, **kwds):
