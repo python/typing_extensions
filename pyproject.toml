@@ -46,7 +46,7 @@ classifiers = [
 Home = "https://github.com/python/typing_extensions"
 Repository = "https://github.com/python/typing_extensions"
 Changes = "https://github.com/python/typing_extensions/blob/main/CHANGELOG.md"
-Documentation = "https://typing.readthedocs.io/"
+Documentation = "https://typing-extensions.readthedocs.io/"
 "Bug Tracker" = "https://github.com/python/typing_extensions/issues"
 "Q & A" = "https://github.com/python/typing/discussions"
 
