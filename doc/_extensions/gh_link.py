@@ -19,7 +19,9 @@ def setup(app):
 
 
 def autolink(pattern: str, prefix: str):
-    def role(name, rawtext, text: str, lineno, inliner, options={}, content=[]):
+    def role(name, rawtext, text: str, lineno, inliner, options=None, content=None):
+        if options is None:
+            options = {}
         url = pattern.format(text)
         node = nodes.reference(rawtext, f"{prefix}{text}", refuri=url, **options)
         return [node], []
