@@ -145,6 +145,11 @@ Special typing primitives
    The ``typing_extensions`` version adds support for the
    ``default=`` argument from :pep:`696`.
 
+   On older Python versions, ``typing_extensions.ParamSpec`` may not work
+   correctly with introspection tools like :func:`get_args` and
+   :func:`get_origin`. Certain special cases in user-defined
+   :py:class:`typing.Generic`\ s are also not available.
+
    .. versionchanged:: 4.4.0
 
       Added support for the ``default=`` argument.
@@ -580,21 +585,3 @@ Other
 .. data:: TYPE_CHECKING
 
    See :py:data:`typing.TYPE_CHECKING`. In ``typing`` since 3.5.2.
-
-Limitations
------------
-
-There are a few types where the interface was modified between different
-versions of typing. For example, :py:class:`typing.Sequence` was modified to
-subclass :py:class:`typing.Reversible` as of Python 3.5.3.
-
-These changes are *not* backported to prevent subtle compatibility
-issues when mixing the differing implementations of modified classes.
-
-Certain types have incorrect runtime behavior due to limitations of older
-versions of the typing module:
-
-- :class:`ParamSpec` and :data:`Concatenate` will not work with :func:`get_args` and
-  :func:`get_origin`.
-- Certain :pep:`612` special cases in user-defined
-  :py:class:`typing.Generic`\ s are also not available.
