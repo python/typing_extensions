@@ -71,6 +71,9 @@ Special typing primitives
 
    See :py:data:`typing.Concatenate` and :pep:`612`. In ``typing`` since 3.10.
 
+   The backport does not support certain operations involving ``...`` as
+   a parameter; see :issue:`48` and :issue:`110` for details.
+
 .. data:: Final
 
    See :py:data:`typing.Final` and :pep:`591`. In ``typing`` since 3.8.
@@ -86,7 +89,7 @@ Special typing primitives
 
    .. versionchanged:: 4.6.0
 
-      Backported the bug fixes from :py:gh:`29334`, :py:gh:`23294`, and :py:gh:`23383`.
+      Backported the bug fixes from :pr-cpy:`29334`, :pr-cpy:`23294`, and :pr-cpy:`23383`.
 
 .. data:: LiteralString
 
@@ -179,7 +182,7 @@ Special typing primitives
    .. versionchanged:: 4.6.0
 
       Backported changes to runtime-checkable protocols from Python 3.12,
-      including :py:gh:`103034` and :py:gh:`26067`.
+      including :pr-cpy:`103034` and :pr-cpy:`26067`.
 
 .. data:: Required
 
