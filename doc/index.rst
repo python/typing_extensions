@@ -46,7 +46,7 @@ Special typing primitives
 
 .. data:: Annotated
 
-   See :py:data:`typing.Annotated`. In ``typing`` since 3.9.
+   See :py:data:`typing.Annotated` and :pep:`593`. In ``typing`` since 3.9.
 
    .. versionchanged:: 4.1.0
 
@@ -65,19 +65,19 @@ Special typing primitives
 
 .. data:: ClassVar
 
-   See :py:data:`typing.ClassVar`. In ``typing`` since 3.5.3.
+   See :py:data:`typing.ClassVar` and :pep:`526`. In ``typing`` since 3.5.3.
 
 .. data:: Concatenate
 
-   See :py:data:`typing.Concatenate`. In ``typing`` since 3.10.
+   See :py:data:`typing.Concatenate` and :pep:`612`. In ``typing`` since 3.10.
 
 .. data:: Final
 
-   See :py:data:`typing.Final`. In ``typing`` since 3.8.
+   See :py:data:`typing.Final` and :pep:`591`. In ``typing`` since 3.8.
 
 .. data:: Literal
 
-   See :py:data:`typing.Literal`. In ``typing`` since 3.8.
+   See :py:data:`typing.Literal` and :pep:`586`. In ``typing`` since 3.8.
 
    :py:data:`typing.Literal` does not flatten or deduplicate parameters on Python <3.9.1, and a
    caching bug was fixed in 3.10.1/3.9.8. The ``typing_extensions`` version
@@ -90,7 +90,7 @@ Special typing primitives
 
 .. data:: LiteralString
 
-   See :py:data:`typing.LiteralString`. In ``typing`` since 3.11.
+   See :py:data:`typing.LiteralString` and :pep:`675`. In ``typing`` since 3.11.
 
    .. versionadded:: 4.1.0
 
@@ -134,13 +134,13 @@ Special typing primitives
 
 .. data:: NotRequired
 
-   See :py:data:`typing.NotRequired`. In ``typing`` since 3.11.
+   See :py:data:`typing.NotRequired` and :pep:`655`. In ``typing`` since 3.11.
 
    .. versionadded:: 4.0.0
 
 .. class:: ParamSpec(name, *, default=...)
 
-   See :py:class:`typing.ParamSpec`. In ``typing`` since 3.10.
+   See :py:class:`typing.ParamSpec` and :pep:`612`. In ``typing`` since 3.10.
 
    The ``typing_extensions`` version adds support for the
    ``default=`` argument from :pep:`696`.
@@ -167,7 +167,7 @@ Special typing primitives
 
 .. class:: Protocol
 
-   See :py:class:`typing.Protocol`. In ``typing`` since 3.8.
+   See :py:class:`typing.Protocol` and :pep:`544`. In ``typing`` since 3.8.
 
    Python 3.12 improves the performance of runtime-checkable protocols;
    ``typing_extensions`` backports this improvement.
@@ -183,13 +183,13 @@ Special typing primitives
 
 .. data:: Required
 
-   See :py:data:`typing.Required`. In ``typing`` since 3.11.
+   See :py:data:`typing.Required` and :pep:`655`. In ``typing`` since 3.11.
 
    .. versionadded:: 4.0.0
 
 .. data:: Self
 
-   See :py:data:`typing.Self`. In ``typing`` since 3.11.
+   See :py:data:`typing.Self` and :pep:`673`. In ``typing`` since 3.11.
 
    .. versionadded:: 4.0.0
 
@@ -199,21 +199,21 @@ Special typing primitives
 
 .. data:: TypeAlias
 
-   See :py:data:`typing.TypeAlias`. In ``typing`` since 3.10.
+   See :py:data:`typing.TypeAlias` and :pep:`613`. In ``typing`` since 3.10.
 
 .. class:: TypeAliasType(name, value, *, type_params=())
 
-   See :py:class:`typing.TypeAliasType`. In ``typing`` since 3.12.
+   See :py:class:`typing.TypeAliasType` and :pep:`695`. In ``typing`` since 3.12.
 
    .. versionadded:: 4.6.0
 
 .. data:: TypeGuard
 
-   See :py:data:`typing.TypeGuard`. In ``typing`` since 3.10.
+   See :py:data:`typing.TypeGuard` and :pep:`647`. In ``typing`` since 3.10.
 
 .. class:: TypedDict
 
-   See :py:class:`typing.TypedDict`. In ``typing`` since 3.8.
+   See :py:class:`typing.TypedDict` and :pep:`589`. In ``typing`` since 3.8.
 
    ``typing_extensions`` backports various bug fixes and improvements
    to ``TypedDict`` on Python 3.11 and lower.
@@ -260,7 +260,7 @@ Special typing primitives
 
 .. class:: TypeVarTuple(name, *, default=...)
 
-   See :py:class:`typing.TypeVarTuple`. In ``typing`` since 3.11.
+   See :py:class:`typing.TypeVarTuple` and :pep:`646`. In ``typing`` since 3.11.
 
    The ``typing_extensions`` version adds support for the
    ``default=`` argument from :pep:`696`.
@@ -277,7 +277,7 @@ Special typing primitives
 
 .. data:: Unpack
 
-   See :py:data:`typing.Unpack`. In ``typing`` since 3.11.
+   See :py:data:`typing.Unpack` and :pep:`646`. In ``typing`` since 3.11.
 
    In Python 3.12, the ``repr()`` was changed as a result of :pep:`692`.
    ``typing_extensions`` backports this change.
@@ -424,7 +424,7 @@ Decorators
                                    kw_only_default=False, frozen_default=False,
                                    field_specifiers=(), **kwargs)
 
-   See :py:func:`typing.dataclass_transform`. In ``typing`` since 3.11.
+   See :py:func:`typing.dataclass_transform` and :pep:`681`. In ``typing`` since 3.11.
 
    Python 3.12 adds the ``frozen_default`` parameter; ``typing_extensions``
    backports this parameter.
@@ -448,7 +448,7 @@ Decorators
 
 .. decorator:: final
 
-   See :py:func:`typing.final`. In ``typing`` since 3.8.
+   See :py:func:`typing.final` and :pep:`591`. In ``typing`` since 3.8.
 
    Since Python 3.11, this decorator supports runtime introspection
    by setting the ``__final__`` attribute wherever possible; ``typing_extensions.final``
@@ -472,7 +472,7 @@ Decorators
 
 .. decorator:: override
 
-   See :py:func:`typing.override`. In ``typing`` since 3.12.
+   See :py:func:`typing.override` and :pep:`698`. In ``typing`` since 3.12.
 
    .. versionadded:: 4.4.0
 
