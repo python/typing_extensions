@@ -1371,18 +1371,21 @@ class _DefaultMixin:
     __init__ = _set_default
 
 
+# Classes using this metaclass must provide a _backported_typevarlike ClassVar
 class _TypeVarLikeMeta(type):
     def __instancecheck__(cls, __instance: Any) -> bool:
         return isinstance(__instance, cls._backported_typevarlike)
 
 
 # Add default and infer_variance parameters from PEP 696 and 695
-class _TypeVarMeta(_TypeVarLikeMeta):
+class TypeVar(metaclass=_TypeVarLikeMeta):
+    """Type variable."""
+
     _backported_typevarlike = typing.TypeVar
 
-    def __call__(self, name, *constraints, bound=None,
-                 covariant=False, contravariant=False,
-                 default=_marker, infer_variance=False):
+    def __new__(cls, name, *constraints, bound=None,
+                covariant=False, contravariant=False,
+                default=_marker, infer_variance=False):
         if hasattr(typing, "TypeAliasType"):
             # PEP 695 implemented, can pass infer_variance to typing.TypeVar
             typevar = typing.TypeVar(name, *constraints, bound=bound,
@@ -1397,10 +1400,6 @@ class _TypeVarMeta(_TypeVarLikeMeta):
         _set_default(typevar, default)
         _set_module(typevar)
         return typevar
-
-
-class TypeVar(metaclass=_TypeVarMeta):
-    """Type variable."""
 
     def __init_subclass__(cls) -> None:
         raise TypeError(f"type '{__name__}.TypeVar' is not an acceptable base type")
@@ -1472,12 +1471,14 @@ else:
 if hasattr(typing, 'ParamSpec'):
 
     # Add default parameter - PEP 696
-    class _ParamSpecMeta(_TypeVarLikeMeta):
-        _backported_typevarlike = typing.ParamSpec
+    class ParamSpec(metaclass=_TypeVarLikeMeta):
+        """Parameter specification."""
 
-        def __call__(self, name, *, bound=None,
-                     covariant=False, contravariant=False,
-                     infer_variance=False, default=_marker):
+        backported_typevarlike = typing.ParamSpec
+
+        def __new__(cls, name, *, bound=None,
+                    covariant=False, contravariant=False,
+                    infer_variance=False, default=_marker):
             if hasattr(typing, "TypeAliasType"):
                 # PEP 695 implemented, can pass infer_variance to typing.TypeVar
                 paramspec = typing.ParamSpec(name, bound=bound,
@@ -1493,9 +1494,6 @@ if hasattr(typing, 'ParamSpec'):
             _set_default(paramspec, default)
             _set_module(paramspec)
             return paramspec
-
-    class ParamSpec(metaclass=_ParamSpecMeta):
-        """Parameter specification."""
 
         def __init_subclass__(cls) -> None:
             raise TypeError(f"type '{__name__}.ParamSpec' is not an acceptable base type")
@@ -2105,17 +2103,16 @@ else:
 if hasattr(typing, "TypeVarTuple"):  # 3.11+
 
     # Add default parameter - PEP 696
-    class _TypeVarTupleMeta(_TypeVarLikeMeta):
+    class TypeVarTuple(metaclass=_TypeVarLikeMeta):
+        """Type variable tuple."""
+
         _backported_typevarlike = typing.TypeVarTuple
 
-        def __call__(self, name, *, default=_marker):
+        def __new__(cls, name, *, default=_marker):
             tvt = typing.TypeVarTuple(name)
             _set_default(tvt, default)
             _set_module(tvt)
             return tvt
-
-    class TypeVarTuple(metaclass=_TypeVarTupleMeta):
-        """Type variable tuple."""
 
         def __init_subclass__(self, *args, **kwds):
             raise TypeError("Cannot subclass special typing classes")
