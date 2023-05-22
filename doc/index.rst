@@ -151,7 +151,7 @@ Special typing primitives
    On older Python versions, ``typing_extensions.ParamSpec`` may not work
    correctly with introspection tools like :func:`get_args` and
    :func:`get_origin`. Certain special cases in user-defined
-   :py:class:`typing.Generic`\ s are also not available.
+   :py:class:`typing.Generic`\ s are also not available (e.g., see :issue:`126`).
 
    .. versionchanged:: 4.4.0
 
@@ -284,6 +284,9 @@ Special typing primitives
 
    In Python 3.12, the ``repr()`` was changed as a result of :pep:`692`.
    ``typing_extensions`` backports this change.
+
+   Generic type aliases involving ``Unpack`` may not work correctly on
+   Python 3.11 and lower; see :issue:`103` for details.
 
    .. versionadded:: 4.1.0
 
