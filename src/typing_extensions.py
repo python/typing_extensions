@@ -1474,7 +1474,7 @@ if hasattr(typing, 'ParamSpec'):
     class ParamSpec(metaclass=_TypeVarLikeMeta):
         """Parameter specification."""
 
-        backported_typevarlike = typing.ParamSpec
+        _backported_typevarlike = typing.ParamSpec
 
         def __new__(cls, name, *, bound=None,
                     covariant=False, contravariant=False,
