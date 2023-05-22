@@ -95,6 +95,7 @@ GenericMeta = type
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
 
+
 class _Sentinel:
     def __repr__(self):
         return "<sentinel>"
