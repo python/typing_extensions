@@ -3314,6 +3314,7 @@ class ParamSpecTests(BaseTestCase):
         P = ParamSpec('P')
         P_co = ParamSpec('P_co', covariant=True)
         P_contra = ParamSpec('P_contra', contravariant=True)
+        P_infer = ParamSpec('P_infer', infer_variance=True)
         P_2 = ParamSpec('P_2')
         self.assertEqual(repr(P), '~P')
         self.assertEqual(repr(P_2), '~P_2')
@@ -3322,6 +3323,30 @@ class ParamSpecTests(BaseTestCase):
         # just follow CPython.
         self.assertEqual(repr(P_co), '+P_co')
         self.assertEqual(repr(P_contra), '-P_contra')
+        # On other versions we use typing.ParamSpec, but it is not aware of
+        # infer_variance=. Not worth creating our own version of ParamSpec
+        # for this.
+        if hasattr(typing, 'TypeAliasType') or not hasattr(typing, 'ParamSpec'):
+            self.assertEqual(repr(P_infer), 'P_infer')
+        else:
+            self.assertEqual(repr(P_infer), '~P_infer')
+
+    def test_variance(self):
+        P_co = ParamSpec('P_co', covariant=True)
+        P_contra = ParamSpec('P_contra', contravariant=True)
+        P_infer = ParamSpec('P_infer', infer_variance=True)
+
+        self.assertIs(P_co.__covariant__, True)
+        self.assertIs(P_co.__contravariant__, False)
+        self.assertIs(P_co.__infer_variance__, False)
+
+        self.assertIs(P_contra.__covariant__, False)
+        self.assertIs(P_contra.__contravariant__, True)
+        self.assertIs(P_contra.__infer_variance__, False)
+
+        self.assertIs(P_infer.__covariant__, False)
+        self.assertIs(P_infer.__contravariant__, False)
+        self.assertIs(P_infer.__infer_variance__, True)
 
     def test_valid_uses(self):
         P = ParamSpec('P')
@@ -3332,7 +3357,6 @@ class ParamSpecTests(BaseTestCase):
         C2 = typing.Callable[P, T]
         self.assertEqual(C2.__args__, (P, T))
         self.assertEqual(C2.__parameters__, (P, T))
-
 
         # Test collections.abc.Callable too.
         if sys.version_info[:2] >= (3, 9):

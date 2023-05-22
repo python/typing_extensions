@@ -1475,9 +1475,19 @@ if hasattr(typing, 'ParamSpec'):
 
         def __call__(self, name, *, bound=None,
                      covariant=False, contravariant=False,
-                     default=_marker):
-            paramspec = typing.ParamSpec(name, bound=bound,
-                                         covariant=covariant, contravariant=contravariant)
+                     infer_variance=False, default=_marker):
+            if hasattr(typing, "TypeAliasType"):
+                # PEP 695 implemented, can pass infer_variance to typing.TypeVar
+                paramspec = typing.ParamSpec(name, bound=bound,
+                                             covariant=covariant,
+                                             contravariant=contravariant,
+                                             infer_variance=infer_variance)
+            else:
+                paramspec = typing.ParamSpec(name, bound=bound,
+                                             covariant=covariant,
+                                             contravariant=contravariant)
+                paramspec.__infer_variance__ = infer_variance
+
             _set_default(paramspec, default)
             _set_module(paramspec)
             return paramspec
@@ -1551,11 +1561,12 @@ else:
             return ParamSpecKwargs(self)
 
         def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
-                     default=_marker):
+                     infer_variance=False, default=_marker):
             super().__init__([self])
             self.__name__ = name
             self.__covariant__ = bool(covariant)
             self.__contravariant__ = bool(contravariant)
+            self.__infer_variance__ = bool(infer_variance)
             if bound:
                 self.__bound__ = typing._type_check(bound, 'Bound must be a type.')
             else:
@@ -1568,7 +1579,9 @@ else:
                 self.__module__ = def_mod
 
         def __repr__(self):
-            if self.__covariant__:
+            if self.__infer_variance__:
+                prefix = ''
+            elif self.__covariant__:
                 prefix = '+'
             elif self.__contravariant__:
                 prefix = '-'
