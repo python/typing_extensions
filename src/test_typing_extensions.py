@@ -3323,7 +3323,13 @@ class ParamSpecTests(BaseTestCase):
         # just follow CPython.
         self.assertEqual(repr(P_co), '+P_co')
         self.assertEqual(repr(P_contra), '-P_contra')
-        self.assertEqual(repr(P_infer), 'P_infer')
+        # On other versions we use typing.ParamSpec, but it is not aware of
+        # infer_variance=. Not worth creating our own version of ParamSpec
+        # for this.
+        if hasattr(typing, 'TypeAliasType') or not hasattr(typing, 'ParamSpec'):
+            self.assertEqual(repr(P_infer), 'P_infer')
+        else:
+            self.assertEqual(repr(P_infer), '~P_infer')
 
     def test_variance(self):
         P_co = ParamSpec('P_co', covariant=True)

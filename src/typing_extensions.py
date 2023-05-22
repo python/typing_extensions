@@ -1479,11 +1479,13 @@ if hasattr(typing, 'ParamSpec'):
             if hasattr(typing, "TypeAliasType"):
                 # PEP 695 implemented, can pass infer_variance to typing.TypeVar
                 paramspec = typing.ParamSpec(name, bound=bound,
-                                             covariant=covariant, contravariant=contravariant,
+                                             covariant=covariant,
+                                             contravariant=contravariant,
                                              infer_variance=infer_variance)
             else:
                 paramspec = typing.ParamSpec(name, bound=bound,
-                                            covariant=covariant, contravariant=contravariant)
+                                             covariant=covariant,
+                                             contravariant=contravariant)
                 paramspec.__infer_variance__ = infer_variance
 
             _set_default(paramspec, default)
