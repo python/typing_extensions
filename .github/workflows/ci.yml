@@ -38,7 +38,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Test typing_extensions
-        continue-on-error: ${{ matrix.python-version == '3.12-dev' }}
         run: |
           # Be wary of running `pip install` here, since it becomes easy for us to
           # accidentally pick up typing_extensions as installed by a dependency
