@@ -19,9 +19,17 @@ repository. If the PEP is accepted, the feature will then be added to the
 affected ``typing_extensions`` has been rejected so far, so we haven't yet
 figured out how to deal with that possibility.
 
+Bugfixes and new typing features that don't require a PEP may be added to
+``typing_extensions`` once they are merged into CPython's main branch.
+
+Versioning and backwards compatibility
+--------------------------------------
+
 Starting with version 4.0.0, ``typing_extensions`` uses
-`Semantic Versioning <https://semver.org>`_. The
-major version is incremented for all backwards-incompatible changes.
+`Semantic Versioning <https://semver.org>`_. A changelog is
+maintained `on GitHub <https://github.com/python/typing_extensions/blob/main/CHANGELOG.md>`_.
+
+The major version is incremented for all backwards-incompatible changes.
 Therefore, it's safe to depend
 on ``typing_extensions`` like this: ``typing_extensions >=x.y, <(x+1)``,
 where ``x.y`` is the first version that includes all features you need.
@@ -29,7 +37,15 @@ In view of the wide usage of ``typing_extensions`` across the ecosystem,
 we are highly hesitant to break backwards compatibility, and we do not
 expect to increase the major version number in the foreseeable future.
 
-``typing_extensions`` supports Python versions 3.7 and higher. In the future,
+Before version 4.0.0, the versioning scheme loosely followed the Python
+version from which features were backported; for example,
+``typing_extensions`` 3.10.0.0 was meant to reflect ``typing`` as of
+Python 3.10.0. During this period, no changelog was maintained.
+
+Python version support
+----------------------
+
+``typing_extensions`` currently supports Python versions 3.7 and higher. In the future,
 support for older Python versions will be dropped some time after that version
 reaches end of life.
 
@@ -151,7 +167,7 @@ Special typing primitives
    On older Python versions, ``typing_extensions.ParamSpec`` may not work
    correctly with introspection tools like :func:`get_args` and
    :func:`get_origin`. Certain special cases in user-defined
-   :py:class:`typing.Generic`\ s are also not available.
+   :py:class:`typing.Generic`\ s are also not available (e.g., see :issue:`126`).
 
    .. versionchanged:: 4.4.0
 
@@ -284,6 +300,9 @@ Special typing primitives
 
    In Python 3.12, the ``repr()`` was changed as a result of :pep:`692`.
    ``typing_extensions`` backports this change.
+
+   Generic type aliases involving ``Unpack`` may not work correctly on
+   Python 3.10 and lower; see :issue:`103` for details.
 
    .. versionadded:: 4.1.0
 

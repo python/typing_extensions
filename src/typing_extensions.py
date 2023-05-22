@@ -95,7 +95,13 @@ GenericMeta = type
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
 
-_marker = object()
+
+class _Sentinel:
+    def __repr__(self):
+        return "<sentinel>"
+
+
+_marker = _Sentinel()
 
 
 def _check_generic(cls, parameters, elen=_marker):
@@ -1366,10 +1372,6 @@ class _DefaultMixin:
 
 
 class _TypeVarLikeMeta(type):
-    def __init__(cls, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        cls.__module__ = 'typing'
-
     def __instancecheck__(cls, __instance: Any) -> bool:
         return isinstance(__instance, cls._backported_typevarlike)
 
@@ -1475,9 +1477,19 @@ if hasattr(typing, 'ParamSpec'):
 
         def __call__(self, name, *, bound=None,
                      covariant=False, contravariant=False,
-                     default=_marker):
-            paramspec = typing.ParamSpec(name, bound=bound,
-                                         covariant=covariant, contravariant=contravariant)
+                     infer_variance=False, default=_marker):
+            if hasattr(typing, "TypeAliasType"):
+                # PEP 695 implemented, can pass infer_variance to typing.TypeVar
+                paramspec = typing.ParamSpec(name, bound=bound,
+                                             covariant=covariant,
+                                             contravariant=contravariant,
+                                             infer_variance=infer_variance)
+            else:
+                paramspec = typing.ParamSpec(name, bound=bound,
+                                             covariant=covariant,
+                                             contravariant=contravariant)
+                paramspec.__infer_variance__ = infer_variance
+
             _set_default(paramspec, default)
             _set_module(paramspec)
             return paramspec
@@ -1551,11 +1563,12 @@ else:
             return ParamSpecKwargs(self)
 
         def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
-                     default=_marker):
+                     infer_variance=False, default=_marker):
             super().__init__([self])
             self.__name__ = name
             self.__covariant__ = bool(covariant)
             self.__contravariant__ = bool(contravariant)
+            self.__infer_variance__ = bool(infer_variance)
             if bound:
                 self.__bound__ = typing._type_check(bound, 'Bound must be a type.')
             else:
@@ -1568,7 +1581,9 @@ else:
                 self.__module__ = def_mod
 
         def __repr__(self):
-            if self.__covariant__:
+            if self.__infer_variance__:
+                prefix = ''
+            elif self.__covariant__:
                 prefix = '+'
             elif self.__contravariant__:
                 prefix = '-'
