@@ -286,7 +286,7 @@ Special typing primitives
    ``typing_extensions`` backports this change.
 
    Generic type aliases involving ``Unpack`` may not work correctly on
-   Python 3.11 and lower; see :issue:`103` for details.
+   Python 3.10 and lower; see :issue:`103` for details.
 
    .. versionadded:: 4.1.0
 
