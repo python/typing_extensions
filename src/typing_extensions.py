@@ -612,131 +612,190 @@ else:
 
             return False
 
-    class Protocol(metaclass=_ProtocolMeta):
-        # There is quite a lot of overlapping code with typing.Generic.
-        # Unfortunately it is hard to avoid this while these live in two different
-        # modules. The duplicated code will be removed when Protocol is moved to typing.
-        """Base class for protocol classes. Protocol classes are defined as::
-
-            class Proto(Protocol):
-                def meth(self) -> int:
-                    ...
-
-        Such classes are primarily used with static type checkers that recognize
-        structural subtyping (static duck-typing), for example::
-
-            class C:
-                def meth(self) -> int:
-                    return 0
-
-            def func(x: Proto) -> int:
-                return x.meth()
-
-            func(C())  # Passes static type check
-
-        See PEP 544 for details. Protocol classes decorated with
-        @typing_extensions.runtime act as simple-minded runtime protocol that checks
-        only the presence of given attributes, ignoring their type signatures.
-
-        Protocol classes can be generic, they are defined as::
-
-            class GenProto(Protocol[T]):
-                def meth(self) -> T:
-                    ...
-        """
-        __slots__ = ()
-        _is_protocol = True
-        _is_runtime_protocol = False
-
-        def __new__(cls, *args, **kwds):
-            if cls is Protocol:
-                raise TypeError("Type Protocol cannot be instantiated; "
-                                "it can only be used as a base class")
-            return super().__new__(cls)
-
-        @typing._tp_cache
-        def __class_getitem__(cls, params):
-            if not isinstance(params, tuple):
-                params = (params,)
-            if not params and cls is not typing.Tuple:
-                raise TypeError(
-                    f"Parameter list to {cls.__qualname__}[...] cannot be empty")
-            msg = "Parameters to generic types must be types."
-            params = tuple(typing._type_check(p, msg) for p in params)
-            if cls is Protocol:
-                # Generic can only be subscripted with unique type variables.
-                if not all(isinstance(p, typing.TypeVar) for p in params):
-                    i = 0
-                    while isinstance(params[i], typing.TypeVar):
-                        i += 1
-                    raise TypeError(
-                        "Parameters to Protocol[...] must all be type variables."
-                        f" Parameter {i + 1} is {params[i]}")
-                if len(set(params)) != len(params):
-                    raise TypeError(
-                        "Parameters to Protocol[...] must all be unique")
-            else:
-                # Subscripting a regular Generic subclass.
-                _check_generic(cls, params, len(cls.__parameters__))
-            return typing._GenericAlias(cls, params)
-
-        def __init_subclass__(cls, *args, **kwargs):
-            if '__orig_bases__' in cls.__dict__:
-                error = typing.Generic in cls.__orig_bases__
-            else:
-                error = typing.Generic in cls.__bases__
-            if error:
-                raise TypeError("Cannot inherit from plain Generic")
-            _maybe_adjust_parameters(cls)
-
-            # Determine if this is a protocol or a concrete subclass.
-            if not cls.__dict__.get('_is_protocol', None):
-                cls._is_protocol = any(b is Protocol for b in cls.__bases__)
-
-            # Set (or override) the protocol subclass hook.
-            def _proto_hook(other):
-                if not cls.__dict__.get('_is_protocol', None):
-                    return NotImplemented
-                if not getattr(cls, '_is_runtime_protocol', False):
-                    if _allow_reckless_class_checks():
-                        return NotImplemented
-                    raise TypeError("Instance and class checks can only be used with"
-                                    " @runtime_checkable protocols")
-                if not isinstance(other, type):
-                    # Same error as for issubclass(1, int)
-                    raise TypeError('issubclass() arg 1 must be a class')
-                for attr in cls.__protocol_attrs__:
-                    for base in other.__mro__:
-                        if attr in base.__dict__:
-                            if base.__dict__[attr] is None:
-                                return NotImplemented
-                            break
-                        annotations = getattr(base, '__annotations__', {})
-                        if (isinstance(annotations, typing.Mapping) and
-                                attr in annotations and
-                                isinstance(other, _ProtocolMeta) and
-                                other._is_protocol):
-                            break
-                    else:
-                        return NotImplemented
+        def __eq__(cls, other):
+            # Hack so that typing.Generic.__class_getitem__
+            # treats typing_extensions.Protocol
+            # as equivalent to typing.Protocol on Python 3.8+
+            if super().__eq__(other) is True:
                 return True
-            if '__subclasshook__' not in cls.__dict__:
-                cls.__subclasshook__ = _proto_hook
+            return (
+                cls is Protocol and other is getattr(typing, "Protocol", object())
+            )
 
-            # We have nothing more to do for non-protocols.
-            if not cls._is_protocol:
-                return
+        # This has to be defined, or the abc-module cache
+        # complains about classes with this metaclass being unhashable,
+        # if we define only __eq__!
+        def __hash__(cls) -> int:
+            return type.__hash__(cls)
 
-            # Check consistency of bases.
-            for base in cls.__bases__:
-                if not (base in (object, typing.Generic) or
-                        base.__module__ in _PROTO_ALLOWLIST and
-                        base.__name__ in _PROTO_ALLOWLIST[base.__module__] or
-                        isinstance(base, _ProtocolMeta) and base._is_protocol):
-                    raise TypeError('Protocols can only inherit from other'
-                                    f' protocols, got {repr(base)}')
-            if cls.__init__ is Protocol.__init__:
-                cls.__init__ = _no_init
+    @classmethod
+    def _proto_hook(cls, other):
+        if not cls.__dict__.get('_is_protocol', False):
+            return NotImplemented
+
+        # First, perform various sanity checks.
+        if not getattr(cls, '_is_runtime_protocol', False):
+            if _allow_reckless_class_checks():
+                return NotImplemented
+            raise TypeError("Instance and class checks can only be used with"
+                            " @runtime_checkable protocols")
+
+        if not isinstance(other, type):
+            # Same error message as for issubclass(1, int).
+            raise TypeError('issubclass() arg 1 must be a class')
+
+        # Second, perform the actual structural compatibility check.
+        for attr in cls.__protocol_attrs__:
+            for base in other.__mro__:
+                # Check if the members appears in the class dictionary...
+                if attr in base.__dict__:
+                    if base.__dict__[attr] is None:
+                        return NotImplemented
+                    break
+
+                # ...or in annotations, if it is a sub-protocol.
+                annotations = getattr(base, '__annotations__', {})
+                if (
+                    isinstance(annotations, collections.abc.Mapping)
+                    and attr in annotations
+                    and issubclass(other, (typing.Generic, _ProtocolMeta))
+                    and other._is_protocol
+                ):
+                    break
+            else:
+                return NotImplemented
+        return True
+
+    def _check_proto_bases(cls):
+        for base in cls.__bases__:
+            if not (base in (object, typing.Generic) or
+                    base.__module__ in _PROTO_ALLOWLIST and
+                    base.__name__ in _PROTO_ALLOWLIST[base.__module__] or
+                    isinstance(base, _ProtocolMeta) and base._is_protocol):
+                raise TypeError('Protocols can only inherit from other'
+                                f' protocols, got {repr(base)}')
+
+    if sys.version_info >= (3, 8):
+        class Protocol(typing.Generic, metaclass=_ProtocolMeta):
+            __doc__ = typing.Protocol.__doc__
+            __slots__ = ()
+            _is_protocol = True
+            _is_runtime_protocol = False
+
+            def __init_subclass__(cls, *args, **kwargs):
+                super().__init_subclass__(*args, **kwargs)
+
+                # Determine if this is a protocol or a concrete subclass.
+                if not cls.__dict__.get('_is_protocol', False):
+                    cls._is_protocol = any(b is Protocol for b in cls.__bases__)
+
+                # Set (or override) the protocol subclass hook.
+                if '__subclasshook__' not in cls.__dict__:
+                    cls.__subclasshook__ = _proto_hook
+
+                # We have nothing more to do for non-protocols...
+                if not cls._is_protocol:
+                    return
+
+                # ... otherwise check consistency of bases, and prohibit instantiation.
+                _check_proto_bases(cls)
+                if cls.__init__ is Protocol.__init__:
+                    cls.__init__ = _no_init
+
+    else:
+        class Protocol(metaclass=_ProtocolMeta):
+            # There is quite a lot of overlapping code with typing.Generic.
+            # Unfortunately it is hard to avoid this on Python <3.8,
+            # as the typing module on Python 3.7 doesn't let us subclass typing.Generic!
+            """Base class for protocol classes. Protocol classes are defined as::
+
+                class Proto(Protocol):
+                    def meth(self) -> int:
+                        ...
+
+            Such classes are primarily used with static type checkers that recognize
+            structural subtyping (static duck-typing), for example::
+
+                class C:
+                    def meth(self) -> int:
+                        return 0
+
+                def func(x: Proto) -> int:
+                    return x.meth()
+
+                func(C())  # Passes static type check
+
+            See PEP 544 for details. Protocol classes decorated with
+            @typing_extensions.runtime act as simple-minded runtime protocol that checks
+            only the presence of given attributes, ignoring their type signatures.
+
+            Protocol classes can be generic, they are defined as::
+
+                class GenProto(Protocol[T]):
+                    def meth(self) -> T:
+                        ...
+            """
+            __slots__ = ()
+            _is_protocol = True
+            _is_runtime_protocol = False
+
+            def __new__(cls, *args, **kwds):
+                if cls is Protocol:
+                    raise TypeError("Type Protocol cannot be instantiated; "
+                                    "it can only be used as a base class")
+                return super().__new__(cls)
+
+            @typing._tp_cache
+            def __class_getitem__(cls, params):
+                if not isinstance(params, tuple):
+                    params = (params,)
+                if not params and cls is not typing.Tuple:
+                    raise TypeError(
+                        f"Parameter list to {cls.__qualname__}[...] cannot be empty")
+                msg = "Parameters to generic types must be types."
+                params = tuple(typing._type_check(p, msg) for p in params)
+                if cls is Protocol:
+                    # Generic can only be subscripted with unique type variables.
+                    if not all(isinstance(p, typing.TypeVar) for p in params):
+                        i = 0
+                        while isinstance(params[i], typing.TypeVar):
+                            i += 1
+                        raise TypeError(
+                            "Parameters to Protocol[...] must all be type variables."
+                            f" Parameter {i + 1} is {params[i]}")
+                    if len(set(params)) != len(params):
+                        raise TypeError(
+                            "Parameters to Protocol[...] must all be unique")
+                else:
+                    # Subscripting a regular Generic subclass.
+                    _check_generic(cls, params, len(cls.__parameters__))
+                return typing._GenericAlias(cls, params)
+
+            def __init_subclass__(cls, *args, **kwargs):
+                if '__orig_bases__' in cls.__dict__:
+                    error = typing.Generic in cls.__orig_bases__
+                else:
+                    error = typing.Generic in cls.__bases__
+                if error:
+                    raise TypeError("Cannot inherit from plain Generic")
+                _maybe_adjust_parameters(cls)
+
+                # Determine if this is a protocol or a concrete subclass.
+                if not cls.__dict__.get('_is_protocol', None):
+                    cls._is_protocol = any(b is Protocol for b in cls.__bases__)
+
+                # Set (or override) the protocol subclass hook.
+                if '__subclasshook__' not in cls.__dict__:
+                    cls.__subclasshook__ = _proto_hook
+
+                # We have nothing more to do for non-protocols.
+                if not cls._is_protocol:
+                    return
+
+                # Check consistency of bases.
+                _check_proto_bases(cls)
+                if cls.__init__ is Protocol.__init__:
+                    cls.__init__ = _no_init
 
     def runtime_checkable(cls):
         """Mark a protocol class as a runtime protocol, so that it

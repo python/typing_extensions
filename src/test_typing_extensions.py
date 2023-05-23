@@ -2613,6 +2613,52 @@ class ProtocolTests(BaseTestCase):
 
         self.assertEqual(CustomProtocolWithoutInitA.__init__, CustomProtocolWithoutInitB.__init__)
 
+    def test_protocol_generic_over_paramspec(self):
+        P = ParamSpec("P")
+        T = TypeVar("T")
+        T2 = TypeVar("T2")
+
+        class MemoizedFunc(Protocol[P, T, T2]):
+            cache: typing.Dict[T2, T]
+            def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T: ...
+
+        self.assertEqual(MemoizedFunc.__parameters__, (P, T, T2))
+        self.assertTrue(MemoizedFunc._is_protocol)
+
+        with self.assertRaisesRegex(TypeError, "Too few arguments"):
+            MemoizedFunc[[int, str, str]]
+
+        X = MemoizedFunc[[int, str, str], T, T2]
+        self.assertEqual(X.__parameters__, (T, T2))
+        self.assertEqual(X.__args__, ((int, str, str), T, T2))
+
+        Y = X[bytes, memoryview]
+        self.assertEqual(Y.__parameters__, ())
+        self.assertEqual(Y.__args__, ((int, str, str), bytes, memoryview))
+
+    def test_protocol_generic_over_typevartuple(self):
+        Ts = TypeVarTuple("Ts")
+        T = TypeVar("T")
+        T2 = TypeVar("T2")
+
+        class MemoizedFunc(Protocol[Unpack[Ts], T, T2]):
+            cache: typing.Dict[T2, T]
+            def __call__(self, *args: Unpack[Ts]) -> T: ...
+
+        self.assertEqual(MemoizedFunc.__parameters__, (Ts, T, T2))
+        self.assertTrue(MemoizedFunc._is_protocol)
+
+        with self.assertRaisesRegex(TypeError, "Too few arguments"):
+            MemoizedFunc[int]
+
+        X = MemoizedFunc[int, T, T2]
+        self.assertEqual(X.__parameters__, (T, T2))
+        self.assertEqual(X.__args__, (int, T, T2))
+
+        Y = X[bytes, memoryview]
+        self.assertEqual(Y.__parameters__, ())
+        self.assertEqual(Y.__args__, (int, bytes, memoryview))
+
 
 class Point2DGeneric(Generic[T], TypedDict):
     a: T
@@ -3402,13 +3448,18 @@ class ParamSpecTests(BaseTestCase):
         class X(Generic[T, P]):
             pass
 
-        G1 = X[int, P_2]
-        self.assertEqual(G1.__args__, (int, P_2))
-        self.assertEqual(G1.__parameters__, (P_2,))
+        class Y(Protocol[T, P]):
+            pass
 
-        G2 = X[int, Concatenate[int, P_2]]
-        self.assertEqual(G2.__args__, (int, Concatenate[int, P_2]))
-        self.assertEqual(G2.__parameters__, (P_2,))
+        for klass in X, Y:
+            with self.subTest(klass=klass.__name__):
+                G1 = klass[int, P_2]
+                self.assertEqual(G1.__args__, (int, P_2))
+                self.assertEqual(G1.__parameters__, (P_2,))
+
+                G2 = klass[int, Concatenate[int, P_2]]
+                self.assertEqual(G2.__args__, (int, Concatenate[int, P_2]))
+                self.assertEqual(G2.__parameters__, (P_2,))
 
         # The following are some valid uses cases in PEP 612 that don't work:
         # These do not work in 3.9, _type_check blocks the list and ellipsis.
@@ -3419,6 +3470,9 @@ class ParamSpecTests(BaseTestCase):
         # G6 = Z[int, str, bool]
 
         class Z(Generic[P]):
+            pass
+
+        class ProtoZ(Protocol[P]):
             pass
 
     def test_pickle(self):
@@ -3727,31 +3781,47 @@ class UnpackTests(BaseTestCase):
         self.assertEqual(Tuple[int, Unpack[Xs], str].__args__,
                          (int, Unpack[Xs], str))
         class C(Generic[Unpack[Xs]]): pass
-        self.assertEqual(C[int, Unpack[Xs]].__args__, (int, Unpack[Xs]))
-        self.assertEqual(C[Unpack[Xs], int].__args__, (Unpack[Xs], int))
-        self.assertEqual(C[int, Unpack[Xs], str].__args__,
-                         (int, Unpack[Xs], str))
+        class D(Protocol[Unpack[Xs]]): pass
+        for klass in C, D:
+            with self.subTest(klass=klass.__name__):
+                self.assertEqual(klass[int, Unpack[Xs]].__args__, (int, Unpack[Xs]))
+                self.assertEqual(klass[Unpack[Xs], int].__args__, (Unpack[Xs], int))
+                self.assertEqual(klass[int, Unpack[Xs], str].__args__,
+                                 (int, Unpack[Xs], str))
 
     def test_class(self):
         Ts = TypeVarTuple('Ts')
 
         class C(Generic[Unpack[Ts]]): pass
-        self.assertEqual(C[int].__args__, (int,))
-        self.assertEqual(C[int, str].__args__, (int, str))
+        class D(Protocol[Unpack[Ts]]): pass
+
+        for klass in C, D:
+            with self.subTest(klass=klass.__name__):
+                self.assertEqual(klass[int].__args__, (int,))
+                self.assertEqual(klass[int, str].__args__, (int, str))
 
         with self.assertRaises(TypeError):
             class C(Generic[Unpack[Ts], int]): pass
 
+        with self.assertRaises(TypeError):
+            class D(Protocol[Unpack[Ts], int]): pass
+
         T1 = TypeVar('T')
         T2 = TypeVar('T')
         class C(Generic[T1, T2, Unpack[Ts]]): pass
-        self.assertEqual(C[int, str].__args__, (int, str))
-        self.assertEqual(C[int, str, float].__args__, (int, str, float))
-        self.assertEqual(C[int, str, float, bool].__args__, (int, str, float, bool))
-        # TODO This should probably also fail on 3.11, pending changes to CPython.
-        if not TYPING_3_11_0:
-            with self.assertRaises(TypeError):
-                C[int]
+        class D(Protocol[T1, T2, Unpack[Ts]]): pass
+        for klass in C, D:
+            with self.subTest(klass=klass.__name__):
+                self.assertEqual(klass[int, str].__args__, (int, str))
+                self.assertEqual(klass[int, str, float].__args__, (int, str, float))
+                self.assertEqual(
+                    klass[int, str, float, bool].__args__, (int, str, float, bool)
+                )
+                # TODO This should probably also fail on 3.11,
+                # pending changes to CPython.
+                if not TYPING_3_11_0:
+                    with self.assertRaises(TypeError):
+                        klass[int]
 
 
 class TypeVarTupleTests(BaseTestCase):
