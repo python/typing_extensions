@@ -2625,16 +2625,19 @@ class ProtocolTests(BaseTestCase):
         self.assertEqual(MemoizedFunc.__parameters__, (P, T, T2))
         self.assertTrue(MemoizedFunc._is_protocol)
 
-        with self.assertRaisesRegex(TypeError, "Too few arguments"):
+        with self.assertRaises(TypeError):
             MemoizedFunc[[int, str, str]]
 
-        X = MemoizedFunc[[int, str, str], T, T2]
-        self.assertEqual(X.__parameters__, (T, T2))
-        self.assertEqual(X.__args__, ((int, str, str), T, T2))
+        if sys.version_info >= (3, 10):
+            # These unfortunately don't pass on <=3.9,
+            # due to typing._type_check on older Python versions
+            X = MemoizedFunc[[int, str, str], T, T2]
+            self.assertEqual(X.__parameters__, (T, T2))
+            self.assertEqual(X.__args__, ((int, str, str), T, T2))
 
-        Y = X[bytes, memoryview]
-        self.assertEqual(Y.__parameters__, ())
-        self.assertEqual(Y.__args__, ((int, str, str), bytes, memoryview))
+            Y = X[bytes, memoryview]
+            self.assertEqual(Y.__parameters__, ())
+            self.assertEqual(Y.__args__, ((int, str, str), bytes, memoryview))
 
     def test_protocol_generic_over_typevartuple(self):
         Ts = TypeVarTuple("Ts")
@@ -2648,7 +2651,9 @@ class ProtocolTests(BaseTestCase):
         self.assertEqual(MemoizedFunc.__parameters__, (Ts, T, T2))
         self.assertTrue(MemoizedFunc._is_protocol)
 
-        with self.assertRaisesRegex(TypeError, "Too few arguments"):
+        things = "arguments" if sys.version_info >= (3, 11) else "parameters"
+
+        with self.assertRaisesRegex(TypeError, f"Too few {things}"):
             MemoizedFunc[int]
 
         X = MemoizedFunc[int, T, T2]
