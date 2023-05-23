@@ -1,5 +1,7 @@
-# Unreleased
+# Release 4.6.0 (May 22, 2023)
 
+- `typing_extensions` is now documented at
+  https://typing-extensions.readthedocs.io/en/latest/. Patch by Jelle Zijlstra.
 - Add `typing_extensions.Buffer`, a marker class for buffer types, as proposed
   by PEP 688. Equivalent to `collections.abc.Buffer` in Python 3.12. Patch by
   Jelle Zijlstra.

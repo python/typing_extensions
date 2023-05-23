@@ -15,8 +15,8 @@ time, this may require different code for some older Python versions.
 
 `typing_extensions` may also include experimental features that are not yet part of the
 standard library, so that users can experiment with them before they are added to the
-standard library. Such features should ideally already be specified in a PEP or draft
-PEP.
+standard library. Such features should already be specified in a PEP or merged into
+CPython's `main` branch.
 
 `typing_extensions` supports Python versions 3.7 and up.
 
