@@ -726,7 +726,8 @@ else:
                 func(C())  # Passes static type check
 
             See PEP 544 for details. Protocol classes decorated with
-            @typing_extensions.runtime act as simple-minded runtime protocol that checks
+            @typing_extensions.runtime_checkable act
+            as simple-minded runtime-checkable protocols that check
             only the presence of given attributes, ignoring their type signatures.
 
             Protocol classes can be generic, they are defined as::
