@@ -3827,9 +3827,11 @@ class UnpackTests(BaseTestCase):
                 self.assertEqual(
                     klass[int, str, float, bool].__args__, (int, str, float, bool)
                 )
-                # TODO This should probably also fail on 3.11,
-                # pending changes to CPython.
-                if not TYPING_3_11_0:
+                # A bug was fixed in 3.11.1
+                # (https://github.com/python/cpython/commit/74920aa27d0c57443dd7f704d6272cca9c507ab3)
+                # That means this assertion doesn't pass on 3.11.0,
+                # but it passes on all other Python versions
+                if sys.version_info[:3] != (3, 11, 0):
                     with self.assertRaises(TypeError):
                         klass[int]
 
