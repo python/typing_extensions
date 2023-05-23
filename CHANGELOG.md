@@ -1,3 +1,8 @@
+# Unreleased
+
+- Change deprecated `@runtime` to formal API `@runtime_checkable` in the error
+  message. Patch by Xuehai Pan.
+
 # Release 4.6.0 (May 22, 2023)
 
 - `typing_extensions` is now documented at

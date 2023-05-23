@@ -701,7 +701,7 @@ else:
                     if _allow_reckless_class_checks():
                         return NotImplemented
                     raise TypeError("Instance and class checks can only be used with"
-                                    " @runtime protocols")
+                                    " @runtime_checkable protocols")
                 if not isinstance(other, type):
                     # Same error as for issubclass(1, int)
                     raise TypeError('issubclass() arg 1 must be a class')
