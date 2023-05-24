@@ -2916,6 +2916,8 @@ class TypedDictTests(BaseTestCase):
 
         # The TypedDict constructor is not itself a TypedDict
         self.assertIs(is_typeddict(TypedDict), False)
+        if hasattr(typing, "TypedDict"):
+            self.assertIs(is_typeddict(typing.TypedDict), False)
 
     @skipUnless(TYPING_3_8_0, "Python 3.8+ required")
     def test_is_typeddict_against_typeddict_from_typing(self):
