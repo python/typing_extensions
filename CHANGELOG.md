@@ -1,5 +1,21 @@
 # Unreleased
 
+- Fix regression in version 4.6.1 where comparing a generic class against a 
+  runtime-checkable protocol using `isinstance()` would cause `AttributeError`
+  to be raised if using Python 3.7
+
+# Release 4.6.1 (May 23, 2023)
+
+- Change deprecated `@runtime` to formal API `@runtime_checkable` in the error
+  message. Patch by Xuehai Pan.
+- Fix regression in 4.6.0 where attempting to define a `Protocol` that was
+  generic over a `ParamSpec` or a `TypeVarTuple` would cause `TypeError` to be
+  raised. Patch by Alex Waygood.
+
+# Release 4.6.0 (May 22, 2023)
+
+- `typing_extensions` is now documented at
+  https://typing-extensions.readthedocs.io/en/latest/. Patch by Jelle Zijlstra.
 - Add `typing_extensions.Buffer`, a marker class for buffer types, as proposed
   by PEP 688. Equivalent to `collections.abc.Buffer` in Python 3.12. Patch by
   Jelle Zijlstra.
