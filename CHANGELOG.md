@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.6.1 (May 23, 2023)
 
 - Change deprecated `@runtime` to formal API `@runtime_checkable` in the error
   message. Patch by Xuehai Pan.
