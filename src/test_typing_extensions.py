@@ -2886,11 +2886,36 @@ class TypedDictTests(BaseTestCase):
         }
 
     def test_is_typeddict(self):
-        assert is_typeddict(Point2D) is True
-        assert is_typeddict(Point2Dor3D) is True
-        assert is_typeddict(Union[str, int]) is False
+        self.assertIs(is_typeddict(Point2D), True)
+        self.assertIs(is_typeddict(Point2Dor3D), True)
+        self.assertIs(is_typeddict(Union[str, int]), False)
         # classes, not instances
         assert is_typeddict(Point2D()) is False
+        self.assertIs(is_typeddict(Point2D()), False)
+        call_based = TypedDict('call_based', {'a': int})
+        self.assertIs(is_typeddict(call_based), True)
+        self.assertIs(is_typeddict(call_based()), False)
+
+        T = TypeVar("T")
+        class BarGeneric(TypedDict, Generic[T]):
+            a: T
+        self.assertIs(is_typeddict(BarGeneric), True)
+        self.assertIs(is_typeddict(BarGeneric[int]), False)
+        self.assertIs(is_typeddict(BarGeneric()), False)
+
+        if hasattr(typing, "TypeAliasType"):
+            ns = {}
+            exec("""if True:
+                class NewGeneric[T](TypedDict):
+                    a: T
+            """, ns)
+            NewGeneric = ns["NewGeneric"]
+            self.assertIs(is_typeddict(NewGeneric), True)
+            self.assertIs(is_typeddict(NewGeneric[int]), False)
+            self.assertIs(is_typeddict(NewGeneric()), False)
+
+        # The TypedDict constructor is not itself a TypedDict
+        self.assertIs(is_typeddict(TypedDict), False)
 
     @skipUnless(TYPING_3_8_0, "Python 3.8+ required")
     def test_is_typeddict_against_typeddict_from_typing(self):

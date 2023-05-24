@@ -1,8 +1,10 @@
 # Unreleased
 
-- Fix regression in version 4.6.1 where comparing a generic class against a 
+- Add additional test cases for `is_typeddict` (backport of
+  https://github.com/python/cpython/pull/104884). Patch by Jelle Zijlstra.
+- Fix regression in version 4.6.1 where comparing a generic class against a
   runtime-checkable protocol using `isinstance()` would cause `AttributeError`
-  to be raised if using Python 3.7
+  to be raised if using Python 3.7.
 
 # Release 4.6.1 (May 23, 2023)
 
