@@ -1,6 +1,8 @@
 # Unreleased
 
-- Fix failing `type object ... has no attribute '_is_protocol'` on Python 3.7
+- Fix regression in version 4.6.1 where comparing a generic class against a 
+  runtime-checkable protocol using `isinstance()` would cause `AttributeError`
+  to be raised if using Python 3.7
 
 # Release 4.6.1 (May 23, 2023)
 

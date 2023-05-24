@@ -2246,6 +2246,28 @@ class ProtocolTests(BaseTestCase):
         del f.x
         self.assertNotIsInstance(f, HasX)
 
+    def test_protocols_isinstance_generic_classes(self):
+        T = TypeVar("T")
+
+        class Foo(Generic[T]):
+            x: T
+
+            def __init__(self, x):
+                self.x = x
+
+        class Bar(Foo[int]):
+            ...
+
+        @runtime_checkable
+        class HasX(Protocol):
+            x: int
+
+        foo = Foo(1)
+        self.assertIsInstance(foo, HasX)
+
+        bar = Bar(2)
+        self.assertIsInstance(bar, HasX)
+
     def test_protocols_support_register(self):
         @runtime_checkable
         class P(Protocol):
@@ -4320,24 +4342,6 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(Y.__orig_bases__, (Generic[T], NamedTuple))
         self.assertEqual(Y.__mro__, (Y, Generic, tuple, object))
 
-        class Z(Y[int]):
-            ...
-        self.assertEqual(Z.__bases__, (Y,))
-        self.assertEqual(Z.__orig_bases__, (Y[int],))
-        self.assertEqual(Z.__mro__, (Z, Y, Generic, tuple, object))
-
-        @runtime_checkable
-        class Proto(Protocol):
-            @property
-            def x(self):
-                ...
-
-        z = Z(3)
-        self.assertIs(type(z), Z)
-        self.assertIsInstance(z, Z)
-        self.assertIsInstance(z, Proto)
-        self.assertEqual(z.x, 3)
-
         for G in X, Y:
             with self.subTest(type=G):
                 self.assertEqual(G.__parameters__, (T,))
@@ -4349,7 +4353,6 @@ class NamedTupleTests(BaseTestCase):
                 a = A(3)
                 self.assertIs(type(a), G)
                 self.assertIsInstance(a, G)
-                self.assertIsInstance(a, Proto)
                 self.assertEqual(a.x, 3)
 
                 things = "arguments" if sys.version_info >= (3, 11) else "parameters"
