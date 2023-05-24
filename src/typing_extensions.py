@@ -9,7 +9,6 @@ import types as _types
 import typing
 import warnings
 
-
 __all__ = [
     # Super-special typing primitives.
     'Any',
@@ -659,7 +658,9 @@ else:
                     isinstance(annotations, collections.abc.Mapping)
                     and attr in annotations
                     and issubclass(other, (typing.Generic, _ProtocolMeta))
-                    and other._is_protocol
+                    # All subclasses of Generic have an _is_proto attribute on 3.8+
+                    # But not on 3.7
+                    and getattr(other, "_is_protocol", False)
                 ):
                     break
             else:

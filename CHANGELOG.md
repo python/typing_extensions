@@ -1,3 +1,9 @@
+# Unreleased
+
+- Fix regression in version 4.6.1 where comparing a generic class against a 
+  runtime-checkable protocol using `isinstance()` would cause `AttributeError`
+  to be raised if using Python 3.7
+
 # Release 4.6.1 (May 23, 2023)
 
 - Change deprecated `@runtime` to formal API `@runtime_checkable` in the error
