@@ -1,3 +1,7 @@
+# Unreleased
+
+- Fix failing `type object ... has no attribute '_is_protocol'` on Python 3.7
+
 # Release 4.6.1 (May 23, 2023)
 
 - Change deprecated `@runtime` to formal API `@runtime_checkable` in the error

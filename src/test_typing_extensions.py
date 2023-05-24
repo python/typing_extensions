@@ -4320,6 +4320,24 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(Y.__orig_bases__, (Generic[T], NamedTuple))
         self.assertEqual(Y.__mro__, (Y, Generic, tuple, object))
 
+        class Z(Y[int]):
+            ...
+        self.assertEqual(Z.__bases__, (Y,))
+        self.assertEqual(Z.__orig_bases__, (Y[int],))
+        self.assertEqual(Z.__mro__, (Z, Y, Generic, tuple, object))
+
+        @runtime_checkable
+        class Proto(Protocol):
+            @property
+            def x(self):
+                ...
+
+        z = Z(3)
+        self.assertIs(type(z), Z)
+        self.assertIsInstance(z, Z)
+        self.assertIsInstance(z, Proto)
+        self.assertEqual(z.x, 3)
+
         for G in X, Y:
             with self.subTest(type=G):
                 self.assertEqual(G.__parameters__, (T,))
@@ -4330,6 +4348,8 @@ class NamedTupleTests(BaseTestCase):
 
                 a = A(3)
                 self.assertIs(type(a), G)
+                self.assertIsInstance(a, G)
+                self.assertIsInstance(a, Proto)
                 self.assertEqual(a.x, 3)
 
                 things = "arguments" if sys.version_info >= (3, 11) else "parameters"
