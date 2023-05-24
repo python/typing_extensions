@@ -2,6 +2,9 @@
 
 - Change deprecated `@runtime` to formal API `@runtime_checkable` in the error
   message. Patch by Xuehai Pan.
+- Fix regression in 4.6.0 where attempting to define a `Protocol` that was
+  generic over a `ParamSpec` or a `TypeVarTuple` would cause `TypeError` to be
+  raised. Patch by Alex Waygood.
 
 # Release 4.6.0 (May 22, 2023)
 
