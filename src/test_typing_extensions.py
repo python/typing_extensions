@@ -4118,6 +4118,12 @@ class AllTests(BaseTestCase):
         te_all = set(typing_extensions.__all__)
         exceptions = {"ByteString"}
         self.assertGreaterEqual(te_all, t_all - exceptions)
+        # Deprecated, to be removed in 3.14
+        self.assertFalse(hasattr(typing_extensions, "ByteString"))
+        # These were never included in `typing.__all__`,
+        # and have been removed in Python 3.13
+        self.assertNotIn('re', te_all)
+        self.assertNotIn('io', te_all)
 
     def test_typing_extensions_includes_standard(self):
         a = typing_extensions.__all__
