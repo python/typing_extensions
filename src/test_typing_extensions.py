@@ -1767,6 +1767,22 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(Bar(), Foo)
         self.assertNotIsInstance(object(), Foo)
 
+    @skipUnless(
+        hasattr(typing, "runtime_checkable"),
+        "Test is only relevant if typing.runtime_checkable exists"
+    )
+    def test_typing_dot_runtimecheckable_on_Protocol(self):
+        @typing.runtime_checkable
+        class Foo(Protocol):
+            x: int
+
+        class Bar:
+            def __init__(self):
+                self.x = 42
+
+        self.assertIsInstance(Bar(), Foo)
+        self.assertNotIsInstance(object(), Foo)
+
     def test_no_instantiation(self):
         class P(Protocol): pass
         with self.assertRaises(TypeError):
@@ -4187,7 +4203,7 @@ class AllTests(BaseTestCase):
             exclude |= {'final', 'Any', 'NewType'}
         if sys.version_info < (3, 12):
             exclude |= {
-                'Protocol', 'runtime_checkable', 'SupportsAbs', 'SupportsBytes',
+                'Protocol', 'SupportsAbs', 'SupportsBytes',
                 'SupportsComplex', 'SupportsFloat', 'SupportsIndex', 'SupportsInt',
                 'SupportsRound', 'TypedDict', 'is_typeddict', 'NamedTuple', 'Unpack',
             }

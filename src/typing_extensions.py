@@ -545,7 +545,6 @@ def _caller(depth=2):
 # so we backport the 3.12 version of Protocol to Python <=3.11
 if sys.version_info >= (3, 12):
     Protocol = typing.Protocol
-    runtime_checkable = typing.runtime_checkable
 else:
     def _allow_reckless_class_checks(depth=4):
         """Allow instance and class checks for special stdlib modules.
@@ -799,6 +798,10 @@ else:
                 if cls.__init__ is Protocol.__init__:
                     cls.__init__ = _no_init
 
+
+if sys.version_info >= (3, 8):
+    runtime_checkable = typing.runtime_checkable
+else:
     def runtime_checkable(cls):
         """Mark a protocol class as a runtime protocol, so that it
         can be used with isinstance() and issubclass(). Raise TypeError

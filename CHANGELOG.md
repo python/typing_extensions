@@ -5,6 +5,10 @@
 - Fix regression in version 4.6.1 where comparing a generic class against a
   runtime-checkable protocol using `isinstance()` would cause `AttributeError`
   to be raised if using Python 3.7.
+- Due to changes in the implementation of `typing_extensions.Protocol`,
+  `typing.runtime_checkable` can now be used on `typing_extensions.Protocol`
+  (previously, users had to use `typing_extensions.runtime_checkable` if they
+  were using `typing_extensions.Protocol`).
 
 # Release 4.6.1 (May 23, 2023)
 
