@@ -4111,6 +4111,14 @@ class DataclassTransformTests(BaseTestCase):
 
 class AllTests(BaseTestCase):
 
+    def test_drop_in_for_typing(self):
+        # Check that the typing_extensions.__all__ is a superset of
+        # typing.__all__.
+        t_all = set(typing.__all__)
+        te_all = set(typing_extensions.__all__)
+        exceptions = {"ByteString"}
+        self.assertGreaterEqual(te_all, t_all - exceptions)
+
     def test_typing_extensions_includes_standard(self):
         a = typing_extensions.__all__
         self.assertIn('ClassVar', a)

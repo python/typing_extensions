@@ -1,3 +1,9 @@
+# Unreleased
+
+- `typing_extensions` now re-exports all names in the standard library's
+  `typing` module, except the deprecated `ByteString`. Patch by Jelle
+  Zijlstra.
+
 # Release 4.6.2 (May 25, 2023)
 
 - Fix use of `@deprecated` on classes with `__new__` but no `__init__`.

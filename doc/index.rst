@@ -22,6 +22,13 @@ figured out how to deal with that possibility.
 Bugfixes and new typing features that don't require a PEP may be added to
 ``typing_extensions`` once they are merged into CPython's main branch.
 
+``typing_extensions`` also re-exports all names from the :py:mod:`typing` module,
+including those that have always been present in the module. This allows users to
+import names from ``typing_extensions`` without having to remember exactly when
+each object was added to :py:mod:`typing`. There is one exception:
+:py:class:`typing.ByteString`, which is deprecated and due to be removed in Python
+3.14, is not re-exported.
+
 Versioning and backwards compatibility
 --------------------------------------
 
@@ -99,10 +106,6 @@ Special typing primitives
 
       Added to support inheritance from ``Any``.
 
-.. data:: ClassVar
-
-   See :py:data:`typing.ClassVar` and :pep:`526`. In ``typing`` since 3.5.3.
-
 .. data:: Concatenate
 
    See :py:data:`typing.Concatenate` and :pep:`612`. In ``typing`` since 3.10.
@@ -167,10 +170,6 @@ Special typing primitives
 
       The improvements from Python 3.10 and 3.11 were backported.
 
-.. data:: NoReturn
-
-   See :py:data:`typing.NoReturn`. In ``typing`` since 3.5.4 and 3.6.2.
-
 .. data:: NotRequired
 
    See :py:data:`typing.NotRequired` and :pep:`655`. In ``typing`` since 3.11.
@@ -231,10 +230,6 @@ Special typing primitives
    See :py:data:`typing.Self` and :pep:`673`. In ``typing`` since 3.11.
 
    .. versionadded:: 4.0.0
-
-.. class:: Type
-
-   See :py:class:`typing.Type`. In ``typing`` since 3.5.2.
 
 .. data:: TypeAlias
 
@@ -333,22 +328,6 @@ Special typing primitives
 Generic concrete collections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. class:: ChainMap
-
-   See :py:class:`typing.ChainMap`. In ``typing`` since 3.5.4 and 3.6.1.
-
-.. class:: Counter
-
-   See :py:class:`typing.Counter`. In ``typing`` since 3.5.4 and 3.6.1.
-
-.. class:: DefaultDict
-
-   See :py:class:`typing.DefaultDict`. In ``typing`` since 3.5.2.
-
-.. class:: Deque
-
-   See :py:class:`typing.Deque`. In ``typing`` since 3.5.4 and 3.6.1.
-
 .. class:: OrderedDict
 
    See :py:class:`typing.OrderedDict`. In ``typing`` since 3.7.2.
@@ -356,40 +335,12 @@ Generic concrete collections
 Abstract Base Classes
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. class:: AsyncContextManager
-
-   See :py:class:`typing.AsyncContextManager`. In ``typing`` since 3.5.4 and 3.6.2.
-
-.. class:: AsyncGenerator
-
-   See :py:class:`typing.AsyncGenerator`. In ``typing`` since 3.6.1.
-
-.. class:: AsyncIterable
-
-   See :py:class:`typing.AsyncIterable`. In ``typing`` since 3.5.2.
-
-.. class:: AsyncIterator
-
-   See :py:class:`typing.AsyncIterator`. In ``typing`` since 3.5.2.
-
-.. class:: Awaitable
-
-   See :py:class:`typing.Awaitable`. In ``typing`` since 3.5.2.
-
 .. class:: Buffer
 
    See :py:class:`collections.abc.Buffer`. Added to the standard library
    in Python 3.12.
 
    .. versionadded:: 4.6.0
-
-.. class:: ContextManager
-
-   See :py:class:`typing.ContextManager`. In ``typing`` since 3.5.4.
-
-.. class:: Coroutine
-
-   See :py:class:`typing.Coroutine`. In ``typing`` since 3.5.3.
 
 Protocols
 ~~~~~~~~~
@@ -499,6 +450,18 @@ Decorators
    .. versionchanged:: 4.1.0
 
       The decorator now attempts to set the ``__final__`` attribute on decorated objects.
+
+.. decorator:: no_type_check
+
+   See :py:class:`typing.no_type_check`.
+
+   .. versionadded:: 4.7.0
+
+.. decorator:: no_type_check_decorator
+
+   See :py:class:`typing.no_type_check_decorator`.
+
+   .. versionadded:: 4.7.0
 
 .. decorator:: overload
 
@@ -617,13 +580,283 @@ Functions
 
    .. versionadded:: 4.1.0
 
-Other
-~~~~~
+Pure aliases
+~~~~~~~~~~~~
+
+These are the same as their :mod:`typing` counterparts in all supported
+versions of Python. They are listed here for completeness.
+
+.. class:: AbstractSet
+
+   See :py:class:`typing.AbstractSet`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: AnyStr
+
+   See :py:class:`typing.AnyStr`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: AsyncContextManager
+
+   See :py:class:`typing.AsyncContextManager`. In ``typing`` since 3.5.4 and 3.6.2.
+
+.. class:: AsyncGenerator
+
+   See :py:class:`typing.AsyncGenerator`. In ``typing`` since 3.6.1.
+
+.. class:: AsyncIterable
+
+   See :py:class:`typing.AsyncIterable`. In ``typing`` since 3.5.2.
+
+.. class:: AsyncIterator
+
+   See :py:class:`typing.AsyncIterator`. In ``typing`` since 3.5.2.
+
+.. class:: Awaitable
+
+   See :py:class:`typing.Awaitable`. In ``typing`` since 3.5.2.
+
+.. class:: BinaryIO
+
+   See :py:class:`typing.BinaryIO`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Callable
+
+   See :py:class:`typing.Callable`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: ChainMap
+
+   See :py:class:`typing.ChainMap`. In ``typing`` since 3.5.4 and 3.6.1.
+
+.. data:: ClassVar
+
+   See :py:data:`typing.ClassVar` and :pep:`526`. In ``typing`` since 3.5.3.
+
+.. class:: Collection
+
+   See :py:class:`typing.Collection`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Container
+
+   See :py:class:`typing.Container`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: ContextManager
+
+   See :py:class:`typing.ContextManager`. In ``typing`` since 3.5.4.
+
+.. class:: Coroutine
+
+   See :py:class:`typing.Coroutine`. In ``typing`` since 3.5.3.
+
+.. class:: Counter
+
+   See :py:class:`typing.Counter`. In ``typing`` since 3.5.4 and 3.6.1.
+
+.. class:: DefaultDict
+
+   See :py:class:`typing.DefaultDict`. In ``typing`` since 3.5.2.
+
+.. class:: Deque
+
+   See :py:class:`typing.Deque`. In ``typing`` since 3.5.4 and 3.6.1.
+
+.. class:: Dict
+
+   See :py:class:`typing.Dict`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: ForwardRef
+
+   See :py:class:`typing.ForwardRef`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: FrozenSet
+
+   See :py:class:`typing.FrozenSet`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Generator
+
+   See :py:class:`typing.Generator`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Generic
+
+   See :py:class:`typing.Generic`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Hashable
+
+   See :py:class:`typing.Hashable`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: IO
+
+   See :py:class:`typing.IO`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: ItemsView
+
+   See :py:class:`typing.ItemsView`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Iterable
+
+   See :py:class:`typing.Iterable`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Iterator
+
+   See :py:class:`typing.Iterator`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: KeysView
+
+   See :py:class:`typing.KeysView`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: List
+
+   See :py:class:`typing.List`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Mapping
+
+   See :py:class:`typing.Mapping`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: MappingView
+
+   See :py:class:`typing.MappingView`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Match
+
+   See :py:class:`typing.Match`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: MutableMapping
+
+   See :py:class:`typing.MutableMapping`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: MutableSequence
+
+   See :py:class:`typing.MutableSequence`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: MutableSet
+
+   See :py:class:`typing.MutableSet`.
+
+   .. versionadded::: 4.7.0
+
+.. data:: NoReturn
+
+   See :py:data:`typing.NoReturn`. In ``typing`` since 3.5.4 and 3.6.2.
+
+.. class:: Optional
+
+   See :py:class:`typing.Optional`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Pattern
+
+   See :py:class:`typing.Pattern`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Reversible
+
+   See :py:class:`typing.Reversible`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Sequence
+
+   See :py:class:`typing.Sequence`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Set
+
+   See :py:class:`typing.Set`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Sized
+
+   See :py:class:`typing.Sized`.
+
+   .. versionadded::: 4.7.0
 
 .. class:: Text
 
    See :py:class:`typing.Text`. In ``typing`` since 3.5.2.
 
+.. class:: TextIO
+
+   See :py:class:`typing.TextIO`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Tuple
+
+   See :py:class:`typing.Tuple`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: Type
+
+   See :py:class:`typing.Type`. In ``typing`` since 3.5.2.
+
 .. data:: TYPE_CHECKING
 
    See :py:data:`typing.TYPE_CHECKING`. In ``typing`` since 3.5.2.
+
+.. class:: Union
+
+   See :py:class:`typing.Union`.
+
+   .. versionadded::: 4.7.0
+
+.. class:: ValuesView
+
+   See :py:class:`typing.ValuesView`.
+
+   .. versionadded::: 4.7.0
+
+.. function:: cast
+
+   See :py:func:`typing.cast`.
+
+   .. versionadded::: 4.7.0
+
