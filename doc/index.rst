@@ -25,9 +25,10 @@ Bugfixes and new typing features that don't require a PEP may be added to
 ``typing_extensions`` also re-exports all names from the :py:mod:`typing` module,
 including those that have always been present in the module. This allows users to
 import names from ``typing_extensions`` without having to remember exactly when
-each object was added to :py:mod:`typing`. There is one exception:
+each object was added to :py:mod:`typing`. There are a few exceptions:
 :py:class:`typing.ByteString`, which is deprecated and due to be removed in Python
-3.14, is not re-exported.
+3.14, is not re-exported. Similarly, the ``typing.io`` and ``typing.re`` submodules,
+which are removed in Python 3.13, are excluded.
 
 Versioning and backwards compatibility
 --------------------------------------
@@ -451,18 +452,6 @@ Decorators
 
       The decorator now attempts to set the ``__final__`` attribute on decorated objects.
 
-.. decorator:: no_type_check
-
-   See :py:class:`typing.no_type_check`.
-
-   .. versionadded:: 4.7.0
-
-.. decorator:: no_type_check_decorator
-
-   See :py:class:`typing.no_type_check_decorator`.
-
-   .. versionadded:: 4.7.0
-
 .. decorator:: overload
 
    See :py:func:`typing.overload`.
@@ -590,13 +579,13 @@ versions of Python. They are listed here for completeness.
 
    See :py:class:`typing.AbstractSet`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
-.. class:: AnyStr
+.. data:: AnyStr
 
-   See :py:class:`typing.AnyStr`.
+   See :py:data:`typing.AnyStr`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: AsyncContextManager
 
@@ -622,13 +611,13 @@ versions of Python. They are listed here for completeness.
 
    See :py:class:`typing.BinaryIO`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
-.. class:: Callable
+.. data:: Callable
 
-   See :py:class:`typing.Callable`.
+   See :py:data:`typing.Callable`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: ChainMap
 
@@ -642,13 +631,13 @@ versions of Python. They are listed here for completeness.
 
    See :py:class:`typing.Collection`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Container
 
    See :py:class:`typing.Container`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: ContextManager
 
@@ -674,149 +663,149 @@ versions of Python. They are listed here for completeness.
 
    See :py:class:`typing.Dict`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: ForwardRef
 
    See :py:class:`typing.ForwardRef`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: FrozenSet
 
    See :py:class:`typing.FrozenSet`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Generator
 
    See :py:class:`typing.Generator`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Generic
 
    See :py:class:`typing.Generic`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Hashable
 
    See :py:class:`typing.Hashable`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: IO
 
    See :py:class:`typing.IO`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: ItemsView
 
    See :py:class:`typing.ItemsView`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Iterable
 
    See :py:class:`typing.Iterable`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Iterator
 
    See :py:class:`typing.Iterator`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: KeysView
 
    See :py:class:`typing.KeysView`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: List
 
    See :py:class:`typing.List`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Mapping
 
    See :py:class:`typing.Mapping`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: MappingView
 
    See :py:class:`typing.MappingView`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Match
 
    See :py:class:`typing.Match`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: MutableMapping
 
    See :py:class:`typing.MutableMapping`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: MutableSequence
 
    See :py:class:`typing.MutableSequence`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: MutableSet
 
    See :py:class:`typing.MutableSet`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. data:: NoReturn
 
    See :py:data:`typing.NoReturn`. In ``typing`` since 3.5.4 and 3.6.2.
 
-.. class:: Optional
+.. data:: Optional
 
-   See :py:class:`typing.Optional`.
+   See :py:data:`typing.Optional`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Pattern
 
    See :py:class:`typing.Pattern`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Reversible
 
    See :py:class:`typing.Reversible`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Sequence
 
    See :py:class:`typing.Sequence`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Set
 
    See :py:class:`typing.Set`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Sized
 
    See :py:class:`typing.Sized`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Text
 
@@ -826,13 +815,13 @@ versions of Python. They are listed here for completeness.
 
    See :py:class:`typing.TextIO`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
-.. class:: Tuple
+.. data:: Tuple
 
-   See :py:class:`typing.Tuple`.
+   See :py:data:`typing.Tuple`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: Type
 
@@ -842,21 +831,32 @@ versions of Python. They are listed here for completeness.
 
    See :py:data:`typing.TYPE_CHECKING`. In ``typing`` since 3.5.2.
 
-.. class:: Union
+.. data:: Union
 
-   See :py:class:`typing.Union`.
+   See :py:data:`typing.Union`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. class:: ValuesView
 
    See :py:class:`typing.ValuesView`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
 .. function:: cast
 
    See :py:func:`typing.cast`.
 
-   .. versionadded::: 4.7.0
+   .. versionadded:: 4.7.0
 
+.. decorator:: no_type_check
+
+   See :py:func:`typing.no_type_check`.
+
+   .. versionadded:: 4.7.0
+
+.. decorator:: no_type_check_decorator
+
+   See :py:func:`typing.no_type_check_decorator`.
+
+   .. versionadded:: 4.7.0
