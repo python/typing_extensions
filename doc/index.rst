@@ -572,7 +572,7 @@ Functions
 Pure aliases
 ~~~~~~~~~~~~
 
-These are the same as their :mod:`typing` counterparts in all supported
+These are simply re-exported from the :mod:`typing` module on all supported
 versions of Python. They are listed here for completeness.
 
 .. class:: AbstractSet
