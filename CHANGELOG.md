@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.6.2 (May 25, 2023)
 
 - Fix use of `@deprecated` on classes with `__new__` but no `__init__`.
   Patch by Jelle Zijlstra.
