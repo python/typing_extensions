@@ -2914,7 +2914,10 @@ else:
                 return typing.Union[left, self]
 
 
-# Aliases for items that have always been in typing
+# Aliases for items that have always been in typing.
+# Explicitly assign these (rather than using `from typing import *` at the top),
+# so that we get a CI error if one of these is deleted from typing.py
+# in a future version of Python
 AbstractSet = typing.AbstractSet
 AnyStr = typing.AnyStr
 BinaryIO = typing.BinaryIO
