@@ -357,6 +357,7 @@ class DeprecatedTests(BaseTestCase):
             with self.assertRaises(TypeError):
                 A(42)
 
+    def test_class_with_init(self):
         @deprecated("HasInit will go away soon")
         class HasInit:
             def __init__(self, x):
@@ -366,6 +367,7 @@ class DeprecatedTests(BaseTestCase):
             instance = HasInit(42)
         self.assertEqual(instance.x, 42)
 
+    def test_class_with_new(self):
         has_new_called = False
 
         @deprecated("HasNew will go away soon")
@@ -382,6 +384,8 @@ class DeprecatedTests(BaseTestCase):
             instance = HasNew(42)
         self.assertEqual(instance.x, 42)
         self.assertTrue(has_new_called)
+
+    def test_class_with_inherited_new(self):
         new_base_called = False
 
         class NewBase:
@@ -401,6 +405,23 @@ class DeprecatedTests(BaseTestCase):
             instance = HasInheritedNew(42)
         self.assertEqual(instance.x, 42)
         self.assertTrue(new_base_called)
+
+    def test_class_with_new_but_no_init(self):
+        new_called = False
+
+        @deprecated("HasNewNoInit will go away soon")
+        class HasNewNoInit:
+            def __new__(cls, x):
+                nonlocal new_called
+                new_called = True
+                obj = super().__new__(cls)
+                obj.x = x
+                return obj
+
+        with self.assertWarnsRegex(DeprecationWarning, "HasNewNoInit will go away soon"):
+            instance = HasNewNoInit(42)
+        self.assertEqual(instance.x, 42)
+        self.assertTrue(new_called)
 
     def test_function(self):
         @deprecated("b will go away soon")
@@ -2246,6 +2267,10 @@ class ProtocolTests(BaseTestCase):
         del f.x
         self.assertNotIsInstance(f, HasX)
 
+    @skipIf(
+        sys.version_info == (3, 12, 0, 'beta', 1),
+        "CPython had a bug in 3.12.0b1"
+    )
     def test_protocols_isinstance_generic_classes(self):
         T = TypeVar("T")
 

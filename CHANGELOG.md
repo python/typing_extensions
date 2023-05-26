@@ -1,8 +1,16 @@
 # Unreleased
 
-- Fix regression in version 4.6.1 where comparing a generic class against a 
+- Skip a problematic test on Python 3.12.0b1. The test fails on 3.12.0b1 due to
+  a bug in CPython, which will be fixed in 3.12.0b2. The
+  `typing_extensions` test suite now passes on 3.12.0b1.
+
+# Release 4.6.2 (May 25, 2023)
+
+- Fix use of `@deprecated` on classes with `__new__` but no `__init__`.
+  Patch by Jelle Zijlstra.
+- Fix regression in version 4.6.1 where comparing a generic class against a
   runtime-checkable protocol using `isinstance()` would cause `AttributeError`
-  to be raised if using Python 3.7
+  to be raised if using Python 3.7.
 
 # Release 4.6.1 (May 23, 2023)
 

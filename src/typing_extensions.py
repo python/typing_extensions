@@ -2497,11 +2497,11 @@ else:
                 @functools.wraps(original_new)
                 def __new__(cls, *args, **kwargs):
                     warnings.warn(__msg, category=category, stacklevel=stacklevel + 1)
-                    # Mirrors a similar check in object.__new__.
-                    if not has_init and (args or kwargs):
-                        raise TypeError(f"{cls.__name__}() takes no arguments")
                     if original_new is not object.__new__:
                         return original_new(cls, *args, **kwargs)
+                    # Mirrors a similar check in object.__new__.
+                    elif not has_init and (args or kwargs):
+                        raise TypeError(f"{cls.__name__}() takes no arguments")
                     else:
                         return original_new(cls)
 
