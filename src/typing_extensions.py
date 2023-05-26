@@ -88,7 +88,6 @@ __all__ = [
 
     # Introspection helpers unique to typing_extensions
     # These will never be added to typing.py in CPython
-    'typing_extensions_reexports_name',
     'get_typing_objects_by_name_of',
 ]
 
@@ -2898,11 +2897,6 @@ def _get_name_from_globals(name: str) -> object:
             f"The typing_extensions module has no object called {name!r}!"
         ) from None
     return obj
-
-
-@functools.lru_cache(maxsize=None)
-def typing_extensions_reexports_name(name: str) -> bool:
-    return _get_name_from_globals(name) is getattr(typing, name, object())
 
 
 @functools.lru_cache(maxsize=None)

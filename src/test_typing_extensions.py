@@ -37,7 +37,7 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args,
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar
-from typing_extensions import typing_extensions_reexports_name, get_typing_objects_by_name_of
+from typing_extensions import get_typing_objects_by_name_of
 from _typed_dict_test_helper import Foo, FooGeneric
 
 # Flags used to mark tests that only apply after a specific
@@ -4990,20 +4990,6 @@ class TypeAliasTypeTests(BaseTestCase):
 
 
 class IntrospectionHelperTests(BaseTestCase):
-    def test_typing_extensions_reexports(self):
-        for name in typing_extensions.__all__:
-            with self.subTest(name=name):
-                self.assertIs(type(typing_extensions_reexports_name(name)), bool)
-
-        self.assertTrue(typing_extensions_reexports_name("ClassVar"))
-
-        with self.assertRaisesRegex(ValueError, "no object called 'foo'"):
-            typing_extensions_reexports_name("foo")
-
-    @skipIf(TYPING_3_12_0, "We reexport TypeAliasType from typing on 3.12+")
-    def test_typing_extensions_doesnt_reexport(self):
-        self.assertFalse(typing_extensions_reexports_name("TypeAliasType"))
-
     def test_typing_objects_by_name_of(self):
         for name in typing_extensions.__all__:
             with self.subTest(name=name):
