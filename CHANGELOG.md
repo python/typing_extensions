@@ -3,7 +3,8 @@
 - Align the implementation of `TypedDict` with that in Python 3.9 and higher.
   `typing_extensions.TypedDict` is now a function instead of a class. The
   private functions `_check_fails`, `_dict_new`, and `_typeddict_new`
-  have been removed. Patch by Jelle Zijlstra.
+  have been removed. `is_typeddict` now returns `False` when called with
+  `TypedDict` itself as the argument. Patch by Jelle Zijlstra.
 
 # Release 4.6.2 (May 25, 2023)
 
