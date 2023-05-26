@@ -998,7 +998,7 @@ else:
 
         __instancecheck__ = __subclasscheck__
 
-    def TypedDict(typename, fields=None, /, *, total=True, **kwargs):
+    def TypedDict(__typename, __fields=None, *, total=True, **kwargs):
         """A simple typed namespace. At runtime it is equivalent to a plain dict.
 
         TypedDict creates a dictionary type that expects all of its
@@ -1036,8 +1036,8 @@ else:
         the total argument. True is the default, and makes all items defined in the
         class body be required.
         """
-        if fields is None:
-            fields = kwargs
+        if __fields is None:
+            __fields = kwargs
         elif kwargs:
             raise TypeError("TypedDict takes either a dict or keyword arguments,"
                             " but not both")
@@ -1050,13 +1050,13 @@ else:
                 stacklevel=2,
             )
 
-        ns = {'__annotations__': dict(fields)}
+        ns = {'__annotations__': dict(__fields)}
         module = _caller()
         if module is not None:
             # Setting correct module is necessary to make typed dict classes pickleable.
             ns['__module__'] = module
 
-        td = _TypedDictMeta(typename, (), ns, total=total)
+        td = _TypedDictMeta(__typename, (), ns, total=total)
         td.__orig_bases__ = (TypedDict,)
         return td
 
