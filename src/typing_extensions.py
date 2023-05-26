@@ -1079,6 +1079,9 @@ else:
             is_typeddict(Film)  # => True
             is_typeddict(Union[list, str])  # => False
         """
+        # On 3.8, this would otherwise return True
+        if hasattr(typing, "TypedDict") and tp is typing.TypedDict:
+            return False
         return isinstance(tp, tuple(_TYPEDDICT_TYPES))
 
 
