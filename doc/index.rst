@@ -531,6 +531,20 @@ Decorators
    improved, and ``typing_extensions`` backports these performance
    improvements.
 
+   .. versionchanged:: 4.6.0
+
+      Due to changes in the implementation of :class:`typing_extensions.Protocol`,
+      :py:func:`typing.runtime_checkable` will no longer work on classes inheriting
+      from :class:`typing_extensions.Protocol` on Python 3.8-3.11. Use
+      ``typing_extensions.runtime_checkable`` instead.
+
+   .. versionchanged:: 4.7.0
+
+      Due to changes in the implementation of :class:`typing_extensions.Protocol`,
+      :py:func:`typing.runtime_checkable` can now again be used on classes inheriting
+      from :class:`typing_extensions.Protocol`. ``typing_extensions.runtime_checkable``
+      now simply re-exports :py:func:`typing.runtime_checkable` on Python 3.8+.
+
 Functions
 ~~~~~~~~~
 
