@@ -620,7 +620,7 @@ Functions
 
       :func:`is_typeddict` now returns ``False`` when called with
       :data:`TypedDict` itself as the argument, consistent with the
-      behavior in :mod:`typing`.
+      behavior of :py:func:`typing.is_typeddict`.
 
 .. function:: reveal_type(obj)
 

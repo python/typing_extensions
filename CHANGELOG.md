@@ -1,6 +1,7 @@
 # Release 4.7.0 (unreleased)
 
-- Align the implementation of `TypedDict` with that in Python 3.9 and higher.
+- Align the implementation of `TypedDict` with the implementation in the
+  standard library on Python 3.9 and higher.
   `typing_extensions.TypedDict` is now a function instead of a class. The
   private functions `_check_fails`, `_dict_new`, and `_typeddict_new`
   have been removed. `is_typeddict` now returns `False` when called with
