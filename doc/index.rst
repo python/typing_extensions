@@ -42,6 +42,26 @@ version from which features were backported; for example,
 ``typing_extensions`` 3.10.0.0 was meant to reflect ``typing`` as of
 Python 3.10.0. During this period, no changelog was maintained.
 
+Runtime use of types
+~~~~~~~~~~~~~~~~~~~~
+
+We aim for complete backwards compatibility in terms of the names we export:
+code like ``from typing_extensions import X`` that works on one
+typing-extensions release will continue to work on the next.
+It is more difficult to maintain compatibility for users that introspect
+types at runtime, as almost any detail can potentially break compatibility.
+Users who introspect types should follow these guidelines to minimize
+the risk of compatibility issues:
+
+- Always check for both the :mod:`typing` and ``typing_extensions`` versions
+  of objects, even if they are currently the same on some Python version.
+  Future ``typing_extensions`` releases may re-export a separate version of
+  the object to backport some new feature or bugfix.
+- Use public APIs like :func:`get_origin` and :func:`get_original_bases` to
+  access internal information about types, instead of accessing private
+  attributes directly. If some information is not available through a public
+  attribute, consider opening an issue in CPython to add such an API.
+
 Python version support
 ----------------------
 

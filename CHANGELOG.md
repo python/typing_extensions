@@ -1,7 +1,14 @@
-# Unreleased
+# Release 4.7.0 (unreleased)
 
-- Add additional test cases for `is_typeddict` (backport of
-  https://github.com/python/cpython/pull/104884). Patch by Jelle Zijlstra.
+- Align the implementation of `TypedDict` with that in Python 3.9 and higher.
+  `typing_extensions.TypedDict` is now a function instead of a class. The
+  private functions `_check_fails`, `_dict_new`, and `_typeddict_new`
+  have been removed. Patch by Jelle Zijlstra.
+
+# Release 4.6.2 (May 25, 2023)
+
+- Fix use of `@deprecated` on classes with `__new__` but no `__init__`.
+  Patch by Jelle Zijlstra.
 - Fix regression in version 4.6.1 where comparing a generic class against a
   runtime-checkable protocol using `isinstance()` would cause `AttributeError`
   to be raised if using Python 3.7.
