@@ -5,6 +5,10 @@
   private functions `_check_fails`, `_dict_new`, and `_typeddict_new`
   have been removed. `is_typeddict` now returns `False` when called with
   `TypedDict` itself as the argument. Patch by Jelle Zijlstra.
+- Skip a problematic test on Python 3.12.0b1. The test fails on 3.12.0b1 due to
+  a bug in CPython, which will be fixed in 3.12.0b2. The
+  `typing_extensions` test suite now passes on 3.12.0b1.
+- Declare support for Python 3.12. Patch by Jelle Zijlstra.
 
 # Release 4.6.2 (May 25, 2023)
 
