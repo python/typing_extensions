@@ -2895,18 +2895,23 @@ def get_typing_objects_by_name_of(name: str) -> typing.Tuple[Any, ...]:
     try:
         te_obj = globals()[name]
     except KeyError:
-        raise ValueError(
-            f"The typing_extensions module has no object called {name!r}!"
-        ) from None
-    objs = [te_obj]
-    if hasattr(typing, name):
-        typing_obj = getattr(typing, name)
-        # Some typing objects compare equal to the equivalent typing_extensions object,
-        # but aren't actually the exact same object,
-        # so we can't use a set here; a list is better
-        if typing_obj is not te_obj:
-            objs.append(typing_obj)
-    return tuple(objs)
+        try:
+            typing_obj = getattr(typing, name)
+        except AttributeError:
+            raise ValueError(
+                f"Neither typing nor typing_extensions has an object called {name!r}!"
+            ) from None
+        else:
+            return (typing_obj,)
+    else:
+        if hasattr(typing, name):
+            typing_obj = getattr(typing, name)
+            # Some typing objects compare equal to the equivalent typing_extensions object,
+            # but aren't actually the exact same object,
+            # so we can't use a set here
+            if typing_obj is not te_obj:
+                return (te_obj, typing_obj)
+        return (te_obj,)
 
 
 def is_typing_name(obj: object, name: str) -> bool:

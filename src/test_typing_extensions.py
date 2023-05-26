@@ -5003,8 +5003,19 @@ class IntrospectionHelperTests(BaseTestCase):
                     self.assertTrue(hasattr(typing, name))
                     self.assertIsNot(te_obj, getattr(typing, name))
 
-        with self.assertRaisesRegex(ValueError, "no object called 'foo'"):
+        with self.assertRaisesRegex(
+            ValueError,
+            "Neither typing nor typing_extensions has an object called 'foo'"
+        ):
             get_typing_objects_by_name_of("foo")
+
+    def test_typing_objects_by_name_not_in_typing_extensions(self):
+        objs = get_typing_objects_by_name_of("ByteString")
+        self.assertIsInstance(objs, tuple)
+        self.assertEqual(len(objs), 1)
+        bytestring = objs[0]
+        self.assertIs(bytestring, typing.ByteString)
+        self.assertEqual(bytestring.__module__, "typing")
 
     def test_typing_objects_by_name_of_2(self):
         classvar_objs = get_typing_objects_by_name_of("ClassVar")
@@ -5048,6 +5059,20 @@ class IntrospectionHelperTests(BaseTestCase):
             if hasattr(typing, name):
                 typing_obj = getattr(typing, name)
                 self.assertTrue(is_typing_name(typing_obj, name))
+
+    def test_is_typing_name_fails_appropriately(self):
+        self.assertFalse(is_typing_name(typing_extensions.NoReturn, "ClassVar"))
+        self.assertFalse(is_typing_name(typing.NoReturn, "ClassVar"))
+        error_msg = "Neither typing nor typing_extensions has an object called 'foo'"
+        with self.assertRaisesRegex(ValueError, error_msg):
+            is_typing_name(typing_extensions.NoReturn, "foo")
+        with self.assertRaisesRegex(ValueError, error_msg):
+            is_typing_name(typing_extensions.NoReturn, "foo")
+
+    def test_is_typing_name_not_in_typing_extensions(self):
+        # Sanity check -- this is a useless test otherwise:
+        self.assertFalse(hasattr(typing_extensions, "ByteString"))
+        self.assertTrue(is_typing_name(typing.ByteString, "ByteString"))
 
 
 if __name__ == '__main__':
