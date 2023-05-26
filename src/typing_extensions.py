@@ -915,6 +915,11 @@ else:
     # 3.10.0 and later
     _TAKES_MODULE = "module" in inspect.signature(typing._type_check).parameters
 
+    if sys.version_info >= (3, 8):
+        _fake_name = "Protocol"
+    else:
+        _fake_name = "_Protocol"
+
     class _TypedDictMeta(type):
         def __new__(cls, name, bases, ns, total=True):
             """Create new typed dict class object.
@@ -935,10 +940,10 @@ else:
                 generic_base = ()
 
             # typing.py generally doesn't let you inherit from plain Generic, unless
-            # the name of the class happens to be "Protocol".
-            tp_dict = type.__new__(_TypedDictMeta, "Protocol", (*generic_base, dict), ns)
+            # the name of the class happens to be "Protocol" (or "_Protocol" on 3.7).
+            tp_dict = type.__new__(_TypedDictMeta, _fake_name, (*generic_base, dict), ns)
             tp_dict.__name__ = name
-            if tp_dict.__qualname__ == "Protocol":
+            if tp_dict.__qualname__ == _fake_name:
                 tp_dict.__qualname__ = name
 
             if not hasattr(tp_dict, '__orig_bases__'):
