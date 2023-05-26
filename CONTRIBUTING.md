@@ -23,10 +23,13 @@ CPython's `main` branch.
 # Versioning scheme
 
 Starting with version 4.0.0, `typing_extensions` uses
-[Semantic Versioning](https://semver.org/). The major version is incremented for all
-backwards-incompatible changes.
+[Semantic Versioning](https://semver.org/). See the documentation
+for more detail.
 
 # Workflow for PyPI releases
+
+- Make sure you follow the versioning policy in the documentation
+  (e.g., release candidates before any feature release)
 
 - Ensure that GitHub Actions reports no errors.
 
