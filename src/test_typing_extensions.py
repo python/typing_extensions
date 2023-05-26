@@ -37,7 +37,6 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args,
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar
-import _typed_dict_test_helper
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 
 # Flags used to mark tests that only apply after a specific
@@ -3099,12 +3098,6 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(
             {k: v.__name__ for k, v in get_type_hints(Bar).items()},
             {'a': "_DoNotImport", 'b': "int"}
-        )
-
-    def test_get_type_hints(self):
-        self.assertEqual(
-            get_type_hints(Bar),
-            {'a': _typed_dict_test_helper._DoNotImport, 'b': int}
         )
 
     def test_get_type_hints_generic(self):
