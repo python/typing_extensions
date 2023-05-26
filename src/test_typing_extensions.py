@@ -37,7 +37,7 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args,
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar
-from typing_extensions import get_typing_objects_by_name_of
+from typing_extensions import get_typing_objects_by_name_of, is_typing_name
 from _typed_dict_test_helper import Foo, FooGeneric
 
 # Flags used to mark tests that only apply after a specific
@@ -5040,6 +5040,14 @@ class IntrospectionHelperTests(BaseTestCase):
         self.assertEqual(len(protocol_objs), 2)
         modules = {obj.__module__ for obj in protocol_objs}
         self.assertEqual(modules, {"typing", "typing_extensions"})
+
+    def test_is_typing_name(self):
+        for name in typing_extensions.__all__:
+            te_obj = getattr(typing_extensions, name)
+            self.assertTrue(is_typing_name(te_obj, name))
+            if hasattr(typing, name):
+                typing_obj = getattr(typing, name)
+                self.assertTrue(is_typing_name(typing_obj, name))
 
 
 if __name__ == '__main__':

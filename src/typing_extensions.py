@@ -89,6 +89,7 @@ __all__ = [
     # Introspection helpers unique to typing_extensions
     # These will never be added to typing.py in CPython
     'get_typing_objects_by_name_of',
+    'is_typing_name',
 ]
 
 # for backward compatibility
@@ -2889,19 +2890,14 @@ else:
 ##############################################################
 
 
-def _get_name_from_globals(name: str) -> object:
+@functools.lru_cache(maxsize=None)
+def get_typing_objects_by_name_of(name: str) -> typing.Tuple[Any, ...]:
     try:
-        obj = globals()[name]
+        te_obj = globals()[name]
     except KeyError:
         raise ValueError(
             f"The typing_extensions module has no object called {name!r}!"
         ) from None
-    return obj
-
-
-@functools.lru_cache(maxsize=None)
-def get_typing_objects_by_name_of(name: str) -> typing.Tuple[Any, ...]:
-    te_obj = _get_name_from_globals(name)
     objs = [te_obj]
     if hasattr(typing, name):
         typing_obj = getattr(typing, name)
@@ -2911,3 +2907,7 @@ def get_typing_objects_by_name_of(name: str) -> typing.Tuple[Any, ...]:
         if typing_obj is not te_obj:
             objs.append(typing_obj)
     return tuple(objs)
+
+
+def is_typing_name(obj: object, name: str) -> bool:
+    return any(obj is thing for thing in get_typing_objects_by_name_of(name))
