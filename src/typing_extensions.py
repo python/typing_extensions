@@ -998,7 +998,6 @@ else:
 
         __instancecheck__ = __subclasscheck__
 
-
     def TypedDict(typename, fields=None, /, *, total=True, **kwargs):
         """A simple typed namespace. At runtime it is equivalent to a plain dict.
 
