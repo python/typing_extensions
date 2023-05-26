@@ -3252,7 +3252,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(A.__origin__, TD)
         self.assertEqual(A.__parameters__, ())
         self.assertEqual(A.__args__, (int,))
-        a = A(a = 1)
+        a = A(a=1)
         self.assertIs(type(a), dict)
         self.assertEqual(a, {'a': 1})
 
