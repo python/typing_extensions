@@ -3236,9 +3236,11 @@ class TypedDictTests(BaseTestCase):
         with self.assertRaises(TypeError):
             WithImplicitAny[str]
 
+    @skipUnless(TYPING_3_9_0, "Was changed in 3.9")
     def test_non_generic_subscript(self):
         # For backward compatibility, subscription works
         # on arbitrary TypedDict types.
+        # (But we don't attempt to backport this misfeature onto 3.7 and 3.8.)
         class TD(TypedDict):
             a: T
         A = TD[int]
