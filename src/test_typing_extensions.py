@@ -1696,6 +1696,12 @@ class NT(NamedTuple):
     y: int
 
 
+skip_if_py312b1 = skipIf(
+    sys.version_info == (3, 12, 0, 'beta', 1),
+    "CPython had a bug in 3.12.0b1"
+)
+
+
 class ProtocolTests(BaseTestCase):
     def test_runtime_alias(self):
         self.assertIs(runtime, runtime_checkable)
@@ -2267,10 +2273,56 @@ class ProtocolTests(BaseTestCase):
         del f.x
         self.assertNotIsInstance(f, HasX)
 
-    @skipIf(
-        sys.version_info == (3, 12, 0, 'beta', 1),
-        "CPython had a bug in 3.12.0b1"
-    )
+    @skip_if_py312b1
+    def test_runtime_checkable_generic_non_protocol(self):
+        # Make sure this doesn't raise AttributeError
+        with self.assertRaisesRegex(
+            TypeError,
+            "@runtime_checkable can be only applied to protocol classes",
+        ):
+            @runtime_checkable
+            class Foo(Generic[T]): ...
+
+    def test_runtime_checkable_generic(self):
+        @runtime_checkable
+        class Foo(Protocol[T]):
+            def meth(self) -> T: ...
+
+        class Impl:
+            def meth(self) -> int: ...
+
+        self.assertIsSubclass(Impl, Foo)
+
+        class NotImpl:
+            def method(self) -> int: ...
+
+        self.assertNotIsSubclass(NotImpl, Foo)
+
+    if sys.version_info >= (3, 12):
+        exec(textwrap.dedent(
+            """
+            @skip_if_py312b1
+            def test_pep695_generics_can_be_runtime_checkable(self):
+                @runtime_checkable
+                class HasX(Protocol):
+                    x: int
+
+                class Bar[T]:
+                    x: T
+                    def __init__(self, x):
+                        self.x = x
+
+                class Capybara[T]:
+                    y: str
+                    def __init__(self, y):
+                        self.y = y
+
+                self.assertIsInstance(Bar(1), HasX)
+                self.assertNotIsInstance(Capybara('a'), HasX)
+                """
+        ))
+
+    @skip_if_py312b1
     def test_protocols_isinstance_generic_classes(self):
         T = TypeVar("T")
 
