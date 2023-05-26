@@ -912,113 +912,51 @@ if sys.version_info >= (3, 12):
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
 else:
-    def _check_fails(cls, other):
-        try:
-            if _caller() not in {'abc', 'functools', 'typing'}:
-                # Typed dicts are only for static structural subtyping.
-                raise TypeError('TypedDict does not support instance and class checks')
-        except (AttributeError, ValueError):
-            pass
-        return False
-
-    def _dict_new(*args, **kwargs):
-        if not args:
-            raise TypeError('TypedDict.__new__(): not enough arguments')
-        _, args = args[0], args[1:]  # allow the "cls" keyword be passed
-        return dict(*args, **kwargs)
-
-    _dict_new.__text_signature__ = '($cls, _typename, _fields=None, /, **kwargs)'
-
-    def _typeddict_new(*args, total=True, **kwargs):
-        if not args:
-            raise TypeError('TypedDict.__new__(): not enough arguments')
-        _, args = args[0], args[1:]  # allow the "cls" keyword be passed
-        if args:
-            typename, args = args[0], args[1:]  # allow the "_typename" keyword be passed
-        elif '_typename' in kwargs:
-            typename = kwargs.pop('_typename')
-            warnings.warn("Passing '_typename' as keyword argument is deprecated",
-                          DeprecationWarning, stacklevel=2)
-        else:
-            raise TypeError("TypedDict.__new__() missing 1 required positional "
-                            "argument: '_typename'")
-        if args:
-            try:
-                fields, = args  # allow the "_fields" keyword be passed
-            except ValueError:
-                raise TypeError('TypedDict.__new__() takes from 2 to 3 '
-                                f'positional arguments but {len(args) + 2} '
-                                'were given')
-        elif '_fields' in kwargs and len(kwargs) == 1:
-            fields = kwargs.pop('_fields')
-            warnings.warn("Passing '_fields' as keyword argument is deprecated",
-                          DeprecationWarning, stacklevel=2)
-        else:
-            fields = None
-
-        if fields is None:
-            fields = kwargs
-        elif kwargs:
-            raise TypeError("TypedDict takes either a dict or keyword arguments,"
-                            " but not both")
-
-        if kwargs:
-            warnings.warn(
-                "The kwargs-based syntax for TypedDict definitions is deprecated, "
-                "may be removed in a future version, and may not be "
-                "understood by third-party type checkers.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-        ns = {'__annotations__': dict(fields)}
-        module = _caller()
-        if module is not None:
-            # Setting correct module is necessary to make typed dict classes pickleable.
-            ns['__module__'] = module
-
-        return _TypedDictMeta(typename, (), ns, total=total)
-
-    _typeddict_new.__text_signature__ = ('($cls, _typename, _fields=None,'
-                                         ' /, *, total=True, **kwargs)')
-
+    # 3.10.0 and later
     _TAKES_MODULE = "module" in inspect.signature(typing._type_check).parameters
 
     class _TypedDictMeta(type):
-        def __init__(cls, name, bases, ns, total=True):
-            super().__init__(name, bases, ns)
-
         def __new__(cls, name, bases, ns, total=True):
-            # Create new typed dict class object.
-            # This method is called directly when TypedDict is subclassed,
-            # or via _typeddict_new when TypedDict is instantiated. This way
-            # TypedDict supports all three syntaxes described in its docstring.
-            # Subclasses and instances of TypedDict return actual dictionaries
-            # via _dict_new.
-            ns['__new__'] = _typeddict_new if name == 'TypedDict' else _dict_new
-            # Don't insert typing.Generic into __bases__ here,
-            # or Generic.__init_subclass__ will raise TypeError
-            # in the super().__new__() call.
-            # Instead, monkey-patch __bases__ onto the class after it's been created.
-            tp_dict = super().__new__(cls, name, (dict,), ns)
+            """Create new typed dict class object.
 
-            is_generic = any(issubclass(base, typing.Generic) for base in bases)
+            This method is called when TypedDict is subclassed,
+            or when TypedDict is instantiated. This way
+            TypedDict supports all three syntax forms described in its docstring.
+            Subclasses and instances of TypedDict return actual dictionaries.
+            """
+            for base in bases:
+                if type(base) is not _TypedDictMeta and base is not typing.Generic:
+                    raise TypeError('cannot inherit from both a TypedDict type '
+                                    'and a non-TypedDict base class')
 
-            if is_generic:
-                tp_dict.__bases__ = (typing.Generic, dict)
-                _maybe_adjust_parameters(tp_dict)
+            if any(issubclass(b, typing.Generic) for b in bases):
+                generic_base = (typing.Generic,)
             else:
-                # generic TypedDicts get __orig_bases__ from Generic
-                tp_dict.__orig_bases__ = bases or (TypedDict,)
+                generic_base = ()
+
+            # typing.py generally doesn't let you inherit from plain Generic, unless
+            # the name of the class happens to be "Protocol".
+            tp_dict = type.__new__(_TypedDictMeta, "Protocol", (*generic_base, dict), ns)
+            tp_dict.__name__ = name
+            if tp_dict.__qualname__ == "Protocol":
+                tp_dict.__qualname__ = name
+
+            if not hasattr(tp_dict, '__orig_bases__'):
+                tp_dict.__orig_bases__ = bases
 
             annotations = {}
             own_annotations = ns.get('__annotations__', {})
             msg = "TypedDict('Name', {f0: t0, f1: t1, ...}); each t must be a type"
-            kwds = {"module": tp_dict.__module__} if _TAKES_MODULE else {}
-            own_annotations = {
-                n: typing._type_check(tp, msg, **kwds)
-                for n, tp in own_annotations.items()
-            }
+            if _TAKES_MODULE:
+                own_annotations = {
+                    n: typing._type_check(tp, msg, module=tp_dict.__module__)
+                    for n, tp in own_annotations.items()
+                }
+            else:
+                own_annotations = {
+                    n: typing._type_check(tp, msg)
+                    for n, tp in own_annotations.items()
+                }
             required_keys = set()
             optional_keys = set()
 
@@ -1052,15 +990,20 @@ else:
                 tp_dict.__total__ = total
             return tp_dict
 
-        __instancecheck__ = __subclasscheck__ = _check_fails
+        __call__ = dict  # static method
 
-    TypedDict = _TypedDictMeta('TypedDict', (dict,), {})
-    TypedDict.__module__ = __name__
-    TypedDict.__doc__ = \
-        """A simple typed name space. At runtime it is equivalent to a plain dict.
+        def __subclasscheck__(cls, other):
+            # Typed dicts are only for static structural subtyping.
+            raise TypeError('TypedDict does not support instance and class checks')
+
+        __instancecheck__ = __subclasscheck__
+
+
+    def TypedDict(typename, fields=None, /, *, total=True, **kwargs):
+        """A simple typed namespace. At runtime it is equivalent to a plain dict.
 
         TypedDict creates a dictionary type that expects all of its
-        instances to have a certain set of keys, with each key
+        instances to have a certain set of keys, where each key is
         associated with a value of a consistent type. This expectation
         is not checked at runtime but is only enforced by type checkers.
         Usage::
@@ -1077,14 +1020,52 @@ else:
 
         The type info can be accessed via the Point2D.__annotations__ dict, and
         the Point2D.__required_keys__ and Point2D.__optional_keys__ frozensets.
-        TypedDict supports two additional equivalent forms::
+        TypedDict supports an additional equivalent form::
 
-            Point2D = TypedDict('Point2D', x=int, y=int, label=str)
             Point2D = TypedDict('Point2D', {'x': int, 'y': int, 'label': str})
 
-        The class syntax is only supported in Python 3.6+, while two other
-        syntax forms work for Python 2.7 and 3.2+
+        By default, all keys must be present in a TypedDict. It is possible
+        to override this by specifying totality.
+        Usage::
+
+            class point2D(TypedDict, total=False):
+                x: int
+                y: int
+
+        This means that a point2D TypedDict can have any of the keys omitted. A type
+        checker is only expected to support a literal False or True as the value of
+        the total argument. True is the default, and makes all items defined in the
+        class body be required.
+
+        The class syntax is only supported in Python 3.6+, while the other
+        syntax form works for Python 2.7 and 3.2+
         """
+        if fields is None:
+            fields = kwargs
+        elif kwargs:
+            raise TypeError("TypedDict takes either a dict or keyword arguments,"
+                            " but not both")
+        if kwargs:
+            warnings.warn(
+                "The kwargs-based syntax for TypedDict definitions is deprecated "
+                "in Python 3.11, will be removed in Python 3.13, and may not be "
+                "understood by third-party type checkers.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        ns = {'__annotations__': dict(fields)}
+        module = _caller()
+        if module is not None:
+            # Setting correct module is necessary to make typed dict classes pickleable.
+            ns['__module__'] = module
+
+        td = _TypedDictMeta(typename, (), ns, total=total)
+        td.__orig_bases__ = (TypedDict,)
+        return td
+
+    _TypedDict = type.__new__(_TypedDictMeta, 'TypedDict', (), {})
+    TypedDict.__mro_entries__ = lambda bases: (_TypedDict,)
 
     if hasattr(typing, "_TypedDictMeta"):
         _TYPEDDICT_TYPES = (typing._TypedDictMeta, _TypedDictMeta)
