@@ -37,6 +37,7 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args,
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar
+from typing_extensions import typing_extensions_reexports_name, get_typing_objects_by_name_of
 from _typed_dict_test_helper import Foo, FooGeneric
 
 # Flags used to mark tests that only apply after a specific
@@ -4986,6 +4987,73 @@ class TypeAliasTypeTests(BaseTestCase):
         with self.assertRaises(TypeError):
             class MyAlias(TypeAliasType):
                 pass
+
+
+class IntrospectionHelperTests(BaseTestCase):
+    def test_typing_extensions_reexports(self):
+        for name in typing_extensions.__all__:
+            with self.subTest(name=name):
+                self.assertIs(type(typing_extensions_reexports_name(name)), bool)
+
+        self.assertTrue(typing_extensions_reexports_name("ClassVar"))
+
+        with self.assertRaisesRegex(ValueError, "no object called 'foo'"):
+            typing_extensions_reexports_name("foo")
+
+    @skipIf(TYPING_3_12_0, "We reexport TypeAliasType from typing on 3.12+")
+    def test_typing_extensions_doesnt_reexport(self):
+        self.assertFalse(typing_extensions_reexports_name("TypeAliasType"))
+
+    def test_typing_objects_by_name_of(self):
+        for name in typing_extensions.__all__:
+            with self.subTest(name=name):
+                objs = get_typing_objects_by_name_of(name)
+                self.assertIsInstance(objs, tuple)
+                self.assertIn(len(objs), (1, 2))
+                te_obj = getattr(typing_extensions, name)
+                if len(objs) == 1:
+                    self.assertIs(te_obj, getattr(typing, name, te_obj))
+                else:
+                    self.assertTrue(hasattr(typing, name))
+                    self.assertIsNot(te_obj, getattr(typing, name))
+
+        with self.assertRaisesRegex(ValueError, "no object called 'foo'"):
+            get_typing_objects_by_name_of("foo")
+
+    def test_typing_objects_by_name_of_2(self):
+        classvar_objs = get_typing_objects_by_name_of("ClassVar")
+        self.assertEqual(len(classvar_objs), 1)
+        classvar_obj = classvar_objs[0]
+        self.assertIs(classvar_obj, typing.ClassVar)
+        self.assertIs(classvar_obj, typing_extensions.ClassVar)
+        self.assertEqual(classvar_obj.__module__, "typing")
+
+    @skipIf(TYPING_3_12_0, "We reexport TypeAliasType from typing on 3.12+")
+    def test_typing_objects_by_name_of_2(self):
+        name = "TypeAliasType"
+        # Sanity check; the test won't work correctly if this doesn't hold true:
+        self.assertFalse(hasattr(typing, name))
+        typealiastype_objs = get_typing_objects_by_name_of(name)
+        self.assertEqual(len(typealiastype_objs), 1)
+        typealiastype_obj = typealiastype_objs[0]
+        self.assertIs(typealiastype_obj, typing_extensions.TypeAliasType)
+        self.assertEqual(typealiastype_obj.__module__, "typing_extensions")
+
+    @skipUnless(
+        (3, 8) <= sys.version_info < (3, 12),
+        (
+            "Needs a Python version where typing.Protocol "
+            "and typing_extensions.Protocol are different objects"
+        )
+    )
+    def test_typing_objects_by_name_of_3(self):
+        name = "Protocol"
+        # Sanity check; the test won't work correctly if this doesn't hold true:
+        self.assertTrue(hasattr(typing, name))
+        protocol_objs = get_typing_objects_by_name_of(name)
+        self.assertEqual(len(protocol_objs), 2)
+        modules = {obj.__module__ for obj in protocol_objs}
+        self.assertEqual(modules, {"typing", "typing_extensions"})
 
 
 if __name__ == '__main__':

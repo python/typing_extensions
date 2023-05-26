@@ -85,6 +85,11 @@ __all__ = [
     'NoReturn',
     'Required',
     'NotRequired',
+
+    # Introspection helpers unique to typing_extensions
+    # These will never be added to typing.py in CPython
+    'typing_extensions_reexports_name',
+    'get_typing_objects_by_name_of',
 ]
 
 # for backward compatibility
@@ -2873,3 +2878,42 @@ else:
                 if not _is_unionable(left):
                     return NotImplemented
                 return typing.Union[left, self]
+
+
+#############################################################
+# Introspection helpers for third-party libraries
+#
+# These are not part of the typing-module API,
+# and nor will they ever become part of the typing-module API.
+#
+# They are specific to typing-extensions
+##############################################################
+
+
+def _get_name_from_globals(name: str) -> object:
+    try:
+        obj = globals()[name]
+    except KeyError:
+        raise ValueError(
+            f"The typing_extensions module has no object called {name!r}!"
+        ) from None
+    return obj
+
+
+@functools.lru_cache(maxsize=None)
+def typing_extensions_reexports_name(name: str) -> bool:
+    return _get_name_from_globals(name) is getattr(typing, name, object())
+
+
+@functools.lru_cache(maxsize=None)
+def get_typing_objects_by_name_of(name: str) -> typing.Tuple[Any, ...]:
+    te_obj = _get_name_from_globals(name)
+    objs = [te_obj]
+    if hasattr(typing, name):
+        typing_obj = getattr(typing, name)
+        # Some typing objects compare equal to the equivalent typing_extensions object,
+        # but aren't actually the exact same object,
+        # so we can't use a set here; a list is better
+        if typing_obj is not te_obj:
+            objs.append(typing_obj)
+    return tuple(objs)
