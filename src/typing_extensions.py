@@ -2906,9 +2906,6 @@ def get_typing_objects_by_name_of(name: str) -> typing.Tuple[Any, ...]:
     else:
         if hasattr(typing, name):
             typing_obj = getattr(typing, name)
-            # Some typing objects compare equal to the equivalent typing_extensions object,
-            # but aren't actually the exact same object,
-            # so we can't use a set here
             if typing_obj is not te_obj:
                 return (te_obj, typing_obj)
         return (te_obj,)
