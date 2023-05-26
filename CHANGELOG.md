@@ -3,6 +3,7 @@
 - Skip a problematic test on Python 3.12.0b1. The test fails on 3.12.0b1 due to
   a bug in CPython, which will be fixed in 3.12.0b2. The
   `typing_extensions` test suite now passes on 3.12.0b1.
+- Declare support for Python 3.12. Patch by Jelle Zijlstra.
 
 # Release 4.6.2 (May 25, 2023)
 
@@ -98,7 +99,7 @@
   as a class rather than a function). This allows user-defined `NewType`s to be
   pickled. Patch by Alex Waygood.
 - Fix tests and import on Python 3.12, where `typing.TypeVar` can no longer be
-  subclassed. Add explicit support for Python 3.12. Patches by Jelle Zijlstra.
+  subclassed. Patch by Jelle Zijlstra.
 - Add `typing_extensions.TypeAliasType`, a backport of `typing.TypeAliasType`
   from PEP 695. Patch by Jelle Zijlstra.
 - Backport changes to the repr of `typing.Unpack` that were made in order to
