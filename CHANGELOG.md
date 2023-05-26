@@ -1,8 +1,12 @@
 # Unreleased
+
 - Due to changes in the implementation of `typing_extensions.Protocol`,
   `typing.runtime_checkable` can now be used on `typing_extensions.Protocol`
   (previously, users had to use `typing_extensions.runtime_checkable` if they
   were using `typing_extensions.Protocol`).
+- Skip a problematic test on Python 3.12.0b1. The test fails on 3.12.0b1 due to
+  a bug in CPython, which will be fixed in 3.12.0b2. The
+  `typing_extensions` test suite now passes on 3.12.0b1.
 
 # Release 4.6.2 (May 25, 2023)
 

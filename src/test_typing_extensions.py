@@ -2283,6 +2283,10 @@ class ProtocolTests(BaseTestCase):
         del f.x
         self.assertNotIsInstance(f, HasX)
 
+    @skipIf(
+        sys.version_info == (3, 12, 0, 'beta', 1),
+        "CPython had a bug in 3.12.0b1"
+    )
     def test_protocols_isinstance_generic_classes(self):
         T = TypeVar("T")
 
