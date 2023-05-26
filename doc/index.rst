@@ -45,6 +45,17 @@ In view of the wide usage of ``typing_extensions`` across the ecosystem,
 we are highly hesitant to break backwards compatibility, and we do not
 expect to increase the major version number in the foreseeable future.
 
+Feature releases, with version numbers of the form 4.N.0, are made at
+irregular intervals when enough new features accumulate. Before a
+feature release, at least one release candidate (with a version number
+of the form 4.N.0rc1) should be released to give downstream users time
+to test. After at least a week of testing, the new feature version
+may then be released. If necessary, additional release candidates can
+be added.
+
+Bugfix releases, with version numbers of the form 4.N.1 or higher,
+may be made if bugs are discovered after a feature release.
+
 Before version 4.0.0, the versioning scheme loosely followed the Python
 version from which features were backported; for example,
 ``typing_extensions`` 3.10.0.0 was meant to reflect ``typing`` as of

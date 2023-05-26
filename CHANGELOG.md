@@ -3,6 +3,10 @@
 - `typing_extensions` now re-exports all names in the standard library's
   `typing` module, except the deprecated `ByteString`. Patch by Jelle
   Zijlstra.
+- Skip a problematic test on Python 3.12.0b1. The test fails on 3.12.0b1 due to
+  a bug in CPython, which will be fixed in 3.12.0b2. The
+  `typing_extensions` test suite now passes on 3.12.0b1.
+- Declare support for Python 3.12. Patch by Jelle Zijlstra.
 
 # Release 4.6.2 (May 25, 2023)
 
