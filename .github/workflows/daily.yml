@@ -296,6 +296,44 @@ jobs:
       - name: Run stubtest tests
         run: pytest ./mypy/test/teststubtest.py
 
+  cattrs:
+    name: cattrs tests
+    if: >-
+      # if 'schedule' was the trigger,
+      # don't run it on contributors' forks
+      ${{
+        github.repository == 'python/typing_extensions'
+        || github.event_name != 'schedule'
+      }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cattrs
+        uses: actions/checkout@v3
+        with:
+          repository: python-attrs/cattrs
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v3
+        with:
+          path: typing-extensions-latest
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install poetry for cattrs
+        run: pip install poetry
+      - name: Add latest typing-extensions as a dependency
+        run: poetry add ./typing-extensions-latest
+      - name: Install cattrs test dependencies
+        run: poetry install -v --all-extras
+      - name: List all installed dependencies
+        run: poetry show
+      - name: Run cattrs tests
+        run: poetry run pytest tests
+
   create-issue-on-failure:
     name: Create an issue if daily tests failed
     runs-on: ubuntu-latest
@@ -308,6 +346,7 @@ jobs:
       - typeguard
       - typed-argument-parser
       - stubtest
+      - cattrs
 
     if: >-
         ${{
@@ -322,6 +361,7 @@ jobs:
             || needs.typeguard.result == 'failure'
             || needs.typed-argument-parser.result == 'failure'
             || needs.stubtest.result == 'failure'
+            || needs.cattrs.result == 'failure'
           )
         }}
 
