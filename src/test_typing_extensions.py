@@ -2855,7 +2855,7 @@ class TypedDictTests(BaseTestCase):
             TypedDict('Emp', [('name', str)], None)
 
         with self.assertWarns(DeprecationWarning):
-            Emp = TypedDict(__typename='Emp', name=str, id=int)
+            Emp = TypedDict('Emp', name=str, id=int)
         self.assertEqual(Emp.__name__, 'Emp')
         self.assertEqual(Emp.__annotations__, {'name': str, 'id': int})
 
@@ -3118,7 +3118,7 @@ class TypedDictTests(BaseTestCase):
         self.assertIs(is_typeddict(BarGeneric()), False)
 
         if hasattr(typing, "TypeAliasType"):
-            ns = {}
+            ns = {"TypedDict": TypedDict}
             exec("""if True:
                 class NewGeneric[T](TypedDict):
                     a: T
@@ -3172,7 +3172,7 @@ class TypedDictTests(BaseTestCase):
 
     @skipUnless(TYPING_3_12_0, "PEP 695 required")
     def test_pep695_generic_typeddict(self):
-        ns = {}
+        ns = {"TypedDict": TypedDict}
         exec("""if True:
             class A[T](TypedDict):
                 a: T
