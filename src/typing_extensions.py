@@ -1087,7 +1087,7 @@ else:
         # On 3.8, this would otherwise return True
         if hasattr(typing, "TypedDict") and tp is typing.TypedDict:
             return False
-        return isinstance(tp, tuple(_TYPEDDICT_TYPES))
+        return isinstance(tp, _TYPEDDICT_TYPES)
 
 
 if hasattr(typing, "assert_type"):
