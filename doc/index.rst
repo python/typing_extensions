@@ -280,9 +280,9 @@ Special typing primitives
 
    .. versionchanged:: 4.7.0
 
-      The implementation of ``TypedDict`` now follows the implementation in the
-      standard library on Python 3.9 and higher, where :class:`typing.TypedDict`
-      is a function rather than a class.
+      ``TypedDict`` is now a function rather than a class.
+      This brings the ``typing_extensions.TypedDict`` closer to the implementation
+      of :py:mod:`typing.TypedDict` on Python 3.9 and higher.
 
 .. class:: TypeVar(name, *constraints, bound=None, covariant=False,
                    contravariant=False, infer_variance=False, default=...)
