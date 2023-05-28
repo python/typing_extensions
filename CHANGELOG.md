@@ -4,6 +4,9 @@
   `typing.runtime_checkable` can now be used on `typing_extensions.Protocol`
   (previously, users had to use `typing_extensions.runtime_checkable` if they
   were using `typing_extensions.Protocol`).
+- Sync the repository's LICENSE file with that of CPython.
+  `typing_extensions` is distributed under the same license as
+  CPython itself.
 - Skip a problematic test on Python 3.12.0b1. The test fails on 3.12.0b1 due to
   a bug in CPython, which will be fixed in 3.12.0b2. The
   `typing_extensions` test suite now passes on 3.12.0b1.
