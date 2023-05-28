@@ -3,6 +3,9 @@
 - `typing_extensions` now re-exports all names in the standard library's
   `typing` module, except the deprecated `ByteString`. Patch by Jelle
   Zijlstra.
+- Sync the repository's LICENSE file with that of CPython.
+  `typing_extensions` is distributed under the same license as
+  CPython itself.
 - Skip a problematic test on Python 3.12.0b1. The test fails on 3.12.0b1 due to
   a bug in CPython, which will be fixed in 3.12.0b2. The
   `typing_extensions` test suite now passes on 3.12.0b1.
