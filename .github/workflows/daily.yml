@@ -169,8 +169,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install pyanalyze test requirements
         run: |
-          pip install .
-          pip install pytest mypy_extensions attrs
+          pip install .[tests]
       - name: Install typing_extensions latest
         run: pip install ./typing-extensions-latest
       - name: List all installed dependencies
