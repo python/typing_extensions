@@ -1,4 +1,4 @@
-# This workflow is a daily cron job
+# This workflow is a daily cron job.
 # As well as running our own tests,
 # we also run the tests of various third-party libraries that use us.
 # This helps us spot regressions early,
@@ -81,6 +81,7 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout pydantic
         uses: actions/checkout@v3
@@ -118,6 +119,7 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout typing_inspect
         uses: actions/checkout@v3
@@ -154,6 +156,7 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Check out pyanalyze
         uses: actions/checkout@v3
@@ -185,6 +188,7 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Check out typeguard
         uses: actions/checkout@v3
@@ -221,6 +225,7 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Check out typed-argument-parser
         uses: actions/checkout@v3
@@ -265,6 +270,7 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout mypy for stubtest tests
         uses: actions/checkout@v3
@@ -303,6 +309,7 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout cattrs
         uses: actions/checkout@v3
