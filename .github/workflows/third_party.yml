@@ -297,7 +297,6 @@ jobs:
     runs-on: ubuntu-latest
 
     needs:
-      - typing-extensions
       - pydantic
       - typing_inspect
       - pyanalyze
