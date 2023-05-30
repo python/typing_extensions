@@ -9,7 +9,7 @@ name: Daily tests
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # Midnight UTC
+    - cron: "30 2 * * *"  # 02:30 UTC
   pull_request:
     paths:
       - ".github/workflows/daily.yml"
