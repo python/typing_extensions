@@ -1,18 +1,17 @@
-# This workflow is a daily cron job.
-# As well as running our own tests,
-# we also run the tests of various third-party libraries that use us.
+# This workflow is a daily cron job,
+# running the tests of various third-party libraries that use us.
 # This helps us spot regressions early,
 # and helps flag when third-party libraries are making incorrect assumptions
 # that might cause them to break when we cut a new release.
 
-name: Daily tests
+name: Third-party tests
 
 on:
   schedule:
     - cron: "30 2 * * *"  # 02:30 UTC
   pull_request:
     paths:
-      - ".github/workflows/daily.yml"
+      - ".github/workflows/third_party.yml"
   workflow_dispatch:
 
 permissions:
@@ -27,46 +26,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  typing-extensions:
-    name: Run our own tests
-    # Only run if 'schedule' was the trigger,
-    # and we're not running on a fork
-    if: >-
-      ${{
-        github.repository == 'python/typing_extensions'
-        && github.event_name == 'schedule'
-      }}
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version:
-          - "3.7"
-          - "3.7.1"
-          - "3.8"
-          - "3.8.0"
-          - "3.9"
-          - "3.9.0"
-          - "3.10"
-          - "3.10.0"
-          - "3.11"
-          - "3.11.0"
-          - "3.12"
-          - "pypy3.9"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-      - name: Test typing_extensions
-        run: |
-          # Be wary of running `pip install` here, since it becomes easy for us to
-          # accidentally pick up typing_extensions as installed by a dependency
-          cd src
-          python -m unittest test_typing_extensions.py
-
   pydantic:
     name: pydantic tests
     if: >-
@@ -353,8 +312,7 @@ jobs:
           && always()
           && github.event_name == 'schedule'
           && (
-            needs.typing-extensions == 'failure'
-            || needs.pydantic.result == 'failure'
+            needs.pydantic.result == 'failure'
             || needs.typing_inspect.result == 'failure'
             || needs.pyanalyze.result == 'failure'
             || needs.typeguard.result == 'failure'
@@ -375,6 +333,6 @@ jobs:
             await github.rest.issues.create({
               owner: "python",
               repo: "typing_extensions",
-              title: `Daily tests failed on ${new Date().toDateString()}`,
-              body: "Runs listed here: https://github.com/python/typing_extensions/actions/workflows/daily.yml",
+              title: `Third-party tests failed on ${new Date().toDateString()}`,
+              body: "Runs listed here: https://github.com/python/typing_extensions/actions/workflows/third_party.yml",
             })
