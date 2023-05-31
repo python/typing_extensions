@@ -2490,6 +2490,7 @@ class ProtocolTests(BaseTestCase):
         self.assertIsSubclass(OKClass, C)
         self.assertNotIsSubclass(BadClass, C)
 
+    @skip_if_py312b1
     def test_issubclass_fails_correctly(self):
         @runtime_checkable
         class P(Protocol):
