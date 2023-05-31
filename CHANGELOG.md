@@ -5,7 +5,8 @@
   that doing `class Foo(X, typing.Protocol)`, where `X` was a class that
   had `abc.ABCMeta` as its metaclass, would then cause subsequent
   `isinstance(1, X)` calls to erroneously raise `TypeError`. Patch by
-  Alex Waygood.
+  Alex Waygood (backporting the CPython PR
+  https://github.com/python/cpython/pull/105152).
 - Sync the repository's LICENSE file with that of CPython.
   `typing_extensions` is distributed under the same license as
   CPython itself.
