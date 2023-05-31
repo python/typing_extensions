@@ -547,7 +547,7 @@ if sys.version_info >= (3, 12):
     Protocol = typing.Protocol
     runtime_checkable = typing.runtime_checkable
 else:
-    def _allow_reckless_class_checks(depth=4):
+    def _allow_reckless_class_checks(depth=3):
         """Allow instance and class checks for special stdlib modules.
         The abc and functools modules indiscriminately call isinstance() and
         issubclass() on the whole MRO of a user class, which may contain protocols.
@@ -572,14 +572,22 @@ else:
                 )
 
         def __subclasscheck__(cls, other):
+            if not isinstance(other, type):
+                # Same error message as for issubclass(1, int).
+                raise TypeError('issubclass() arg 1 must be a class')
             if (
                 getattr(cls, '_is_protocol', False)
-                and not cls.__callable_proto_members_only__
-                and not _allow_reckless_class_checks(depth=3)
+                and not _allow_reckless_class_checks()
             ):
-                raise TypeError(
-                    "Protocols with non-method members don't support issubclass()"
-                )
+                if not cls.__callable_proto_members_only__:
+                    raise TypeError(
+                        "Protocols with non-method members don't support issubclass()"
+                    )
+                if not getattr(cls, '_is_runtime_protocol', False):
+                    raise TypeError(
+                        "Instance and class checks can only be used with "
+                        "@runtime_checkable protocols"
+                    )
             return super().__subclasscheck__(other)
 
         def __instancecheck__(cls, instance):
@@ -591,7 +599,7 @@ else:
 
             if (
                 not getattr(cls, '_is_runtime_protocol', False) and
-                not _allow_reckless_class_checks(depth=2)
+                not _allow_reckless_class_checks()
             ):
                 raise TypeError("Instance and class checks can only be used with"
                                 " @runtime_checkable protocols")
@@ -632,18 +640,6 @@ else:
         if not cls.__dict__.get('_is_protocol', False):
             return NotImplemented
 
-        # First, perform various sanity checks.
-        if not getattr(cls, '_is_runtime_protocol', False):
-            if _allow_reckless_class_checks():
-                return NotImplemented
-            raise TypeError("Instance and class checks can only be used with"
-                            " @runtime_checkable protocols")
-
-        if not isinstance(other, type):
-            # Same error message as for issubclass(1, int).
-            raise TypeError('issubclass() arg 1 must be a class')
-
-        # Second, perform the actual structural compatibility check.
         for attr in cls.__protocol_attrs__:
             for base in other.__mro__:
                 # Check if the members appears in the class dictionary...
@@ -658,8 +654,6 @@ else:
                     isinstance(annotations, collections.abc.Mapping)
                     and attr in annotations
                     and issubclass(other, (typing.Generic, _ProtocolMeta))
-                    # All subclasses of Generic have an _is_proto attribute on 3.8+
-                    # But not on 3.7
                     and getattr(other, "_is_protocol", False)
                 ):
                     break
