@@ -6,6 +6,9 @@
   private functions `_check_fails`, `_dict_new`, and `_typeddict_new`
   have been removed. `is_typeddict` now returns `False` when called with
   `TypedDict` itself as the argument. Patch by Jelle Zijlstra.
+- Sync the repository's LICENSE file with that of CPython.
+  `typing_extensions` is distributed under the same license as
+  CPython itself.
 - Skip a problematic test on Python 3.12.0b1. The test fails on 3.12.0b1 due to
   a bug in CPython, which will be fixed in 3.12.0b2. The
   `typing_extensions` test suite now passes on 3.12.0b1.
