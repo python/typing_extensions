@@ -281,16 +281,18 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install poetry for cattrs
-        run: pip install poetry
+      - name: Install pdm for cattrs
+        run: pip install pdm
       - name: Add latest typing-extensions as a dependency
-        run: poetry add ./typing-extensions-latest
+        run: |
+          pdm remove typing-extensions
+          pdm add --dev ./typing-extensions-latest
       - name: Install cattrs test dependencies
-        run: poetry install -v --all-extras
+        run: pdm install --dev -G :all
       - name: List all installed dependencies
-        run: poetry show
+        run: pdm list -vv
       - name: Run cattrs tests
-        run: poetry run pytest tests
+        run: pdm run pytest tests
 
   create-issue-on-failure:
     name: Create an issue if daily tests failed
