@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.6.3 (June 1, 2023)
 
 - Fix a regression introduced in v4.6.0 in the implementation of
   runtime-checkable protocols. The regression meant
