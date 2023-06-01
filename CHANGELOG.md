@@ -2,7 +2,7 @@
 
 - Fix a regression introduced in v4.6.0 in the implementation of
   runtime-checkable protocols. The regression meant
-  that doing `class Foo(X, typing.Protocol)`, where `X` was a class that
+  that doing `class Foo(X, typing_extensions.Protocol)`, where `X` was a class that
   had `abc.ABCMeta` as its metaclass, would then cause subsequent
   `isinstance(1, X)` calls to erroneously raise `TypeError`. Patch by
   Alex Waygood (backporting the CPython PR
