@@ -1,5 +1,12 @@
 # Unreleased
 
+- Fix a regression introduced in v4.6.0 in the implementation of
+  runtime-checkable protocols. The regression meant
+  that doing `class Foo(X, typing_extensions.Protocol)`, where `X` was a class that
+  had `abc.ABCMeta` as its metaclass, would then cause subsequent
+  `isinstance(1, X)` calls to erroneously raise `TypeError`. Patch by
+  Alex Waygood (backporting the CPython PR
+  https://github.com/python/cpython/pull/105152).
 - Sync the repository's LICENSE file with that of CPython.
   `typing_extensions` is distributed under the same license as
   CPython itself.
