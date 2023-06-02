@@ -28,8 +28,8 @@ for more detail.
 
 # Running tests
 
-Testing `typing-extensions` can be tricky because many development tools depend on
-`typing-extensions`, so you may end up testing some installed version of the library,
+Testing `typing_extensions` can be tricky because many development tools depend on
+`typing_extensions`, so you may end up testing some installed version of the library,
 rather than your local code.
 
 The simplest way to run the tests locally is:
