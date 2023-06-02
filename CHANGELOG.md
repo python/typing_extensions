@@ -1,6 +1,9 @@
 # Unreleased
 
 - Declare support for Python 3.12. Patch by Jelle Zijlstra.
+- Fix tests on Python 3.13, which removes support for creating
+  `TypedDict` classes through the keyword-argument syntax. Patch by
+  Jelle Zijlstra.
 
 # Release 4.6.3 (June 1, 2023)
 
