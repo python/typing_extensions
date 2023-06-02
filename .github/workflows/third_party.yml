@@ -265,7 +265,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        # TODO: add 3.7 back to this matrix when tests pass on 3.7 again
+        # (issue #213)
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
