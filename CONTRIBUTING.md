@@ -26,6 +26,25 @@ Starting with version 4.0.0, `typing_extensions` uses
 [Semantic Versioning](https://semver.org/). See the documentation
 for more detail.
 
+# Running tests
+
+Testing `typing_extensions` can be tricky because many development tools depend on
+`typing_extensions`, so you may end up testing some installed version of the library,
+rather than your local code.
+
+The simplest way to run the tests locally is:
+
+- `cd src/`
+- `python test_typing_extensions.py`
+
+Alternatively, you can invoke `unittest` explicitly:
+
+- `python -m unittest test_typing_extensions.py`
+
+Running these commands in the `src/` directory ensures that the local file
+`typing_extensions.py` is used, instead of any other version of the library you
+may have installed.
+
 # Workflow for PyPI releases
 
 - Make sure you follow the versioning policy in the documentation
