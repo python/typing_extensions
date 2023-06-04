@@ -1320,24 +1320,18 @@ class CollectionsAbcTests(BaseTestCase):
             issubclass(collections.Counter, typing_extensions.Counter[str])
 
     def test_awaitable(self):
-        ns = {}
-        exec(
-            "async def foo() -> typing_extensions.Awaitable[int]:\n"
-            "    return await AwaitableWrapper(42)\n",
-            globals(), ns)
-        foo = ns['foo']
+        async def foo() -> typing_extensions.Awaitable[int]:
+            return await AwaitableWrapper(42)
+
         g = foo()
         self.assertIsInstance(g, typing_extensions.Awaitable)
         self.assertNotIsInstance(foo, typing_extensions.Awaitable)
         g.send(None)  # Run foo() till completion, to avoid warning.
 
     def test_coroutine(self):
-        ns = {}
-        exec(
-            "async def foo():\n"
-            "    return\n",
-            globals(), ns)
-        foo = ns['foo']
+        async def foo():
+            return
+
         g = foo()
         self.assertIsInstance(g, typing_extensions.Coroutine)
         with self.assertRaises(TypeError):
@@ -1457,10 +1451,10 @@ class CollectionsAbcTests(BaseTestCase):
         self.assertIsInstance(d, typing_extensions.Counter)
 
     def test_async_generator(self):
-        ns = {}
-        exec("async def f():\n"
-             "    yield 42\n", globals(), ns)
-        g = ns['f']()
+        async def f():
+            yield 42
+
+        g = f()
         self.assertIsSubclass(type(g), typing_extensions.AsyncGenerator)
 
     def test_no_async_generator_instantiation(self):
@@ -1478,9 +1472,8 @@ class CollectionsAbcTests(BaseTestCase):
             def athrow(self, typ, val=None, tb=None):
                 pass
 
-        ns = {}
-        exec('async def g(): yield 0', globals(), ns)
-        g = ns['g']
+        async def g(): yield 0
+
         self.assertIsSubclass(G, typing_extensions.AsyncGenerator)
         self.assertIsSubclass(G, typing_extensions.AsyncIterable)
         self.assertIsSubclass(G, collections.abc.AsyncGenerator)
