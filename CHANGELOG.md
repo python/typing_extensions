@@ -5,7 +5,7 @@
   `TypedDict` classes through the keyword-argument syntax. Patch by
   Jelle Zijlstra.
 - Fix a regression introduced in v4.6.3 that meant that 
-  ``issubclass(object, typing.Protocol)`` would erroneously raise
+  ``issubclass(object, typing_extensions.Protocol)`` would erroneously raise
   ``TypeError``. Patch by Alex Waygood (backporting the CPython PR
   https://github.com/python/cpython/pull/105239).
 
