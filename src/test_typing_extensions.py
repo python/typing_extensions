@@ -2767,6 +2767,7 @@ class ProtocolTests(BaseTestCase):
         class CustomContextManager(typing.ContextManager, Protocol):
             pass
 
+    @skip_if_py312b1
     def test_typing_extensions_protocol_allowlist(self):
         @runtime_checkable
         class ReleasableBuffer(Buffer, Protocol):
