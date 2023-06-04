@@ -561,6 +561,25 @@ else:
     class _ProtocolMeta(abc.ABCMeta):
         # This metaclass is somewhat unfortunate,
         # but is necessary for several reasons...
+        def __new__(mcls, name, bases, namespace, **kwargs):
+            if name == "Protocol" and len(bases) < 2:
+                pass
+            elif Protocol in bases:
+                for base in bases:
+                    if not (
+                        base in {object, typing.Generic}
+                        or base.__name__ in _PROTO_ALLOWLIST.get(base.__module__, {})
+                        or (
+                            isinstance(base, _ProtocolMeta)
+                            and getattr(base, "_is_protocol", False)
+                        )
+                    ):
+                        raise TypeError(
+                            f"Protocols can only inherit from other protocols, "
+                            f"got {base!r}"
+                        )
+            return super().__new__(mcls, name, bases, namespace, **kwargs)
+
         def __init__(cls, *args, **kwargs):
             super().__init__(*args, **kwargs)
             if getattr(cls, "_is_protocol", False):
@@ -572,6 +591,8 @@ else:
                 )
 
         def __subclasscheck__(cls, other):
+            if cls is Protocol:
+                return type.__subclasscheck__(cls, other)
             if not isinstance(other, type):
                 # Same error message as for issubclass(1, int).
                 raise TypeError('issubclass() arg 1 must be a class')
@@ -593,6 +614,8 @@ else:
         def __instancecheck__(cls, instance):
             # We need this method for situations where attributes are
             # assigned in __init__.
+            if cls is Protocol:
+                return type.__instancecheck__(cls, instance)
             if not getattr(cls, "_is_protocol", False):
                 # i.e., it's a concrete subclass of a protocol
                 return super().__instancecheck__(instance)
@@ -661,15 +684,6 @@ else:
                 return NotImplemented
         return True
 
-    def _check_proto_bases(cls):
-        for base in cls.__bases__:
-            if not (base in (object, typing.Generic) or
-                    base.__module__ in _PROTO_ALLOWLIST and
-                    base.__name__ in _PROTO_ALLOWLIST[base.__module__] or
-                    isinstance(base, _ProtocolMeta) and base._is_protocol):
-                raise TypeError('Protocols can only inherit from other'
-                                f' protocols, got {repr(base)}')
-
     if sys.version_info >= (3, 8):
         class Protocol(typing.Generic, metaclass=_ProtocolMeta):
             __doc__ = typing.Protocol.__doc__
@@ -692,8 +706,7 @@ else:
                 if not cls._is_protocol:
                     return
 
-                # ... otherwise check consistency of bases, and prohibit instantiation.
-                _check_proto_bases(cls)
+                # ... otherwise prohibit instantiation.
                 if cls.__init__ is Protocol.__init__:
                     cls.__init__ = _no_init
 
@@ -788,8 +801,7 @@ else:
                 if not cls._is_protocol:
                     return
 
-                # Check consistency of bases.
-                _check_proto_bases(cls)
+                # Prohibit instantiation
                 if cls.__init__ is Protocol.__init__:
                     cls.__init__ = _no_init
 
