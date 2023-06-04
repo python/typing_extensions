@@ -4,6 +4,9 @@
 - Fix tests on Python 3.13, which removes support for creating
   `TypedDict` classes through the keyword-argument syntax. Patch by
   Jelle Zijlstra.
+- Allow `Protocol` classes to inherit from `typing_extensions.Buffer`. Patch by
+  Alex Waygood (backporting https://github.com/python/cpython/pull/104827, by
+  Jelle Zijlstra).
 
 # Release 4.6.3 (June 1, 2023)
 

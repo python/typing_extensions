@@ -456,6 +456,7 @@ _PROTO_ALLOWLIST = {
         'Hashable', 'Sized', 'Container', 'Collection', 'Reversible',
     ],
     'contextlib': ['AbstractContextManager', 'AbstractAsyncContextManager'],
+    'typing_extensions': ['Buffer'],
 }
 
 

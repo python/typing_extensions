@@ -2745,6 +2745,23 @@ class ProtocolTests(BaseTestCase):
         class CustomContextManager(typing.ContextManager, Protocol):
             pass
 
+    def test_typing_extensions_protocol_allowlist(self):
+        @runtime_checkable
+        class ReleasableBuffer(Buffer, Protocol):
+            def __release_buffer__(self, mv: memoryview) -> None: ...
+
+        class C: pass
+        class D:
+            def __buffer__(self, flags: int) -> memoryview:
+                return memoryview(b'')
+            def __release_buffer__(self, mv: memoryview) -> None:
+                pass
+
+        self.assertIsSubclass(D, ReleasableBuffer)
+        self.assertIsInstance(D(), ReleasableBuffer)
+        self.assertNotIsSubclass(C, ReleasableBuffer)
+        self.assertNotIsInstance(C(), ReleasableBuffer)
+
     def test_non_runtime_protocol_isinstance_check(self):
         class P(Protocol):
             x: int
