@@ -8,6 +8,9 @@
   ``issubclass(object, typing_extensions.Protocol)`` would erroneously raise
   ``TypeError``. Patch by Alex Waygood (backporting the CPython PR
   https://github.com/python/cpython/pull/105239).
+- Allow `Protocol` classes to inherit from `typing_extensions.Buffer` or
+  `collections.abc.Buffer`. Patch by Alex Waygood (backporting
+  https://github.com/python/cpython/pull/104827, by Jelle Zijlstra).
 
 # Release 4.6.3 (June 1, 2023)
 
