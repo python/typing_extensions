@@ -2001,8 +2001,8 @@ class ProtocolTests(BaseTestCase):
 
     @skip_if_py312b1
     def test_isinstance_checks_not_at_whim_of_gc(self):
-        gc.disable()
         self.addCleanup(gc.enable)
+        gc.disable()
 
         with self.assertRaisesRegex(
             TypeError,
