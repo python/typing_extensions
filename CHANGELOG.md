@@ -4,6 +4,10 @@
 - Fix tests on Python 3.13, which removes support for creating
   `TypedDict` classes through the keyword-argument syntax. Patch by
   Jelle Zijlstra.
+- Fix a regression introduced in v4.6.3 that meant that 
+  ``issubclass(object, typing_extensions.Protocol)`` would erroneously raise
+  ``TypeError``. Patch by Alex Waygood (backporting the CPython PR
+  https://github.com/python/cpython/pull/105239).
 - Allow `Protocol` classes to inherit from `typing_extensions.Buffer` or
   `collections.abc.Buffer`. Patch by Alex Waygood (backporting
   https://github.com/python/cpython/pull/104827, by Jelle Zijlstra).
