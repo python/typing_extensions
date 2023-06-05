@@ -568,7 +568,7 @@ else:
                 for base in bases:
                     if not (
                         base in {object, typing.Generic}
-                        or base.__name__ in _PROTO_ALLOWLIST.get(base.__module__, {})
+                        or base.__name__ in _PROTO_ALLOWLIST.get(base.__module__, [])
                         or (
                             isinstance(base, _ProtocolMeta)
                             and getattr(base, "_is_protocol", False)
