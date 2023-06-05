@@ -453,9 +453,10 @@ TYPE_CHECKING = typing.TYPE_CHECKING
 _PROTO_ALLOWLIST = {
     'collections.abc': [
         'Callable', 'Awaitable', 'Iterable', 'Iterator', 'AsyncIterable',
-        'Hashable', 'Sized', 'Container', 'Collection', 'Reversible',
+        'Hashable', 'Sized', 'Container', 'Collection', 'Reversible', 'Buffer',
     ],
     'contextlib': ['AbstractContextManager', 'AbstractAsyncContextManager'],
+    'typing_extensions': ['Buffer'],
 }
 
 
