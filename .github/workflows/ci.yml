@@ -27,8 +27,11 @@ jobs:
       # if 'schedule' was the trigger,
       # don't run it on contributors' forks
       ${{
-        github.repository == 'python/typing_extensions'
-        || github.event_name != 'schedule'
+        github.event_name != 'schedule'
+        || (
+          github.repository == 'python/typing_extensions'
+          && github.event_name == 'schedule'
+        )
       }}
 
     strategy:
