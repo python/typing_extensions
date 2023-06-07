@@ -1,0 +1,338 @@
+# This workflow is a daily cron job,
+# running the tests of various third-party libraries that use us.
+# This helps us spot regressions early,
+# and helps flag when third-party libraries are making incorrect assumptions
+# that might cause them to break when we cut a new release.
+
+name: Third-party tests
+
+on:
+  schedule:
+    - cron: "30 2 * * *"  # 02:30 UTC
+  pull_request:
+    paths:
+      - ".github/workflows/third_party.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  FORCE_COLOR: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  pydantic:
+    name: pydantic tests
+    if: >-
+      # if 'schedule' was the trigger,
+      # don't run it on contributors' forks
+      ${{
+        github.repository == 'python/typing_extensions'
+        || github.event_name != 'schedule'
+      }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout pydantic
+        uses: actions/checkout@v3
+        with:
+          repository: pydantic/pydantic
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v3
+        with:
+          path: typing-extensions-latest
+      - name: Setup pdm for pydantic tests
+        uses: pdm-project/setup-pdm@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Add local version of typing_extensions as a dependency
+        run: pdm add ./typing-extensions-latest
+      - name: Install pydantic test dependencies
+        run: pdm install -G testing -G email
+      - name: List installed dependencies
+        run: pdm list -vv  # pdm equivalent to `pip list`
+      - name: Run pydantic tests
+        run: pdm run pytest
+
+  typing_inspect:
+    name: typing_inspect tests
+    if: >-
+      # if 'schedule' was the trigger,
+      # don't run it on contributors' forks
+      ${{
+        github.repository == 'python/typing_extensions'
+        || github.event_name != 'schedule'
+      }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout typing_inspect
+        uses: actions/checkout@v3
+        with:
+          repository: ilevkivskyi/typing_inspect
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v3
+        with:
+          path: typing-extensions-latest
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install typing_inspect test dependencies
+        run: pip install -r test-requirements.txt
+      - name: Install typing_extensions latest
+        run: pip install ./typing-extensions-latest
+      - name: List all installed dependencies
+        run: pip freeze --all
+      - name: Run typing_inspect tests
+        run: pytest
+
+  pyanalyze:
+    name: pyanalyze tests
+    if: >-
+      # if 'schedule' was the trigger,
+      # don't run it on contributors' forks
+      ${{
+        github.repository == 'python/typing_extensions'
+        || github.event_name != 'schedule'
+      }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out pyanalyze
+        uses: actions/checkout@v3
+        with:
+          repository: quora/pyanalyze
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v3
+        with:
+          path: typing-extensions-latest
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install pyanalyze test requirements
+        run: pip install .[tests]
+      - name: Install typing_extensions latest
+        run: pip install ./typing-extensions-latest
+      - name: List all installed dependencies
+        run: pip freeze --all
+      - name: Run pyanalyze tests
+        run: pytest pyanalyze/
+
+  typeguard:
+    name: typeguard tests
+    if: false  # TODO: unskip when typeguard's tests pass on typing_extensions>=4.6.0
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out typeguard
+        uses: actions/checkout@v3
+        with:
+          repository: agronholm/typeguard
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v3
+        with:
+          path: typing-extensions-latest
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install typeguard test requirements
+        run: pip install -e .[test]
+      - name: Install typing_extensions latest
+        run: pip install ./typing-extensions-latest
+      - name: List all installed dependencies
+        run: pip freeze --all
+      - name: Run typeguard tests
+        run: pytest
+
+  typed-argument-parser:
+    name: typed-argument-parser tests
+    if: >-
+      # if 'schedule' was the trigger,
+      # don't run it on contributors' forks
+      ${{
+        github.repository == 'python/typing_extensions'
+        || github.event_name != 'schedule'
+      }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out typed-argument-parser
+        uses: actions/checkout@v3
+        with:
+          repository: swansonk14/typed-argument-parser
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v3
+        with:
+          path: typing-extensions-latest
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Configure git for typed-argument-parser tests
+        # typed-argument parser does this in their CI,
+        # and the tests fail unless we do this
+        run: |
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+      - name: Install typed-argument-parser test requirements
+        run: |
+          pip install -e .
+          pip install pytest
+      - name: Install typing_extensions latest
+        run: pip install ./typing-extensions-latest
+      - name: List all installed dependencies
+        run: pip freeze --all
+      - name: Run typed-argument-parser tests
+        run: pytest
+
+  stubtest:
+    name: stubtest tests
+    if: >-
+      # if 'schedule' was the trigger,
+      # don't run it on contributors' forks
+      ${{
+        github.repository == 'python/typing_extensions'
+        || github.event_name != 'schedule'
+      }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout mypy for stubtest tests
+        uses: actions/checkout@v3
+        with:
+          repository: python/mypy
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v3
+        with:
+          path: typing-extensions-latest
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install mypy test requirements
+        run: |
+          pip install -r test-requirements.txt
+          pip install -e .
+      - name: Install typing_extensions latest
+        run: pip install ./typing-extensions-latest
+      - name: List all installed dependencies
+        run: pip freeze --all
+      - name: Run stubtest tests
+        run: pytest ./mypy/test/teststubtest.py
+
+  cattrs:
+    name: cattrs tests
+    if: >-
+      # if 'schedule' was the trigger,
+      # don't run it on contributors' forks
+      ${{
+        github.repository == 'python/typing_extensions'
+        || github.event_name != 'schedule'
+      }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout cattrs
+        uses: actions/checkout@v3
+        with:
+          repository: python-attrs/cattrs
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v3
+        with:
+          path: typing-extensions-latest
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install pdm for cattrs
+        run: pip install pdm
+      - name: Add latest typing-extensions as a dependency
+        run: |
+          pdm remove typing-extensions
+          pdm add --dev ./typing-extensions-latest
+      - name: Install cattrs test dependencies
+        run: pdm install --dev -G :all
+      - name: List all installed dependencies
+        run: pdm list -vv
+      - name: Run cattrs tests
+        run: pdm run pytest tests
+
+  create-issue-on-failure:
+    name: Create an issue if daily tests failed
+    runs-on: ubuntu-latest
+
+    needs:
+      - pydantic
+      - typing_inspect
+      - pyanalyze
+      - typeguard
+      - typed-argument-parser
+      - stubtest
+      - cattrs
+
+    if: >-
+        ${{
+          github.repository == 'python/typing_extensions'
+          && always()
+          && github.event_name == 'schedule'
+          && (
+            needs.pydantic.result == 'failure'
+            || needs.typing_inspect.result == 'failure'
+            || needs.pyanalyze.result == 'failure'
+            || needs.typeguard.result == 'failure'
+            || needs.typed-argument-parser.result == 'failure'
+            || needs.stubtest.result == 'failure'
+            || needs.cattrs.result == 'failure'
+          )
+        }}
+
+    permissions:
+      issues: write
+
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.create({
+              owner: "python",
+              repo: "typing_extensions",
+              title: `Third-party tests failed on ${new Date().toDateString()}`,
+              body: "Runs listed here: https://github.com/python/typing_extensions/actions/workflows/third_party.yml",
+            })

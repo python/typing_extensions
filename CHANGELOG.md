@@ -4,13 +4,33 @@
   `typing.runtime_checkable` can now be used on `typing_extensions.Protocol`
   (previously, users had to use `typing_extensions.runtime_checkable` if they
   were using `typing_extensions.Protocol`).
+- Declare support for Python 3.12. Patch by Jelle Zijlstra.
+- Fix tests on Python 3.13, which removes support for creating
+  `TypedDict` classes through the keyword-argument syntax. Patch by
+  Jelle Zijlstra.
+- Fix a regression introduced in v4.6.3 that meant that 
+  ``issubclass(object, typing_extensions.Protocol)`` would erroneously raise
+  ``TypeError``. Patch by Alex Waygood (backporting the CPython PR
+  https://github.com/python/cpython/pull/105239).
+- Allow `Protocol` classes to inherit from `typing_extensions.Buffer` or
+  `collections.abc.Buffer`. Patch by Alex Waygood (backporting
+  https://github.com/python/cpython/pull/104827, by Jelle Zijlstra).
+
+# Release 4.6.3 (June 1, 2023)
+
+- Fix a regression introduced in v4.6.0 in the implementation of
+  runtime-checkable protocols. The regression meant
+  that doing `class Foo(X, typing_extensions.Protocol)`, where `X` was a class that
+  had `abc.ABCMeta` as its metaclass, would then cause subsequent
+  `isinstance(1, X)` calls to erroneously raise `TypeError`. Patch by
+  Alex Waygood (backporting the CPython PR
+  https://github.com/python/cpython/pull/105152).
 - Sync the repository's LICENSE file with that of CPython.
   `typing_extensions` is distributed under the same license as
   CPython itself.
 - Skip a problematic test on Python 3.12.0b1. The test fails on 3.12.0b1 due to
   a bug in CPython, which will be fixed in 3.12.0b2. The
   `typing_extensions` test suite now passes on 3.12.0b1.
-- Declare support for Python 3.12. Patch by Jelle Zijlstra.
 
 # Release 4.6.2 (May 25, 2023)
 
