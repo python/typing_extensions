@@ -272,6 +272,13 @@ Special typing primitives
    ``typing_extensions`` backport provides all of these features and bugfixes on
    all Python versions.
 
+   Historically, ``TypedDict`` has supported an alternative creation syntax
+   where the fields are supplied as keyword arguments (e.g.,
+   ``TypedDict("TD", a=int, b=str)``). In CPython, this feature was deprecated
+   in Python 3.11 and removed in Python 3.13. ``typing_extensions.TypedDict``
+   raises a :py:exc:`DeprecationWarning` when this syntax is used in Python 3.12
+   or lower and fails with a :py:exc:`TypeError` in Python 3.13 and higher.
+
    .. versionchanged:: 4.3.0
 
       Added support for generic ``TypedDict``\ s.
