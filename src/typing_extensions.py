@@ -453,9 +453,10 @@ TYPE_CHECKING = typing.TYPE_CHECKING
 _PROTO_ALLOWLIST = {
     'collections.abc': [
         'Callable', 'Awaitable', 'Iterable', 'Iterator', 'AsyncIterable',
-        'Hashable', 'Sized', 'Container', 'Collection', 'Reversible',
+        'Hashable', 'Sized', 'Container', 'Collection', 'Reversible', 'Buffer',
     ],
     'contextlib': ['AbstractContextManager', 'AbstractAsyncContextManager'],
+    'typing_extensions': ['Buffer'],
 }
 
 
@@ -547,7 +548,7 @@ if sys.version_info >= (3, 12):
     Protocol = typing.Protocol
     runtime_checkable = typing.runtime_checkable
 else:
-    def _allow_reckless_class_checks(depth=4):
+    def _allow_reckless_class_checks(depth=3):
         """Allow instance and class checks for special stdlib modules.
         The abc and functools modules indiscriminately call isinstance() and
         issubclass() on the whole MRO of a user class, which may contain protocols.
@@ -561,6 +562,25 @@ else:
     class _ProtocolMeta(abc.ABCMeta):
         # This metaclass is somewhat unfortunate,
         # but is necessary for several reasons...
+        def __new__(mcls, name, bases, namespace, **kwargs):
+            if name == "Protocol" and len(bases) < 2:
+                pass
+            elif Protocol in bases:
+                for base in bases:
+                    if not (
+                        base in {object, typing.Generic}
+                        or base.__name__ in _PROTO_ALLOWLIST.get(base.__module__, [])
+                        or (
+                            isinstance(base, _ProtocolMeta)
+                            and getattr(base, "_is_protocol", False)
+                        )
+                    ):
+                        raise TypeError(
+                            f"Protocols can only inherit from other protocols, "
+                            f"got {base!r}"
+                        )
+            return super().__new__(mcls, name, bases, namespace, **kwargs)
+
         def __init__(cls, *args, **kwargs):
             super().__init__(*args, **kwargs)
             if getattr(cls, "_is_protocol", False):
@@ -572,26 +592,38 @@ else:
                 )
 
         def __subclasscheck__(cls, other):
+            if cls is Protocol:
+                return type.__subclasscheck__(cls, other)
+            if not isinstance(other, type):
+                # Same error message as for issubclass(1, int).
+                raise TypeError('issubclass() arg 1 must be a class')
             if (
                 getattr(cls, '_is_protocol', False)
-                and not cls.__callable_proto_members_only__
-                and not _allow_reckless_class_checks(depth=3)
+                and not _allow_reckless_class_checks()
             ):
-                raise TypeError(
-                    "Protocols with non-method members don't support issubclass()"
-                )
+                if not cls.__callable_proto_members_only__:
+                    raise TypeError(
+                        "Protocols with non-method members don't support issubclass()"
+                    )
+                if not getattr(cls, '_is_runtime_protocol', False):
+                    raise TypeError(
+                        "Instance and class checks can only be used with "
+                        "@runtime_checkable protocols"
+                    )
             return super().__subclasscheck__(other)
 
         def __instancecheck__(cls, instance):
             # We need this method for situations where attributes are
             # assigned in __init__.
+            if cls is Protocol:
+                return type.__instancecheck__(cls, instance)
             if not getattr(cls, "_is_protocol", False):
                 # i.e., it's a concrete subclass of a protocol
                 return super().__instancecheck__(instance)
 
             if (
                 not getattr(cls, '_is_runtime_protocol', False) and
-                not _allow_reckless_class_checks(depth=2)
+                not _allow_reckless_class_checks()
             ):
                 raise TypeError("Instance and class checks can only be used with"
                                 " @runtime_checkable protocols")
@@ -632,18 +664,6 @@ else:
         if not cls.__dict__.get('_is_protocol', False):
             return NotImplemented
 
-        # First, perform various sanity checks.
-        if not getattr(cls, '_is_runtime_protocol', False):
-            if _allow_reckless_class_checks():
-                return NotImplemented
-            raise TypeError("Instance and class checks can only be used with"
-                            " @runtime_checkable protocols")
-
-        if not isinstance(other, type):
-            # Same error message as for issubclass(1, int).
-            raise TypeError('issubclass() arg 1 must be a class')
-
-        # Second, perform the actual structural compatibility check.
         for attr in cls.__protocol_attrs__:
             for base in other.__mro__:
                 # Check if the members appears in the class dictionary...
@@ -658,23 +678,12 @@ else:
                     isinstance(annotations, collections.abc.Mapping)
                     and attr in annotations
                     and issubclass(other, (typing.Generic, _ProtocolMeta))
-                    # All subclasses of Generic have an _is_proto attribute on 3.8+
-                    # But not on 3.7
                     and getattr(other, "_is_protocol", False)
                 ):
                     break
             else:
                 return NotImplemented
         return True
-
-    def _check_proto_bases(cls):
-        for base in cls.__bases__:
-            if not (base in (object, typing.Generic) or
-                    base.__module__ in _PROTO_ALLOWLIST and
-                    base.__name__ in _PROTO_ALLOWLIST[base.__module__] or
-                    isinstance(base, _ProtocolMeta) and base._is_protocol):
-                raise TypeError('Protocols can only inherit from other'
-                                f' protocols, got {repr(base)}')
 
     if sys.version_info >= (3, 8):
         class Protocol(typing.Generic, metaclass=_ProtocolMeta):
@@ -698,8 +707,7 @@ else:
                 if not cls._is_protocol:
                     return
 
-                # ... otherwise check consistency of bases, and prohibit instantiation.
-                _check_proto_bases(cls)
+                # ... otherwise prohibit instantiation.
                 if cls.__init__ is Protocol.__init__:
                     cls.__init__ = _no_init
 
@@ -794,8 +802,7 @@ else:
                 if not cls._is_protocol:
                     return
 
-                # Check consistency of bases.
-                _check_proto_bases(cls)
+                # Prohibit instantiation
                 if cls.__init__ is Protocol.__init__:
                     cls.__init__ = _no_init
 
