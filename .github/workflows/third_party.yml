@@ -54,7 +54,6 @@ jobs:
         uses: pdm-project/setup-pdm@v3
         with:
           python-version: ${{ matrix.python-version }}
-          cache: true
       - name: Add local version of typing_extensions as a dependency
         run: pdm add ./typing-extensions-latest
       - name: Install pydantic test dependencies
