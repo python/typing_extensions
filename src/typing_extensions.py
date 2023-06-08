@@ -201,17 +201,19 @@ else:
 
 ClassVar = typing.ClassVar
 
+
+class _ExtensionsSpecialForm(typing._SpecialForm, _root=True):
+    def __repr__(self):
+        return 'typing_extensions.' + self._name
+
+
 # On older versions of typing there is an internal class named "Final".
 # 3.8+
 if hasattr(typing, 'Final') and sys.version_info[:2] >= (3, 7):
     Final = typing.Final
 # 3.7
 else:
-    class _FinalForm(typing._SpecialForm, _root=True):
-
-        def __repr__(self):
-            return 'typing_extensions.' + self._name
-
+    class _FinalForm(_ExtensionsSpecialForm, _root=True):
         def __getitem__(self, parameters):
             item = typing._type_check(parameters,
                                       f'{self._name} accepts only a single type.')
@@ -303,13 +305,10 @@ else:
         def __hash__(self):
             return hash(frozenset(_value_and_type_iter(self.__args__)))
 
-    class _LiteralForm(typing._SpecialForm, _root=True):
+    class _LiteralForm(_ExtensionsSpecialForm, _root=True):
         def __init__(self, doc: str):
             self._name = 'Literal'
             self._doc = self.__doc__ = doc
-
-        def __repr__(self):
-            return 'typing_extensions.' + self._name
 
         def __getitem__(self, parameters):
             if not isinstance(parameters, tuple):
@@ -1372,11 +1371,6 @@ else:
                 res = (list(res[:-1]), res[-1])
             return res
         return ()
-
-
-class _ExtensionsSpecialForm(typing._SpecialForm, _root=True):
-    def __repr__(self):
-        return 'typing_extensions.' + self._name
 
 
 # 3.10+
