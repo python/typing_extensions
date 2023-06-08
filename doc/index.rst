@@ -101,6 +101,9 @@ simply being re-exported from the :mod:`typing` module::
        return result
 
 
+   # Use a cache here as well, but make it a bounded cache
+   # (the default cache size is 128)
+   @functools.lru_cache()
    def is_typing_name(obj: object, name: str) -> bool:
        return any(obj is thing for thing in get_typing_objects_by_name_of(name))
 
