@@ -32,8 +32,11 @@ jobs:
       # if 'schedule' was the trigger,
       # don't run it on contributors' forks
       ${{
-        github.repository == 'python/typing_extensions'
-        || github.event_name != 'schedule'
+        github.event_name != 'schedule'
+        || (
+          github.repository == 'python/typing_extensions'
+          && github.event_name == 'schedule'
+        )
       }}
     strategy:
       fail-fast: false
@@ -69,8 +72,11 @@ jobs:
       # if 'schedule' was the trigger,
       # don't run it on contributors' forks
       ${{
-        github.repository == 'python/typing_extensions'
-        || github.event_name != 'schedule'
+        github.event_name != 'schedule'
+        || (
+          github.repository == 'python/typing_extensions'
+          && github.event_name == 'schedule'
+        )
       }}
     strategy:
       fail-fast: false
@@ -83,6 +89,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: ilevkivskyi/typing_inspect
+          path: typing_inspect
       - name: Checkout typing_extensions
         uses: actions/checkout@v3
         with:
@@ -92,13 +99,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install typing_inspect test dependencies
-        run: pip install -r test-requirements.txt
+        run: pip install -r typing_inspect/test-requirements.txt
       - name: Install typing_extensions latest
         run: pip install ./typing-extensions-latest
       - name: List all installed dependencies
         run: pip freeze --all
       - name: Run typing_inspect tests
-        run: pytest
+        run: |
+          cd typing_inspect
+          pytest
 
   pyanalyze:
     name: pyanalyze tests
@@ -106,8 +115,11 @@ jobs:
       # if 'schedule' was the trigger,
       # don't run it on contributors' forks
       ${{
-        github.repository == 'python/typing_extensions'
-        || github.event_name != 'schedule'
+        github.event_name != 'schedule'
+        || (
+          github.repository == 'python/typing_extensions'
+          && github.event_name == 'schedule'
+        )
       }}
     strategy:
       fail-fast: false
@@ -120,6 +132,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: quora/pyanalyze
+          path: pyanalyze
       - name: Checkout typing_extensions
         uses: actions/checkout@v3
         with:
@@ -129,13 +142,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install pyanalyze test requirements
-        run: pip install .[tests]
+        run: pip install ./pyanalyze[tests]
       - name: Install typing_extensions latest
         run: pip install ./typing-extensions-latest
       - name: List all installed dependencies
         run: pip freeze --all
       - name: Run pyanalyze tests
-        run: pytest pyanalyze/
+        run: |
+          cd pyanalyze
+          pytest pyanalyze/
 
   typeguard:
     name: typeguard tests
@@ -151,6 +166,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: agronholm/typeguard
+          path: typeguard
       - name: Checkout typing_extensions
         uses: actions/checkout@v3
         with:
@@ -160,13 +176,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install typeguard test requirements
-        run: pip install -e .[test]
+        run: pip install -e ./typeguard[test]
       - name: Install typing_extensions latest
         run: pip install ./typing-extensions-latest
       - name: List all installed dependencies
         run: pip freeze --all
       - name: Run typeguard tests
-        run: pytest
+        run: |
+          cd typeguard
+          pytest
 
   typed-argument-parser:
     name: typed-argument-parser tests
@@ -174,8 +192,11 @@ jobs:
       # if 'schedule' was the trigger,
       # don't run it on contributors' forks
       ${{
-        github.repository == 'python/typing_extensions'
-        || github.event_name != 'schedule'
+        github.event_name != 'schedule'
+        || (
+          github.repository == 'python/typing_extensions'
+          && github.event_name == 'schedule'
+        )
       }}
     strategy:
       fail-fast: false
@@ -188,6 +209,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: swansonk14/typed-argument-parser
+          path: typed-argument-parser
       - name: Checkout typing_extensions
         uses: actions/checkout@v3
         with:
@@ -204,14 +226,16 @@ jobs:
           git config --global user.name "Your Name"
       - name: Install typed-argument-parser test requirements
         run: |
-          pip install -e .
+          pip install -e ./typed-argument-parser
           pip install pytest
       - name: Install typing_extensions latest
         run: pip install ./typing-extensions-latest
       - name: List all installed dependencies
         run: pip freeze --all
       - name: Run typed-argument-parser tests
-        run: pytest
+        run: |
+          cd typed-argument-parser
+          pytest
 
   stubtest:
     name: stubtest tests
@@ -219,8 +243,11 @@ jobs:
       # if 'schedule' was the trigger,
       # don't run it on contributors' forks
       ${{
-        github.repository == 'python/typing_extensions'
-        || github.event_name != 'schedule'
+        github.event_name != 'schedule'
+        || (
+          github.repository == 'python/typing_extensions'
+          && github.event_name == 'schedule'
+        )
       }}
     strategy:
       fail-fast: false
@@ -233,6 +260,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: python/mypy
+          path: mypy
       - name: Checkout typing_extensions
         uses: actions/checkout@v3
         with:
@@ -243,6 +271,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install mypy test requirements
         run: |
+          cd mypy
           pip install -r test-requirements.txt
           pip install -e .
       - name: Install typing_extensions latest
@@ -250,7 +279,9 @@ jobs:
       - name: List all installed dependencies
         run: pip freeze --all
       - name: Run stubtest tests
-        run: pytest ./mypy/test/teststubtest.py
+        run: |
+          cd mypy
+          pytest ./mypy/test/teststubtest.py
 
   cattrs:
     name: cattrs tests
@@ -258,8 +289,11 @@ jobs:
       # if 'schedule' was the trigger,
       # don't run it on contributors' forks
       ${{
-        github.repository == 'python/typing_extensions'
-        || github.event_name != 'schedule'
+        github.event_name != 'schedule'
+        || (
+          github.repository == 'python/typing_extensions'
+          && github.event_name == 'schedule'
+        )
       }}
     strategy:
       fail-fast: false
