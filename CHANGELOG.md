@@ -4,6 +4,12 @@
   `typing.runtime_checkable` can now be used on `typing_extensions.Protocol`
   (previously, users had to use `typing_extensions.runtime_checkable` if they
   were using `typing_extensions.Protocol`).
+- Align the implementation of `TypedDict` with the implementation in the
+  standard library on Python 3.9 and higher.
+  `typing_extensions.TypedDict` is now a function instead of a class. The
+  private functions `_check_fails`, `_dict_new`, and `_typeddict_new`
+  have been removed. `is_typeddict` now returns `False` when called with
+  `TypedDict` itself as the argument. Patch by Jelle Zijlstra.
 - Declare support for Python 3.12. Patch by Jelle Zijlstra.
 - Fix tests on Python 3.13, which removes support for creating
   `TypedDict` classes through the keyword-argument syntax. Patch by

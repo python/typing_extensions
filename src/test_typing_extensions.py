@@ -38,7 +38,7 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args,
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar
-from _typed_dict_test_helper import Foo, FooGeneric
+from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
@@ -1148,9 +1148,25 @@ class NontotalMovie(TypedDict, total=False):
     title: Required[str]
     year: int
 
+class ParentNontotalMovie(TypedDict, total=False):
+    title: Required[str]
+
+class ChildTotalMovie(ParentNontotalMovie):
+    year: NotRequired[int]
+
+class ParentDeeplyAnnotatedMovie(TypedDict):
+    title: Annotated[Annotated[Required[str], "foobar"], "another level"]
+
+class ChildDeeplyAnnotatedMovie(ParentDeeplyAnnotatedMovie):
+    year: NotRequired[Annotated[int, 2000]]
+
 class AnnotatedMovie(TypedDict):
     title: Annotated[Required[str], "foobar"]
     year: NotRequired[Annotated[int, 2000]]
+
+class WeirdlyQuotedMovie(TypedDict):
+    title: Annotated['Annotated[Required[str], "foobar"]', "another level"]
+    year: NotRequired['Annotated[int, 2000]']
 
 
 gth = get_type_hints
@@ -2972,6 +2988,71 @@ class ProtocolTests(BaseTestCase):
         # before any isinstance() checks against Sized
         self.assertNotIsInstance(1, typing.Sized)
 
+    def test_empty_protocol_decorated_with_final(self):
+        @final
+        @runtime_checkable
+        class EmptyProtocol(Protocol): ...
+
+        self.assertIsSubclass(object, EmptyProtocol)
+        self.assertIsInstance(object(), EmptyProtocol)
+
+    def test_protocol_decorated_with_final_callable_members(self):
+        @final
+        @runtime_checkable
+        class ProtocolWithMethod(Protocol):
+            def startswith(self, string: str) -> bool: ...
+
+        self.assertIsSubclass(str, ProtocolWithMethod)
+        self.assertNotIsSubclass(int, ProtocolWithMethod)
+        self.assertIsInstance('foo', ProtocolWithMethod)
+        self.assertNotIsInstance(42, ProtocolWithMethod)
+
+    def test_protocol_decorated_with_final_noncallable_members(self):
+        @final
+        @runtime_checkable
+        class ProtocolWithNonCallableMember(Protocol):
+            x: int
+
+        class Foo:
+            x = 42
+
+        only_callable_members_please = (
+            r"Protocols with non-method members don't support issubclass()"
+        )
+
+        with self.assertRaisesRegex(TypeError, only_callable_members_please):
+            issubclass(Foo, ProtocolWithNonCallableMember)
+
+        with self.assertRaisesRegex(TypeError, only_callable_members_please):
+            issubclass(int, ProtocolWithNonCallableMember)
+
+        self.assertIsInstance(Foo(), ProtocolWithNonCallableMember)
+        self.assertNotIsInstance(42, ProtocolWithNonCallableMember)
+
+    def test_protocol_decorated_with_final_mixed_members(self):
+        @final
+        @runtime_checkable
+        class ProtocolWithMixedMembers(Protocol):
+            x: int
+            def method(self) -> None: ...
+
+        class Foo:
+            x = 42
+            def method(self) -> None: ...
+
+        only_callable_members_please = (
+            r"Protocols with non-method members don't support issubclass()"
+        )
+
+        with self.assertRaisesRegex(TypeError, only_callable_members_please):
+            issubclass(Foo, ProtocolWithMixedMembers)
+
+        with self.assertRaisesRegex(TypeError, only_callable_members_please):
+            issubclass(int, ProtocolWithMixedMembers)
+
+        self.assertIsInstance(Foo(), ProtocolWithMixedMembers)
+        self.assertNotIsInstance(42, ProtocolWithMixedMembers)
+
 
 class Point2DGeneric(Generic[T], TypedDict):
     a: T
@@ -2987,8 +3068,7 @@ class BarGeneric(FooGeneric[T], total=False):
 
 
 class TypedDictTests(BaseTestCase):
-
-    def test_basics_iterable_syntax(self):
+    def test_basics_functional_syntax(self):
         Emp = TypedDict('Emp', {'name': str, 'id': int})
         self.assertIsSubclass(Emp, dict)
         self.assertIsSubclass(Emp, typing.MutableMapping)
@@ -3042,7 +3122,6 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(a['fields'], [('bar', tuple)])
         self.assertEqual(a['_fields'], {'baz', set})
 
-    @skipIf(hasattr(typing, 'TypedDict'), "Should be tested by upstream")
     def test_typeddict_create_errors(self):
         with self.assertRaises(TypeError):
             TypedDict.__new__()
@@ -3052,12 +3131,7 @@ class TypedDictTests(BaseTestCase):
             TypedDict('Emp', [('name', str)], None)
 
         with self.assertWarns(DeprecationWarning):
-            Emp = TypedDict(_typename='Emp', name=str, id=int)
-        self.assertEqual(Emp.__name__, 'Emp')
-        self.assertEqual(Emp.__annotations__, {'name': str, 'id': int})
-
-        with self.assertWarns(DeprecationWarning):
-            Emp = TypedDict('Emp', _fields={'name': str, 'id': int})
+            Emp = TypedDict('Emp', name=str, id=int)
         self.assertEqual(Emp.__name__, 'Emp')
         self.assertEqual(Emp.__annotations__, {'name': str, 'id': int})
 
@@ -3086,7 +3160,7 @@ class TypedDictTests(BaseTestCase):
     def test_py36_class_syntax_usage(self):
         self.assertEqual(LabelPoint2D.__name__, 'LabelPoint2D')
         self.assertEqual(LabelPoint2D.__module__, __name__)
-        self.assertEqual(get_type_hints(LabelPoint2D), {'x': int, 'y': int, 'label': str})
+        self.assertEqual(LabelPoint2D.__annotations__, {'x': int, 'y': int, 'label': str})
         self.assertEqual(LabelPoint2D.__bases__, (dict,))
         self.assertEqual(LabelPoint2D.__total__, True)
         self.assertNotIsSubclass(LabelPoint2D, typing.Sequence)
@@ -3098,11 +3172,9 @@ class TypedDictTests(BaseTestCase):
 
     def test_pickle(self):
         global EmpD  # pickle wants to reference the class by name
-        EmpD = TypedDict('EmpD', {"name": str, "id": int})
+        EmpD = TypedDict('EmpD', {'name': str, 'id': int})
         jane = EmpD({'name': 'jane', 'id': 37})
-        point = Point2DGeneric(a=5.0, b=3.0)
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
-            # Test non-generic TypedDict
             z = pickle.dumps(jane, proto)
             jane2 = pickle.loads(z)
             self.assertEqual(jane2, jane)
@@ -3110,17 +3182,20 @@ class TypedDictTests(BaseTestCase):
             ZZ = pickle.dumps(EmpD, proto)
             EmpDnew = pickle.loads(ZZ)
             self.assertEqual(EmpDnew({'name': 'jane', 'id': 37}), jane)
-            # and generic TypedDict
-            y = pickle.dumps(point, proto)
-            point2 = pickle.loads(y)
-            self.assertEqual(point, point2)
+
+    def test_pickle_generic(self):
+        point = Point2DGeneric(a=5.0, b=3.0)
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            z = pickle.dumps(point, proto)
+            point2 = pickle.loads(z)
+            self.assertEqual(point2, point)
             self.assertEqual(point2, {'a': 5.0, 'b': 3.0})
-            YY = pickle.dumps(Point2DGeneric, proto)
-            Point2DGenericNew = pickle.loads(YY)
+            ZZ = pickle.dumps(Point2DGeneric, proto)
+            Point2DGenericNew = pickle.loads(ZZ)
             self.assertEqual(Point2DGenericNew({'a': 5.0, 'b': 3.0}), point)
 
     def test_optional(self):
-        EmpD = TypedDict('EmpD', {"name": str, "id": int})
+        EmpD = TypedDict('EmpD', {'name': str, 'id': int})
 
         self.assertEqual(typing.Optional[EmpD], typing.Union[None, EmpD])
         self.assertNotEqual(typing.List[EmpD], typing.Tuple[EmpD])
@@ -3140,25 +3215,30 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Options.__optional_keys__, {'log_level', 'log_path'})
 
     def test_optional_keys(self):
+        class Point2Dor3D(Point2D, total=False):
+            z: int
+
         assert Point2Dor3D.__required_keys__ == frozenset(['x', 'y'])
         assert Point2Dor3D.__optional_keys__ == frozenset(['z'])
 
-    def test_required_notrequired_keys(self):
-        assert NontotalMovie.__required_keys__ == frozenset({'title'})
-        assert NontotalMovie.__optional_keys__ == frozenset({'year'})
-
-        assert TotalMovie.__required_keys__ == frozenset({'title'})
-        assert TotalMovie.__optional_keys__ == frozenset({'year'})
-
-
     def test_keys_inheritance(self):
+        class BaseAnimal(TypedDict):
+            name: str
+
+        class Animal(BaseAnimal, total=False):
+            voice: str
+            tail: bool
+
+        class Cat(Animal):
+            fur_color: str
+
         assert BaseAnimal.__required_keys__ == frozenset(['name'])
         assert BaseAnimal.__optional_keys__ == frozenset([])
-        assert get_type_hints(BaseAnimal) == {'name': str}
+        assert BaseAnimal.__annotations__ == {'name': str}
 
         assert Animal.__required_keys__ == frozenset(['name'])
         assert Animal.__optional_keys__ == frozenset(['tail', 'voice'])
-        assert get_type_hints(Animal) == {
+        assert Animal.__annotations__ == {
             'name': str,
             'tail': bool,
             'voice': str,
@@ -3166,19 +3246,168 @@ class TypedDictTests(BaseTestCase):
 
         assert Cat.__required_keys__ == frozenset(['name', 'fur_color'])
         assert Cat.__optional_keys__ == frozenset(['tail', 'voice'])
-        assert get_type_hints(Cat) == {
+        assert Cat.__annotations__ == {
             'fur_color': str,
             'name': str,
             'tail': bool,
             'voice': str,
         }
 
+    def test_required_notrequired_keys(self):
+        self.assertEqual(NontotalMovie.__required_keys__,
+                         frozenset({"title"}))
+        self.assertEqual(NontotalMovie.__optional_keys__,
+                         frozenset({"year"}))
+
+        self.assertEqual(TotalMovie.__required_keys__,
+                         frozenset({"title"}))
+        self.assertEqual(TotalMovie.__optional_keys__,
+                         frozenset({"year"}))
+
+        self.assertEqual(VeryAnnotated.__required_keys__,
+                         frozenset())
+        self.assertEqual(VeryAnnotated.__optional_keys__,
+                         frozenset({"a"}))
+
+        self.assertEqual(AnnotatedMovie.__required_keys__,
+                         frozenset({"title"}))
+        self.assertEqual(AnnotatedMovie.__optional_keys__,
+                         frozenset({"year"}))
+
+        self.assertEqual(WeirdlyQuotedMovie.__required_keys__,
+                         frozenset({"title"}))
+        self.assertEqual(WeirdlyQuotedMovie.__optional_keys__,
+                         frozenset({"year"}))
+
+        self.assertEqual(ChildTotalMovie.__required_keys__,
+                         frozenset({"title"}))
+        self.assertEqual(ChildTotalMovie.__optional_keys__,
+                         frozenset({"year"}))
+
+        self.assertEqual(ChildDeeplyAnnotatedMovie.__required_keys__,
+                         frozenset({"title"}))
+        self.assertEqual(ChildDeeplyAnnotatedMovie.__optional_keys__,
+                         frozenset({"year"}))
+
+    def test_multiple_inheritance(self):
+        class One(TypedDict):
+            one: int
+        class Two(TypedDict):
+            two: str
+        class Untotal(TypedDict, total=False):
+            untotal: str
+        Inline = TypedDict('Inline', {'inline': bool})
+        class Regular:
+            pass
+
+        class Child(One, Two):
+            child: bool
+        self.assertEqual(
+            Child.__required_keys__,
+            frozenset(['one', 'two', 'child']),
+        )
+        self.assertEqual(
+            Child.__optional_keys__,
+            frozenset([]),
+        )
+        self.assertEqual(
+            Child.__annotations__,
+            {'one': int, 'two': str, 'child': bool},
+        )
+
+        class ChildWithOptional(One, Untotal):
+            child: bool
+        self.assertEqual(
+            ChildWithOptional.__required_keys__,
+            frozenset(['one', 'child']),
+        )
+        self.assertEqual(
+            ChildWithOptional.__optional_keys__,
+            frozenset(['untotal']),
+        )
+        self.assertEqual(
+            ChildWithOptional.__annotations__,
+            {'one': int, 'untotal': str, 'child': bool},
+        )
+
+        class ChildWithTotalFalse(One, Untotal, total=False):
+            child: bool
+        self.assertEqual(
+            ChildWithTotalFalse.__required_keys__,
+            frozenset(['one']),
+        )
+        self.assertEqual(
+            ChildWithTotalFalse.__optional_keys__,
+            frozenset(['untotal', 'child']),
+        )
+        self.assertEqual(
+            ChildWithTotalFalse.__annotations__,
+            {'one': int, 'untotal': str, 'child': bool},
+        )
+
+        class ChildWithInlineAndOptional(Untotal, Inline):
+            child: bool
+        self.assertEqual(
+            ChildWithInlineAndOptional.__required_keys__,
+            frozenset(['inline', 'child']),
+        )
+        self.assertEqual(
+            ChildWithInlineAndOptional.__optional_keys__,
+            frozenset(['untotal']),
+        )
+        self.assertEqual(
+            ChildWithInlineAndOptional.__annotations__,
+            {'inline': bool, 'untotal': str, 'child': bool},
+        )
+
+        wrong_bases = [
+            (One, Regular),
+            (Regular, One),
+            (One, Two, Regular),
+            (Inline, Regular),
+            (Untotal, Regular),
+        ]
+        for bases in wrong_bases:
+            with self.subTest(bases=bases):
+                with self.assertRaisesRegex(
+                    TypeError,
+                    'cannot inherit from both a TypedDict type and a non-TypedDict',
+                ):
+                    class Wrong(*bases):
+                        pass
+
     def test_is_typeddict(self):
-        assert is_typeddict(Point2D) is True
-        assert is_typeddict(Point2Dor3D) is True
-        assert is_typeddict(Union[str, int]) is False
+        self.assertIs(is_typeddict(Point2D), True)
+        self.assertIs(is_typeddict(Point2Dor3D), True)
+        self.assertIs(is_typeddict(Union[str, int]), False)
         # classes, not instances
-        assert is_typeddict(Point2D()) is False
+        self.assertIs(is_typeddict(Point2D()), False)
+        call_based = TypedDict('call_based', {'a': int})
+        self.assertIs(is_typeddict(call_based), True)
+        self.assertIs(is_typeddict(call_based()), False)
+
+        T = TypeVar("T")
+        class BarGeneric(TypedDict, Generic[T]):
+            a: T
+        self.assertIs(is_typeddict(BarGeneric), True)
+        self.assertIs(is_typeddict(BarGeneric[int]), False)
+        self.assertIs(is_typeddict(BarGeneric()), False)
+
+        if hasattr(typing, "TypeAliasType"):
+            ns = {"TypedDict": TypedDict}
+            exec("""if True:
+                class NewGeneric[T](TypedDict):
+                    a: T
+            """, ns)
+            NewGeneric = ns["NewGeneric"]
+            self.assertIs(is_typeddict(NewGeneric), True)
+            self.assertIs(is_typeddict(NewGeneric[int]), False)
+            self.assertIs(is_typeddict(NewGeneric()), False)
+
+        # The TypedDict constructor is not itself a TypedDict
+        self.assertIs(is_typeddict(TypedDict), False)
+        if hasattr(typing, "TypedDict"):
+            self.assertIs(is_typeddict(typing.TypedDict), False)
 
     @skipUnless(TYPING_3_8_0, "Python 3.8+ required")
     def test_is_typeddict_against_typeddict_from_typing(self):
@@ -3216,6 +3445,24 @@ class TypedDictTests(BaseTestCase):
             get_type_hints(FooBarGeneric),
             {'a': typing.Optional[T], 'b': int, 'c': str}
         )
+
+    @skipUnless(TYPING_3_12_0, "PEP 695 required")
+    def test_pep695_generic_typeddict(self):
+        ns = {"TypedDict": TypedDict}
+        exec("""if True:
+            class A[T](TypedDict):
+                a: T
+            """, ns)
+        A = ns["A"]
+        T, = A.__type_params__
+        self.assertIsInstance(T, TypeVar)
+        self.assertEqual(T.__name__, 'T')
+        self.assertEqual(A.__bases__, (Generic, dict))
+        self.assertEqual(A.__orig_bases__, (TypedDict, Generic[T]))
+        self.assertEqual(A.__mro__, (A, Generic, dict, object))
+        self.assertEqual(A.__parameters__, (T,))
+        self.assertEqual(A[str].__parameters__, ())
+        self.assertEqual(A[str].__args__, (str,))
 
     def test_generic_inheritance(self):
         class A(TypedDict, Generic[T]):
@@ -3282,11 +3529,11 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Point3D.__total__, True)
         self.assertEqual(Point3D.__optional_keys__, frozenset())
         self.assertEqual(Point3D.__required_keys__, frozenset(['a', 'b', 'c']))
-        assert Point3D.__annotations__ == {
+        self.assertEqual(Point3D.__annotations__, {
             'a': T,
             'b': T,
             'c': KT,
-        }
+        })
         self.assertEqual(Point3D[int, str].__origin__, Point3D)
 
         with self.assertRaises(TypeError):
@@ -3320,6 +3567,64 @@ class TypedDictTests(BaseTestCase):
         }
         with self.assertRaises(TypeError):
             WithImplicitAny[str]
+
+    @skipUnless(TYPING_3_9_0, "Was changed in 3.9")
+    def test_non_generic_subscript(self):
+        # For backward compatibility, subscription works
+        # on arbitrary TypedDict types.
+        # (But we don't attempt to backport this misfeature onto 3.7 and 3.8.)
+        class TD(TypedDict):
+            a: T
+        A = TD[int]
+        self.assertEqual(A.__origin__, TD)
+        self.assertEqual(A.__parameters__, ())
+        self.assertEqual(A.__args__, (int,))
+        a = A(a=1)
+        self.assertIs(type(a), dict)
+        self.assertEqual(a, {'a': 1})
+
+    def test_orig_bases(self):
+        T = TypeVar('T')
+
+        class Parent(TypedDict):
+            pass
+
+        class Child(Parent):
+            pass
+
+        class OtherChild(Parent):
+            pass
+
+        class MixedChild(Child, OtherChild, Parent):
+            pass
+
+        class GenericParent(TypedDict, Generic[T]):
+            pass
+
+        class GenericChild(GenericParent[int]):
+            pass
+
+        class OtherGenericChild(GenericParent[str]):
+            pass
+
+        class MixedGenericChild(GenericChild, OtherGenericChild, GenericParent[float]):
+            pass
+
+        class MultipleGenericBases(GenericParent[int], GenericParent[float]):
+            pass
+
+        CallTypedDict = TypedDict('CallTypedDict', {})
+
+        self.assertEqual(Parent.__orig_bases__, (TypedDict,))
+        self.assertEqual(Child.__orig_bases__, (Parent,))
+        self.assertEqual(OtherChild.__orig_bases__, (Parent,))
+        self.assertEqual(MixedChild.__orig_bases__, (Child, OtherChild, Parent,))
+        self.assertEqual(GenericParent.__orig_bases__, (TypedDict, Generic[T]))
+        self.assertEqual(GenericChild.__orig_bases__, (GenericParent[int],))
+        self.assertEqual(OtherGenericChild.__orig_bases__, (GenericParent[str],))
+        self.assertEqual(MixedGenericChild.__orig_bases__, (GenericChild, OtherGenericChild, GenericParent[float]))
+        self.assertEqual(MultipleGenericBases.__orig_bases__, (GenericParent[int], GenericParent[float]))
+        self.assertEqual(CallTypedDict.__orig_bases__, (TypedDict,))
 
 
 class AnnotatedTests(BaseTestCase):

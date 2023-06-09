@@ -73,6 +73,57 @@ the risk of compatibility issues:
   attributes directly. If some information is not available through a public
   attribute, consider opening an issue in CPython to add such an API.
 
+Here is an example recipe for a general-purpose function that could be used for
+reasonably performant runtime introspection of typing objects. The function
+will be resilient against any potential changes in ``typing_extensions`` that
+alter whether an object is reimplemented in ``typing_extensions``, rather than
+simply being re-exported from the :mod:`typing` module::
+
+   import functools
+   import typing
+   import typing_extensions
+   from typing import Tuple, Any
+
+   # Use an unbounded cache for this function, for optimal performance
+   @functools.lru_cache(maxsize=None)
+   def get_typing_objects_by_name_of(name: str) -> Tuple[Any, ...]:
+       result = tuple(
+           getattr(module, name)
+           # You could potentially also include mypy_extensions here,
+           # if your library supports mypy_extensions
+           for module in (typing, typing_extensions)
+           if hasattr(module, name)
+       )
+       if not result:
+           raise ValueError(
+               f"Neither typing nor typing_extensions has an object called {name!r}"
+           )
+       return result
+
+
+   # Use a cache here as well, but make it a bounded cache
+   # (the default cache size is 128)
+   @functools.lru_cache()
+   def is_typing_name(obj: object, name: str) -> bool:
+       return any(obj is thing for thing in get_typing_objects_by_name_of(name))
+
+Example usage::
+
+   >>> import typing, typing_extensions
+   >>> from functools import partial
+   >>> from typing_extensions import get_origin
+   >>> is_literal = partial(is_typing_name, name="Literal")
+   >>> is_literal(typing.Literal)
+   True
+   >>> is_literal(typing_extensions.Literal)
+   True
+   >>> is_literal(typing.Any)
+   False
+   >>> is_literal(get_origin(typing.Literal[42]))
+   True
+   >>> is_literal(get_origin(typing_extensions.Final[42]))
+   False
+
 Python version support
 ----------------------
 
@@ -295,6 +346,12 @@ Special typing primitives
    .. versionchanged:: 4.6.0
 
       Support for the ``__orig_bases__`` attribute was added.
+
+   .. versionchanged:: 4.7.0
+
+      ``TypedDict`` is now a function rather than a class.
+      This brings ``typing_extensions.TypedDict`` closer to the implementation
+      of :py:mod:`typing.TypedDict` on Python 3.9 and higher.
 
 .. class:: TypeVar(name, *constraints, bound=None, covariant=False,
                    contravariant=False, infer_variance=False, default=...)
@@ -628,6 +685,12 @@ Functions
    ``TypedDict`` classes created through either mechanism.
 
    .. versionadded:: 4.1.0
+
+   .. versionchanged:: 4.7.0
+
+      :func:`is_typeddict` now returns ``False`` when called with
+      :data:`TypedDict` itself as the argument, consistent with the
+      behavior of :py:func:`typing.is_typeddict`.
 
 .. function:: reveal_type(obj)
 
