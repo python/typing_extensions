@@ -1,5 +1,9 @@
 # Unreleased
 
+- Due to changes in the implementation of `typing_extensions.Protocol`,
+  `typing.runtime_checkable` can now be used on `typing_extensions.Protocol`
+  (previously, users had to use `typing_extensions.runtime_checkable` if they
+  were using `typing_extensions.Protocol`).
 - Align the implementation of `TypedDict` with the implementation in the
   standard library on Python 3.9 and higher.
   `typing_extensions.TypedDict` is now a function instead of a class. The
