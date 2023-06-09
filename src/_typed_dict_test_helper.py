@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Generic, Optional, T
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, Annotated, Required
 
 
 # this class must not be imported into test_typing_extensions.py at top level, otherwise
@@ -16,3 +16,7 @@ class Foo(TypedDict):
 
 class FooGeneric(TypedDict, Generic[T]):
     a: Optional[T]
+
+
+class VeryAnnotated(TypedDict, total=False):
+    a: Annotated[Annotated[Annotated[Required[int], "a"], "b"], "c"]

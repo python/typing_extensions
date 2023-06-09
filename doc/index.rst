@@ -347,6 +347,12 @@ Special typing primitives
 
       Support for the ``__orig_bases__`` attribute was added.
 
+   .. versionchanged:: 4.7.0
+
+      ``TypedDict`` is now a function rather than a class.
+      This brings ``typing_extensions.TypedDict`` closer to the implementation
+      of :py:mod:`typing.TypedDict` on Python 3.9 and higher.
+
 .. class:: TypeVar(name, *constraints, bound=None, covariant=False,
                    contravariant=False, infer_variance=False, default=...)
 
@@ -679,6 +685,12 @@ Functions
    ``TypedDict`` classes created through either mechanism.
 
    .. versionadded:: 4.1.0
+
+   .. versionchanged:: 4.7.0
+
+      :func:`is_typeddict` now returns ``False`` when called with
+      :data:`TypedDict` itself as the argument, consistent with the
+      behavior of :py:func:`typing.is_typeddict`.
 
 .. function:: reveal_type(obj)
 
