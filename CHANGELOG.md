@@ -1,5 +1,8 @@
 # Unreleased
 
+- `typing_extensions` now re-exports all names in the standard library's
+  `typing` module, except the deprecated `ByteString`. Patch by Jelle
+  Zijlstra.
 - Due to changes in the implementation of `typing_extensions.Protocol`,
   `typing.runtime_checkable` can now be used on `typing_extensions.Protocol`
   (previously, users had to use `typing_extensions.runtime_checkable` if they

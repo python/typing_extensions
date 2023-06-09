@@ -85,6 +85,45 @@ __all__ = [
     'NoReturn',
     'Required',
     'NotRequired',
+
+    # Pure aliases, have always been in typing
+    'AbstractSet',
+    'AnyStr',
+    'BinaryIO',
+    'Callable',
+    'Collection',
+    'Container',
+    'Dict',
+    'ForwardRef',
+    'FrozenSet',
+    'Generator',
+    'Generic',
+    'Hashable',
+    'IO',
+    'ItemsView',
+    'Iterable',
+    'Iterator',
+    'KeysView',
+    'List',
+    'Mapping',
+    'MappingView',
+    'Match',
+    'MutableMapping',
+    'MutableSequence',
+    'MutableSet',
+    'Optional',
+    'Pattern',
+    'Reversible',
+    'Sequence',
+    'Set',
+    'Sized',
+    'TextIO',
+    'Tuple',
+    'Union',
+    'ValuesView',
+    'cast',
+    'no_type_check',
+    'no_type_check_decorator',
 ]
 
 # for backward compatibility
@@ -2837,3 +2876,46 @@ else:
                 if not _is_unionable(left):
                     return NotImplemented
                 return typing.Union[left, self]
+
+
+# Aliases for items that have always been in typing.
+# Explicitly assign these (rather than using `from typing import *` at the top),
+# so that we get a CI error if one of these is deleted from typing.py
+# in a future version of Python
+AbstractSet = typing.AbstractSet
+AnyStr = typing.AnyStr
+BinaryIO = typing.BinaryIO
+Callable = typing.Callable
+Collection = typing.Collection
+Container = typing.Container
+Dict = typing.Dict
+ForwardRef = typing.ForwardRef
+FrozenSet = typing.FrozenSet
+Generator = typing.Generator
+Generic = typing.Generic
+Hashable = typing.Hashable
+IO = typing.IO
+ItemsView = typing.ItemsView
+Iterable = typing.Iterable
+Iterator = typing.Iterator
+KeysView = typing.KeysView
+List = typing.List
+Mapping = typing.Mapping
+MappingView = typing.MappingView
+Match = typing.Match
+MutableMapping = typing.MutableMapping
+MutableSequence = typing.MutableSequence
+MutableSet = typing.MutableSet
+Optional = typing.Optional
+Pattern = typing.Pattern
+Reversible = typing.Reversible
+Sequence = typing.Sequence
+Set = typing.Set
+Sized = typing.Sized
+TextIO = typing.TextIO
+Tuple = typing.Tuple
+Union = typing.Union
+ValuesView = typing.ValuesView
+cast = typing.cast
+no_type_check = typing.no_type_check
+no_type_check_decorator = typing.no_type_check_decorator
