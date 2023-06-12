@@ -154,7 +154,16 @@ jobs:
 
   typeguard:
     name: typeguard tests
-    if: false  # TODO: unskip when typeguard's tests pass on typing_extensions>=4.6.0
+    if: >-
+      # if 'schedule' was the trigger,
+      # don't run it on contributors' forks
+      ${{
+        github.event_name != 'schedule'
+        || (
+          github.repository == 'python/typing_extensions'
+          && github.event_name == 'schedule'
+        )
+      }}
     strategy:
       fail-fast: false
       matrix:
