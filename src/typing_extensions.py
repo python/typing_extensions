@@ -601,7 +601,7 @@ else:
         # but is necessary to allow typing.Protocol and typing_extensions.Protocol
         # to mix without getting TypeErrors about "metaclass conflict"
         _typing_Protocol = typing.Protocol
-        _ProtocolBase = type(_typing_Protocol)
+        _ProtocolMetaBase = type(_typing_Protocol)
 
         def _is_protocol(cls):
             return (
@@ -611,7 +611,7 @@ else:
             )
     else:
         _typing_Protocol = _marker
-        _ProtocolBase = abc.ABCMeta
+        _ProtocolMetaBase = abc.ABCMeta
 
         def _is_protocol(cls):
             return (
@@ -619,7 +619,7 @@ else:
                 and getattr(cls, "_is_protocol", False)
             )
 
-    class _ProtocolMeta(_ProtocolBase):
+    class _ProtocolMeta(_ProtocolMetaBase):
         # This metaclass is somewhat unfortunate,
         # but is necessary for several reasons...
         #
