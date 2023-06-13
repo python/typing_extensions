@@ -1799,6 +1799,23 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(Bar(), Foo)
         self.assertNotIsInstance(object(), Foo)
 
+    @skipUnless(
+        hasattr(typing, "Protocol"),
+        "Test is only relevant if typing.Protocol exists"
+    )
+    def test_typing_Protocol_and_extensions_Protocol_can_mix(self):
+        class TypingProto(typing.Protocol):
+            x: int
+
+        class ExtensionsProto(Protocol):
+            y: int
+
+        class Subclass1(TypingProto, ExtensionsProto, typing.Protocol):
+            z: int
+
+        class Subclass2(TypingProto, ExtensionsProto, Protocol):
+            z: int
+
     def test_no_instantiation(self):
         class P(Protocol): pass
         with self.assertRaises(TypeError):
