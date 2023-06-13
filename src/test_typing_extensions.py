@@ -1810,11 +1810,14 @@ class ProtocolTests(BaseTestCase):
         class ExtensionsProto(Protocol):
             y: int
 
-        class Subclass1(TypingProto, ExtensionsProto, typing.Protocol):
+        class SubProto(TypingProto, ExtensionsProto, typing.Protocol):
             z: int
 
-        class Subclass2(TypingProto, ExtensionsProto, Protocol):
+        class SubProto2(TypingProto, ExtensionsProto, Protocol):
             z: int
+
+        class Concrete(SubProto): pass
+        class Concrete2(SubProto2): pass
 
     def test_no_instantiation(self):
         class P(Protocol): pass

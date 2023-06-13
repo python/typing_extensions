@@ -600,7 +600,8 @@ else:
         # Inheriting from typing._ProtocolMeta isn't actually desirable,
         # but is necessary to allow typing.Protocol and typing_extensions.Protocol
         # to mix without getting TypeErrors about "metaclass conflict"
-        _ProtocolBase = type(typing.Protocol)
+        _typing_Protocol = typing.Protocol
+        _ProtocolBase = type(_typing_Protocol)
 
         def _is_protocol(cls):
             return (
@@ -609,6 +610,7 @@ else:
                 and getattr(cls, "_is_protocol", False)
             )
     else:
+        _typing_Protocol = _marker
         _ProtocolBase = abc.ABCMeta
 
         def _is_protocol(cls):
@@ -627,7 +629,7 @@ else:
         def __new__(mcls, name, bases, namespace, **kwargs):
             if name == "Protocol" and len(bases) < 2:
                 pass
-            elif Protocol in bases or getattr(typing, "Protocol", _marker) in bases:
+            elif {Protocol, _typing_Protocol} & set(bases):
                 for base in bases:
                     if not (
                         base in {object, typing.Generic}
