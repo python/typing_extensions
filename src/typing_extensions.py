@@ -596,30 +596,54 @@ else:
         if type(self)._is_protocol:
             raise TypeError('Protocols cannot be instantiated')
 
-    class _ProtocolMeta(abc.ABCMeta):
+    if sys.version_info >= (3, 8):
+        # Inheriting from typing._ProtocolMeta isn't actually desirable,
+        # but is necessary to allow typing.Protocol and typing_extensions.Protocol
+        # to mix without getting TypeErrors about "metaclass conflict"
+        _typing_Protocol = typing.Protocol
+        _ProtocolMetaBase = type(_typing_Protocol)
+
+        def _is_protocol(cls):
+            return (
+                isinstance(cls, type)
+                and issubclass(cls, typing.Generic)
+                and getattr(cls, "_is_protocol", False)
+            )
+    else:
+        _typing_Protocol = _marker
+        _ProtocolMetaBase = abc.ABCMeta
+
+        def _is_protocol(cls):
+            return (
+                isinstance(cls, _ProtocolMeta)
+                and getattr(cls, "_is_protocol", False)
+            )
+
+    class _ProtocolMeta(_ProtocolMetaBase):
         # This metaclass is somewhat unfortunate,
         # but is necessary for several reasons...
+        #
+        # NOTE: DO NOT call super() in any methods in this class
+        # That would call the methods on typing._ProtocolMeta on Python 3.8-3.11
+        # and those are slow
         def __new__(mcls, name, bases, namespace, **kwargs):
             if name == "Protocol" and len(bases) < 2:
                 pass
-            elif Protocol in bases:
+            elif {Protocol, _typing_Protocol} & set(bases):
                 for base in bases:
                     if not (
                         base in {object, typing.Generic}
                         or base.__name__ in _PROTO_ALLOWLIST.get(base.__module__, [])
-                        or (
-                            isinstance(base, _ProtocolMeta)
-                            and getattr(base, "_is_protocol", False)
-                        )
+                        or _is_protocol(base)
                     ):
                         raise TypeError(
                             f"Protocols can only inherit from other protocols, "
                             f"got {base!r}"
                         )
-            return super().__new__(mcls, name, bases, namespace, **kwargs)
+            return abc.ABCMeta.__new__(mcls, name, bases, namespace, **kwargs)
 
         def __init__(cls, *args, **kwargs):
-            super().__init__(*args, **kwargs)
+            abc.ABCMeta.__init__(cls, *args, **kwargs)
             if getattr(cls, "_is_protocol", False):
                 cls.__protocol_attrs__ = _get_protocol_attrs(cls)
                 # PEP 544 prohibits using issubclass()
@@ -647,7 +671,7 @@ else:
                         "Instance and class checks can only be used with "
                         "@runtime_checkable protocols"
                     )
-            return super().__subclasscheck__(other)
+            return abc.ABCMeta.__subclasscheck__(cls, other)
 
         def __instancecheck__(cls, instance):
             # We need this method for situations where attributes are
@@ -656,7 +680,7 @@ else:
                 return type.__instancecheck__(cls, instance)
             if not getattr(cls, "_is_protocol", False):
                 # i.e., it's a concrete subclass of a protocol
-                return super().__instancecheck__(instance)
+                return abc.ABCMeta.__instancecheck__(cls, instance)
 
             if (
                 not getattr(cls, '_is_runtime_protocol', False) and
@@ -665,7 +689,7 @@ else:
                 raise TypeError("Instance and class checks can only be used with"
                                 " @runtime_checkable protocols")
 
-            if super().__instancecheck__(instance):
+            if abc.ABCMeta.__instancecheck__(cls, instance):
                 return True
 
             for attr in cls.__protocol_attrs__:
@@ -684,7 +708,7 @@ else:
             # Hack so that typing.Generic.__class_getitem__
             # treats typing_extensions.Protocol
             # as equivalent to typing.Protocol on Python 3.8+
-            if super().__eq__(other) is True:
+            if abc.ABCMeta.__eq__(cls, other) is True:
                 return True
             return (
                 cls is Protocol and other is getattr(typing, "Protocol", object())

@@ -282,6 +282,12 @@ Special typing primitives
       Backported changes to runtime-checkable protocols from Python 3.12,
       including :pr-cpy:`103034` and :pr-cpy:`26067`.
 
+   .. versionchanged:: 4.7.0
+
+      Classes can now inherit from both :py:class:`typing.Protocol` and
+      ``typing_extensions.Protocol`` simultaneously. Previously, this led to
+      :py:exc:`TypeError` being raised due to a metaclass conflict.
+
 .. data:: Required
 
    See :py:data:`typing.Required` and :pep:`655`. In ``typing`` since 3.11.
