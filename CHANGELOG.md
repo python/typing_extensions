@@ -24,8 +24,8 @@
 - Allow `Protocol` classes to inherit from `typing_extensions.Buffer` or
   `collections.abc.Buffer`. Patch by Alex Waygood (backporting
   https://github.com/python/cpython/pull/104827, by Jelle Zijlstra).
-- Allow classes to have both `typing.Protocol` and `typing_extensions.Protocol`
-  in their mro. Since v4.6.0, this caused `TypeError` to be raised due to a
+- Allow classes to inherit from both `typing.Protocol` and `typing_extensions.Protocol`
+  simultaneously. Since v4.6.0, this caused `TypeError` to be raised due to a
   metaclass conflict. Patch by Alex Waygood.
 
 # Release 4.6.3 (June 1, 2023)

@@ -284,8 +284,8 @@ Special typing primitives
 
    .. versionchanged:: 4.7.0
 
-      Classes can now have both :py:class:`typing.Protocol` and
-      ``typing_extensions.Protocol`` in their mro. Previously, this led to
+      Classes can now inherit from both :py:class:`typing.Protocol` and
+      ``typing_extensions.Protocol`` simultaneously. Previously, this led to
       :py:exc:`TypeError` being raised due to a metaclass conflict.
 
 .. data:: Required
