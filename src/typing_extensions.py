@@ -2928,7 +2928,6 @@ else:
             and __tp != Protocol
         )
 
-
     def get_protocol_members(__tp: type) -> typing.FrozenSet[str]:
         """Return the set of members defined in a Protocol.
 
