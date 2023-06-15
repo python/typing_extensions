@@ -37,7 +37,7 @@ from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
-from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar
+from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar, get_protocol_members, is_protocol
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 
 # Flags used to mark tests that only apply after a specific
@@ -2991,6 +2991,59 @@ class ProtocolTests(BaseTestCase):
         Y = X[bytes, memoryview]
         self.assertEqual(Y.__parameters__, ())
         self.assertEqual(Y.__args__, (int, bytes, memoryview))
+
+    def test_get_protocol_members(self):
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(object)
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(object())
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(Protocol)
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(Generic)
+
+        class P(Protocol):
+            a: int
+            def b(self) -> str: ...
+            @property
+            def c(self) -> int: ...
+
+        self.assertEqual(get_protocol_members(P), {'a', 'b', 'c'})
+        self.assertIsInstance(get_protocol_members(P), frozenset)
+        self.assertIsNot(get_protocol_members(P), P.__protocol_attrs__)
+
+        class Concrete:
+            a: int
+            def b(self) -> str: return "capybara"
+            @property
+            def c(self) -> int: return 5
+
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(Concrete)
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(Concrete())
+
+        class ConcreteInherit(P):
+            a: int = 42
+            def b(self) -> str: return "capybara"
+            @property
+            def c(self) -> int: return 5
+
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(ConcreteInherit)
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(ConcreteInherit())
+
+    def test_is_protocol(self):
+        self.assertTrue(is_protocol(Proto))
+        self.assertTrue(is_protocol(Point))
+        self.assertFalse(is_protocol(Concrete))
+        self.assertFalse(is_protocol(Concrete()))
+        self.assertFalse(is_protocol(Generic))
+        self.assertFalse(is_protocol(object))
+
+        # Protocol is not itself a protocol
+        self.assertFalse(is_protocol(Protocol))
 
     @skip_if_py312b1
     def test_interaction_with_isinstance_checks_on_superclasses_with_ABCMeta(self):
