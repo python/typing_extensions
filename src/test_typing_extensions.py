@@ -3034,6 +3034,44 @@ class ProtocolTests(BaseTestCase):
         with self.assertRaisesRegex(TypeError, "not a Protocol"):
             get_protocol_members(ConcreteInherit())
 
+    @skipUnless(hasattr(typing, "Protocol"), "Only relevant when typing.Protocol exists")
+    def test_get_protocol_members_typing(self):
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(typing.Protocol)
+
+        class P(typing.Protocol):
+            a: int
+            def b(self) -> str: ...
+            @property
+            def c(self) -> int: ...
+
+        self.assertEqual(get_protocol_members(P), {'a', 'b', 'c'})
+        self.assertIsInstance(get_protocol_members(P), frozenset)
+        if hasattr(P, "__protocol_attrs__"):
+            self.assertIsNot(get_protocol_members(P), P.__protocol_attrs__)
+
+        class Concrete:
+            a: int
+            def b(self) -> str: return "capybara"
+            @property
+            def c(self) -> int: return 5
+
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(Concrete)
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(Concrete())
+
+        class ConcreteInherit(P):
+            a: int = 42
+            def b(self) -> str: return "capybara"
+            @property
+            def c(self) -> int: return 5
+
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(ConcreteInherit)
+        with self.assertRaisesRegex(TypeError, "not a Protocol"):
+            get_protocol_members(ConcreteInherit())
+
     def test_is_protocol(self):
         self.assertTrue(is_protocol(Proto))
         self.assertTrue(is_protocol(Point))
@@ -3044,6 +3082,20 @@ class ProtocolTests(BaseTestCase):
 
         # Protocol is not itself a protocol
         self.assertFalse(is_protocol(Protocol))
+
+    @skipUnless(hasattr(typing, "Protocol"), "Only relevant when typing.Protocol exists")
+    def test_is_protocol_with_typing(self):
+        self.assertFalse(is_protocol(typing.Protocol))
+
+        class TypingProto(typing.Protocol):
+            a: int
+
+        self.assertTrue(is_protocol(TypingProto))
+
+        class Concrete(TypingProto):
+            a: int
+
+        self.assertFalse(is_protocol(Concrete))
 
     @skip_if_py312b1
     def test_interaction_with_isinstance_checks_on_superclasses_with_ABCMeta(self):

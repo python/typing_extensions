@@ -2929,7 +2929,7 @@ else:
         )
 
 
-    def get_protocol_members(__tp: type) -> frozenset[str]:
+    def get_protocol_members(__tp: type) -> typing.FrozenSet[str]:
         """Return the set of members defined in a Protocol.
 
         Example::
@@ -2945,7 +2945,9 @@ else:
         """
         if not is_protocol(__tp):
             raise TypeError(f'{__tp!r} is not a Protocol')
-        return frozenset(__tp.__protocol_attrs__)
+        if hasattr(__tp, '__protocol_attrs__'):
+            return frozenset(__tp.__protocol_attrs__)
+        return frozenset(typing._get_protocol_attrs(__tp))
 
 
 # Aliases for items that have always been in typing.
