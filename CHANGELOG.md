@@ -39,6 +39,13 @@
     or `NT = NamedTuple("NT", None)` is now deprecated.
   - Creating a `TypedDict` with zero fields using the syntax `TD = TypedDict("TD")`
     or `TD = TypedDict("TD", None)` is now deprecated.
+- Fix bug on Python 3.7 where a protocol `X` that had a member `a` would not be
+  considered an implicit subclass of an unrelated protocol `Y` that only has a
+  member `a`. Where the members of `X` are a superset of the members of `Y`,
+  `X` should always be considered a subclass of `Y` iff `Y` is a
+  runtime-checkable protocol that only has callable members. Patch by Alex
+  Waygood (backporting CPython PR
+  https://github.com/python/cpython/pull/105835).
 
 # Release 4.6.3 (June 1, 2023)
 

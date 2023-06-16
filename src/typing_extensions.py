@@ -604,22 +604,9 @@ else:
         # to mix without getting TypeErrors about "metaclass conflict"
         _typing_Protocol = typing.Protocol
         _ProtocolMetaBase = type(_typing_Protocol)
-
-        def _is_protocol(cls):
-            return (
-                isinstance(cls, type)
-                and issubclass(cls, typing.Generic)
-                and getattr(cls, "_is_protocol", False)
-            )
     else:
         _typing_Protocol = _marker
         _ProtocolMetaBase = abc.ABCMeta
-
-        def _is_protocol(cls):
-            return (
-                isinstance(cls, _ProtocolMeta)
-                and getattr(cls, "_is_protocol", False)
-            )
 
     class _ProtocolMeta(_ProtocolMetaBase):
         # This metaclass is somewhat unfortunate,
@@ -634,9 +621,9 @@ else:
             elif {Protocol, _typing_Protocol} & set(bases):
                 for base in bases:
                     if not (
-                        base in {object, typing.Generic}
+                        base in {object, typing.Generic, Protocol, _typing_Protocol}
                         or base.__name__ in _PROTO_ALLOWLIST.get(base.__module__, [])
-                        or _is_protocol(base)
+                        or is_protocol(base)
                     ):
                         raise TypeError(
                             f"Protocols can only inherit from other protocols, "
@@ -740,8 +727,7 @@ else:
                 if (
                     isinstance(annotations, collections.abc.Mapping)
                     and attr in annotations
-                    and issubclass(other, (typing.Generic, _ProtocolMeta))
-                    and getattr(other, "_is_protocol", False)
+                    and is_protocol(other)
                 ):
                     break
             else:
