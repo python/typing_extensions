@@ -636,7 +636,7 @@ Functions
       >>> get_protocol_members(P)
       frozenset({'a', 'b'})
 
-   Raise :exc:`TypeError` for arguments that are not Protocols.
+   Raise :py:exc:`TypeError` for arguments that are not Protocols.
 
    .. versionadded:: 4.7.0
 
@@ -655,7 +655,7 @@ Functions
 .. function:: is_protocol(tp)
 
    Determine if a type is a :class:`Protocol`. This works with protocols
-   defined using either :class:`typing.Protocol` or :class:`typing_extensions.Protocol`.
+   defined using either :py:class:`typing.Protocol` or :class:`typing_extensions.Protocol`.
 
    For example::
 
