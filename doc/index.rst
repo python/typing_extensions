@@ -625,7 +625,7 @@ Functions
 .. function:: get_protocol_members(tp)
 
    Return the set of members defined in a :class:`Protocol`. This works with protocols
-   defined using either of :class:`typing.Protocol` and :class:`typing_extensions.Protocol`.
+   defined using either :class:`typing.Protocol` or :class:`typing_extensions.Protocol`.
 
    ::
 
