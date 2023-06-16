@@ -52,6 +52,10 @@ TYPING_3_11_0 = sys.version_info[:3] >= (3, 11, 0)
 # 3.12 changes the representation of Unpack[] (PEP 692)
 TYPING_3_12_0 = sys.version_info[:3] >= (3, 12, 0)
 
+only_with_typing_Protocol = skipUnless(
+    hasattr(typing, "Protocol"), "Only relevant when typing.Protocol exists"
+)
+
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
 HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
@@ -1767,10 +1771,7 @@ class ProtocolTests(BaseTestCase):
         self.assertNotIsInstance(D(), E)
         self.assertNotIsInstance(E(), D)
 
-    @skipUnless(
-        hasattr(typing, "Protocol"),
-        "Test is only relevant if typing.Protocol exists"
-    )
+    @only_with_typing_Protocol
     def test_runtimecheckable_on_typing_dot_Protocol(self):
         @runtime_checkable
         class Foo(typing.Protocol):
@@ -1783,10 +1784,7 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(Bar(), Foo)
         self.assertNotIsInstance(object(), Foo)
 
-    @skipUnless(
-        hasattr(typing, "runtime_checkable"),
-        "Test is only relevant if typing.runtime_checkable exists"
-    )
+    @only_with_typing_Protocol
     def test_typing_dot_runtimecheckable_on_Protocol(self):
         @typing.runtime_checkable
         class Foo(Protocol):
@@ -1799,10 +1797,7 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(Bar(), Foo)
         self.assertNotIsInstance(object(), Foo)
 
-    @skipUnless(
-        hasattr(typing, "Protocol"),
-        "Test is only relevant if typing.Protocol exists"
-    )
+    @only_with_typing_Protocol
     def test_typing_Protocol_and_extensions_Protocol_can_mix(self):
         class TypingProto(typing.Protocol):
             x: int
@@ -3034,7 +3029,7 @@ class ProtocolTests(BaseTestCase):
         with self.assertRaisesRegex(TypeError, "not a Protocol"):
             get_protocol_members(ConcreteInherit())
 
-    @skipUnless(hasattr(typing, "Protocol"), "Only relevant when typing.Protocol exists")
+    @only_with_typing_Protocol
     def test_get_protocol_members_typing(self):
         with self.assertRaisesRegex(TypeError, "not a Protocol"):
             get_protocol_members(typing.Protocol)
@@ -3083,7 +3078,7 @@ class ProtocolTests(BaseTestCase):
         # Protocol is not itself a protocol
         self.assertFalse(is_protocol(Protocol))
 
-    @skipUnless(hasattr(typing, "Protocol"), "Only relevant when typing.Protocol exists")
+    @only_with_typing_Protocol
     def test_is_protocol_with_typing(self):
         self.assertFalse(is_protocol(typing.Protocol))
 

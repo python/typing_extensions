@@ -624,7 +624,8 @@ Functions
 
 .. function:: get_protocol_members(tp)
 
-   Return the set of members defined in a :class:`Protocol`.
+   Return the set of members defined in a :class:`Protocol`. This works with protocols
+   defined using either of :class:`typing.Protocol` and :class:`typing_extensions.Protocol`.
 
    ::
 
@@ -653,7 +654,8 @@ Functions
 
 .. function:: is_protocol(tp)
 
-   Determine if a type is a :class:`Protocol`.
+   Determine if a type is a :class:`Protocol`. This works with protocols
+   defined using either of :class:`typing.Protocol` and :class:`typing_extensions.Protocol`.
 
    For example::
 
