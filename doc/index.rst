@@ -629,7 +629,7 @@ Functions
 
    ::
 
-      >>> from typing import Protocol, get_protocol_members
+      >>> from typing_extensions import Protocol, get_protocol_members
       >>> class P(Protocol):
       ...     def a(self) -> str: ...
       ...     b: int
@@ -655,7 +655,7 @@ Functions
 .. function:: is_protocol(tp)
 
    Determine if a type is a :class:`Protocol`. This works with protocols
-   defined using either of :class:`typing.Protocol` and :class:`typing_extensions.Protocol`.
+   defined using either :class:`typing.Protocol` or :class:`typing_extensions.Protocol`.
 
    For example::
 

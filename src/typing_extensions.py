@@ -2913,7 +2913,7 @@ else:
 
         Example::
 
-            >>> from typing import Protocol, is_protocol
+            >>> from typing_extensions import Protocol, is_protocol
             >>> class P(Protocol):
             ...     def a(self) -> str: ...
             ...     b: int
@@ -2933,7 +2933,7 @@ else:
 
         Example::
 
-            >>> from typing import Protocol, get_protocol_members
+            >>> from typing_extensions import Protocol, get_protocol_members
             >>> class P(Protocol):
             ...     def a(self) -> str: ...
             ...     b: int
