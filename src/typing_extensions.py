@@ -987,14 +987,6 @@ if sys.version_info >= (3, 13):
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
 else:
-    class _Sentinel:
-        __slots__ = ()
-
-        def __repr__(self):
-            return '<sentinel>'
-
-    _sentinel = _Sentinel()
-
     # 3.10.0 and later
     _TAKES_MODULE = "module" in inspect.signature(typing._type_check).parameters
 
@@ -1086,7 +1078,7 @@ else:
 
         __instancecheck__ = __subclasscheck__
 
-    def TypedDict(__typename, __fields=_sentinel, *, total=True, **kwargs):
+    def TypedDict(__typename, __fields=_marker, *, total=True, **kwargs):
         """A simple typed namespace. At runtime it is equivalent to a plain dict.
 
         TypedDict creates a dictionary type such that a type checker will expect all
@@ -1133,8 +1125,8 @@ else:
 
         See PEP 655 for more details on Required and NotRequired.
         """
-        if __fields is _sentinel or __fields is None:
-            if __fields is _sentinel:
+        if __fields is _marker or __fields is None:
+            if __fields is _marker:
                 deprecated_thing = "Failing to pass a value for the 'fields' parameter"
             else:
                 deprecated_thing = "Passing `None` as the 'fields' parameter"
@@ -2660,7 +2652,7 @@ else:
                 nm_tpl.__init_subclass__()
             return nm_tpl
 
-    def NamedTuple(__typename, __fields=_sentinel, **kwargs):
+    def NamedTuple(__typename, __fields=_marker, **kwargs):
         """Typed version of namedtuple.
 
         Usage::
@@ -2680,7 +2672,7 @@ else:
 
             Employee = NamedTuple('Employee', [('name', str), ('id', int)])
         """
-        if __fields is _sentinel:
+        if __fields is _marker:
             if kwargs:
                 deprecated_thing = "Creating NamedTuple classes using keyword arguments"
                 deprecation_msg = (
@@ -2714,7 +2706,7 @@ else:
         elif kwargs:
             raise TypeError("Either list of fields or keywords"
                             " can be provided to NamedTuple, not both")
-        if __fields is _sentinel or __fields is None:
+        if __fields is _marker or __fields is None:
             warnings.warn(
                 deprecation_msg.format(name=deprecated_thing, remove="3.15"),
                 DeprecationWarning,
@@ -2725,7 +2717,6 @@ else:
         nt.__orig_bases__ = (NamedTuple,)
         return nt
 
-    NamedTuple.__doc__ = typing.NamedTuple.__doc__
     _NamedTuple = type.__new__(_NamedTupleMeta, 'NamedTuple', (), {})
 
     # On 3.8+, alter the signature so that it matches typing.NamedTuple.

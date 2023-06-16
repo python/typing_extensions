@@ -5283,7 +5283,6 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIsInstance(jane2, cls)
 
     def test_docstring(self):
-        self.assertEqual(NamedTuple.__doc__, typing.NamedTuple.__doc__)
         self.assertIsInstance(NamedTuple.__doc__, str)
 
     @skipUnless(TYPING_3_8_0, "NamedTuple had a bad signature on <=3.7")
