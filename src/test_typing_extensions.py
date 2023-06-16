@@ -4842,10 +4842,10 @@ class AllTests(BaseTestCase):
             exclude |= {
                 'Protocol', 'SupportsAbs', 'SupportsBytes',
                 'SupportsComplex', 'SupportsFloat', 'SupportsIndex', 'SupportsInt',
-                'SupportsRound', 'is_typeddict', 'Unpack',
+                'SupportsRound', 'Unpack',
             }
         if sys.version_info < (3, 13):
-            exclude |= {'NamedTuple', 'TypedDict'}
+            exclude |= {'NamedTuple', 'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(

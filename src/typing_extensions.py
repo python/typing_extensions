@@ -2643,8 +2643,11 @@ else:
             )
             nm_tpl.__bases__ = bases
             if typing.Generic in bases:
-                class_getitem = typing.Generic.__class_getitem__.__func__
-                nm_tpl.__class_getitem__ = classmethod(class_getitem)
+                if hasattr(typing, '_generic_class_getitem'):  # 3.12+
+                    nm_tpl.__class_getitem__ = classmethod(typing._generic_class_getitem)
+                else:
+                    class_getitem = typing.Generic.__class_getitem__.__func__
+                    nm_tpl.__class_getitem__ = classmethod(class_getitem)
             # update from user namespace without overriding special namedtuple attributes
             for key in ns:
                 if key in _prohibited_namedtuple_fields:
