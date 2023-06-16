@@ -970,7 +970,7 @@ else:
             pass
 
 
-if sys.version_info >= (3, 12):
+if sys.version_info >= (3, 13):
     # The standard library TypedDict in Python 3.8 does not store runtime information
     # about which (if any) keys are optional.  See https://bugs.python.org/issue38834
     # The standard library TypedDict in Python 3.9.0/1 does not honour the "total"
@@ -980,10 +980,18 @@ if sys.version_info >= (3, 12):
     # Generic TypedDicts are also impossible using typing.TypedDict on Python <3.11.
     # Aaaand on 3.12 we add __orig_bases__ to TypedDict
     # to enable better runtime introspection.
+    # On 3.13 we deprecate some odd ways of creating TypedDicts.
     TypedDict = typing.TypedDict
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
 else:
+    class _Sentinel:
+        __slots__ = ()
+        def __repr__(self):
+            return '<sentinel>'
+
+    _sentinel = _Sentinel()
+
     # 3.10.0 and later
     _TAKES_MODULE = "module" in inspect.signature(typing._type_check).parameters
 
@@ -1075,13 +1083,14 @@ else:
 
         __instancecheck__ = __subclasscheck__
 
-    def TypedDict(__typename, __fields=None, *, total=True, **kwargs):
+    def TypedDict(__typename, __fields=_sentinel, *, total=True, **kwargs):
         """A simple typed namespace. At runtime it is equivalent to a plain dict.
 
-        TypedDict creates a dictionary type that expects all of its
+        TypedDict creates a dictionary type such that a type checker will expect all
         instances to have a certain set of keys, where each key is
         associated with a value of a consistent type. This expectation
-        is not checked at runtime but is only enforced by type checkers.
+        is not checked at runtime.
+
         Usage::
 
             class Point2D(TypedDict):
@@ -1101,19 +1110,40 @@ else:
             Point2D = TypedDict('Point2D', {'x': int, 'y': int, 'label': str})
 
         By default, all keys must be present in a TypedDict. It is possible
-        to override this by specifying totality.
-        Usage::
+        to override this by specifying totality::
 
-            class point2D(TypedDict, total=False):
+            class Point2D(TypedDict, total=False):
                 x: int
                 y: int
 
-        This means that a point2D TypedDict can have any of the keys omitted. A type
+        This means that a Point2D TypedDict can have any of the keys omitted. A type
         checker is only expected to support a literal False or True as the value of
         the total argument. True is the default, and makes all items defined in the
         class body be required.
+
+        The Required and NotRequired special forms can also be used to mark
+        individual keys as being required or not required::
+
+            class Point2D(TypedDict):
+                x: int               # the "x" key must always be present (Required is the default)
+                y: NotRequired[int]  # the "y" key can be omitted
+
+        See PEP 655 for more details on Required and NotRequired.
         """
-        if __fields is None:
+        if __fields is _sentinel or __fields is None:
+            if __fields is _sentinel:
+                deprecated_thing = "Failing to pass a value for the 'fields' parameter"
+            else:
+                deprecated_thing = "Passing `None` as the 'fields' parameter"
+
+            example = f"`{__typename} = TypedDict({__typename!r}, {{}})`"
+            deprecation_msg = (
+                f"{deprecated_thing} is deprecated and will be disallowed in Python 3.15. "
+                "To create a TypedDict class with 0 fields "
+                "using the functional syntax, "
+                "pass an empty dictionary, e.g. "
+            ) + example + "."
+            warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
             __fields = kwargs
         elif kwargs:
             raise TypeError("TypedDict takes either a dict or keyword arguments,"
@@ -2568,7 +2598,8 @@ if not hasattr(typing, "TypeVarTuple"):
 # In 3.11, the ability to define generic `NamedTuple`s was supported.
 # This was explicitly disallowed in 3.9-3.10, and only half-worked in <=3.8.
 # On 3.12, we added __orig_bases__ to call-based NamedTuples
-if sys.version_info >= (3, 12):
+# On 3.13, we deprecated kwargs-based NamedTuples
+if sys.version_info >= (3, 13):
     NamedTuple = typing.NamedTuple
 else:
     def _make_nmtuple(name, types, module, defaults=()):
@@ -2624,12 +2655,67 @@ else:
                 nm_tpl.__init_subclass__()
             return nm_tpl
 
-    def NamedTuple(__typename, __fields=None, **kwargs):
-        if __fields is None:
-            __fields = kwargs.items()
+    def NamedTuple(__typename, __fields=_sentinel, **kwargs):
+        """Typed version of namedtuple.
+
+        Usage::
+
+            class Employee(NamedTuple):
+                name: str
+                id: int
+
+        This is equivalent to::
+
+            Employee = collections.namedtuple('Employee', ['name', 'id'])
+
+        The resulting class has an extra __annotations__ attribute, giving a
+        dict that maps field names to types.  (The field names are also in
+        the _fields attribute, which is part of the namedtuple API.)
+        An alternative equivalent functional syntax is also accepted::
+
+            Employee = NamedTuple('Employee', [('name', str), ('id', int)])
+        """
+        if __fields is _sentinel:
+            if kwargs:
+                deprecated_thing = "Creating NamedTuple classes using keyword arguments"
+                deprecation_msg = (
+                    "{name} is deprecated and will be disallowed in Python {remove}. "
+                    "Use the class-based or functional syntax instead."
+                )
+            else:
+                deprecated_thing = "Failing to pass a value for the 'fields' parameter"
+                example = f"`{__typename} = NamedTuple({__typename!r}, [])`"
+                deprecation_msg = (
+                    "{name} is deprecated and will be disallowed in Python {remove}. "
+                    "To create a NamedTuple class with 0 fields "
+                    "using the functional syntax, "
+                    "pass an empty list, e.g. "
+                ) + example + "."
+        elif __fields is None:
+            if kwargs:
+                raise TypeError(
+                    "Cannot pass `None` as the 'fields' parameter "
+                    "and also specify fields using keyword arguments"
+                )
+            else:
+                deprecated_thing = "Passing `None` as the 'fields' parameter"
+                example = f"`{__typename} = NamedTuple({__typename!r}, [])`"
+                deprecation_msg = (
+                    "{name} is deprecated and will be disallowed in Python {remove}. "
+                    "To create a NamedTuple class with 0 fields "
+                    "using the functional syntax, "
+                    "pass an empty list, e.g. "
+                ) + example + "."
         elif kwargs:
             raise TypeError("Either list of fields or keywords"
                             " can be provided to NamedTuple, not both")
+        if __fields is _sentinel or __fields is None:
+            warnings.warn(
+                deprecation_msg.format(name=deprecated_thing, remove="3.15"),
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            __fields = kwargs.items()
         nt = _make_nmtuple(__typename, __fields, module=_caller())
         nt.__orig_bases__ = (NamedTuple,)
         return nt
