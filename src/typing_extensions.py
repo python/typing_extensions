@@ -2946,7 +2946,7 @@ else:
             raise TypeError(f'{__tp!r} is not a Protocol')
         if hasattr(__tp, '__protocol_attrs__'):
             return frozenset(__tp.__protocol_attrs__)
-        return frozenset(typing._get_protocol_attrs(__tp))
+        return frozenset(_get_protocol_attrs(__tp))
 
 
 # Aliases for items that have always been in typing.

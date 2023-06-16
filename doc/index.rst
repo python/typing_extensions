@@ -664,7 +664,7 @@ Functions
       is_protocol(P)    # => True
       is_protocol(int)  # => False
 
-   .. versionadded:: 4.7
+   .. versionadded:: 4.7.0
 
 .. function:: is_typeddict(tp)
 
