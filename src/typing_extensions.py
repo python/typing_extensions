@@ -987,6 +987,7 @@ if sys.version_info >= (3, 13):
 else:
     class _Sentinel:
         __slots__ = ()
+
         def __repr__(self):
             return '<sentinel>'
 
