@@ -3265,7 +3265,7 @@ class TypedDictTests(BaseTestCase):
 
     def test_typeddict_errors(self):
         Emp = TypedDict('Emp', {'name': str, 'id': int})
-        if sys.version_info >= (3, 12):
+        if sys.version_info >= (3, 13):
             self.assertEqual(TypedDict.__module__, 'typing')
         else:
             self.assertEqual(TypedDict.__module__, 'typing_extensions')
@@ -3753,6 +3753,45 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(MixedGenericChild.__orig_bases__, (GenericChild, OtherGenericChild, GenericParent[float]))
         self.assertEqual(MultipleGenericBases.__orig_bases__, (GenericParent[int], GenericParent[float]))
         self.assertEqual(CallTypedDict.__orig_bases__, (TypedDict,))
+
+    def test_zero_fields_typeddicts(self):
+        T1 = TypedDict("T1", {})
+        class T2(TypedDict): pass
+        try:
+            ns = {"TypedDict": TypedDict}
+            exec("class T3[tvar](TypedDict): pass", ns)
+            T3 = ns["T3"]
+        except SyntaxError:
+            class T3(TypedDict): pass
+        S = TypeVar("S")
+        class T4(TypedDict, Generic[S]): pass
+
+        expected_warning = re.escape(
+            "Failing to pass a value for the 'fields' parameter is deprecated "
+            "and will be disallowed in Python 3.15. "
+            "To create a TypedDict class with 0 fields "
+            "using the functional syntax, "
+            "pass an empty dictionary, e.g. `T5 = TypedDict('T5', {})`."
+        )
+        with self.assertWarnsRegex(DeprecationWarning, fr"^{expected_warning}$"):
+            T5 = TypedDict('T5')
+
+        expected_warning = re.escape(
+            "Passing `None` as the 'fields' parameter is deprecated "
+            "and will be disallowed in Python 3.15. "
+            "To create a TypedDict class with 0 fields "
+            "using the functional syntax, "
+            "pass an empty dictionary, e.g. `T6 = TypedDict('T6', {})`."
+        )
+        with self.assertWarnsRegex(DeprecationWarning, fr"^{expected_warning}$"):
+            T6 = TypedDict('T6', None)
+
+        for klass in T1, T2, T3, T4, T5, T6:
+            with self.subTest(klass=klass.__name__):
+                self.assertEqual(klass.__annotations__, {})
+                self.assertEqual(klass.__required_keys__, set())
+                self.assertEqual(klass.__optional_keys__, set())
+                self.assertIsInstance(klass(), dict)
 
 
 class AnnotatedTests(BaseTestCase):
@@ -4903,8 +4942,10 @@ class AllTests(BaseTestCase):
             exclude |= {
                 'Protocol', 'SupportsAbs', 'SupportsBytes',
                 'SupportsComplex', 'SupportsFloat', 'SupportsIndex', 'SupportsInt',
-                'SupportsRound', 'TypedDict', 'is_typeddict', 'NamedTuple', 'Unpack',
+                'SupportsRound', 'Unpack',
             }
+        if sys.version_info < (3, 13):
+            exclude |= {'NamedTuple', 'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
@@ -5124,21 +5165,47 @@ class NamedTupleTests(BaseTestCase):
                 self.assertFalse(hasattr(Group, attr))
 
     def test_namedtuple_keyword_usage(self):
-        LocalEmployee = NamedTuple("LocalEmployee", name=str, age=int)
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            "Creating NamedTuple classes using keyword arguments is deprecated"
+        ):
+            LocalEmployee = NamedTuple("LocalEmployee", name=str, age=int)
+
         nick = LocalEmployee('Nick', 25)
         self.assertIsInstance(nick, tuple)
         self.assertEqual(nick.name, 'Nick')
         self.assertEqual(LocalEmployee.__name__, 'LocalEmployee')
         self.assertEqual(LocalEmployee._fields, ('name', 'age'))
         self.assertEqual(LocalEmployee.__annotations__, dict(name=str, age=int))
+
         with self.assertRaisesRegex(
             TypeError,
-            'Either list of fields or keywords can be provided to NamedTuple, not both'
+            "Either list of fields or keywords can be provided to NamedTuple, not both"
         ):
             NamedTuple('Name', [('x', int)], y=str)
 
+        with self.assertRaisesRegex(
+            TypeError,
+            "Either list of fields or keywords can be provided to NamedTuple, not both"
+        ):
+            NamedTuple('Name', [], y=str)
+
+        with self.assertRaisesRegex(
+            TypeError,
+            (
+                r"Cannot pass `None` as the 'fields' parameter "
+                r"and also specify fields using keyword arguments"
+            )
+        ):
+            NamedTuple('Name', None, x=int)
+
     def test_namedtuple_special_keyword_names(self):
-        NT = NamedTuple("NT", cls=type, self=object, typename=str, fields=list)
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            "Creating NamedTuple classes using keyword arguments is deprecated"
+        ):
+            NT = NamedTuple("NT", cls=type, self=object, typename=str, fields=list)
+
         self.assertEqual(NT.__name__, 'NT')
         self.assertEqual(NT._fields, ('cls', 'self', 'typename', 'fields'))
         a = NT(cls=str, self=42, typename='foo', fields=[('bar', tuple)])
@@ -5148,12 +5215,32 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(a.fields, [('bar', tuple)])
 
     def test_empty_namedtuple(self):
-        NT = NamedTuple('NT')
+        expected_warning = re.escape(
+            "Failing to pass a value for the 'fields' parameter is deprecated "
+            "and will be disallowed in Python 3.15. "
+            "To create a NamedTuple class with 0 fields "
+            "using the functional syntax, "
+            "pass an empty list, e.g. `NT1 = NamedTuple('NT1', [])`."
+        )
+        with self.assertWarnsRegex(DeprecationWarning, fr"^{expected_warning}$"):
+            NT1 = NamedTuple('NT1')
+
+        expected_warning = re.escape(
+            "Passing `None` as the 'fields' parameter is deprecated "
+            "and will be disallowed in Python 3.15. "
+            "To create a NamedTuple class with 0 fields "
+            "using the functional syntax, "
+            "pass an empty list, e.g. `NT2 = NamedTuple('NT2', [])`."
+        )
+        with self.assertWarnsRegex(DeprecationWarning, fr"^{expected_warning}$"):
+            NT2 = NamedTuple('NT2', None)
+
+        NT3 = NamedTuple('NT2', [])
 
         class CNT(NamedTuple):
             pass  # empty body
 
-        for struct in [NT, CNT]:
+        for struct in NT1, NT2, NT3, CNT:
             with self.subTest(struct=struct):
                 self.assertEqual(struct._fields, ())
                 self.assertEqual(struct.__annotations__, {})
@@ -5196,7 +5283,6 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIsInstance(jane2, cls)
 
     def test_docstring(self):
-        self.assertEqual(NamedTuple.__doc__, typing.NamedTuple.__doc__)
         self.assertIsInstance(NamedTuple.__doc__, str)
 
     @skipUnless(TYPING_3_8_0, "NamedTuple had a bad signature on <=3.7")

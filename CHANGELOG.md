@@ -30,6 +30,15 @@
 - Allow classes to inherit from both `typing.Protocol` and `typing_extensions.Protocol`
   simultaneously. Since v4.6.0, this caused `TypeError` to be raised due to a
   metaclass conflict. Patch by Alex Waygood.
+- Backport several deprecations from CPython relating to unusual ways to
+  create `TypedDict`s and `NamedTuple`s. CPython PRs #105609 and #105780
+  by Alex Waygood; `typing_extensions` backport by Jelle Zijlstra.
+  - Creating a `NamedTuple` using the functional syntax with keyword arguments
+    (`NT = NamedTuple("NT", a=int)`) is now deprecated.
+  - Creating a `NamedTuple` with zero fields using the syntax `NT = NamedTuple("NT")`
+    or `NT = NamedTuple("NT", None)` is now deprecated.
+  - Creating a `TypedDict` with zero fields using the syntax `TD = TypedDict("TD")`
+    or `TD = TypedDict("TD", None)` is now deprecated.
 
 # Release 4.6.3 (June 1, 2023)
 

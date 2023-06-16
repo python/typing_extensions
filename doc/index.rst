@@ -216,6 +216,22 @@ Special typing primitives
 
       Support for the ``__orig_bases__`` attribute was added.
 
+   .. versionchanged:: 4.7.0
+
+      The undocumented keyword argument syntax for creating NamedTuple classes
+      (``NT = NamedTuple("NT", x=int)``) is deprecated, and will be disallowed
+      in Python 3.15. Use the class-based syntax or the functional syntax instead.
+
+   .. versionchanged:: 4.7.0
+
+      When using the functional syntax to create a NamedTuple class, failing to
+      pass a value to the 'fields' parameter (``NT = NamedTuple("NT")``) is
+      deprecated. Passing ``None`` to the 'fields' parameter
+      (``NT = NamedTuple("NT", None)``) is also deprecated. Both will be
+      disallowed in Python 3.15. To create a NamedTuple class with zero fields,
+      use ``class NT(NamedTuple): pass`` or ``NT = NamedTuple("NT", [])``.
+
+
 .. data:: Never
 
    See :py:data:`typing.Never`. In ``typing`` since 3.11.
@@ -354,6 +370,15 @@ Special typing primitives
       ``TypedDict`` is now a function rather than a class.
       This brings ``typing_extensions.TypedDict`` closer to the implementation
       of :py:mod:`typing.TypedDict` on Python 3.9 and higher.
+
+   .. versionchanged:: 4.7.0
+
+      When using the functional syntax to create a TypedDict class, failing to
+      pass a value to the 'fields' parameter (``TD = TypedDict("TD")``) is
+      deprecated. Passing ``None`` to the 'fields' parameter
+      (``TD = TypedDict("TD", None)``) is also deprecated. Both will be
+      disallowed in Python 3.15. To create a TypedDict class with 0 fields,
+      use ``class TD(TypedDict): pass`` or ``TD = TypedDict("TD", {})``.
 
 .. class:: TypeVar(name, *constraints, bound=None, covariant=False,
                    contravariant=False, infer_variance=False, default=...)
