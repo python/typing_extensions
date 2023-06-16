@@ -3165,7 +3165,7 @@ class TypedDictTests(BaseTestCase):
 
     def test_typeddict_errors(self):
         Emp = TypedDict('Emp', {'name': str, 'id': int})
-        if sys.version_info >= (3, 12):
+        if sys.version_info >= (3, 13):
             self.assertEqual(TypedDict.__module__, 'typing')
         else:
             self.assertEqual(TypedDict.__module__, 'typing_extensions')
@@ -3658,7 +3658,7 @@ class TypedDictTests(BaseTestCase):
         T1 = TypedDict("T1", {})
         class T2(TypedDict): pass
         try:
-            ns = {}
+            ns = {"TypedDict": TypedDict}
             exec("class T3[tvar](TypedDict): pass", ns)
             T3 = ns["T3"]
         except SyntaxError:
@@ -4842,8 +4842,10 @@ class AllTests(BaseTestCase):
             exclude |= {
                 'Protocol', 'SupportsAbs', 'SupportsBytes',
                 'SupportsComplex', 'SupportsFloat', 'SupportsIndex', 'SupportsInt',
-                'SupportsRound', 'TypedDict', 'is_typeddict', 'NamedTuple', 'Unpack',
+                'SupportsRound', 'is_typeddict', 'Unpack',
             }
+        if sys.version_info < (3, 13):
+            exclude |= {'NamedTuple', 'TypedDict'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
