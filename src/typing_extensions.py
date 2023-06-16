@@ -608,7 +608,6 @@ else:
         _typing_Protocol = _marker
         _ProtocolMetaBase = abc.ABCMeta
 
-
     class _ProtocolMeta(_ProtocolMetaBase):
         # This metaclass is somewhat unfortunate,
         # but is necessary for several reasons...
