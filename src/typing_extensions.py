@@ -1126,7 +1126,7 @@ else:
         individual keys as being required or not required::
 
             class Point2D(TypedDict):
-                x: int               # the "x" key must always be present (Required is the default)
+                x: int  # the "x" key must always be present (Required is the default)
                 y: NotRequired[int]  # the "y" key can be omitted
 
         See PEP 655 for more details on Required and NotRequired.
@@ -1139,10 +1139,9 @@ else:
 
             example = f"`{__typename} = TypedDict({__typename!r}, {{}})`"
             deprecation_msg = (
-                f"{deprecated_thing} is deprecated and will be disallowed in Python 3.15. "
-                "To create a TypedDict class with 0 fields "
-                "using the functional syntax, "
-                "pass an empty dictionary, e.g. "
+                f"{deprecated_thing} is deprecated and will be disallowed in "
+                "Python 3.15. To create a TypedDict class with 0 fields "
+                "using the functional syntax, pass an empty dictionary, e.g. "
             ) + example + "."
             warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
             __fields = kwargs
