@@ -1,5 +1,8 @@
 # Unreleased
 
+- Add `typing_extensions.get_protocol_members` and
+  `typing_extensions.is_protocol` (backport of CPython PR #104878).
+  Patch by Jelle Zijlstra.
 - `typing_extensions` now re-exports all names in the standard library's
   `typing` module, except the deprecated `ByteString`. Patch by Jelle
   Zijlstra.
@@ -17,7 +20,7 @@
 - Fix tests on Python 3.13, which removes support for creating
   `TypedDict` classes through the keyword-argument syntax. Patch by
   Jelle Zijlstra.
-- Fix a regression introduced in v4.6.3 that meant that 
+- Fix a regression introduced in v4.6.3 that meant that
   ``issubclass(object, typing_extensions.Protocol)`` would erroneously raise
   ``TypeError``. Patch by Alex Waygood (backporting the CPython PR
   https://github.com/python/cpython/pull/105239).

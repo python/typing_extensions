@@ -647,6 +647,24 @@ Functions
 
    .. versionadded:: 4.2.0
 
+.. function:: get_protocol_members(tp)
+
+   Return the set of members defined in a :class:`Protocol`. This works with protocols
+   defined using either :class:`typing.Protocol` or :class:`typing_extensions.Protocol`.
+
+   ::
+
+      >>> from typing_extensions import Protocol, get_protocol_members
+      >>> class P(Protocol):
+      ...     def a(self) -> str: ...
+      ...     b: int
+      >>> get_protocol_members(P)
+      frozenset({'a', 'b'})
+
+   Raise :py:exc:`TypeError` for arguments that are not Protocols.
+
+   .. versionadded:: 4.7.0
+
 .. function:: get_type_hints(obj, globalns=None, localns=None, include_extras=False)
 
    See :py:func:`typing.get_type_hints`.
@@ -658,6 +676,22 @@ Functions
    .. versionchanged:: 4.1.0
 
       Interaction with :data:`Required` and :data:`NotRequired`.
+
+.. function:: is_protocol(tp)
+
+   Determine if a type is a :class:`Protocol`. This works with protocols
+   defined using either :py:class:`typing.Protocol` or :class:`typing_extensions.Protocol`.
+
+   For example::
+
+      class P(Protocol):
+          def a(self) -> str: ...
+          b: int
+
+      is_protocol(P)    # => True
+      is_protocol(int)  # => False
+
+   .. versionadded:: 4.7.0
 
 .. function:: is_typeddict(tp)
 
