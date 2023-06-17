@@ -1822,7 +1822,8 @@ class ProtocolTests(BaseTestCase):
         ):
             with self.subTest(proto=proto.__name__):
                 self.assertTrue(is_protocol(proto))
-                self.assertIsInstance(proto, typing_extensions._ProtocolMeta)
+                if Protocol is not typing.Protocol:
+                    self.assertIsInstance(proto, typing_extensions._ProtocolMeta)
                 self.assertIsInstance(proto.__protocol_attrs__, set)
                 with self.assertRaisesRegex(
                     TypeError, "Protocols cannot be instantiated"
