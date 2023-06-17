@@ -1817,10 +1817,36 @@ class ProtocolTests(BaseTestCase):
         class SubProto4(ExtensionsProto, TypingProto, Protocol):
             z: int
 
+        for proto in (
+            ExtensionsProto, SubProto, SubProto2, SubProto3, SubProto4
+        ):
+            with self.subTest(proto=proto.__name__):
+                self.assertTrue(is_protocol(proto))
+                if Protocol is not typing.Protocol:
+                    self.assertIsInstance(proto, typing_extensions._ProtocolMeta)
+                self.assertIsInstance(proto.__protocol_attrs__, set)
+                with self.assertRaisesRegex(
+                    TypeError, "Protocols cannot be instantiated"
+                ):
+                    proto()
+                # check these don't raise
+                runtime_checkable(proto)
+                typing.runtime_checkable(proto)
+
         class Concrete(SubProto): pass
         class Concrete2(SubProto2): pass
         class Concrete3(SubProto3): pass
         class Concrete4(SubProto4): pass
+
+        for cls in Concrete, Concrete2, Concrete3, Concrete4:
+            with self.subTest(cls=cls.__name__):
+                self.assertFalse(is_protocol(cls))
+                # Check that this doesn't raise:
+                self.assertIsInstance(cls(), cls)
+                with self.assertRaises(TypeError):
+                    runtime_checkable(cls)
+                with self.assertRaises(TypeError):
+                    typing.runtime_checkable(cls)
 
     def test_no_instantiation(self):
         class P(Protocol): pass
