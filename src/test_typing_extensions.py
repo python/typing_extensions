@@ -1842,7 +1842,7 @@ class ProtocolTests(BaseTestCase):
             with self.subTest(cls=cls.__name__):
                 self.assertFalse(is_protocol(cls))
                 # Check that this doesn't raise:
-                cls()
+                self.assertIsInstance(cls(), cls)
                 with self.assertRaises(TypeError):
                     runtime_checkable(cls)
                 with self.assertRaises(TypeError):
