@@ -304,6 +304,12 @@ Special typing primitives
       ``typing_extensions.Protocol`` simultaneously. Previously, this led to
       :py:exc:`TypeError` being raised due to a metaclass conflict.
 
+      It is recommended to avoid doing this if possible. Not all features and
+      bugfixes that ``typing_extensions.Protocol`` backports from newer Python
+      versions are guaranteed to work if :py:class:`typing.Protocol` is also
+      present in a protocol class's :py:term:`method resolution order`. See
+      :issue:`245` for some examples.
+
 .. data:: Required
 
    See :py:data:`typing.Required` and :pep:`655`. In ``typing`` since 3.11.
