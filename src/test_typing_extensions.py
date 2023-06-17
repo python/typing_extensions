@@ -1829,6 +1829,9 @@ class ProtocolTests(BaseTestCase):
                     TypeError, "Protocols cannot be instantiated"
                 ):
                     proto()
+                # check these don't raise
+                runtime_checkable(proto)
+                typing.runtime_checkable(proto)
 
         class Concrete(SubProto): pass
         class Concrete2(SubProto2): pass
@@ -1840,6 +1843,10 @@ class ProtocolTests(BaseTestCase):
                 self.assertFalse(is_protocol(cls))
                 # Check that this doesn't raise:
                 cls()
+                with self.assertRaises(TypeError):
+                    runtime_checkable(cls)
+                with self.assertRaises(TypeError):
+                    typing.runtime_checkable(cls)
 
     def test_no_instantiation(self):
         class P(Protocol): pass
