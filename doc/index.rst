@@ -307,7 +307,7 @@ Special typing primitives
       It is recommended to avoid doing this if possible. Not all features and
       bugfixes that ``typing_extensions.Protocol`` backports from newer Python
       versions are guaranteed to work if :py:class:`typing.Protocol` is also
-      present in a protocol class's :py:term:`method-resolution-order`. See
+      present in a protocol class's :py:term:`method resolution order`. See
       :issue:`245` for some examples.
 
 .. data:: Required
