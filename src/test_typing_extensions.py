@@ -1897,6 +1897,21 @@ class ProtocolTests(BaseTestCase):
         Q.__init__(c, 1)
         self.assertEqual(c.x, 1)
 
+    @only_with_typing_Protocol
+    def test_protocol_defining_init_does_not_get_overridden_3(self):
+        class P(Protocol): pass
+
+        class Q(P, typing.Protocol):
+            x: int
+            def __init__(self, x: int) -> None:
+                self.x = x
+
+        class C: pass
+
+        c = C()
+        Q.__init__(c, 1)
+        self.assertEqual(c.x, 1)
+
     def test_concrete_class_inheriting_init_from_protocol(self):
         class P(Protocol):
             x: int
@@ -1917,6 +1932,21 @@ class ProtocolTests(BaseTestCase):
         class P(typing.Protocol): pass
 
         class Q(P, Protocol):
+            x: int
+            def __init__(self, x: int) -> None:
+                self.x = x
+
+        class C(Q): pass
+
+        c = C(1)
+        self.assertIsInstance(c, C)
+        self.assertEqual(C(1).x, 1)
+
+    @only_with_typing_Protocol
+    def test_concrete_class_inheriting_init_from_protocol_3(self):
+        class P(Protocol): pass
+
+        class Q(P, typing.Protocol):
             x: int
             def __init__(self, x: int) -> None:
                 self.x = x
