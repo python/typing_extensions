@@ -603,10 +603,48 @@ else:
         # but is necessary to allow typing.Protocol and typing_extensions.Protocol
         # to mix without getting TypeErrors about "metaclass conflict"
         _typing_Protocol = typing.Protocol
+        _typing_Protocol_init = typing.Protocol.__init__
         _ProtocolMetaBase = type(_typing_Protocol)
     else:
         _typing_Protocol = _marker
+        _typing_Protocol_init = _marker
         _ProtocolMetaBase = abc.ABCMeta
+
+    # Function for calculating the mro of a class before the class has been created.
+    # Taken from Steven D'Aprano's ActiveState recipe:
+    # https://code.activestate.com/recipes/577748-calculate-the-mro-of-a-class/
+    def _calculate_mro(bases):
+        """Calculate the Method Resolution Order of bases using the C3 algorithm.
+
+        Suppose you intended creating a class K with the given base classes. This
+        function returns the MRO which K would have, *excluding* K itself (since
+        it doesn't yet exist), as if you had actually created the class.
+
+        Another way of looking at this, if you pass a single class K, this will
+        return the linearization of K (the MRO of K, *including* itself).
+        """
+        seqs = [list(C.__mro__) for C in bases] + [list(bases)]
+        res = []
+        while True:
+            non_empty = list(filter(None, seqs))
+            if not non_empty:
+                # Nothing left to process, we're done.
+                return tuple(res)
+            for seq in non_empty:  # Find merge candidates among seq heads.
+                candidate = seq[0]
+                not_head = [s for s in non_empty if candidate in s[1:]]
+                if not_head:
+                    # Reject the candidate.
+                    candidate = None
+                else:
+                    break
+            if not candidate:
+                raise TypeError("inconsistent hierarchy, no C3 MRO is possible")
+            res.append(candidate)
+            for seq in non_empty:
+                # Remove candidate.
+                if seq[0] == candidate:
+                    del seq[0]
 
     class _ProtocolMeta(_ProtocolMetaBase):
         # This metaclass is somewhat unfortunate,
@@ -616,9 +654,12 @@ else:
         # That would call the methods on typing._ProtocolMeta on Python 3.8-3.11
         # and those are slow
         def __new__(mcls, name, bases, namespace, **kwargs):
+            is_protocol_cls = False
+
             if name == "Protocol" and len(bases) < 2:
                 pass
             elif {Protocol, _typing_Protocol} & set(bases):
+                is_protocol_cls = True
                 for base in bases:
                     if not (
                         base in {object, typing.Generic, Protocol, _typing_Protocol}
@@ -629,7 +670,26 @@ else:
                             f"Protocols can only inherit from other protocols, "
                             f"got {base!r}"
                         )
-            return abc.ABCMeta.__new__(mcls, name, bases, namespace, **kwargs)
+
+            if is_protocol_cls:
+                if "__init__" in namespace:
+                    old_init = namespace["__init__"]
+                else:
+                    old_init = next(
+                        supercls.__init__
+                        for supercls in _calculate_mro(bases)
+                        if "__init__" in supercls.__dict__
+                    )
+
+            cls = abc.ABCMeta.__new__(mcls, name, bases, namespace, **kwargs)
+
+            if is_protocol_cls:
+                if old_init in {Protocol.__init__, _typing_Protocol_init}:
+                    cls.__init__ = _no_init
+                else:
+                    cls.__init__ = old_init
+
+            return cls
 
         def __init__(cls, *args, **kwargs):
             abc.ABCMeta.__init__(cls, *args, **kwargs)
@@ -752,14 +812,6 @@ else:
                 if '__subclasshook__' not in cls.__dict__:
                     cls.__subclasshook__ = _proto_hook
 
-                # We have nothing more to do for non-protocols...
-                if not cls._is_protocol:
-                    return
-
-                # ... otherwise prohibit instantiation.
-                if cls.__init__ is Protocol.__init__:
-                    cls.__init__ = _no_init
-
     else:
         class Protocol(metaclass=_ProtocolMeta):
             # There is quite a lot of overlapping code with typing.Generic.
@@ -846,14 +898,6 @@ else:
                 # Set (or override) the protocol subclass hook.
                 if '__subclasshook__' not in cls.__dict__:
                     cls.__subclasshook__ = _proto_hook
-
-                # We have nothing more to do for non-protocols.
-                if not cls._is_protocol:
-                    return
-
-                # Prohibit instantiation
-                if cls.__init__ is Protocol.__init__:
-                    cls.__init__ = _no_init
 
 
 if sys.version_info >= (3, 8):
