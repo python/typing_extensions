@@ -30,7 +30,7 @@ for more detail.
 
 A stub file for `typing_extensions` is maintained
 [in typeshed](https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi).
-Because of the special status that `typing_extensions` holds in the ecosystem,
+Because of the special status that `typing_extensions` holds in the typing ecosystem,
 the stubs are placed in the standard library in typeshed and distributed as
 part of the stubs bundled with individual type checkers.
 
