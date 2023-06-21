@@ -69,8 +69,10 @@ may have installed.
 - Install the built distributions locally and test (if you were using `tox`, you already
   tested the source distribution).
 
-- Run `twine upload dist/*`.
+- Run `twine upload dist/*`. Remember to use `__token__` as the username
+  and pass your API token as the password.
 
-- Tag the release. The tag should be just the version number, e.g. `4.1.1`.
-
-- `git push --tags`
+- Create a new GitHub release at https://github.com/python/typing_extensions/releases/new.
+  Details:
+  - The tag should be just the version number, e.g. `4.1.1`.
+  - Copy the release notes from `CHANGELOG.md`.
