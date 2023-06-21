@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.7.0rc1 (June 21, 2023)
 
 - Add `typing_extensions.get_protocol_members` and
   `typing_extensions.is_protocol` (backport of CPython PR #104878).
