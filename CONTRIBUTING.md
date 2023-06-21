@@ -26,6 +26,14 @@ Starting with version 4.0.0, `typing_extensions` uses
 [Semantic Versioning](https://semver.org/). See the documentation
 for more detail.
 
+# Type stubs
+
+A stub file for `typing_extensions` is maintained
+[in typeshed](https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi).
+Because of the special status that `typing_extensions` holds in the typing ecosystem,
+the stubs are placed in the standard library in typeshed and distributed as
+part of the stubs bundled with individual type checkers.
+
 # Running tests
 
 Testing `typing_extensions` can be tricky because many development tools depend on
