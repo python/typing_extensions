@@ -1,3 +1,13 @@
+# Unreleased
+
+- Fix bug where a `typing_extensions.Protocol` class that had one or more
+  non-callable members would raise `TypeError` when `issubclass()`
+  was called against it, even if it defined a custom `__subclasshook__`
+  method. The correct behaviour -- which has now been restored -- is not to
+  raise `TypeError` in these situations if a custom `__subclasshook__` method
+  is defined. Patch by Alex Waygood (backporting
+  https://github.com/python/cpython/pull/105976).
+
 # Release 4.7.0rc1 (June 21, 2023)
 
 - Add `typing_extensions.get_protocol_members` and
