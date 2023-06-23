@@ -1,5 +1,8 @@
-# Unreleased
+# Release 4.7.0 (???)
 
+- This is expected to be the last feature release supporting Python 3.7,
+  which reaches its end of life on June 27, 2023. Version 4.8.0 will support
+  only Python 3.8.0 and up.
 - Fix bug where a `typing_extensions.Protocol` class that had one or more
   non-callable members would raise `TypeError` when `issubclass()`
   was called against it, even if it defined a custom `__subclasshook__`
