@@ -2714,7 +2714,7 @@ class ProtocolTests(BaseTestCase):
         self.assertNotIsSubclass(BadClass, C)
 
     @skipIf(
-        sys.version_info[:3] == (3, 12, 'beta') and sys.version_info[3] < 4,
+        sys.version_info[:4] == (3, 12, 0, 'beta') and sys.version_info[4] < 4,
         "Early betas of Python 3.12 had a bug"
     )
     def test_custom_subclasshook_2(self):
