@@ -1,4 +1,4 @@
-# Release 4.7.0 (???)
+# Release 4.7.0 (June 28, 2023)
 
 - This is expected to be the last feature release supporting Python 3.7,
   which reaches its end of life on June 27, 2023. Version 4.8.0 will support
