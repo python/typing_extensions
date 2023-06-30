@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "pypy3.8", "pypy3.9"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -167,7 +167,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy3.9"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -184,6 +184,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - name: Install typeguard test requirements
         run: pip install -e ./typeguard[test]
       - name: Install typing_extensions latest
@@ -307,7 +308,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "pypy3.8"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
