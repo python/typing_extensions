@@ -128,6 +128,8 @@ __all__ = [
     'no_type_check_decorator',
 ]
 
+_OLD_PYPY_VERSION = sys.implementation.name == "pypy" and sys.version_info < (3, 9)
+
 # for backward compatibility
 PEP_560 = True
 GenericMeta = type
@@ -1143,7 +1145,18 @@ else:
         return td
 
     _TypedDict = type.__new__(_TypedDictMeta, 'TypedDict', (), {})
-    TypedDict.__mro_entries__ = lambda bases: (_TypedDict,)
+
+    if _OLD_PYPY_VERSION:
+        class _TypedDictType:
+            __call__ = staticmethod(TypedDict)
+
+            def __mro_entries__(self, bases):
+                return (_TypedDict,)
+
+        TypedDict = _TypedDictType()
+        functools.update_wrapper(TypedDict, TypedDict.__call__)
+    else:
+        TypedDict.__mro_entries__ = lambda bases: (_TypedDict,)
 
     if hasattr(typing, "_TypedDictMeta"):
         _TYPEDDICT_TYPES = (typing._TypedDictMeta, _TypedDictMeta)
@@ -2710,7 +2723,15 @@ else:
         assert NamedTuple in bases
         return (_NamedTuple,)
 
-    NamedTuple.__mro_entries__ = _namedtuple_mro_entries
+    if _OLD_PYPY_VERSION:
+        class _NamedTupleType:
+            __call__ = staticmethod(NamedTuple)
+            __mro_entries__ = staticmethod(_namedtuple_mro_entries)
+
+        NamedTuple = _NamedTupleType()
+        functools.update_wrapper(NamedTuple, NamedTuple.__call__)
+    else:
+        NamedTuple.__mro_entries__ = _namedtuple_mro_entries
 
 
 if hasattr(collections.abc, "Buffer"):
@@ -2986,7 +3007,8 @@ else:
         return (
             isinstance(__tp, type)
             and getattr(__tp, '_is_protocol', False)
-            and __tp != Protocol
+            and __tp is not Protocol
+            and __tp is not getattr(typing, "Protocol", object())
         )
 
     def get_protocol_members(__tp: type) -> typing.FrozenSet[str]:

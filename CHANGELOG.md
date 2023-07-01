@@ -1,3 +1,8 @@
+# Release 4.7.1 (???)
+
+- Fix `TypedDict`, `NamedTuple` and `is_protocol` tests on PyPy-3.7 and
+  PyPy-3.8. Patch by Alex Waygood.
+
 # Release 4.7.0 (June 28, 2023)
 
 - This is expected to be the last feature release supporting Python 3.7,
