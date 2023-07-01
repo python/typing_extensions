@@ -128,8 +128,6 @@ __all__ = [
     'no_type_check_decorator',
 ]
 
-_OLD_PYPY_VERSION = sys.implementation.name == "pypy" and sys.version_info < (3, 9)
-
 # for backward compatibility
 PEP_560 = True
 GenericMeta = type
@@ -955,6 +953,21 @@ else:
             pass
 
 
+def _ensure_subclassable(mro_entries):
+    def inner(func):
+        if sys.implementation.name == "pypy" and sys.version_info < (3, 9):
+            cls_dict = {
+                "__call__": staticmethod(func),
+                "__mro_entries__": staticmethod(mro_entries)
+            }
+            t = type(func.__name__, (), cls_dict)
+            return functools.update_wrapper(t(), func)
+        else:
+            func.__mro_entries__ = mro_entries
+            return func
+    return inner
+
+
 if sys.version_info >= (3, 13):
     # The standard library TypedDict in Python 3.8 does not store runtime information
     # about which (if any) keys are optional.  See https://bugs.python.org/issue38834
@@ -1061,6 +1074,9 @@ else:
 
         __instancecheck__ = __subclasscheck__
 
+    _TypedDict = type.__new__(_TypedDictMeta, 'TypedDict', (), {})
+
+    @_ensure_subclassable(lambda bases: (_TypedDict,))
     def TypedDict(__typename, __fields=_marker, *, total=True, **kwargs):
         """A simple typed namespace. At runtime it is equivalent to a plain dict.
 
@@ -1143,20 +1159,6 @@ else:
         td = _TypedDictMeta(__typename, (), ns, total=total)
         td.__orig_bases__ = (TypedDict,)
         return td
-
-    _TypedDict = type.__new__(_TypedDictMeta, 'TypedDict', (), {})
-
-    if _OLD_PYPY_VERSION:
-        class _TypedDictType:
-            __call__ = staticmethod(TypedDict)
-
-            def __mro_entries__(self, bases):
-                return (_TypedDict,)
-
-        TypedDict = _TypedDictType()
-        functools.update_wrapper(TypedDict, TypedDict.__call__)
-    else:
-        TypedDict.__mro_entries__ = lambda bases: (_TypedDict,)
 
     if hasattr(typing, "_TypedDictMeta"):
         _TYPEDDICT_TYPES = (typing._TypedDictMeta, _TypedDictMeta)
@@ -2646,6 +2648,13 @@ else:
                 nm_tpl.__init_subclass__()
             return nm_tpl
 
+    _NamedTuple = type.__new__(_NamedTupleMeta, 'NamedTuple', (), {})
+
+    def _namedtuple_mro_entries(bases):
+        assert NamedTuple in bases
+        return (_NamedTuple,)
+
+    @_ensure_subclassable(_namedtuple_mro_entries)
     def NamedTuple(__typename, __fields=_marker, **kwargs):
         """Typed version of namedtuple.
 
@@ -2711,27 +2720,15 @@ else:
         nt.__orig_bases__ = (NamedTuple,)
         return nt
 
-    _NamedTuple = type.__new__(_NamedTupleMeta, 'NamedTuple', (), {})
-
     # On 3.8+, alter the signature so that it matches typing.NamedTuple.
     # The signature of typing.NamedTuple on >=3.8 is invalid syntax in Python 3.7,
     # so just leave the signature as it is on 3.7.
     if sys.version_info >= (3, 8):
-        NamedTuple.__text_signature__ = '(typename, fields=None, /, **kwargs)'
-
-    def _namedtuple_mro_entries(bases):
-        assert NamedTuple in bases
-        return (_NamedTuple,)
-
-    if _OLD_PYPY_VERSION:
-        class _NamedTupleType:
-            __call__ = staticmethod(NamedTuple)
-            __mro_entries__ = staticmethod(_namedtuple_mro_entries)
-
-        NamedTuple = _NamedTupleType()
-        functools.update_wrapper(NamedTuple, NamedTuple.__call__)
-    else:
-        NamedTuple.__mro_entries__ = _namedtuple_mro_entries
+        _new_signature = '(typename, fields=None, /, **kwargs)'
+        if isinstance(NamedTuple, _types.FunctionType):
+            NamedTuple.__text_signature__ = _new_signature
+        else:
+            NamedTuple.__call__.__text_signature__ = _new_signature
 
 
 if hasattr(collections.abc, "Buffer"):
