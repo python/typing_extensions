@@ -1,7 +1,9 @@
-# Release 4.7.1 (???)
+# Release 4.7.1 (July 2, 2023)
 
-- Fix `TypedDict`, `NamedTuple` and `is_protocol` tests on PyPy-3.7 and
-  PyPy-3.8. Patch by Alex Waygood.
+- Fix support for `TypedDict`, `NamedTuple` and `is_protocol` on PyPy-3.7 and
+  PyPy-3.8. Patch by Alex Waygood. Note that PyPy-3.7 and PyPy-3.8 are unsupported
+  by the PyPy project. The next feature release of typing-extensions will
+  drop support for PyPy-3.7 and may also drop support for PyPy-3.8.
 
 # Release 4.7.0 (June 28, 2023)
 
