@@ -18,7 +18,7 @@ standard library, so that users can experiment with them before they are added t
 standard library. Such features should already be specified in a PEP or merged into
 CPython's `main` branch.
 
-`typing_extensions` supports Python versions 3.7 and up.
+`typing_extensions` supports Python versions 3.8 and up.
 
 # Versioning scheme
 

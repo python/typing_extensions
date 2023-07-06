@@ -26,7 +26,7 @@ Therefore, it's safe to depend
 on `typing_extensions` like this: `typing_extensions >=x.y, <(x+1)`,
 where `x.y` is the first version that includes all features you need.
 
-`typing_extensions` supports Python versions 3.7 and higher.
+`typing_extensions` supports Python versions 3.8 and higher.
 
 ## Included items
 

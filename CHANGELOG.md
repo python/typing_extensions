@@ -1,3 +1,7 @@
+# Release 4.8.0 (???)
+
+- Drop support for Python 3.7 (including PyPy-3.7). Patch by Alex Waygood.
+
 # Release 4.7.1 (July 2, 2023)
 
 - Fix support for `TypedDict`, `NamedTuple` and `is_protocol` on PyPy-3.7 and

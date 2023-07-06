@@ -42,7 +42,6 @@ from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
-TYPING_3_8_0 = sys.version_info[:3] >= (3, 8, 0)
 TYPING_3_9_0 = sys.version_info[:3] >= (3, 9, 0)
 TYPING_3_10_0 = sys.version_info[:3] >= (3, 10, 0)
 
@@ -51,10 +50,6 @@ TYPING_3_11_0 = sys.version_info[:3] >= (3, 11, 0)
 
 # 3.12 changes the representation of Unpack[] (PEP 692)
 TYPING_3_12_0 = sys.version_info[:3] >= (3, 12, 0)
-
-only_with_typing_Protocol = skipUnless(
-    hasattr(typing, "Protocol"), "Only relevant when typing.Protocol exists"
-)
 
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
@@ -246,13 +241,7 @@ class NoReturnTests(BottomTypeTestsMixin, BaseTestCase):
         def some_str(arg: 'NoReturn') -> 'typing.NoReturn': ...
 
         expected = {'arg': NoReturn, 'return': NoReturn}
-        targets = [some]
-
-        # On 3.7.0 and 3.7.1, https://github.com/python/cpython/pull/10772
-        # wasn't applied yet and NoReturn fails _type_check.
-        if not ((3, 7, 0) <= sys.version_info < (3, 7, 2)):
-            targets.append(some_str)
-        for target in targets:
+        for target in some, some_str:
             with self.subTest(target=target):
                 self.assertEqual(gth(target), expected)
 
@@ -595,15 +584,11 @@ class FinalTests(BaseTestCase):
             Final[int][str]
 
     def test_repr(self):
-        if hasattr(typing, 'Final') and sys.version_info[:2] >= (3, 7):
-            mod_name = 'typing'
-        else:
-            mod_name = 'typing_extensions'
-        self.assertEqual(repr(Final), mod_name + '.Final')
+        self.assertEqual(repr(Final), 'typing.Final')
         cv = Final[int]
-        self.assertEqual(repr(cv), mod_name + '.Final[int]')
+        self.assertEqual(repr(cv), 'typing.Final[int]')
         cv = Final[Employee]
-        self.assertEqual(repr(cv), mod_name + f'.Final[{__name__}.Employee]')
+        self.assertEqual(repr(cv), f'typing.Final[{__name__}.Employee]')
 
     def test_cannot_subclass(self):
         with self.assertRaises(TypeError):
@@ -1771,7 +1756,6 @@ class ProtocolTests(BaseTestCase):
         self.assertNotIsInstance(D(), E)
         self.assertNotIsInstance(E(), D)
 
-    @only_with_typing_Protocol
     def test_runtimecheckable_on_typing_dot_Protocol(self):
         @runtime_checkable
         class Foo(typing.Protocol):
@@ -1784,7 +1768,6 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(Bar(), Foo)
         self.assertNotIsInstance(object(), Foo)
 
-    @only_with_typing_Protocol
     def test_typing_dot_runtimecheckable_on_Protocol(self):
         @typing.runtime_checkable
         class Foo(Protocol):
@@ -1797,7 +1780,6 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(Bar(), Foo)
         self.assertNotIsInstance(object(), Foo)
 
-    @only_with_typing_Protocol
     def test_typing_Protocol_and_extensions_Protocol_can_mix(self):
         class TypingProto(typing.Protocol):
             x: int
@@ -3173,7 +3155,6 @@ class ProtocolTests(BaseTestCase):
         with self.assertRaisesRegex(TypeError, "not a Protocol"):
             get_protocol_members(ConcreteInherit())
 
-    @only_with_typing_Protocol
     def test_get_protocol_members_typing(self):
         with self.assertRaisesRegex(TypeError, "not a Protocol"):
             get_protocol_members(typing.Protocol)
@@ -3222,7 +3203,6 @@ class ProtocolTests(BaseTestCase):
         # Protocol is not itself a protocol
         self.assertFalse(is_protocol(Protocol))
 
-    @only_with_typing_Protocol
     def test_is_protocol_with_typing(self):
         self.assertFalse(is_protocol(typing.Protocol))
 
@@ -3681,7 +3661,6 @@ class TypedDictTests(BaseTestCase):
         if hasattr(typing, "TypedDict"):
             self.assertIs(is_typeddict(typing.TypedDict), False)
 
-    @skipUnless(TYPING_3_8_0, "Python 3.8+ required")
     def test_is_typeddict_against_typeddict_from_typing(self):
         Point = typing.TypedDict('Point', {'x': int, 'y': int})
 
@@ -3844,7 +3823,7 @@ class TypedDictTests(BaseTestCase):
     def test_non_generic_subscript(self):
         # For backward compatibility, subscription works
         # on arbitrary TypedDict types.
-        # (But we don't attempt to backport this misfeature onto 3.7 and 3.8.)
+        # (But we don't attempt to backport this misfeature onto 3.8.)
         class TD(TypedDict):
             a: T
         A = TD[int]
@@ -4034,17 +4013,8 @@ class AnnotatedTests(BaseTestCase):
             classvar: Annotated[ClassVar[int], "a decoration"] = 4
             const: Annotated[Final[int], "Const"] = 4
 
-        if sys.version_info[:2] >= (3, 7):
-            self.assertEqual(get_type_hints(C, globals())["classvar"], ClassVar[int])
-            self.assertEqual(get_type_hints(C, globals())["const"], Final[int])
-        else:
-            self.assertEqual(
-                get_type_hints(C, globals())["classvar"],
-                Annotated[ClassVar[int], "a decoration"]
-            )
-            self.assertEqual(
-                get_type_hints(C, globals())["const"], Annotated[Final[int], "Const"]
-            )
+        self.assertEqual(get_type_hints(C, globals())["classvar"], ClassVar[int])
+        self.assertEqual(get_type_hints(C, globals())["const"], Final[int])
 
     def test_cannot_subclass(self):
         with self.assertRaisesRegex(TypeError, "Cannot subclass .*Annotated"):
@@ -5189,13 +5159,6 @@ class NamedTupleTests(BaseTestCase):
                 x: int = 3
                 y: int
 
-    @skipUnless(
-        (
-            TYPING_3_8_0
-            or hasattr(CoolEmployeeWithDefault, '_field_defaults')
-        ),
-        '"_field_defaults" attribute was added in a micro version of 3.7'
-    )
     def test_field_defaults(self):
         self.assertEqual(CoolEmployeeWithDefault._field_defaults, dict(cool=0))
 
@@ -5296,7 +5259,7 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(a, (1, [2]))
 
     @skipIf(TYPING_3_9_0, "Test isn't relevant to 3.9+")
-    def test_non_generic_subscript_error_message_py38_minus(self):
+    def test_non_generic_subscript_error_message_py38(self):
         class Group(NamedTuple):
             key: T
             group: List[T]
@@ -5389,10 +5352,7 @@ class NamedTupleTests(BaseTestCase):
                 self.assertEqual(struct._fields, ())
                 self.assertEqual(struct.__annotations__, {})
                 self.assertIsInstance(struct(), struct)
-                # Attribute was added in a micro version of 3.7
-                # and is tested more fully elsewhere
-                if hasattr(struct, "_field_defaults"):
-                    self.assertEqual(struct._field_defaults, {})
+                self.assertEqual(struct._field_defaults, {})
 
     def test_namedtuple_errors(self):
         with self.assertRaises(TypeError):
@@ -5428,15 +5388,6 @@ class NamedTupleTests(BaseTestCase):
 
     def test_docstring(self):
         self.assertIsInstance(NamedTuple.__doc__, str)
-
-    @skipUnless(TYPING_3_8_0, "NamedTuple had a bad signature on <=3.7")
-    def test_signature_is_same_as_typing_NamedTuple(self):
-        self.assertEqual(inspect.signature(NamedTuple), inspect.signature(typing.NamedTuple))
-
-    @skipIf(TYPING_3_8_0, "tests are only relevant to <=3.7")
-    def test_signature_on_37(self):
-        self.assertIsInstance(inspect.signature(NamedTuple), inspect.Signature)
-        self.assertFalse(hasattr(NamedTuple, "__text_signature__"))
 
     @skipUnless(TYPING_3_9_0, "NamedTuple was a class on 3.8 and lower")
     def test_same_as_typing_NamedTuple_39_plus(self):
@@ -5592,7 +5543,7 @@ class TypeVarTests(BaseTestCase):
                                     r"Bound must be a type\. Got \(1, 2\)\."):
             TypeVar('X', bound=(1, 2))
 
-    # Technically we could run it on later versions of 3.7 and 3.8,
+    # Technically we could run it on later versions of 3.8,
     # but that's not worth the effort.
     @skipUnless(TYPING_3_9_0, "Fix was not backported")
     def test_missing__name__(self):
