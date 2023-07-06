@@ -5039,11 +5039,8 @@ class AllTests(BaseTestCase):
             'dataclass_transform',
             'overload',
             'ParamSpec',
-            'Text',
             'TypeVar',
             'TypeVarTuple',
-            'TYPE_CHECKING',
-            'Final',
             'get_type_hints',
         }
         if sys.version_info < (3, 10):
