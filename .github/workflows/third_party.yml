@@ -49,6 +49,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: pydantic/pydantic
+      - name: Edit pydantic pyproject.toml
+        # pydantic's python-requires means pdm won't let us add typing-extensions-latest
+        # as a requirement unless we do this
+        run: sed -i 's/^requires-python = .*/requires-python = ">=3.8"/' pyproject.toml
       - name: Checkout typing_extensions
         uses: actions/checkout@v3
         with:
@@ -316,6 +320,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: python-attrs/cattrs
+      - name: Edit cattrs pyproject.toml
+        # cattrs's python-requires means pdm won't let us add typing-extensions-latest
+        # as a requirement unless we do this
+        run: sed -i 's/^requires-python = .*/requires-python = ">=3.8"/' pyproject.toml
       - name: Checkout typing_extensions
         uses: actions/checkout@v3
         with:
