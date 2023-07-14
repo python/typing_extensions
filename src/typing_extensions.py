@@ -162,7 +162,8 @@ def _check_generic(cls, parameters, elen=_marker):
             if (num_tv_tuples > 0) and (alen >= elen - num_tv_tuples):
                 return
         raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters for {cls};"
-                        f" actual {alen}, expected {elen}")
+                        f" actual {alen}, expected {elen}"
+                        f" parameters: {parameters}")
 
 
 if sys.version_info >= (3, 10):
