@@ -1,6 +1,10 @@
 # Release 4.8.0 (???)
 
 - Drop support for Python 3.7 (including PyPy-3.7). Patch by Alex Waygood.
+- Fix bug where `get_original_bases()` would return incorrect results when
+  called on a concrete subclass of a generic class. Patch by Alex Waygood
+  (backporting https://github.com/python/cpython/pull/107584, by James
+  Hilton-Balfe).
 
 # Release 4.7.1 (July 2, 2023)
 

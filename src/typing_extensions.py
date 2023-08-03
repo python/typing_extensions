@@ -2570,14 +2570,11 @@ else:
             assert get_original_bases(int) == (object,)
         """
         try:
-            return cls.__orig_bases__
+            return cls.__dict__.get("__orig_bases__", cls.__bases__)
         except AttributeError:
-            try:
-                return cls.__bases__
-            except AttributeError:
-                raise TypeError(
-                    f'Expected an instance of type, not {type(cls).__name__!r}'
-                ) from None
+            raise TypeError(
+                f'Expected an instance of type, not {type(cls).__name__!r}'
+            ) from None
 
 
 # NewType is a class on Python 3.10+, making it pickleable
