@@ -5704,6 +5704,25 @@ class GetOriginalBasesTests(BaseTestCase):
         self.assertEqual(get_original_bases(E), (list[T],))
         self.assertEqual(get_original_bases(F), (list[int],))
 
+    @skipIf(
+        sys.version_info[:3] == (3, 12, 0) and sys.version_info[3] in {"alpha", "beta"},
+        "Early versions of py312 had a bug"
+    )
+    def test_concrete_subclasses_of_generic_classes(self):
+        T = TypeVar("T")
+
+        class FirstBase(Generic[T]): pass
+        class SecondBase(Generic[T]): pass
+        class First(FirstBase[int]): pass
+        class Second(SecondBase[int]): pass
+        class G(First, Second): pass
+        self.assertEqual(get_original_bases(G), (First, Second))
+
+        class First_(Generic[T]): pass
+        class Second_(Generic[T]): pass
+        class H(First_, Second_): pass
+        self.assertEqual(get_original_bases(H), (First_, Second_))
+
     def test_namedtuples(self):
         # On 3.12, this should work well with typing.NamedTuple and typing_extensions.NamedTuple
         # On lower versions, it will only work fully with typing_extensions.NamedTuple
