@@ -38,6 +38,7 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args,
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar, get_protocol_members, is_protocol
+from typing_extensions import doc, DocInfo
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 
 # Flags used to mark tests that only apply after a specific
@@ -5893,6 +5894,17 @@ class TypeAliasTypeTests(BaseTestCase):
         with self.assertRaises(TypeError):
             class MyAlias(TypeAliasType):
                 pass
+
+
+class DocTests(BaseTestCase):
+    def test_annotation(self):
+        
+        def hi(to: Annotated[str, doc("Who to say hi to")]) -> None: pass
+
+        hints = get_type_hints(hi, include_extras=True)
+        doc_info = hints["to"].__metadata__[0]
+        self.assertEqual(doc_info.documentation, "Who to say hi to")
+        self.assertIsInstance(doc_info, DocInfo)
 
 
 if __name__ == '__main__':
