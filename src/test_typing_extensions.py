@@ -5898,7 +5898,7 @@ class TypeAliasTypeTests(BaseTestCase):
 
 class DocTests(BaseTestCase):
     def test_annotation(self):
-        
+
         def hi(to: Annotated[str, doc("Who to say hi to")]) -> None: pass
 
         hints = get_type_hints(hi, include_extras=True)
