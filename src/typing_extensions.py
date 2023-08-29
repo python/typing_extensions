@@ -2826,6 +2826,7 @@ else:
         """
         def __init__(self, documentation: str):
             self.documentation = documentation
+
         def __repr__(self) -> str:
             return f"DocInfo({self.documentation})"
 
