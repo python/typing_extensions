@@ -2828,7 +2828,7 @@ else:
             self.documentation = documentation
 
         def __repr__(self) -> str:
-            return f"DocInfo({self.documentation})"
+            return f"DocInfo({self.documentation!r})"
 
     def doc(documentation: str) -> DocInfo:
         """Define the documentation of a type annotation using ``Annotated``, to be
