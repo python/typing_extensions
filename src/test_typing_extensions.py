@@ -5905,6 +5905,10 @@ class DocTests(BaseTestCase):
         doc_info = hints["to"].__metadata__[0]
         self.assertEqual(doc_info.documentation, "Who to say hi to")
         self.assertIsInstance(doc_info, DocInfo)
+    
+    def test_repr(self):
+        doc_info = doc("Who to say hi to")
+        self.assertEqual(repr(doc_info), "DocInfo('Who to say hi to')")
 
 
 if __name__ == '__main__':
