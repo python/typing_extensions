@@ -56,6 +56,9 @@ be added.
 Bugfix releases, with version numbers of the form 4.N.1 or higher,
 may be made if bugs are discovered after a feature release.
 
+We provide no backward compatibility guarantees for prereleases (e.g.,
+release candidates) and for unreleased code in our Git repository.
+
 Before version 4.0.0, the versioning scheme loosely followed the Python
 version from which features were backported; for example,
 ``typing_extensions`` 3.10.0.0 was meant to reflect ``typing`` as of
@@ -437,13 +440,6 @@ Special typing primitives
    .. versionchanged:: 4.6.0
 
       Backport ``repr()`` changes from Python 3.12.
-
-Generic concrete collections
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. class:: OrderedDict
-
-   See :py:class:`typing.OrderedDict`. In ``typing`` since 3.7.2.
 
 Abstract Base Classes
 ~~~~~~~~~~~~~~~~~~~~~
@@ -928,6 +924,10 @@ versions of Python. They are listed here for completeness.
    See :py:data:`typing.Optional`.
 
    .. versionadded:: 4.7.0
+
+.. class:: OrderedDict
+
+   See :py:class:`typing.OrderedDict`. In ``typing`` since 3.7.2.
 
 .. class:: Pattern
 
