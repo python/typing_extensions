@@ -2824,7 +2824,7 @@ else:
         The ``documentation`` attribute contains the documentation string passed
         to ``doc()``.
         """
-        def __init__(self, documentation: str):
+        def __init__(self, documentation: str) -> None:
             self.documentation = documentation
 
         def __repr__(self) -> str:
