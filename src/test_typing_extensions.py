@@ -5910,6 +5910,26 @@ class DocTests(BaseTestCase):
         doc_info = doc("Who to say hi to")
         self.assertEqual(repr(doc_info), "DocInfo('Who to say hi to')")
 
+    def test_hashability(self):
+        doc_info = doc("Who to say hi to")
+        self.assertIsInstance(hash(doc_info), int)
+        self.assertNotEqual(hash(doc_info), hash(doc("Who not to say hi to")))
+
+    def test_equality(self):
+        doc_info = doc("Who to say hi to")
+        # Equal to itself
+        self.assertEqual(doc_info, doc_info)
+        # Equal to another instance with the same string
+        self.assertEqual(doc_info, doc("Who to say hi to"))
+        # Not equial to another instance with a different string
+        self.assertNotEqual(doc_info, doc("Who not to say hi to"))
+
+    def test_pickle(self):
+        doc_info = doc("Who to say hi to")
+        for proto in range(pickle.HIGHEST_PROTOCOL):
+            pickled = pickle.dumps(doc_info, protocol=proto)
+            self.assertEqual(doc_info, pickle.loads(pickled))
+
 
 if __name__ == '__main__':
     main()

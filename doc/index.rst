@@ -616,6 +616,29 @@ Functions
 
    .. versionadded:: 4.2.0
 
+.. function:: doc(documentation)
+
+   Define the documentation of a type annotation using :data:`Annotated`, to be
+   used in class attributes, function and method parameters, return values,
+   and variables.
+
+   The value should be a string literal to allow static tools like editors
+   to use it.
+
+   This complements docstrings.
+
+   It returns a :class:`DocInfo` instance containing the documentation value in
+   the ``documentation`` attribute.
+
+   Example::
+
+      >>> from typing_extensions import doc, Annotated
+      >>> def hi(to: Annotated[str, doc("Who to say hi to")]) -> None: ...
+
+   .. versionadded:: 4.8.0
+
+      See :pep:`727`.
+
 .. function:: get_args(tp)
 
    See :py:func:`typing.get_args`. In ``typing`` since 3.8.
@@ -720,6 +743,29 @@ Functions
    See :py:func:`typing.reveal_type`. In ``typing`` since 3.11.
 
    .. versionadded:: 4.1.0
+
+
+Helper classes
+~~~~~~~~~~~~~~
+
+.. class:: DocInfo(documentation)
+
+   Container for documentation information as returned by :func:`doc`.
+
+   It is expected this class wouldn't be manually created but instead returned
+   by :func:`doc` inside of type annotations using :data:`Annotated`.
+
+   The ``documentation`` attribute contains the documentation string passed
+   to :func:`doc`.
+
+   .. versionadded:: 4.8.0
+
+      See :pep:`727`.
+
+   .. attribute:: documentation
+
+      The documentation string passed to :func:`doc`.
+
 
 Pure aliases
 ~~~~~~~~~~~~

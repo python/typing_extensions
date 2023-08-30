@@ -2811,8 +2811,8 @@ else:
             return frozenset(tp.__protocol_attrs__)
         return frozenset(_get_protocol_attrs(tp))
 
-if hasattr(typing, "doc"):
-    doc = typing.doc
+
+if hasattr(typing, "DocInfo"):
     DocInfo = typing.DocInfo
 else:
     class DocInfo:
@@ -2830,6 +2830,18 @@ else:
         def __repr__(self) -> str:
             return f"DocInfo({self.documentation!r})"
 
+        def __hash__(self) -> int:
+            return hash(self.documentation)
+
+        def __eq__(self, other: object) -> bool:
+            if not isinstance(other, DocInfo):
+                return NotImplemented
+            return self.documentation == other.documentation
+
+
+if hasattr(typing, "doc"):
+    doc = typing.doc
+else:
     def doc(documentation: str) -> DocInfo:
         """Define the documentation of a type annotation using ``Annotated``, to be
          used in class attributes, function and method parameters, return values,

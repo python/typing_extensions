@@ -1,5 +1,7 @@
 # Release 4.8.0 (???)
 
+- Add `typing_extensions.doc`, as proposed by PEP 727. Patch by
+  Sebastián Ramírez.
 - Drop support for Python 3.7 (including PyPy-3.7). Patch by Alex Waygood.
 - Fix bug where `get_original_bases()` would return incorrect results when
   called on a concrete subclass of a generic class. Patch by Alex Waygood
