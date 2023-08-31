@@ -5908,7 +5908,7 @@ class DocTests(BaseTestCase):
 
     def test_repr(self):
         doc_info = Doc("Who to say hi to")
-        self.assertEqual(repr(doc_info), "DocInfo('Who to say hi to')")
+        self.assertEqual(repr(doc_info), "Doc('Who to say hi to')")
 
     def test_hashability(self):
         doc_info = Doc("Who to say hi to")
