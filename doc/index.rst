@@ -616,29 +616,6 @@ Functions
 
    .. versionadded:: 4.2.0
 
-.. function:: doc(documentation)
-
-   Define the documentation of a type annotation using :data:`Annotated`, to be
-   used in class attributes, function and method parameters, return values,
-   and variables.
-
-   The value should be a string literal to allow static tools like editors
-   to use it.
-
-   This complements docstrings.
-
-   It returns a :class:`DocInfo` instance containing the documentation value in
-   the ``documentation`` attribute.
-
-   Example::
-
-      >>> from typing_extensions import doc, Annotated
-      >>> def hi(to: Annotated[str, doc("Who to say hi to")]) -> None: ...
-
-   .. versionadded:: 4.8.0
-
-      See :pep:`727`.
-
 .. function:: get_args(tp)
 
    See :py:func:`typing.get_args`. In ``typing`` since 3.8.
@@ -748,15 +725,23 @@ Functions
 Helper classes
 ~~~~~~~~~~~~~~
 
-.. class:: DocInfo(documentation)
+.. class:: Doc(/, documentation)
 
-   Container for documentation information as returned by :func:`doc`.
+   Define the documentation of a type annotation using :data:`Annotated`, to be
+   used in class attributes, function and method parameters, return values,
+   and variables.
 
-   It is expected this class wouldn't be manually created but instead returned
-   by :func:`doc` inside of type annotations using :data:`Annotated`.
+   The value should be a positional-only string literal to allow static tools
+   like editors and documentation generators to use it.
 
-   The ``documentation`` attribute contains the documentation string passed
-   to :func:`doc`.
+   This complements docstrings.
+
+   The string value passed is available in the attribute ``documentation``.
+
+   Example::
+
+      >>> from typing_extensions import Annotated, Doc
+      >>> def hi(to: Annotated[str, Doc("Who to say hi to")]) -> None: ...
 
    .. versionadded:: 4.8.0
 
@@ -764,7 +749,7 @@ Helper classes
 
    .. attribute:: documentation
 
-      The documentation string passed to :func:`doc`.
+      The documentation string passed to :class:`Doc`.
 
 
 Pure aliases
