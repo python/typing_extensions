@@ -2835,7 +2835,7 @@ else:
             self.documentation = documentation
 
         def __repr__(self) -> str:
-            return f"DocInfo({self.documentation!r})"
+            return f"Doc({self.documentation!r})"
 
         def __hash__(self) -> int:
             return hash(self.documentation)
