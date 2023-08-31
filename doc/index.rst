@@ -722,8 +722,8 @@ Functions
    .. versionadded:: 4.1.0
 
 
-Helper classes
-~~~~~~~~~~~~~~
+Annotation metadata
+~~~~~~~~~~~~~~~~~~~
 
 .. class:: Doc(documentation, /)
 
