@@ -60,8 +60,7 @@ __all__ = [
     'clear_overloads',
     'dataclass_transform',
     'deprecated',
-    'doc',
-    'DocInfo',
+    'Doc',
     'get_overloads',
     'final',
     'get_args',
@@ -2812,19 +2811,27 @@ else:
         return frozenset(_get_protocol_attrs(tp))
 
 
-if hasattr(typing, "DocInfo"):
-    DocInfo = typing.DocInfo
+if hasattr(typing, "Doc"):
+    Doc = typing.Doc
 else:
-    class DocInfo:
-        """Container for documentation information as returned by ``doc()``.
+    class Doc:
+        """Define the documentation of a type annotation using ``Annotated``, to be
+         used in class attributes, function and method parameters, return values,
+         and variables.
 
-        It is expected this class wouldn't be manually created but instead returned
-        by ``doc()`` inside of type annotations using ``Annotated``.
+        The value should be a positional-only string literal to allow static tools
+        like editors and documentation generators to use it.
 
-        The ``documentation`` attribute contains the documentation string passed
-        to ``doc()``.
+        This complements docstrings.
+
+        The string value passed is available in the attribute ``documentation``.
+
+        Example::
+
+            >>> from typing_extensions import Annotated, Doc
+            >>> def hi(to: Annotated[str, Doc("Who to say hi to")]) -> None: ...
         """
-        def __init__(self, documentation: str) -> None:
+        def __init__(self, /, documentation: str) -> None:
             self.documentation = documentation
 
         def __repr__(self) -> str:
@@ -2834,33 +2841,10 @@ else:
             return hash(self.documentation)
 
         def __eq__(self, other: object) -> bool:
-            if not isinstance(other, DocInfo):
+            if not isinstance(other, Doc):
                 return NotImplemented
             return self.documentation == other.documentation
 
-
-if hasattr(typing, "doc"):
-    doc = typing.doc
-else:
-    def doc(documentation: str) -> DocInfo:
-        """Define the documentation of a type annotation using ``Annotated``, to be
-         used in class attributes, function and method parameters, return values,
-         and variables.
-
-        The value should be a string literal to allow static tools like editors
-        to use it.
-
-        This complements docstrings.
-
-        It returns a class ``DocInfo`` instance containing the documentation value in
-        the ``documentation`` attribute.
-
-        Example::
-
-            >>> from typing_extensions import doc, Annotated
-            >>> def hi(to: Annotated[str, doc("Who to say hi to")]) -> None: ...
-        """
-        return DocInfo(documentation)
 
 # Aliases for items that have always been in typing.
 # Explicitly assign these (rather than using `from typing import *` at the top),
