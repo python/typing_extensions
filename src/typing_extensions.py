@@ -2831,7 +2831,7 @@ else:
             >>> from typing_extensions import Annotated, Doc
             >>> def hi(to: Annotated[str, Doc("Who to say hi to")]) -> None: ...
         """
-        def __init__(self, /, documentation: str) -> None:
+        def __init__(self, documentation: str, /) -> None:
             self.documentation = documentation
 
         def __repr__(self) -> str:
