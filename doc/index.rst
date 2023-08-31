@@ -725,7 +725,7 @@ Functions
 Helper classes
 ~~~~~~~~~~~~~~
 
-.. class:: Doc(/, documentation)
+.. class:: Doc(documentation, /)
 
    Define the documentation of a type annotation using :data:`Annotated`, to be
    used in class attributes, function and method parameters, return values,
