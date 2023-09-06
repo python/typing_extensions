@@ -278,6 +278,11 @@ Special typing primitives
 
       The implementation was changed for compatibility with Python 3.12.
 
+   .. versionchanged:: 4.8.0
+
+      Fixed a bug where passing an ellipsis literal to ``default`` would raise a 
+      :py:exc:`TypeError` on Python versions <3.11.
+
 .. class:: ParamSpecArgs
 
 .. class:: ParamSpecKwargs
