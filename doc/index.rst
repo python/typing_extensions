@@ -280,8 +280,8 @@ Special typing primitives
 
    .. versionchanged:: 4.8.0
 
-      Fixed a bug where passing an ellipsis literal to ``default`` would raise a 
-      :py:exc:`TypeError` on Python versions <3.11.
+      Fixed a bug where passing an ellipsis literal (``...``) to ``default`` now
+      works on Python 3.10 and lower.
 
 .. class:: ParamSpecArgs
 
