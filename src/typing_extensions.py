@@ -1277,7 +1277,10 @@ def _set_default(type_param, default):
         type_param.__default__ = tuple((typing._type_check(d, "Default must be a type")
                                         for d in default))
     elif default != _marker:
-        type_param.__default__ = typing._type_check(default, "Default must be a type")
+        if isinstance(type_param, ParamSpec) and default is ...:  # ellipsis wasn't accepted until 3.11 as a valid call
+            type_param.__default__ = default
+        else:
+            type_param.__default__ = typing._type_check(default, "Default must be a type")
     else:
         type_param.__default__ = None
 
