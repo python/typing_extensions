@@ -278,6 +278,11 @@ Special typing primitives
 
       The implementation was changed for compatibility with Python 3.12.
 
+   .. versionchanged:: 4.8.0
+
+      Passing an ellipsis literal (``...``) to *default* now works on Python
+      3.10 and lower.
+
 .. class:: ParamSpecArgs
 
 .. class:: ParamSpecKwargs

@@ -5,6 +5,8 @@
   called on a concrete subclass of a generic class. Patch by Alex Waygood
   (backporting https://github.com/python/cpython/pull/107584, by James
   Hilton-Balfe).
+- Fix bug where `ParamSpec(default=...)` would raise a `TypeError` on Python
+  versions <3.11. Patch by James Hilton-Balfe
 
 # Release 4.7.1 (July 2, 2023)
 
