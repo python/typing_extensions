@@ -5593,6 +5593,9 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         class A(Generic[P]): ...
         Alias = typing.Callable[P, None]
 
+        P_default = ParamSpec('P_default', default=...)
+        self.assertIs(P_default.__default__, ...)
+
     def test_typevartuple(self):
         Ts = TypeVarTuple('Ts', default=Unpack[Tuple[str, int]])
         self.assertEqual(Ts.__default__, Unpack[Tuple[str, int]])
