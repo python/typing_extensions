@@ -1,4 +1,4 @@
-# Release 4.8.0 (???)
+# Release 4.8.0rc1 (September 7, 2023)
 
 - Add `typing_extensions.Doc`, as proposed by PEP 727. Patch by
   Sebastián Ramírez.
