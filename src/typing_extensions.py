@@ -60,6 +60,7 @@ __all__ = [
     'clear_overloads',
     'dataclass_transform',
     'deprecated',
+    'Doc',
     'get_overloads',
     'final',
     'get_args',
@@ -2811,6 +2812,41 @@ else:
         if hasattr(tp, '__protocol_attrs__'):
             return frozenset(tp.__protocol_attrs__)
         return frozenset(_get_protocol_attrs(tp))
+
+
+if hasattr(typing, "Doc"):
+    Doc = typing.Doc
+else:
+    class Doc:
+        """Define the documentation of a type annotation using ``Annotated``, to be
+         used in class attributes, function and method parameters, return values,
+         and variables.
+
+        The value should be a positional-only string literal to allow static tools
+        like editors and documentation generators to use it.
+
+        This complements docstrings.
+
+        The string value passed is available in the attribute ``documentation``.
+
+        Example::
+
+            >>> from typing_extensions import Annotated, Doc
+            >>> def hi(to: Annotated[str, Doc("Who to say hi to")]) -> None: ...
+        """
+        def __init__(self, documentation: str, /) -> None:
+            self.documentation = documentation
+
+        def __repr__(self) -> str:
+            return f"Doc({self.documentation!r})"
+
+        def __hash__(self) -> int:
+            return hash(self.documentation)
+
+        def __eq__(self, other: object) -> bool:
+            if not isinstance(other, Doc):
+                return NotImplemented
+            return self.documentation == other.documentation
 
 
 # Aliases for items that have always been in typing.

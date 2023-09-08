@@ -38,6 +38,7 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args,
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar, get_protocol_members, is_protocol
+from typing_extensions import Doc
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 
 # Flags used to mark tests that only apply after a specific
@@ -5896,6 +5897,41 @@ class TypeAliasTypeTests(BaseTestCase):
         with self.assertRaises(TypeError):
             class MyAlias(TypeAliasType):
                 pass
+
+
+class DocTests(BaseTestCase):
+    def test_annotation(self):
+
+        def hi(to: Annotated[str, Doc("Who to say hi to")]) -> None: pass
+
+        hints = get_type_hints(hi, include_extras=True)
+        doc_info = hints["to"].__metadata__[0]
+        self.assertEqual(doc_info.documentation, "Who to say hi to")
+        self.assertIsInstance(doc_info, Doc)
+
+    def test_repr(self):
+        doc_info = Doc("Who to say hi to")
+        self.assertEqual(repr(doc_info), "Doc('Who to say hi to')")
+
+    def test_hashability(self):
+        doc_info = Doc("Who to say hi to")
+        self.assertIsInstance(hash(doc_info), int)
+        self.assertNotEqual(hash(doc_info), hash(Doc("Who not to say hi to")))
+
+    def test_equality(self):
+        doc_info = Doc("Who to say hi to")
+        # Equal to itself
+        self.assertEqual(doc_info, doc_info)
+        # Equal to another instance with the same string
+        self.assertEqual(doc_info, Doc("Who to say hi to"))
+        # Not equal to another instance with a different string
+        self.assertNotEqual(doc_info, Doc("Who not to say hi to"))
+
+    def test_pickle(self):
+        doc_info = Doc("Who to say hi to")
+        for proto in range(pickle.HIGHEST_PROTOCOL):
+            pickled = pickle.dumps(doc_info, protocol=proto)
+            self.assertEqual(doc_info, pickle.loads(pickled))
 
 
 if __name__ == '__main__':

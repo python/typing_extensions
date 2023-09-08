@@ -722,6 +722,37 @@ Functions
 
    .. versionadded:: 4.1.0
 
+
+Annotation metadata
+~~~~~~~~~~~~~~~~~~~
+
+.. class:: Doc(documentation, /)
+
+   Define the documentation of a type annotation using :data:`Annotated`, to be
+   used in class attributes, function and method parameters, return values,
+   and variables.
+
+   The value should be a positional-only string literal to allow static tools
+   like editors and documentation generators to use it.
+
+   This complements docstrings.
+
+   The string value passed is available in the attribute ``documentation``.
+
+   Example::
+
+      >>> from typing_extensions import Annotated, Doc
+      >>> def hi(to: Annotated[str, Doc("Who to say hi to")]) -> None: ...
+
+   .. versionadded:: 4.8.0
+
+      See :pep:`727`.
+
+   .. attribute:: documentation
+
+      The documentation string passed to :class:`Doc`.
+
+
 Pure aliases
 ~~~~~~~~~~~~
 
