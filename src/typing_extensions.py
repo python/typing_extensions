@@ -809,7 +809,6 @@ else:
             else:
                 break
 
-
     class _TypedDictMeta(type):
         def __new__(cls, name, bases, ns, *, total=True, readonly=False, other_keys=True):
             """Create new typed dict class object.
@@ -865,13 +864,24 @@ else:
                 mutable_keys.update(base.__dict__.get('__mutable_keys__', ()))
 
                 if not getattr(base, "__other_keys__", True):
-                    if set(own_annotations) - set(base.__dict__.get('__annotations__', {})):
+                    if (
+                        set(own_annotations) -
+                        set(base.__dict__.get('__annotations__', {}))
+                    ):
                         raise TypeError(
                             "TypedDict cannot inherit from a TypedDict with "
                             "other_keys=False and new fields"
                         )
-                if readonly and is_typeddict(base) and base is not _TypedDict and not getattr(base, "__readonly__", False):
-                    raise TypeError(f"read-only TypedDict cannot extend non-read-only TypedDict {base}")
+                if (
+                    readonly
+                    and is_typeddict(base)
+                    and base is not _TypedDict
+                    and not getattr(base, "__readonly__", False)
+                ):
+                    raise TypeError(
+                        "read-only TypedDict cannot extend non-read-only "
+                        f"TypedDict {base}"
+                    )
 
             annotations.update(own_annotations)
             for annotation_key, annotation_type in own_annotations.items():
@@ -887,9 +897,14 @@ else:
                     optional_keys.add(annotation_key)
                 if ReadOnly in qualifiers:
                     if readonly:
-                        raise TypeError("Using ReadOnly[] on a TypedDict with readonly=True is redundant")
+                        raise TypeError(
+                            "Using ReadOnly[] on a TypedDict with readonly=True "
+                            "is redundant")
                     if annotation_key in mutable_keys:
-                        raise TypeError(f"Cannot override mutable key {annotation_key!r} with read-only key")
+                        raise TypeError(
+                            f"Cannot override mutable key {annotation_key!r}"
+                            " with read-only key"
+                        )
                     readonly_keys.add(annotation_key)
                 elif readonly:
                     readonly_keys.add(annotation_key)
@@ -1976,7 +1991,8 @@ if hasattr(typing, 'ReadOnly'):
 elif sys.version_info[:2] >= (3, 9):  # 3.9-3.12
     @_ExtensionsSpecialForm
     def ReadOnly(self, parameters):
-        """A special typing construct to mark a key of a TypedDict as read-only. For example:
+        """A special typing construct to mark a key of a TypedDict as read-only.
+        For example:
 
             class Movie(TypedDict):
                 title: ReadOnly[str]
@@ -2000,7 +2016,8 @@ else:  # 3.8
 
     ReadOnly = _ReadOnlyForm(
         'ReadOnly',
-        doc="""A special typing construct to mark a key of a TypedDict as read-only. For example:
+        doc="""A special typing construct to mark a key of a TypedDict as read-only.
+        For example:
 
             class Movie(TypedDict):
                 title: ReadOnly[str]
