@@ -1,3 +1,9 @@
+# Unreleased
+
+- Add support for PEP 705, adding `typing_extensions.ReadOnly` and the
+  `readonly=True` and `other_keys=False` arguments to `TypedDict`. Patch
+  by Jelle Zijlstra.
+
 # Release 4.8.0 (September 17, 2023)
 
 No changes since 4.8.0rc1.

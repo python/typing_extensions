@@ -86,6 +86,7 @@ __all__ = [
     'TYPE_CHECKING',
     'Never',
     'NoReturn',
+    'ReadOnly',
     'Required',
     'NotRequired',
 
@@ -767,7 +768,7 @@ def _ensure_subclassable(mro_entries):
     return inner
 
 
-if sys.version_info >= (3, 13):
+if hasattr(typing, "ReadOnly"):
     # The standard library TypedDict in Python 3.8 does not store runtime information
     # about which (if any) keys are optional.  See https://bugs.python.org/issue38834
     # The standard library TypedDict in Python 3.9.0/1 does not honour the "total"
@@ -778,6 +779,8 @@ if sys.version_info >= (3, 13):
     # Aaaand on 3.12 we add __orig_bases__ to TypedDict
     # to enable better runtime introspection.
     # On 3.13 we deprecate some odd ways of creating TypedDicts.
+    # PEP 705 proposes adding read_only= and other_keys= to TypedDict, along with
+    # the ReadOnly[] qualifier.
     TypedDict = typing.TypedDict
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
@@ -785,8 +788,30 @@ else:
     # 3.10.0 and later
     _TAKES_MODULE = "module" in inspect.signature(typing._type_check).parameters
 
+    def _get_typeddict_qualifiers(annotation_type):
+        while True:
+            annotation_origin = get_origin(annotation_type)
+            if annotation_origin is Annotated:
+                annotation_args = get_args(annotation_type)
+                if annotation_args:
+                    annotation_type = annotation_args[0]
+                else:
+                    break
+            elif annotation_origin is Required:
+                yield Required
+                annotation_type, = get_args(annotation_type)
+            elif annotation_origin is NotRequired:
+                yield NotRequired
+                annotation_type, = get_args(annotation_type)
+            elif annotation_origin is ReadOnly:
+                yield ReadOnly
+                annotation_type, = get_args(annotation_type)
+            else:
+                break
+
+
     class _TypedDictMeta(type):
-        def __new__(cls, name, bases, ns, total=True):
+        def __new__(cls, name, bases, ns, *, total=True, readonly=False, other_keys=True):
             """Create new typed dict class object.
 
             This method is called when TypedDict is subclassed,
@@ -829,35 +854,57 @@ else:
                 }
             required_keys = set()
             optional_keys = set()
+            readonly_keys = set()
+            mutable_keys = set()
 
             for base in bases:
                 annotations.update(base.__dict__.get('__annotations__', {}))
                 required_keys.update(base.__dict__.get('__required_keys__', ()))
                 optional_keys.update(base.__dict__.get('__optional_keys__', ()))
+                readonly_keys.update(base.__dict__.get('__readonly_keys__', ()))
+                mutable_keys.update(base.__dict__.get('__mutable_keys__', ()))
+
+                if not getattr(base, "__other_keys__", True):
+                    if set(own_annotations) - set(base.__dict__.get('__annotations__', {})):
+                        raise TypeError(
+                            "TypedDict cannot inherit from a TypedDict with "
+                            "other_keys=False and new fields"
+                        )
+                if readonly and is_typeddict(base) and base is not _TypedDict and not getattr(base, "__readonly__", False):
+                    raise TypeError(f"read-only TypedDict cannot extend non-read-only TypedDict {base}")
 
             annotations.update(own_annotations)
             for annotation_key, annotation_type in own_annotations.items():
-                annotation_origin = get_origin(annotation_type)
-                if annotation_origin is Annotated:
-                    annotation_args = get_args(annotation_type)
-                    if annotation_args:
-                        annotation_type = annotation_args[0]
-                        annotation_origin = get_origin(annotation_type)
+                qualifiers = list(_get_typeddict_qualifiers(annotation_type))
 
-                if annotation_origin is Required:
+                if Required in qualifiers:
                     required_keys.add(annotation_key)
-                elif annotation_origin is NotRequired:
+                elif NotRequired in qualifiers:
                     optional_keys.add(annotation_key)
                 elif total:
                     required_keys.add(annotation_key)
                 else:
                     optional_keys.add(annotation_key)
+                if ReadOnly in qualifiers:
+                    if readonly:
+                        raise TypeError("Using ReadOnly[] on a TypedDict with readonly=True is redundant")
+                    if annotation_key in mutable_keys:
+                        raise TypeError(f"Cannot override mutable key {annotation_key!r} with read-only key")
+                    readonly_keys.add(annotation_key)
+                elif readonly:
+                    readonly_keys.add(annotation_key)
+                else:
+                    mutable_keys.add(annotation_key)
 
             tp_dict.__annotations__ = annotations
             tp_dict.__required_keys__ = frozenset(required_keys)
             tp_dict.__optional_keys__ = frozenset(optional_keys)
+            tp_dict.__readonly_keys__ = frozenset(readonly_keys)
+            tp_dict.__mutable_keys__ = frozenset(mutable_keys)
             if not hasattr(tp_dict, '__total__'):
                 tp_dict.__total__ = total
+            tp_dict.__readonly__ = readonly
+            tp_dict.__other_keys__ = other_keys
             return tp_dict
 
         __call__ = dict  # static method
@@ -1921,6 +1968,49 @@ else:  # 3.8
                 title='The Matrix',  # typechecker error if key is omitted
                 year=1999,
             )
+        """)
+
+
+if hasattr(typing, 'ReadOnly'):
+    ReadOnly = typing.ReadOnly
+elif sys.version_info[:2] >= (3, 9):  # 3.9-3.12
+    @_ExtensionsSpecialForm
+    def ReadOnly(self, parameters):
+        """A special typing construct to mark a key of a TypedDict as read-only. For example:
+
+            class Movie(TypedDict):
+                title: ReadOnly[str]
+                year: int
+
+            def mutate_movie(m: Movie) -> None:
+                m["year"] = 1992  # allowed
+                m["title"] = "The Matrix"  # typechecker error
+
+        There is no runtime checking for this propery.
+        """
+        item = typing._type_check(parameters, f'{self._name} accepts only a single type.')
+        return typing._GenericAlias(self, (item,))
+
+else:  # 3.8
+    class _ReadOnlyForm(_ExtensionsSpecialForm, _root=True):
+        def __getitem__(self, parameters):
+            item = typing._type_check(parameters,
+                                      f'{self._name} accepts only a single type.')
+            return typing._GenericAlias(self, (item,))
+
+    ReadOnly = _ReadOnlyForm(
+        'ReadOnly',
+        doc="""A special typing construct to mark a key of a TypedDict as read-only. For example:
+
+            class Movie(TypedDict):
+                title: ReadOnly[str]
+                year: int
+
+            def mutate_movie(m: Movie) -> None:
+                m["year"] = 1992  # allowed
+                m["title"] = "The Matrix"  # typechecker error
+
+        There is no runtime checking for this propery.
         """)
 
 

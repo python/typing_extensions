@@ -31,7 +31,7 @@ import warnings
 import typing_extensions
 from typing_extensions import NoReturn, Any, ClassVar, Final, IntVar, Literal, Type, NewType, TypedDict, Self
 from typing_extensions import TypeAlias, ParamSpec, Concatenate, ParamSpecArgs, ParamSpecKwargs, TypeGuard
-from typing_extensions import Awaitable, AsyncIterator, AsyncContextManager, Required, NotRequired
+from typing_extensions import Awaitable, AsyncIterator, AsyncContextManager, Required, NotRequired, ReadOnly
 from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, final, is_typeddict
 from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_type, Never, assert_never, LiteralString
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
@@ -3916,6 +3916,100 @@ class TypedDictTests(BaseTestCase):
                 self.assertEqual(klass.__required_keys__, set())
                 self.assertEqual(klass.__optional_keys__, set())
                 self.assertIsInstance(klass(), dict)
+
+    def test_readonly(self):
+        class TD1(TypedDict):
+            a: int
+            b: str
+
+        self.assertEqual(TD1.__readonly_keys__, frozenset())
+        self.assertEqual(TD1.__mutable_keys__, frozenset({'a', 'b'}))
+
+        class TD2(TypedDict):
+            a: ReadOnly[int]
+            b: str
+
+        self.assertEqual(TD2.__readonly_keys__, frozenset({'a'}))
+        self.assertEqual(TD2.__mutable_keys__, frozenset({'b'}))
+
+        class TD3(TypedDict, readonly=True):
+            a: int
+            b: str
+
+        self.assertEqual(TD3.__readonly_keys__, frozenset({'a', 'b'}))
+        self.assertEqual(TD3.__mutable_keys__, frozenset())
+
+    def test_cannot_combine_readonly_qualifier_and_kwarg(self):
+        with self.assertRaises(TypeError):
+            class TD(TypedDict, readonly=True):
+                a: ReadOnly[int]
+
+    def test_readonly_inheritance(self):
+        class Base1(TypedDict, readonly=True):
+            a: int
+
+        class Child1(Base1):
+            b: str
+
+        self.assertEqual(Child1.__readonly_keys__, frozenset({'a'}))
+        self.assertEqual(Child1.__mutable_keys__, frozenset({'b'}))
+
+        class Base2(TypedDict):
+            a: ReadOnly[int]
+
+        class Child2(Base2):
+            b: str
+
+        self.assertEqual(Child1.__readonly_keys__, frozenset({'a'}))
+        self.assertEqual(Child1.__mutable_keys__, frozenset({'b'}))
+
+    def test_cannot_make_mutable_key_readonly(self):
+        class Base(TypedDict):
+            a: int
+
+        with self.assertRaises(TypeError):
+            class Child(Base):
+                a: ReadOnly[int]
+
+    def test_combine_qualifiers(self):
+        class AllTheThings(TypedDict):
+            a: Annotated[Required[ReadOnly[int]], "why not"]
+            b: Required[Annotated[ReadOnly[int], "why not"]]
+            c: ReadOnly[NotRequired[Annotated[int, "why not"]]]
+            d: NotRequired[Annotated[int, "why not"]]
+
+        self.assertEqual(AllTheThings.__required_keys__, frozenset({'a', 'b'}))
+        self.assertEqual(AllTheThings.__optional_keys__, frozenset({'c', 'd'}))
+        self.assertEqual(AllTheThings.__readonly_keys__, frozenset({'a', 'b', 'c'}))
+        self.assertEqual(AllTheThings.__mutable_keys__, frozenset({'d'}))
+
+    def test_other_keys(self):
+        class TD1(TypedDict):
+            a: int
+
+        self.assertIs(TD1.__other_keys__, True)
+
+        class TD2(TypedDict, other_keys=False):
+            a: int
+
+        self.assertIs(TD2.__other_keys__, False)
+
+    def test_cannot_add_fields_with_other_keys_false(self):
+        class TD(TypedDict, other_keys=False):
+            a: int
+
+        with self.assertRaises(TypeError):
+            class TD2(TD):
+                b: int
+
+    def test_can_narrow_other_keys(self):
+        class Base(TypedDict, other_keys=False):
+            a: ReadOnly[Optional[int]]
+
+        class Child(Base):
+            a: int
+
+        self.assertEqual(Child.__annotations__, {"a": int})
 
 
 class AnnotatedTests(BaseTestCase):
