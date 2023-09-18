@@ -1,3 +1,7 @@
+# Release 4.8.0 (September 17, 2023)
+
+No changes since 4.8.0rc1.
+
 # Release 4.8.0rc1 (September 7, 2023)
 
 - Add `typing_extensions.Doc`, as proposed by PEP 727. Patch by
