@@ -2600,7 +2600,7 @@ else:
             num = UserId(5) + 1     # type: int
         """
 
-        def __call__(self, obj):
+        def __call__(self, obj, /):
             return obj
 
         def __init__(self, name, tp):
