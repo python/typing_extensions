@@ -1,3 +1,9 @@
+# Release 4.9.0
+
+- All parameters on `NewType.__call__` are now positional-only. This means that
+  the signature of `typing_extensions.NewType.__call__` now exactly matches the
+  signature of `typing.NewType.__call__`. Patch by Alex Waygood.
+
 # Release 4.8.0 (September 17, 2023)
 
 No changes since 4.8.0rc1.
