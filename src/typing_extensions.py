@@ -473,6 +473,7 @@ _EXCLUDED_ATTRS = {
     "__orig_bases__", "__module__", "_MutableMapping__marker", "__doc__",
     "__subclasshook__", "__orig_class__", "__init__", "__new__",
     "__protocol_attrs__", "__callable_proto_members_only__",
+    "__match_args__",
 }
 
 if sys.version_info >= (3, 9):
