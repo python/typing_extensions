@@ -3383,11 +3383,6 @@ class TypedDictTests(BaseTestCase):
         with self.assertRaises(TypeError):
             TypedDict('Emp', [('name', str)], None)
 
-        with self.assertWarns(DeprecationWarning):
-            Emp = TypedDict('Emp', name=str, id=int)
-        self.assertEqual(Emp.__name__, 'Emp')
-        self.assertEqual(Emp.__annotations__, {'name': str, 'id': int})
-
     def test_typeddict_errors(self):
         Emp = TypedDict('Emp', {'name': str, 'id': int})
         if sys.version_info >= (3, 13):
