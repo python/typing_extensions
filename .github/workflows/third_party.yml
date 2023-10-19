@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout pydantic
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: pydantic/pydantic
       - name: Edit pydantic pyproject.toml
@@ -54,7 +54,7 @@ jobs:
         # as a requirement unless we do this
         run: sed -i 's/^requires-python = .*/requires-python = ">=3.8"/' pyproject.toml
       - name: Checkout typing_extensions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
       - name: Setup pdm for pydantic tests
@@ -90,12 +90,12 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout typing_inspect
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ilevkivskyi/typing_inspect
           path: typing_inspect
       - name: Checkout typing_extensions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
       - name: Setup Python
@@ -133,12 +133,12 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out pyanalyze
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: quora/pyanalyze
           path: pyanalyze
       - name: Checkout typing_extensions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
       - name: Setup Python
@@ -177,12 +177,12 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out typeguard
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: agronholm/typeguard
           path: typeguard
       - name: Checkout typing_extensions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
       - name: Setup Python
@@ -221,12 +221,12 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out typed-argument-parser
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: swansonk14/typed-argument-parser
           path: typed-argument-parser
       - name: Checkout typing_extensions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
       - name: Setup Python
@@ -272,12 +272,12 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout mypy for stubtest and mypyc tests
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: python/mypy
           path: mypy
       - name: Checkout typing_extensions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
       - name: Setup Python
@@ -319,11 +319,11 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout cattrs
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: python-attrs/cattrs
       - name: Checkout typing_extensions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
       - name: Setup Python
