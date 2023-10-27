@@ -5605,6 +5605,23 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         class A(Generic[Unpack[Ts]]): ...
         Alias = Optional[Unpack[Ts]]
 
+    def test_erroneous_generic(self):
+        DefaultStrT = TypeVar('DefaultStrT', default=str)
+        T = TypeVar('T')
+
+        with self.assertRaises(TypeError):
+            Test = Generic[DefaultStrT, T]
+
+    def test_need_more_params(self):
+        DefaultStrT = typing_extensions.TypeVar('DefaultStrT', default=str)
+        T = typing_extensions.TypeVar('T')
+        U = typing_extensions.TypeVar('U')
+
+        class A(Generic[T, U, DefaultStrT]): ...
+
+        with self.assertRaises(TypeError):
+            Test = A[int]
+
     def test_pickle(self):
         global U, U_co, U_contra, U_default  # pickle wants to reference the class by name
         U = typing_extensions.TypeVar('U')
