@@ -145,27 +145,6 @@ class _Sentinel:
 _marker = _Sentinel()
 
 
-def _check_generic(cls, parameters, elen=_marker):
-    """Check correct count for parameters of a generic cls (internal helper).
-    This gives a nice error message in case of count mismatch.
-    """
-    if not elen:
-        raise TypeError(f"{cls} is not a generic class")
-    if elen is _marker:
-        if not hasattr(cls, "__parameters__") or not cls.__parameters__:
-            raise TypeError(f"{cls} is not a generic class")
-        elen = len(cls.__parameters__)
-    alen = len(parameters)
-    if alen != elen:
-        if hasattr(cls, "__parameters__"):
-            parameters = [p for p in cls.__parameters__ if not _is_unpack(p)]
-            num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
-            if (num_tv_tuples > 0) and (alen >= elen - num_tv_tuples):
-                return
-        raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters for {cls};"
-                        f" actual {alen}, expected {elen}")
-
-
 if sys.version_info >= (3, 10):
     def _should_collect_from_parameters(t):
         return isinstance(
@@ -2379,6 +2358,55 @@ else:
 #   the runtime doesn't try to substitute the Unpack with the subscripted type.
 if not hasattr(typing, "TypeVarTuple"):
     typing._collect_type_vars = _collect_type_vars
+    def _check_generic(cls, parameters, elen=_marker):
+        """Check correct count for parameters of a generic cls (internal helper).
+        This gives a nice error message in case of count mismatch.
+        """
+        if not elen:
+            raise TypeError(f"{cls} is not a generic class")
+        if elen is _marker:
+            if not hasattr(cls, "__parameters__") or not cls.__parameters__:
+                raise TypeError(f"{cls} is not a generic class")
+            elen = len(cls.__parameters__)
+        alen = len(parameters)
+        if alen != elen:
+            if hasattr(cls, "__parameters__"):
+                parameters = [p for p in cls.__parameters__ if not _is_unpack(p)]
+                num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
+                if (num_tv_tuples > 0) and (alen >= elen - num_tv_tuples):
+                    return
+
+            # deal with TypeVarLike defaults
+            # required TypeVarLikes cannot appear after a defaulted one.
+            if alen < elen:
+                if all(hasattr(p, '__default__') for p in parameters[alen:]):
+                    return
+
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters for {cls};"
+                            f" actual {alen}, expected {elen}")
+
+    typing._check_generic = _check_generic
+else:
+    # Python 3.11+
+
+    def _check_generic(cls, parameters, elen):
+        """Check correct count for parameters of a generic cls (internal helper).
+
+        This gives a nice error message in case of count mismatch.
+        """
+        if not elen:
+            raise TypeError(f"{cls} is not a generic class")
+        alen = len(parameters)
+        if alen != elen:
+            # deal with TypeVarLike defaults
+            # required TypeVarLikes cannot appear after a defaulted one.
+            if alen < elen:
+                if all(hasattr(p, '__default__') for p in parameters[alen:]):
+                    return
+
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments for {cls};"
+                            f" actual {alen}, expected {elen}")
+
     typing._check_generic = _check_generic
 
 
