@@ -2357,13 +2357,13 @@ if not hasattr(typing, "TypeVarTuple"):
                 # deal with TypeVarLike defaults
                 # required TypeVarLikes cannot appear after a defaulted one.
                 if alen < elen:
-                    # since we validate TypeVarLike default in _collect_type_vars / _collect_parameters
-                    # we can safely check parameters[alen]
+                    # since we validate TypeVarLike default in _collect_type_vars
+                    # or _collect_parameters we can safely check parameters[alen]
                     if getattr(parameters[alen], '__default__', None) is not None:
                         return
 
-            raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters for {cls};"
-                            f" actual {alen}, expected {elen}")
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters"
+                            f" for {cls}; actual {alen}, expected {elen}")
 
     typing._check_generic = _check_generic
 else:
@@ -2387,13 +2387,13 @@ else:
                 # deal with TypeVarLike defaults
                 # required TypeVarLikes cannot appear after a defaulted one.
                 if alen < elen:
-                    # since we validate TypeVarLike default in _collect_type_vars / _collect_parameters
-                    # we can safely check parameters[alen]
+                    # since we validate TypeVarLike default in _collect_type_vars
+                    # or _collect_parameters we can safely check parameters[alen]
                     if getattr(parameters[alen], '__default__', None) is not None:
                         return
 
-            raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments for {cls};"
-                            f" actual {alen}, expected {elen}")
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters"
+                            f" for {cls}; actual {alen}, expected {elen}")
 
     typing._check_generic = _check_generic
 
@@ -2457,12 +2457,14 @@ else:
                         if not default_encountered:
                             default_encountered = True
                     elif default_encountered:
-                        raise TypeError(f'expected TypeVar with default type, found {t!r}')
+                        raise TypeError('expected TypeVar with default type, found'
+                                        f' {t!r}')
 
                     parameters.append(t)
             else:
                 if _should_collect_from_parameters(t):
-                    parameters.extend([t for t in t.__parameters__ if t not in parameters])
+                    parameters.extend(
+                        [t for t in t.__parameters__ if t not in parameters])
 
         return tuple(parameters)
 
