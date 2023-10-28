@@ -1,3 +1,4 @@
+from ast import Pass
 import sys
 import os
 import abc
@@ -417,6 +418,22 @@ class DeprecatedTests(BaseTestCase):
             instance = HasNewNoInit(42)
         self.assertEqual(instance.x, 42)
         self.assertTrue(new_called)
+
+    def test_mixin_class(self):
+        @deprecated("Mixin will go away soon")
+        class Mixin:
+            pass
+
+        class Base:
+            def __init__(self, a) -> None:
+                self.a = a
+
+        class Child(Base, Mixin):
+            pass
+
+        with self.assertWarnsRegex(DeprecationWarning, "Mixin will go away soon"):
+            instance = Child(42)
+        self.assertEqual(instance.a, 42)
 
     def test_function(self):
         @deprecated("b will go away soon")

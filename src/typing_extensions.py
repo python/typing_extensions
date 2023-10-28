@@ -2346,6 +2346,9 @@ else:
                         return original_new(cls, *args, **kwargs)
                     # Mirrors a similar check in object.__new__.
                     elif not has_init and (args or kwargs):
+                        # Non-deprecated child class of a deprecated class
+                        if cls.__init__ is not arg.__init__:
+                            return original_new(cls)
                         raise TypeError(f"{cls.__name__}() takes no arguments")
                     else:
                         return original_new(cls)
