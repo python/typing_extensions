@@ -3,7 +3,8 @@
 - All parameters on `NewType.__call__` are now positional-only. This means that
   the signature of `typing_extensions.NewType.__call__` now exactly matches the
   signature of `typing.NewType.__call__`. Patch by Alex Waygood.
-- Fix bug with using `@deprecated` on a mixin class. Patch by Jelle Zijlstra.
+- Fix bug with using `@deprecated` on a mixin class. Inheriting from a
+  deprecated class now raises a `DeprecationWarning`. Patch by Jelle Zijlstra.
 
 # Release 4.8.0 (September 17, 2023)
 
