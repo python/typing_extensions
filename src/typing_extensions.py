@@ -2359,7 +2359,7 @@ else:
                     return original_init_subclass(*args, **kwargs)
 
                 arg.__init_subclass__ = __init_subclass__
-                arg.__deprecated__ = __new__.__deprecated__ = arg
+                arg.__deprecated__ = __new__.__deprecated__ = msg
                 __init_subclass__.__deprecated__ = msg
                 return arg
             elif callable(arg):
