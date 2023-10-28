@@ -2359,7 +2359,8 @@ else:
                     return original_init_subclass(*args, **kwargs)
 
                 arg.__init_subclass__ = __init_subclass__
-                arg.__deprecated__ = __new__.__deprecated__ = __init_subclass__.__deprecated__ = msg
+                arg.__deprecated__ = __new__.__deprecated__ = arg
+                __init_subclass__.__deprecated__ = msg
                 return arg
             elif callable(arg):
                 @functools.wraps(arg)
