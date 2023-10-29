@@ -480,6 +480,21 @@ class DeprecatedTests(BaseTestCase):
             warnings.simplefilter("error")
             d()
 
+    def test_only_strings_allowed(self):
+        with self.assertRaisesRegex(
+            TypeError,
+            "Expected an object of type str for 'msg', not 'type'"
+        ):
+            @deprecated
+            class Foo: ...
+
+        with self.assertRaisesRegex(
+            TypeError,
+            "Expected an object of type str for 'msg', not 'function'"
+        ):
+            @deprecated
+            def foo(): ...
+
 
 class AnyTests(BaseTestCase):
     def test_can_subclass(self):
