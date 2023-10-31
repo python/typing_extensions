@@ -3096,6 +3096,9 @@ class ProtocolTests(BaseTestCase):
         self.assertEqual(MemoizedFunc.__parameters__, (Ts, T, T2))
         self.assertTrue(MemoizedFunc._is_protocol)
 
+        # 3.11+ moves where this exception is thrown
+        # 3.11: TypeVarTuple.__typing_prepare_subst__
+        # 3.12+: typing._typevartuple_prepare_subst
         things = "arguments" if sys.version_info >= (3, 11) else "parameters"
 
         # A bug was fixed in 3.11.1
@@ -5231,9 +5234,7 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIsInstance(a, G)
                 self.assertEqual(a.x, 3)
 
-                things = "arguments" if sys.version_info >= (3, 11) else "parameters"
-
-                with self.assertRaisesRegex(TypeError, f'Too many {things}'):
+                with self.assertRaisesRegex(TypeError, f'Too many parameters'):
                     G[int, str]
 
     @skipUnless(TYPING_3_9_0, "tuple.__class_getitem__ was added in 3.9")
@@ -5606,7 +5607,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         Alias = Optional[Unpack[Ts]]
 
     def test_erroneous_generic(self):
-        DefaultStrT = TypeVar('DefaultStrT', default=str)
+        DefaultStrT = typing_extensions.TypeVar('DefaultStrT', default=str)
         T = TypeVar('T')
 
         with self.assertRaises(TypeError):

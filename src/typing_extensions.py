@@ -2348,6 +2348,7 @@ if not hasattr(typing, "TypeVarTuple"):
             elen = len(cls.__parameters__)
         alen = len(parameters)
         if alen != elen:
+            expect_val = elen
             if hasattr(cls, "__parameters__"):
                 parameters = [p for p in cls.__parameters__ if not _is_unpack(p)]
                 num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
@@ -2362,10 +2363,14 @@ if not hasattr(typing, "TypeVarTuple"):
                     if getattr(parameters[alen], '__default__', None) is not None:
                         return
 
-            raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters"
-                            f" for {cls}; actual {alen}, expected {elen}")
+                    num_default_tv = sum(getattr(p, '__default__', None) is not None for p in parameters)
 
-    typing._check_generic = _check_generic
+                    elen -= num_default_tv
+
+                    expect_val = f"at least {elen}"
+
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters"
+                            f" for {cls}; actual {alen}, expected {expect_val}")
 else:
     # Python 3.11+
 
@@ -2378,6 +2383,7 @@ else:
             raise TypeError(f"{cls} is not a generic class")
         alen = len(parameters)
         if alen != elen:
+            expect_val = elen
             if hasattr(cls, "__parameters__"):
                 parameters = [p for p in cls.__parameters__ if not _is_unpack(p)]
                 num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
@@ -2392,10 +2398,16 @@ else:
                     if getattr(parameters[alen], '__default__', None) is not None:
                         return
 
-            raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters"
-                            f" for {cls}; actual {alen}, expected {elen}")
+                    num_default_tv = sum(getattr(p, '__default__', None) is not None for p in parameters)
 
-    typing._check_generic = _check_generic
+                    elen -= num_default_tv
+
+                    expect_val = f"at least {elen}"
+
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters"
+                            f" for {cls}; actual {alen}, expected {expect_val}")
+
+typing._check_generic = _check_generic
 
 # Python 3.11+ _collect_type_vars was renamed to _collect_parameters
 if hasattr(typing, '_collect_type_vars'):
@@ -2420,7 +2432,8 @@ if hasattr(typing, '_collect_type_vars'):
                     if not default_encountered:
                         default_encountered = True
                 elif default_encountered:
-                    raise TypeError(f'expected TypeVar with default type, found {t!r}')
+                    raise TypeError(f'type parameter {t!r} without a default'
+                                     ' follows type parameter with a default')
 
                 tvars.append(t)
             if _should_collect_from_parameters(t):
@@ -2457,8 +2470,9 @@ else:
                         if not default_encountered:
                             default_encountered = True
                     elif default_encountered:
-                        raise TypeError('expected TypeVar with default type, found'
-                                        f' {t!r}')
+                        raise TypeError(f'type parameter {t!r} without a default'
+                                        ' follows type parameter with a default')
+
 
                     parameters.append(t)
             else:
