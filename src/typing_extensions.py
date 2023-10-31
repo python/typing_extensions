@@ -2363,7 +2363,8 @@ if not hasattr(typing, "TypeVarTuple"):
                     if getattr(parameters[alen], '__default__', None) is not None:
                         return
 
-                    num_default_tv = sum(getattr(p, '__default__', None) is not None for p in parameters)
+                    num_default_tv = sum(getattr(p, '__default__', None)
+                                         is not None for p in parameters)
 
                     elen -= num_default_tv
 
@@ -2398,7 +2399,8 @@ else:
                     if getattr(parameters[alen], '__default__', None) is not None:
                         return
 
-                    num_default_tv = sum(getattr(p, '__default__', None) is not None for p in parameters)
+                    num_default_tv = sum(getattr(p, '__default__', None)
+                                         is not None for p in parameters)
 
                     elen -= num_default_tv
 
@@ -2433,7 +2435,7 @@ if hasattr(typing, '_collect_type_vars'):
                         default_encountered = True
                 elif default_encountered:
                     raise TypeError(f'type parameter {t!r} without a default'
-                                     ' follows type parameter with a default')
+                                    ' follows type parameter with a default')
 
                 tvars.append(t)
             if _should_collect_from_parameters(t):
@@ -2472,7 +2474,6 @@ else:
                     elif default_encountered:
                         raise TypeError(f'type parameter {t!r} without a default'
                                         ' follows type parameter with a default')
-
 
                     parameters.append(t)
             else:
