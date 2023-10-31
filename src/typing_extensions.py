@@ -2332,6 +2332,11 @@ else:
         See PEP 702 for details.
 
         """
+        if not isinstance(msg, str):
+            raise TypeError(
+                f"Expected an object of type str for 'msg', not {type(msg).__name__!r}"
+            )
+
         def decorator(arg: _T, /) -> _T:
             if category is None:
                 arg.__deprecated__ = msg

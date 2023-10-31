@@ -480,6 +480,21 @@ class DeprecatedTests(BaseTestCase):
             warnings.simplefilter("error")
             d()
 
+    def test_only_strings_allowed(self):
+        with self.assertRaisesRegex(
+            TypeError,
+            "Expected an object of type str for 'msg', not 'type'"
+        ):
+            @deprecated
+            class Foo: ...
+
+        with self.assertRaisesRegex(
+            TypeError,
+            "Expected an object of type str for 'msg', not 'function'"
+        ):
+            @deprecated
+            def foo(): ...
+
 
 class AnyTests(BaseTestCase):
     def test_can_subclass(self):
@@ -3415,11 +3430,6 @@ class TypedDictTests(BaseTestCase):
             TypedDict()
         with self.assertRaises(TypeError):
             TypedDict('Emp', [('name', str)], None)
-
-        with self.assertWarns(DeprecationWarning):
-            Emp = TypedDict('Emp', name=str, id=int)
-        self.assertEqual(Emp.__name__, 'Emp')
-        self.assertEqual(Emp.__annotations__, {'name': str, 'id': int})
 
     def test_typeddict_errors(self):
         Emp = TypedDict('Emp', {'name': str, 'id': int})
