@@ -5095,12 +5095,12 @@ class AllTests(BaseTestCase):
             exclude |= {'final', 'Any', 'NewType'}
         if sys.version_info < (3, 12):
             exclude |= {
-                'Protocol', 'SupportsAbs', 'SupportsBytes',
+                'SupportsAbs', 'SupportsBytes',
                 'SupportsComplex', 'SupportsFloat', 'SupportsIndex', 'SupportsInt',
                 'SupportsRound', 'Unpack',
             }
         if sys.version_info < (3, 13):
-            exclude |= {'NamedTuple', 'TypedDict', 'is_typeddict'}
+            exclude |= {'NamedTuple', 'Protocol', 'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
