@@ -2337,7 +2337,6 @@ else:
                 return arg
             elif isinstance(arg, type):
                 original_new = arg.__new__
-                original_init_subclass = arg.__init_subclass__
 
                 @functools.wraps(original_new)
                 def __new__(cls, *args, **kwargs):
@@ -2353,12 +2352,28 @@ else:
 
                 arg.__new__ = staticmethod(__new__)
 
-                @functools.wraps(original_init_subclass)
-                def __init_subclass__(*args, **kwargs):
-                    warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
-                    return original_init_subclass(*args, **kwargs)
+                original_init_subclass = arg.__init_subclass__
+                # We need slightly different behavior if __init_subclass__
+                # is a bound method (likely if it was implemented in Python)
+                if isinstance(original_init_subclass, _types.MethodType):
+                    original_init_subclass = original_init_subclass.__func__
 
-                arg.__init_subclass__ = __init_subclass__
+                    @functools.wraps(original_init_subclass)
+                    def __init_subclass__(*args, **kwargs):
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                        return original_init_subclass(*args, **kwargs)
+
+                    arg.__init_subclass__ = classmethod(__init_subclass__)
+                # Or otherwise, which likely means it's a builtin such as
+                # type's implementation of __init_subclass__.
+                else:
+                    @functools.wraps(original_init_subclass)
+                    def __init_subclass__(*args, **kwargs):
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                        return original_init_subclass(*args, **kwargs)
+
+                    arg.__init_subclass__ = __init_subclass__
+
                 arg.__deprecated__ = __new__.__deprecated__ = msg
                 __init_subclass__.__deprecated__ = msg
                 return arg
