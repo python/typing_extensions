@@ -473,6 +473,7 @@ _EXCLUDED_ATTRS = {
     "__orig_bases__", "__module__", "_MutableMapping__marker", "__doc__",
     "__subclasshook__", "__orig_class__", "__init__", "__new__",
     "__protocol_attrs__", "__callable_proto_members_only__",
+    "__match_args__",
 }
 
 if sys.version_info >= (3, 9):
@@ -503,9 +504,9 @@ def _caller(depth=2):
         return None
 
 
-# The performance of runtime-checkable protocols is significantly improved on Python 3.12,
-# so we backport the 3.12 version of Protocol to Python <=3.11
-if sys.version_info >= (3, 12):
+# `__match_args__` attribute was removed from protocol members in 3.13,
+# we want to backport this change to older Python versions.
+if sys.version_info >= (3, 13):
     Protocol = typing.Protocol
 else:
     def _allow_reckless_class_checks(depth=3):
@@ -2331,6 +2332,11 @@ else:
         See PEP 702 for details.
 
         """
+        if not isinstance(msg, str):
+            raise TypeError(
+                f"Expected an object of type str for 'msg', not {type(msg).__name__!r}"
+            )
+
         def decorator(arg: _T, /) -> _T:
             if category is None:
                 arg.__deprecated__ = msg

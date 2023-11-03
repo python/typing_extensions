@@ -567,6 +567,21 @@ class DeprecatedTests(BaseTestCase):
             warnings.simplefilter("error")
             d()
 
+    def test_only_strings_allowed(self):
+        with self.assertRaisesRegex(
+            TypeError,
+            "Expected an object of type str for 'msg', not 'type'"
+        ):
+            @deprecated
+            class Foo: ...
+
+        with self.assertRaisesRegex(
+            TypeError,
+            "Expected an object of type str for 'msg', not 'function'"
+        ):
+            @deprecated
+            def foo(): ...
+
 
 class AnyTests(BaseTestCase):
     def test_can_subclass(self):
@@ -2592,6 +2607,39 @@ class ProtocolTests(BaseTestCase):
         self.assertNotIsInstance(Bad(), Concrete)
         self.assertNotIsInstance(Other(), Concrete)
         self.assertIsInstance(NT(1, 2), Position)
+
+    def test_runtime_checkable_with_match_args(self):
+        @runtime_checkable
+        class P_regular(Protocol):
+            x: int
+            y: int
+
+        @runtime_checkable
+        class P_match(Protocol):
+            __match_args__ = ("x", "y")
+            x: int
+            y: int
+
+        class Regular:
+            def __init__(self, x: int, y: int):
+                self.x = x
+                self.y = y
+
+        class WithMatch:
+            __match_args__ = ("x", "y", "z")
+            def __init__(self, x: int, y: int, z: int):
+                self.x = x
+                self.y = y
+                self.z = z
+
+        class Nope: ...
+
+        self.assertIsInstance(Regular(1, 2), P_regular)
+        self.assertIsInstance(Regular(1, 2), P_match)
+        self.assertIsInstance(WithMatch(1, 2, 3), P_regular)
+        self.assertIsInstance(WithMatch(1, 2, 3), P_match)
+        self.assertNotIsInstance(Nope(), P_regular)
+        self.assertNotIsInstance(Nope(), P_match)
 
     def test_protocols_isinstance_init(self):
         T = TypeVar('T')
@@ -5134,12 +5182,12 @@ class AllTests(BaseTestCase):
             exclude |= {'final', 'Any', 'NewType'}
         if sys.version_info < (3, 12):
             exclude |= {
-                'Protocol', 'SupportsAbs', 'SupportsBytes',
+                'SupportsAbs', 'SupportsBytes',
                 'SupportsComplex', 'SupportsFloat', 'SupportsIndex', 'SupportsInt',
                 'SupportsRound', 'Unpack',
             }
         if sys.version_info < (3, 13):
-            exclude |= {'NamedTuple', 'TypedDict', 'is_typeddict'}
+            exclude |= {'NamedTuple', 'Protocol', 'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
