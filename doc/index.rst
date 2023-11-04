@@ -553,6 +553,11 @@ Decorators
 
    .. versionadded:: 4.5.0
 
+   .. versionchanged:: 4.9.0
+
+      Inheriting from a deprecated class now also raises a runtime
+      :py:exc:`DeprecationWarning`.
+
 .. decorator:: final
 
    See :py:func:`typing.final` and :pep:`591`. In ``typing`` since 3.8.

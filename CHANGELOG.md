@@ -3,7 +3,9 @@
 - All parameters on `NewType.__call__` are now positional-only. This means that
   the signature of `typing_extensions.NewType.__call__` now exactly matches the
   signature of `typing.NewType.__call__`. Patch by Alex Waygood.
-- `typing.deprecated` now gives a better error message if you pass a non-`str`
+- Fix bug with using `@deprecated` on a mixin class. Inheriting from a
+  deprecated class now raises a `DeprecationWarning`. Patch by Jelle Zijlstra.
+- `@deprecated` now gives a better error message if you pass a non-`str`
   argument to the `msg` parameter. Patch by Alex Waygood.
 - Exclude `__match_args__` from `Protocol` members,
   this is a backport of https://github.com/python/cpython/pull/110683

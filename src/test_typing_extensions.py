@@ -418,6 +418,93 @@ class DeprecatedTests(BaseTestCase):
         self.assertEqual(instance.x, 42)
         self.assertTrue(new_called)
 
+    def test_mixin_class(self):
+        @deprecated("Mixin will go away soon")
+        class Mixin:
+            pass
+
+        class Base:
+            def __init__(self, a) -> None:
+                self.a = a
+
+        with self.assertWarnsRegex(DeprecationWarning, "Mixin will go away soon"):
+            class Child(Base, Mixin):
+                pass
+
+        instance = Child(42)
+        self.assertEqual(instance.a, 42)
+
+    def test_existing_init_subclass(self):
+        @deprecated("C will go away soon")
+        class C:
+            def __init_subclass__(cls) -> None:
+                cls.inited = True
+
+        with self.assertWarnsRegex(DeprecationWarning, "C will go away soon"):
+            C()
+
+        with self.assertWarnsRegex(DeprecationWarning, "C will go away soon"):
+            class D(C):
+                pass
+
+        self.assertTrue(D.inited)
+        self.assertIsInstance(D(), D)  # no deprecation
+
+    def test_existing_init_subclass_in_base(self):
+        class Base:
+            def __init_subclass__(cls, x) -> None:
+                cls.inited = x
+
+        @deprecated("C will go away soon")
+        class C(Base, x=42):
+            pass
+
+        self.assertEqual(C.inited, 42)
+
+        with self.assertWarnsRegex(DeprecationWarning, "C will go away soon"):
+            C()
+
+        with self.assertWarnsRegex(DeprecationWarning, "C will go away soon"):
+            class D(C, x=3):
+                pass
+
+        self.assertEqual(D.inited, 3)
+
+    def test_init_subclass_has_correct_cls(self):
+        init_subclass_saw = None
+
+        @deprecated("Base will go away soon")
+        class Base:
+            def __init_subclass__(cls) -> None:
+                nonlocal init_subclass_saw
+                init_subclass_saw = cls
+
+        self.assertIsNone(init_subclass_saw)
+
+        with self.assertWarnsRegex(DeprecationWarning, "Base will go away soon"):
+            class C(Base):
+                pass
+
+        self.assertIs(init_subclass_saw, C)
+
+    def test_init_subclass_with_explicit_classmethod(self):
+        init_subclass_saw = None
+
+        @deprecated("Base will go away soon")
+        class Base:
+            @classmethod
+            def __init_subclass__(cls) -> None:
+                nonlocal init_subclass_saw
+                init_subclass_saw = cls
+
+        self.assertIsNone(init_subclass_saw)
+
+        with self.assertWarnsRegex(DeprecationWarning, "Base will go away soon"):
+            class C(Base):
+                pass
+
+        self.assertIs(init_subclass_saw, C)
+
     def test_function(self):
         @deprecated("b will go away soon")
         def b():

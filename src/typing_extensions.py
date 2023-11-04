@@ -2343,21 +2343,45 @@ else:
                 return arg
             elif isinstance(arg, type):
                 original_new = arg.__new__
-                has_init = arg.__init__ is not object.__init__
 
                 @functools.wraps(original_new)
                 def __new__(cls, *args, **kwargs):
-                    warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                    if cls is arg:
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                     if original_new is not object.__new__:
                         return original_new(cls, *args, **kwargs)
                     # Mirrors a similar check in object.__new__.
-                    elif not has_init and (args or kwargs):
+                    elif cls.__init__ is object.__init__ and (args or kwargs):
                         raise TypeError(f"{cls.__name__}() takes no arguments")
                     else:
                         return original_new(cls)
 
                 arg.__new__ = staticmethod(__new__)
+
+                original_init_subclass = arg.__init_subclass__
+                # We need slightly different behavior if __init_subclass__
+                # is a bound method (likely if it was implemented in Python)
+                if isinstance(original_init_subclass, _types.MethodType):
+                    original_init_subclass = original_init_subclass.__func__
+
+                    @functools.wraps(original_init_subclass)
+                    def __init_subclass__(*args, **kwargs):
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                        return original_init_subclass(*args, **kwargs)
+
+                    arg.__init_subclass__ = classmethod(__init_subclass__)
+                # Or otherwise, which likely means it's a builtin such as
+                # object's implementation of __init_subclass__.
+                else:
+                    @functools.wraps(original_init_subclass)
+                    def __init_subclass__(*args, **kwargs):
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                        return original_init_subclass(*args, **kwargs)
+
+                    arg.__init_subclass__ = __init_subclass__
+
                 arg.__deprecated__ = __new__.__deprecated__ = msg
+                __init_subclass__.__deprecated__ = msg
                 return arg
             elif callable(arg):
                 @functools.wraps(arg)
