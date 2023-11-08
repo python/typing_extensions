@@ -2282,8 +2282,8 @@ else:  # <=3.11
         return arg
 
 
-if hasattr(typing, "deprecated"):
-    deprecated = typing.deprecated
+if hasattr(warnings, "deprecated"):
+    deprecated = warnings.deprecated
 else:
     _T = typing.TypeVar("_T")
 
