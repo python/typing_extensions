@@ -2363,7 +2363,7 @@ else:
                 @functools.wraps(original_new)
                 def __new__(cls, *args, **kwargs):
                     if cls is arg:
-                        warn(msg, category=category, stacklevel=stacklevel + 1)
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                     if original_new is not object.__new__:
                         return original_new(cls, *args, **kwargs)
                     # Mirrors a similar check in object.__new__.
@@ -2382,7 +2382,7 @@ else:
 
                     @functools.wraps(original_init_subclass)
                     def __init_subclass__(*args, **kwargs):
-                        warn(msg, category=category, stacklevel=stacklevel + 1)
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                         return original_init_subclass(*args, **kwargs)
 
                     arg.__init_subclass__ = classmethod(__init_subclass__)
@@ -2391,7 +2391,7 @@ else:
                 else:
                     @functools.wraps(original_init_subclass)
                     def __init_subclass__(*args, **kwargs):
-                        warn(msg, category=category, stacklevel=stacklevel + 1)
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                         return original_init_subclass(*args, **kwargs)
 
                     arg.__init_subclass__ = __init_subclass__
@@ -2404,7 +2404,7 @@ else:
 
                 @functools.wraps(arg)
                 def wrapper(*args, **kwargs):
-                    warn(msg, category=category, stacklevel=stacklevel + 1)
+                    warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                     return arg(*args, **kwargs)
 
                 arg.__deprecated__ = wrapper.__deprecated__ = msg
