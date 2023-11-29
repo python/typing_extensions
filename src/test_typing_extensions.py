@@ -56,6 +56,11 @@ TYPING_3_12_0 = sys.version_info[:3] >= (3, 12, 0)
 # versions, but not all
 HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
 
+skip_if_early_py313_alpha = skipIf(
+    sys.version_info[:4] == (3, 13, 0, 'alpha') and sys.version_info.serial < 3,
+    "Bugfixes will be released in 3.13.0a3"
+)
+
 ANN_MODULE_SOURCE = '''\
 from typing import Optional
 from functools import wraps
@@ -5548,6 +5553,7 @@ class NamedTupleTests(BaseTestCase):
 
         self.assertEqual(CallNamedTuple.__orig_bases__, (NamedTuple,))
 
+    @skip_if_early_py313_alpha
     def test_setname_called_on_values_in_class_dictionary(self):
         class Vanilla:
             def __set_name__(self, owner, name):
@@ -5619,10 +5625,7 @@ class NamedTupleTests(BaseTestCase):
         TYPING_3_12_0,
         "__set_name__ behaviour changed on py312+ to use BaseException.add_note()"
     )
-    @skipIf(
-        sys.version_info[:4] == (3, 13, 0, 'alpha') and sys.version_info.serial < 3,
-        "A NamedTuple bugfix will be released in 3.13.0a3"
-    )
+    @skip_if_early_py313_alpha
     def test_setname_raises_the_same_as_on_other_classes_py312_plus(self):
         class CustomException(BaseException): pass
 
@@ -5662,6 +5665,7 @@ class NamedTupleTests(BaseTestCase):
             normal_exception.__notes__[0].replace("NormalClass", "NamedTupleClass")
         )
 
+    @skip_if_early_py313_alpha
     def test_strange_errors_when_accessing_set_name_itself(self):
         class CustomException(Exception): pass
 
