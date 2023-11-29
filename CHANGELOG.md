@@ -1,8 +1,17 @@
-# Unreleased
+# Release 4.9.0 (???)
 
 - Add support for PEP 705, adding `typing_extensions.ReadOnly` and the
   `readonly=True` and `other_keys=False` arguments to `TypedDict`. Patch
   by Jelle Zijlstra.
+- All parameters on `NewType.__call__` are now positional-only. This means that
+  the signature of `typing_extensions.NewType.__call__` now exactly matches the
+  signature of `typing.NewType.__call__`. Patch by Alex Waygood.
+- Fix bug with using `@deprecated` on a mixin class. Inheriting from a
+  deprecated class now raises a `DeprecationWarning`. Patch by Jelle Zijlstra.
+- `@deprecated` now gives a better error message if you pass a non-`str`
+  argument to the `msg` parameter. Patch by Alex Waygood.
+- Exclude `__match_args__` from `Protocol` members,
+  this is a backport of https://github.com/python/cpython/pull/110683
 
 # Release 4.8.0 (September 17, 2023)
 

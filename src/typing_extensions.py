@@ -474,6 +474,7 @@ _EXCLUDED_ATTRS = {
     "__orig_bases__", "__module__", "_MutableMapping__marker", "__doc__",
     "__subclasshook__", "__orig_class__", "__init__", "__new__",
     "__protocol_attrs__", "__callable_proto_members_only__",
+    "__match_args__",
 }
 
 if sys.version_info >= (3, 9):
@@ -504,9 +505,9 @@ def _caller(depth=2):
         return None
 
 
-# The performance of runtime-checkable protocols is significantly improved on Python 3.12,
-# so we backport the 3.12 version of Protocol to Python <=3.11
-if sys.version_info >= (3, 12):
+# `__match_args__` attribute was removed from protocol members in 3.13,
+# we want to backport this change to older Python versions.
+if sys.version_info >= (3, 13):
     Protocol = typing.Protocol
 else:
     def _allow_reckless_class_checks(depth=3):
@@ -2388,8 +2389,8 @@ else:  # <=3.11
         return arg
 
 
-if hasattr(typing, "deprecated"):
-    deprecated = typing.deprecated
+if hasattr(warnings, "deprecated"):
+    deprecated = warnings.deprecated
 else:
     _T = typing.TypeVar("_T")
 
@@ -2438,27 +2439,56 @@ else:
         See PEP 702 for details.
 
         """
+        if not isinstance(msg, str):
+            raise TypeError(
+                f"Expected an object of type str for 'msg', not {type(msg).__name__!r}"
+            )
+
         def decorator(arg: _T, /) -> _T:
             if category is None:
                 arg.__deprecated__ = msg
                 return arg
             elif isinstance(arg, type):
                 original_new = arg.__new__
-                has_init = arg.__init__ is not object.__init__
 
                 @functools.wraps(original_new)
                 def __new__(cls, *args, **kwargs):
-                    warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                    if cls is arg:
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                     if original_new is not object.__new__:
                         return original_new(cls, *args, **kwargs)
                     # Mirrors a similar check in object.__new__.
-                    elif not has_init and (args or kwargs):
+                    elif cls.__init__ is object.__init__ and (args or kwargs):
                         raise TypeError(f"{cls.__name__}() takes no arguments")
                     else:
                         return original_new(cls)
 
                 arg.__new__ = staticmethod(__new__)
+
+                original_init_subclass = arg.__init_subclass__
+                # We need slightly different behavior if __init_subclass__
+                # is a bound method (likely if it was implemented in Python)
+                if isinstance(original_init_subclass, _types.MethodType):
+                    original_init_subclass = original_init_subclass.__func__
+
+                    @functools.wraps(original_init_subclass)
+                    def __init_subclass__(*args, **kwargs):
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                        return original_init_subclass(*args, **kwargs)
+
+                    arg.__init_subclass__ = classmethod(__init_subclass__)
+                # Or otherwise, which likely means it's a builtin such as
+                # object's implementation of __init_subclass__.
+                else:
+                    @functools.wraps(original_init_subclass)
+                    def __init_subclass__(*args, **kwargs):
+                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                        return original_init_subclass(*args, **kwargs)
+
+                    arg.__init_subclass__ = __init_subclass__
+
                 arg.__deprecated__ = __new__.__deprecated__ = msg
+                __init_subclass__.__deprecated__ = msg
                 return arg
             elif callable(arg):
                 @functools.wraps(arg)
@@ -2707,7 +2737,7 @@ else:
             num = UserId(5) + 1     # type: int
         """
 
-        def __call__(self, obj):
+        def __call__(self, obj, /):
             return obj
 
         def __init__(self, name, tp):
