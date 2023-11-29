@@ -1966,7 +1966,7 @@ if hasattr(typing, 'ReadOnly'):
 elif sys.version_info[:2] >= (3, 9):  # 3.9-3.12
     @_ExtensionsSpecialForm
     def ReadOnly(self, parameters):
-        """A special typing construct to mark a key of a TypedDict as read-only.
+        """A special typing construct to mark an item of a TypedDict as read-only.
         For example:
 
             class Movie(TypedDict):
@@ -1977,7 +1977,7 @@ elif sys.version_info[:2] >= (3, 9):  # 3.9-3.12
                 m["year"] = 1992  # allowed
                 m["title"] = "The Matrix"  # typechecker error
 
-        There is no runtime checking for this propery.
+        There is no runtime checking for this property.
         """
         item = typing._type_check(parameters, f'{self._name} accepts only a single type.')
         return typing._GenericAlias(self, (item,))
