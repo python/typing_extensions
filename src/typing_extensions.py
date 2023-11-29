@@ -2334,7 +2334,7 @@ else:
             message: str,
             /,
             *,
-            category: type[Warning] | None = DeprecationWarning,
+            category: typing.Optional[typing.Type[Warning]] = DeprecationWarning,
             stacklevel: int = 1,
         ) -> None:
             if not isinstance(message, str):
