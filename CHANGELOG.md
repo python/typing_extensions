@@ -1,4 +1,4 @@
-# Release 4.9.0 (???)
+# Release 4.9.0rc1 (November 29, 2023)
 
 - Add support for PEP 705, adding `typing_extensions.ReadOnly`. Patch
   by Jelle Zijlstra.
@@ -11,8 +11,8 @@
   argument to the `msg` parameter. Patch by Alex Waygood.
 - `@deprecated` is now implemented as a class for better introspectability.
   Patch by Jelle Zijlstra.
-- Exclude `__match_args__` from `Protocol` members,
-  this is a backport of https://github.com/python/cpython/pull/110683
+- Exclude `__match_args__` from `Protocol` members.
+  Backport of https://github.com/python/cpython/pull/110683 by Nikita Sobolev.
 - When creating a `typing_extensions.NamedTuple` class, ensure `__set_name__`
   is called on all objects that define `__set_name__` and exist in the values
   of the `NamedTuple` class's class dictionary. Patch by Alex Waygood,
