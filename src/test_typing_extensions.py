@@ -4074,6 +4074,16 @@ class TypedDictTests(BaseTestCase):
             class Child(Base):
                 a: ReadOnly[int]
 
+    def test_can_make_readonly_key_mutable(self):
+        class Base(TypedDict):
+            a: ReadOnly[int]
+
+        class Child(Base):
+            a: int
+
+        self.assertEqual(Child.__readonly_keys__, frozenset())
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
+
     def test_combine_qualifiers(self):
         class AllTheThings(TypedDict):
             a: Annotated[Required[ReadOnly[int]], "why not"]

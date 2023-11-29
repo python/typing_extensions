@@ -863,19 +863,9 @@ else:
                 readonly_keys.update(base.__dict__.get('__readonly_keys__', ()))
                 mutable_keys.update(base.__dict__.get('__mutable_keys__', ()))
 
-                if not getattr(base, "__other_keys__", True):
-                    if (
-                        set(own_annotations) -
-                        set(base.__dict__.get('__annotations__', {}))
-                    ):
-                        raise TypeError(
-                            "TypedDict cannot inherit from a TypedDict with "
-                            "other_keys=False and new fields"
-                        )
-
             annotations.update(own_annotations)
             for annotation_key, annotation_type in own_annotations.items():
-                qualifiers = list(_get_typeddict_qualifiers(annotation_type))
+                qualifiers = set(_get_typeddict_qualifiers(annotation_type))
 
                 if Required in qualifiers:
                     required_keys.add(annotation_key)
@@ -894,6 +884,7 @@ else:
                     readonly_keys.add(annotation_key)
                 else:
                     mutable_keys.add(annotation_key)
+                    readonly_keys.discard(annotation_key)
 
             tp_dict.__annotations__ = annotations
             tp_dict.__required_keys__ = frozenset(required_keys)

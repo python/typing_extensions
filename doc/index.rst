@@ -320,7 +320,7 @@ Special typing primitives
 
 .. data:: ReadOnly
 
-   See :pep:`705`. Indicates that a :class:`TypedDict` key may not be modified.
+   See :pep:`705`. Indicates that a :class:`TypedDict` item may not be modified.
 
    .. versionadded:: 4.9.0
 
