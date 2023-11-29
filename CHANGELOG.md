@@ -7,6 +7,8 @@
   deprecated class now raises a `DeprecationWarning`. Patch by Jelle Zijlstra.
 - `@deprecated` now gives a better error message if you pass a non-`str`
   argument to the `msg` parameter. Patch by Alex Waygood.
+- `@deprecated` is now implemented as a class for better introspectability.
+  Patch by Jelle Zijlstra.
 - Exclude `__match_args__` from `Protocol` members,
   this is a backport of https://github.com/python/cpython/pull/110683
 - When creating a `typing_extensions.NamedTuple` class, ensure `__set_name__`

@@ -575,17 +575,25 @@ class DeprecatedTests(BaseTestCase):
     def test_only_strings_allowed(self):
         with self.assertRaisesRegex(
             TypeError,
-            "Expected an object of type str for 'msg', not 'type'"
+            "Expected an object of type str for 'message', not 'type'"
         ):
             @deprecated
             class Foo: ...
 
         with self.assertRaisesRegex(
             TypeError,
-            "Expected an object of type str for 'msg', not 'function'"
+            "Expected an object of type str for 'message', not 'function'"
         ):
             @deprecated
             def foo(): ...
+
+    def test_no_retained_references_to_wrapper_instance(self):
+        @deprecated('depr')
+        def d(): pass
+
+        self.assertFalse(any(
+            isinstance(cell.cell_contents, deprecated) for cell in d.__closure__
+        ))
 
 
 class AnyTests(BaseTestCase):
