@@ -2485,8 +2485,12 @@ else:
                                 f"Error calling __set_name__ on {type(val).__name__!r} "
                                 f"instance {key!r} in {typename!r}"
                             )
-                            # py311+
-                            if hasattr(BaseException, "add_note"):
+                            # BaseException.add_note() existed on py311,
+                            # but the __set_name__ machinery didn't start
+                            # using add_note() until py312.
+                            # Making sure exceptions are raised in the same way
+                            # as in "normal" classes seems most important here.
+                            if sys.version_info >= (3, 12):
                                 e.add_note(msg)
                                 raise
                             else:

@@ -5572,10 +5572,10 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(bar.attr.name, "attr")
 
     @skipIf(
-        TYPING_3_11_0,
-        "__set_name__ behaviour changed on py311+ to use BaseException.add_note()"
+        TYPING_3_12_0,
+        "__set_name__ behaviour changed on py312+ to use BaseException.add_note()"
     )
-    def test_setname_raises_the_same_as_on_other_classes_py310_minus(self):
+    def test_setname_raises_the_same_as_on_other_classes_py311_minus(self):
         class CustomException(BaseException): pass
 
         class Annoying:
@@ -5616,10 +5616,14 @@ class NamedTupleTests(BaseTestCase):
         )
 
     @skipUnless(
-        TYPING_3_11_0,
-        "__set_name__ behaviour changed on py311+ to use BaseException.add_note()"
+        TYPING_3_12_0,
+        "__set_name__ behaviour changed on py312+ to use BaseException.add_note()"
     )
-    def test_setname_raises_the_same_as_on_other_classes_py311_plus(self):
+    @skipIf(
+        sys.version_info[:4] == (3, 13, 0, 'alpha') and sys.version_info.serial < 3,
+        "A NamedTuple bugfix will be released in 3.13.0a3"
+    )
+    def test_setname_raises_the_same_as_on_other_classes_py312_plus(self):
         class CustomException(BaseException): pass
 
         class Annoying:
