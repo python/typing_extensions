@@ -1,5 +1,7 @@
 # Release 4.9.0 (???)
 
+- Add support for PEP 705, adding `typing_extensions.ReadOnly`. Patch
+  by Jelle Zijlstra.
 - All parameters on `NewType.__call__` are now positional-only. This means that
   the signature of `typing_extensions.NewType.__call__` now exactly matches the
   signature of `typing.NewType.__call__`. Patch by Alex Waygood.

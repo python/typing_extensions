@@ -31,7 +31,7 @@ import warnings
 import typing_extensions
 from typing_extensions import NoReturn, Any, ClassVar, Final, IntVar, Literal, Type, NewType, TypedDict, Self
 from typing_extensions import TypeAlias, ParamSpec, Concatenate, ParamSpecArgs, ParamSpecKwargs, TypeGuard
-from typing_extensions import Awaitable, AsyncIterator, AsyncContextManager, Required, NotRequired
+from typing_extensions import Awaitable, AsyncIterator, AsyncContextManager, Required, NotRequired, ReadOnly
 from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, final, is_typeddict
 from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_type, Never, assert_never, LiteralString
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
@@ -3550,10 +3550,7 @@ class TypedDictTests(BaseTestCase):
 
     def test_typeddict_errors(self):
         Emp = TypedDict('Emp', {'name': str, 'id': int})
-        if sys.version_info >= (3, 13):
-            self.assertEqual(TypedDict.__module__, 'typing')
-        else:
-            self.assertEqual(TypedDict.__module__, 'typing_extensions')
+        self.assertEqual(TypedDict.__module__, 'typing_extensions')
         jim = Emp(name='Jim', id=1)
         with self.assertRaises(TypeError):
             isinstance({}, Emp)
@@ -4076,6 +4073,55 @@ class TypedDictTests(BaseTestCase):
                 self.assertEqual(klass.__required_keys__, set())
                 self.assertEqual(klass.__optional_keys__, set())
                 self.assertIsInstance(klass(), dict)
+
+    def test_readonly_inheritance(self):
+        class Base1(TypedDict):
+            a: ReadOnly[int]
+
+        class Child1(Base1):
+            b: str
+
+        self.assertEqual(Child1.__readonly_keys__, frozenset({'a'}))
+        self.assertEqual(Child1.__mutable_keys__, frozenset({'b'}))
+
+        class Base2(TypedDict):
+            a: ReadOnly[int]
+
+        class Child2(Base2):
+            b: str
+
+        self.assertEqual(Child1.__readonly_keys__, frozenset({'a'}))
+        self.assertEqual(Child1.__mutable_keys__, frozenset({'b'}))
+
+    def test_cannot_make_mutable_key_readonly(self):
+        class Base(TypedDict):
+            a: int
+
+        with self.assertRaises(TypeError):
+            class Child(Base):
+                a: ReadOnly[int]
+
+    def test_can_make_readonly_key_mutable(self):
+        class Base(TypedDict):
+            a: ReadOnly[int]
+
+        class Child(Base):
+            a: int
+
+        self.assertEqual(Child.__readonly_keys__, frozenset())
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
+
+    def test_combine_qualifiers(self):
+        class AllTheThings(TypedDict):
+            a: Annotated[Required[ReadOnly[int]], "why not"]
+            b: Required[Annotated[ReadOnly[int], "why not"]]
+            c: ReadOnly[NotRequired[Annotated[int, "why not"]]]
+            d: NotRequired[Annotated[int, "why not"]]
+
+        self.assertEqual(AllTheThings.__required_keys__, frozenset({'a', 'b'}))
+        self.assertEqual(AllTheThings.__optional_keys__, frozenset({'c', 'd'}))
+        self.assertEqual(AllTheThings.__readonly_keys__, frozenset({'a', 'b', 'c'}))
+        self.assertEqual(AllTheThings.__mutable_keys__, frozenset({'d'}))
 
 
 class AnnotatedTests(BaseTestCase):
@@ -5217,7 +5263,9 @@ class AllTests(BaseTestCase):
                 'SupportsRound', 'Unpack',
             }
         if sys.version_info < (3, 13):
-            exclude |= {'NamedTuple', 'Protocol', 'TypedDict', 'is_typeddict'}
+            exclude |= {'NamedTuple', 'Protocol'}
+        if not hasattr(typing, 'ReadOnly'):
+            exclude |= {'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
