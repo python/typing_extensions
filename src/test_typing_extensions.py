@@ -4047,36 +4047,9 @@ class TypedDictTests(BaseTestCase):
                 self.assertEqual(klass.__optional_keys__, set())
                 self.assertIsInstance(klass(), dict)
 
-    def test_readonly(self):
-        class TD1(TypedDict):
-            a: int
-            b: str
-
-        self.assertEqual(TD1.__readonly_keys__, frozenset())
-        self.assertEqual(TD1.__mutable_keys__, frozenset({'a', 'b'}))
-
-        class TD2(TypedDict):
-            a: ReadOnly[int]
-            b: str
-
-        self.assertEqual(TD2.__readonly_keys__, frozenset({'a'}))
-        self.assertEqual(TD2.__mutable_keys__, frozenset({'b'}))
-
-        class TD3(TypedDict, readonly=True):
-            a: int
-            b: str
-
-        self.assertEqual(TD3.__readonly_keys__, frozenset({'a', 'b'}))
-        self.assertEqual(TD3.__mutable_keys__, frozenset())
-
-    def test_cannot_combine_readonly_qualifier_and_kwarg(self):
-        with self.assertRaises(TypeError):
-            class TD(TypedDict, readonly=True):
-                a: ReadOnly[int]
-
     def test_readonly_inheritance(self):
-        class Base1(TypedDict, readonly=True):
-            a: int
+        class Base1(TypedDict):
+            a: ReadOnly[int]
 
         class Child1(Base1):
             b: str
@@ -4112,34 +4085,6 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(AllTheThings.__optional_keys__, frozenset({'c', 'd'}))
         self.assertEqual(AllTheThings.__readonly_keys__, frozenset({'a', 'b', 'c'}))
         self.assertEqual(AllTheThings.__mutable_keys__, frozenset({'d'}))
-
-    def test_other_keys(self):
-        class TD1(TypedDict):
-            a: int
-
-        self.assertIs(TD1.__other_keys__, True)
-
-        class TD2(TypedDict, other_keys=False):
-            a: int
-
-        self.assertIs(TD2.__other_keys__, False)
-
-    def test_cannot_add_fields_with_other_keys_false(self):
-        class TD(TypedDict, other_keys=False):
-            a: int
-
-        with self.assertRaises(TypeError):
-            class TD2(TD):
-                b: int
-
-    def test_can_narrow_other_keys(self):
-        class Base(TypedDict, other_keys=False):
-            a: ReadOnly[Optional[int]]
-
-        class Child(Base):
-            a: int
-
-        self.assertEqual(Child.__annotations__, {"a": int})
 
 
 class AnnotatedTests(BaseTestCase):

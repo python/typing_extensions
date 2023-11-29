@@ -350,7 +350,7 @@ Special typing primitives
 
    See :py:data:`typing.TypeGuard` and :pep:`647`. In ``typing`` since 3.10.
 
-.. class:: TypedDict(dict, total=True, readonly=False, other_keys=True)
+.. class:: TypedDict(dict, total=True)
 
    See :py:class:`typing.TypedDict` and :pep:`589`. In ``typing`` since 3.8.
 
@@ -372,42 +372,20 @@ Special typing primitives
    raises a :py:exc:`DeprecationWarning` when this syntax is used in Python 3.12
    or lower and fails with a :py:exc:`TypeError` in Python 3.13 and higher.
 
-   ``typing_extensions`` supports the experimental additions to ``TypedDict``
-   proposed by :pep:`705`. These are implemented in the following attributes::
+   ``typing_extensions`` supports the experimental :data:`ReadOnly` qualifier
+   proposed by :pep:`705`. It is reflected in the following attributes::
 
    .. attribute:: __readonly_keys__
 
       A :py:class:`frozenset` containing the names of all read-only keys. Keys
-      are read-only if they are declared in a ``TypedDict`` with the
-      ``readonly=True`` argument, or if they carry the :data:`ReadOnly` qualifier.
+      are read-only if they carry the :data:`ReadOnly` qualifier.
 
       .. versionadded:: 4.9.0
 
    .. attribute:: __mutable_keys__
 
       A :py:class:`frozenset` containing the names of all mutable keys. Keys
-      are mutable if they are declared in a ``TypedDict`` with the
-      ``readonly=False`` argument, or if they do not carry the :data:`ReadOnly`
-      qualifier.
-
-      .. versionadded:: 4.9.0
-
-   .. attribute:: __readonly__
-
-      Boolean indicating whether the current class was declared with
-      the ``readonly=True`` argument. If this is true, all keys are read-only.
-
-      .. versionadded:: 4.9.0
-
-   .. attribute:: __other_keys__
-
-      Boolean indicating the value of the ``other_keys=`` argument for
-      the current class, which indicates whether the ``TypedDict`` accepts
-      keys other than those explicitly declared in the class body.
-
-      Note that if a base class has ``other_keys=False``,
-      but the current class does not, semantically the class will not accept
-      other keys, but this attribute will still be ``False``.
+      are mutable if they do not carry the :data:`ReadOnly` qualifier.
 
       .. versionadded:: 4.9.0
 
@@ -441,7 +419,7 @@ Special typing primitives
 
    .. versionchanged:: 4.9.0
 
-      Support for the ``readonly=`` and ``other_keys=`` arguments was added.
+      Support for the :data:`ReadOnly` qualifier was added.
 
 .. class:: TypeVar(name, *constraints, bound=None, covariant=False,
                    contravariant=False, infer_variance=False, default=...)

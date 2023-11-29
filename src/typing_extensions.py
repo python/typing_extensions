@@ -780,8 +780,7 @@ if hasattr(typing, "ReadOnly"):
     # Aaaand on 3.12 we add __orig_bases__ to TypedDict
     # to enable better runtime introspection.
     # On 3.13 we deprecate some odd ways of creating TypedDicts.
-    # PEP 705 proposes adding read_only= and other_keys= to TypedDict, along with
-    # the ReadOnly[] qualifier.
+    # PEP 705 proposes adding the ReadOnly[] qualifier.
     TypedDict = typing.TypedDict
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
@@ -811,7 +810,7 @@ else:
                 break
 
     class _TypedDictMeta(type):
-        def __new__(cls, name, bases, ns, *, total=True, readonly=False, other_keys=True):
+        def __new__(cls, name, bases, ns, *, total=True):
             """Create new typed dict class object.
 
             This method is called when TypedDict is subclassed,
@@ -873,16 +872,6 @@ else:
                             "TypedDict cannot inherit from a TypedDict with "
                             "other_keys=False and new fields"
                         )
-                if (
-                    readonly
-                    and is_typeddict(base)
-                    and base is not _TypedDict
-                    and not getattr(base, "__readonly__", False)
-                ):
-                    raise TypeError(
-                        "read-only TypedDict cannot extend non-read-only "
-                        f"TypedDict {base}"
-                    )
 
             annotations.update(own_annotations)
             for annotation_key, annotation_type in own_annotations.items():
@@ -897,17 +886,11 @@ else:
                 else:
                     optional_keys.add(annotation_key)
                 if ReadOnly in qualifiers:
-                    if readonly:
-                        raise TypeError(
-                            "Using ReadOnly[] on a TypedDict with readonly=True "
-                            "is redundant")
                     if annotation_key in mutable_keys:
                         raise TypeError(
                             f"Cannot override mutable key {annotation_key!r}"
                             " with read-only key"
                         )
-                    readonly_keys.add(annotation_key)
-                elif readonly:
                     readonly_keys.add(annotation_key)
                 else:
                     mutable_keys.add(annotation_key)
@@ -919,8 +902,6 @@ else:
             tp_dict.__mutable_keys__ = frozenset(mutable_keys)
             if not hasattr(tp_dict, '__total__'):
                 tp_dict.__total__ = total
-            tp_dict.__readonly__ = readonly
-            tp_dict.__other_keys__ = other_keys
             return tp_dict
 
         __call__ = dict  # static method
