@@ -9,6 +9,10 @@
   argument to the `msg` parameter. Patch by Alex Waygood.
 - Exclude `__match_args__` from `Protocol` members,
   this is a backport of https://github.com/python/cpython/pull/110683
+- When creating a `typing_extensions.NamedTuple` class, ensure `__set_name__`
+  is called on all objects that define `__set_name__` and exist in the values
+  of the `NamedTuple` class's class dictionary. Patch by Alex Waygood,
+  backporting https://github.com/python/cpython/pull/111876.
 
 # Release 4.8.0 (September 17, 2023)
 
