@@ -857,11 +857,13 @@ else:
             mutable_keys = set()
 
             for base in bases:
-                annotations.update(base.__dict__.get('__annotations__', {}))
-                required_keys.update(base.__dict__.get('__required_keys__', ()))
-                optional_keys.update(base.__dict__.get('__optional_keys__', ()))
-                readonly_keys.update(base.__dict__.get('__readonly_keys__', ()))
-                mutable_keys.update(base.__dict__.get('__mutable_keys__', ()))
+                base_dict = base.__dict__
+
+                annotations.update(base_dict.get('__annotations__', {}))
+                required_keys.update(base_dict.get('__required_keys__', ()))
+                optional_keys.update(base_dict.get('__optional_keys__', ()))
+                readonly_keys.update(base_dict.get('__readonly_keys__', ()))
+                mutable_keys.update(base_dict.get('__mutable_keys__', ()))
 
             annotations.update(own_annotations)
             for annotation_key, annotation_type in own_annotations.items():
@@ -1967,6 +1969,7 @@ elif sys.version_info[:2] >= (3, 9):  # 3.9-3.12
     @_ExtensionsSpecialForm
     def ReadOnly(self, parameters):
         """A special typing construct to mark an item of a TypedDict as read-only.
+
         For example:
 
             class Movie(TypedDict):
@@ -1992,6 +1995,7 @@ else:  # 3.8
     ReadOnly = _ReadOnlyForm(
         'ReadOnly',
         doc="""A special typing construct to mark a key of a TypedDict as read-only.
+
         For example:
 
             class Movie(TypedDict):
