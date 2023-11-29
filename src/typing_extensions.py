@@ -2252,7 +2252,7 @@ else:  # <=3.11
         Usage:
 
             class Base:
-                def method(self) -> None: ...
+                def method(self) -> None:
                     pass
 
             class Child(Base):
