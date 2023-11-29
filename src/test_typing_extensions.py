@@ -3520,7 +3520,7 @@ class TypedDictTests(BaseTestCase):
 
     def test_typeddict_errors(self):
         Emp = TypedDict('Emp', {'name': str, 'id': int})
-        if sys.version_info >= (3, 13):
+        if hasattr(typing, "ReadOnly"):
             self.assertEqual(TypedDict.__module__, 'typing')
         else:
             self.assertEqual(TypedDict.__module__, 'typing_extensions')
@@ -5236,7 +5236,9 @@ class AllTests(BaseTestCase):
                 'SupportsRound', 'Unpack',
             }
         if sys.version_info < (3, 13):
-            exclude |= {'NamedTuple', 'Protocol', 'TypedDict', 'is_typeddict'}
+            exclude |= {'NamedTuple', 'Protocol'}
+        if not hasattr(typing, 'ReadOnly'):
+            exclude |= {'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(

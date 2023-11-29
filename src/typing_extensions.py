@@ -971,6 +971,8 @@ else:
             raise TypeError("TypedDict takes either a dict or keyword arguments,"
                             " but not both")
         if kwargs:
+            if sys.version_info >= (3, 13):
+                raise TypeError("TypedDict takes no keyword arguments")
             warnings.warn(
                 "The kwargs-based syntax for TypedDict definitions is deprecated "
                 "in Python 3.11, will be removed in Python 3.13, and may not be "
