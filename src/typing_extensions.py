@@ -2287,14 +2287,11 @@ if hasattr(warnings, "deprecated"):
 else:
     _T = typing.TypeVar("_T")
 
-    def deprecated(
-        msg: str,
-        /,
-        *,
-        category: typing.Optional[typing.Type[Warning]] = DeprecationWarning,
-        stacklevel: int = 1,
-    ) -> typing.Callable[[_T], _T]:
+    class deprecated:
         """Indicate that a class, function or overload is deprecated.
+
+        When this decorator is applied to an object, the type checker
+        will generate a diagnostic on usage of the deprecated object.
 
         Usage:
 
@@ -2312,42 +2309,61 @@ else:
             @overload
             def g(x: str) -> int: ...
 
-        When this decorator is applied to an object, the type checker
-        will generate a diagnostic on usage of the deprecated object.
-
-        The warning specified by ``category`` will be emitted on use
-        of deprecated objects. For functions, that happens on calls;
-        for classes, on instantiation. If the ``category`` is ``None``,
-        no warning is emitted. The ``stacklevel`` determines where the
+        The warning specified by *category* will be emitted at runtime
+        on use of deprecated objects. For functions, that happens on calls;
+        for classes, on instantiation and on creation of subclasses.
+        If the *category* is ``None``, no warning is emitted at runtime.
+        The *stacklevel* determines where the
         warning is emitted. If it is ``1`` (the default), the warning
         is emitted at the direct caller of the deprecated object; if it
         is higher, it is emitted further up the stack.
+        Static type checker behavior is not affected by the *category*
+        and *stacklevel* arguments.
 
-        The decorator sets the ``__deprecated__``
-        attribute on the decorated object to the deprecation message
-        passed to the decorator. If applied to an overload, the decorator
+        The deprecation message passed to the decorator is saved in the
+        ``__deprecated__`` attribute on the decorated object.
+        If applied to an overload, the decorator
         must be after the ``@overload`` decorator for the attribute to
         exist on the overload as returned by ``get_overloads()``.
 
         See PEP 702 for details.
 
         """
-        if not isinstance(msg, str):
-            raise TypeError(
-                f"Expected an object of type str for 'msg', not {type(msg).__name__!r}"
-            )
+        def __init__(
+            self,
+            message: str,
+            /,
+            *,
+            category: type[Warning] | None = DeprecationWarning,
+            stacklevel: int = 1,
+        ) -> None:
+            if not isinstance(message, str):
+                raise TypeError(
+                    f"Expected an object of type str for 'msg', not {type(message).__name__!r}"
+                )
+            self.message = message
+            self.category = category
+            self.stacklevel = stacklevel
 
-        def decorator(arg: _T, /) -> _T:
+        def __call__(self, arg: _T, /) -> _T:
+            # Make sure the inner functions created below don't
+            # retain a reference to self.
+            msg = self.message
+            category = self.category
+            stacklevel = self.stacklevel
             if category is None:
                 arg.__deprecated__ = msg
                 return arg
             elif isinstance(arg, type):
+                import functools
+                from types import MethodType
+
                 original_new = arg.__new__
 
                 @functools.wraps(original_new)
                 def __new__(cls, *args, **kwargs):
                     if cls is arg:
-                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                        warn(msg, category=category, stacklevel=stacklevel + 1)
                     if original_new is not object.__new__:
                         return original_new(cls, *args, **kwargs)
                     # Mirrors a similar check in object.__new__.
@@ -2361,21 +2377,21 @@ else:
                 original_init_subclass = arg.__init_subclass__
                 # We need slightly different behavior if __init_subclass__
                 # is a bound method (likely if it was implemented in Python)
-                if isinstance(original_init_subclass, _types.MethodType):
+                if isinstance(original_init_subclass, MethodType):
                     original_init_subclass = original_init_subclass.__func__
 
                     @functools.wraps(original_init_subclass)
                     def __init_subclass__(*args, **kwargs):
-                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                        warn(msg, category=category, stacklevel=stacklevel + 1)
                         return original_init_subclass(*args, **kwargs)
 
                     arg.__init_subclass__ = classmethod(__init_subclass__)
                 # Or otherwise, which likely means it's a builtin such as
-                # object's implementation of __init_subclass__.
+                # type's implementation of __init_subclass__.
                 else:
                     @functools.wraps(original_init_subclass)
                     def __init_subclass__(*args, **kwargs):
-                        warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                        warn(msg, category=category, stacklevel=stacklevel + 1)
                         return original_init_subclass(*args, **kwargs)
 
                     arg.__init_subclass__ = __init_subclass__
@@ -2384,9 +2400,11 @@ else:
                 __init_subclass__.__deprecated__ = msg
                 return arg
             elif callable(arg):
+                import functools
+
                 @functools.wraps(arg)
                 def wrapper(*args, **kwargs):
-                    warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
+                    warn(msg, category=category, stacklevel=stacklevel + 1)
                     return arg(*args, **kwargs)
 
                 arg.__deprecated__ = wrapper.__deprecated__ = msg
@@ -2396,8 +2414,6 @@ else:
                     "@deprecated decorator with non-None category must be applied to "
                     f"a class or callable, not {arg!r}"
                 )
-
-        return decorator
 
 
 # We have to do some monkey patching to deal with the dual nature of
