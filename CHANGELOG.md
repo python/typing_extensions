@@ -13,6 +13,9 @@
   is called on all objects that define `__set_name__` and exist in the values
   of the `NamedTuple` class's class dictionary. Patch by Alex Waygood,
   backporting https://github.com/python/cpython/pull/111876.
+- Improve the error message when trying to call `issubclass()` against a
+  `Protocol` that has non-method members. Patch by Alex Waygood (backporting
+  https://github.com/python/cpython/pull/112344, by Randolph Sholz).
 
 # Release 4.8.0 (September 17, 2023)
 

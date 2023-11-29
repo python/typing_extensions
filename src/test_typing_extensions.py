@@ -3446,6 +3446,23 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(Foo(), ProtocolWithMixedMembers)
         self.assertNotIsInstance(42, ProtocolWithMixedMembers)
 
+    @skip_if_early_py313_alpha
+    def test_protocol_issubclass_error_message(self):
+        class Vec2D(Protocol):
+            x: float
+            y: float
+
+            def square_norm(self) -> float:
+                return self.x ** 2 + self.y ** 2
+
+        self.assertEqual(Vec2D.__protocol_attrs__, {'x', 'y', 'square_norm'})
+        expected_error_message = (
+            "Protocols with non-method members don't support issubclass()."
+            " Non-method members: 'x', 'y'."
+        )
+        with self.assertRaisesRegex(TypeError, re.escape(expected_error_message)):
+            issubclass(int, Vec2D)
+
 
 class Point2DGeneric(Generic[T], TypedDict):
     a: T
