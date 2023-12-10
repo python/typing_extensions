@@ -1,3 +1,11 @@
+# Release 4.9.0 (December 9, 2023)
+
+This feature release adds `typing_extensions.ReadOnly`, as specified
+by PEP 705, and makes various other improvements, especially to
+`@typing_extensions.deprecated()`.
+
+There are no changes since 4.9.0rc1.
+
 # Release 4.9.0rc1 (November 29, 2023)
 
 - Add support for PEP 705, adding `typing_extensions.ReadOnly`. Patch
