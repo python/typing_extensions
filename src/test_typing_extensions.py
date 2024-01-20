@@ -2817,8 +2817,8 @@ class ProtocolTests(BaseTestCase):
 
         self.assertNotIn("__protocol_attrs__", vars(NonP))
         self.assertNotIn("__protocol_attrs__", vars(NonPR))
-        self.assertNotIn("__callable_proto_members_only__", vars(NonP))
-        self.assertNotIn("__callable_proto_members_only__", vars(NonPR))
+        self.assertNotIn("__non_callable_proto_members__", vars(NonP))
+        self.assertNotIn("__non_callable_proto_members__", vars(NonPR))
 
         acceptable_extra_attrs = {
             '_is_protocol', '_is_runtime_protocol', '__parameters__',
@@ -2891,11 +2891,26 @@ class ProtocolTests(BaseTestCase):
     @skip_if_py312b1
     def test_issubclass_fails_correctly(self):
         @runtime_checkable
-        class P(Protocol):
+        class NonCallableMembers(Protocol):
             x = 1
+
+        class NotRuntimeCheckable(Protocol):
+            def callable_member(self) -> int: ...
+
+        @runtime_checkable
+        class RuntimeCheckable(Protocol):
+            def callable_member(self) -> int: ...
+
         class C: pass
-        with self.assertRaisesRegex(TypeError, r"issubclass\(\) arg 1 must be a class"):
-            issubclass(C(), P)
+
+        # These three all exercise different code paths,
+        # but should result in the same error message:
+        for protocol in NonCallableMembers, NotRuntimeCheckable, RuntimeCheckable:
+            with self.subTest(proto_name=protocol.__name__):
+                with self.assertRaisesRegex(
+                    TypeError, r"issubclass\(\) arg 1 must be a class"
+                ):
+                    issubclass(C(), protocol)
 
     def test_defining_generic_protocols(self):
         T = TypeVar('T')
@@ -3456,6 +3471,7 @@ class ProtocolTests(BaseTestCase):
 
     @skip_if_early_py313_alpha
     def test_protocol_issubclass_error_message(self):
+        @runtime_checkable
         class Vec2D(Protocol):
             x: float
             y: float
@@ -3470,6 +3486,39 @@ class ProtocolTests(BaseTestCase):
         )
         with self.assertRaisesRegex(TypeError, re.escape(expected_error_message)):
             issubclass(int, Vec2D)
+
+    def test_nonruntime_protocol_interaction_with_evil_classproperty(self):
+        class classproperty:
+            def __get__(self, instance, type):
+                raise RuntimeError("NO")
+
+        class Commentable(Protocol):
+            evil = classproperty()
+
+        # recognised as a protocol attr,
+        # but not actually accessed by the protocol metaclass
+        # (which would raise RuntimeError) for non-runtime protocols.
+        # See gh-113320
+        self.assertEqual(get_protocol_members(Commentable), {"evil"})
+
+    def test_runtime_protocol_interaction_with_evil_classproperty(self):
+        class CustomError(Exception): pass
+
+        class classproperty:
+            def __get__(self, instance, type):
+                raise CustomError
+
+        with self.assertRaises(TypeError) as cm:
+            @runtime_checkable
+            class Commentable(Protocol):
+                evil = classproperty()
+
+        exc = cm.exception
+        self.assertEqual(
+            exc.args[0],
+            "Failed to determine whether protocol member 'evil' is a method member"
+        )
+        self.assertIs(type(exc.__cause__), CustomError)
 
 
 class Point2DGeneric(Generic[T], TypedDict):
@@ -5263,7 +5312,7 @@ class AllTests(BaseTestCase):
                 'SupportsRound', 'Unpack',
             }
         if sys.version_info < (3, 13):
-            exclude |= {'NamedTuple', 'Protocol'}
+            exclude |= {'NamedTuple', 'Protocol', 'runtime_checkable'}
         if not hasattr(typing, 'ReadOnly'):
             exclude |= {'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
