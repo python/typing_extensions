@@ -4,7 +4,7 @@
   around 6% (backporting https://github.com/python/cpython/pull/112717, by Alex
   Waygood).
 - Fix a regression in the implementation of protocols where `typing.Protocol`
-  classes that were not marked as `@runtime-checkable` would be unnecessarily
+  classes that were not marked as `@runtime_checkable` would be unnecessarily
   introspected, potentially causing exceptions to be raised if the protocol had
   problematic members. Patch by Alex Waygood, backporting
   https://github.com/python/cpython/pull/113401.
