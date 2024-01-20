@@ -708,6 +708,9 @@ else:
             raise TypeError('@runtime_checkable can be only applied to protocol classes,'
                             ' got %r' % cls)
         cls._is_runtime_protocol = True
+
+        # Only execute the following block if it's a typing_extensions.Protocol class.
+        # typing.Protocol classes don't need it.
         if isinstance(cls, _ProtocolMeta):
             # PEP 544 prohibits using issubclass()
             # with protocols that have non-method members.
@@ -725,6 +728,7 @@ else:
                 else:
                     if not is_callable:
                         cls.__non_callable_proto_members__.add(attr)
+
         return cls
 
 
