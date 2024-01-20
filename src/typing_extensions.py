@@ -687,52 +687,6 @@ else:
                 cls.__init__ = _no_init
 
 
-if hasattr(typing, "is_protocol"):
-    is_protocol = typing.is_protocol
-    get_protocol_members = typing.get_protocol_members
-else:
-    def is_protocol(tp: type, /) -> bool:
-        """Return True if the given type is a Protocol.
-
-        Example::
-
-            >>> from typing_extensions import Protocol, is_protocol
-            >>> class P(Protocol):
-            ...     def a(self) -> str: ...
-            ...     b: int
-            >>> is_protocol(P)
-            True
-            >>> is_protocol(int)
-            False
-        """
-        return (
-            isinstance(tp, type)
-            and getattr(tp, '_is_protocol', False)
-            and tp is not Protocol
-            and tp is not typing.Protocol
-        )
-
-    def get_protocol_members(tp: type, /) -> typing.FrozenSet[str]:
-        """Return the set of members defined in a Protocol.
-
-        Example::
-
-            >>> from typing_extensions import Protocol, get_protocol_members
-            >>> class P(Protocol):
-            ...     def a(self) -> str: ...
-            ...     b: int
-            >>> get_protocol_members(P)
-            frozenset({'a', 'b'})
-
-        Raise a TypeError for arguments that are not Protocols.
-        """
-        if not is_protocol(tp):
-            raise TypeError(f'{tp!r} is not a Protocol')
-        if hasattr(tp, '__protocol_attrs__'):
-            return frozenset(tp.__protocol_attrs__)
-        return frozenset(_get_protocol_attrs(tp))
-
-
 if sys.version_info >= (3, 13):
     runtime_checkable = typing.runtime_checkable
 else:
@@ -760,7 +714,7 @@ else:
             # See gh-113320 for why we compute this attribute here,
             # rather than in `_ProtocolMeta.__init__`
             cls.__non_callable_proto_members__ = set()
-            for attr in get_protocol_members(cls):
+            for attr in cls.__protocol_attrs__:
                 try:
                     is_callable = callable(getattr(cls, attr, None))
                 except Exception as e:
@@ -3023,6 +2977,52 @@ else:
                 if not _is_unionable(left):
                     return NotImplemented
                 return typing.Union[left, self]
+
+
+if hasattr(typing, "is_protocol"):
+    is_protocol = typing.is_protocol
+    get_protocol_members = typing.get_protocol_members
+else:
+    def is_protocol(tp: type, /) -> bool:
+        """Return True if the given type is a Protocol.
+
+        Example::
+
+            >>> from typing_extensions import Protocol, is_protocol
+            >>> class P(Protocol):
+            ...     def a(self) -> str: ...
+            ...     b: int
+            >>> is_protocol(P)
+            True
+            >>> is_protocol(int)
+            False
+        """
+        return (
+            isinstance(tp, type)
+            and getattr(tp, '_is_protocol', False)
+            and tp is not Protocol
+            and tp is not typing.Protocol
+        )
+
+    def get_protocol_members(tp: type, /) -> typing.FrozenSet[str]:
+        """Return the set of members defined in a Protocol.
+
+        Example::
+
+            >>> from typing_extensions import Protocol, get_protocol_members
+            >>> class P(Protocol):
+            ...     def a(self) -> str: ...
+            ...     b: int
+            >>> get_protocol_members(P)
+            frozenset({'a', 'b'})
+
+        Raise a TypeError for arguments that are not Protocols.
+        """
+        if not is_protocol(tp):
+            raise TypeError(f'{tp!r} is not a Protocol')
+        if hasattr(tp, '__protocol_attrs__'):
+            return frozenset(tp.__protocol_attrs__)
+        return frozenset(_get_protocol_attrs(tp))
 
 
 if hasattr(typing, "Doc"):
