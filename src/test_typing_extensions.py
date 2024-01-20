@@ -1872,6 +1872,18 @@ class ProtocolTests(BaseTestCase):
         self.assertNotIsInstance(D(), E)
         self.assertNotIsInstance(E(), D)
 
+    def test_runtimecheckable_on_typing_dot_Protocol(self):
+        @runtime_checkable
+        class Foo(typing.Protocol):
+            x: int
+
+        class Bar:
+            def __init__(self):
+                self.x = 42
+
+        self.assertIsInstance(Bar(), Foo)
+        self.assertNotIsInstance(object(), Foo)
+
     def test_typing_dot_runtimecheckable_on_Protocol(self):
         @typing.runtime_checkable
         class Foo(Protocol):
