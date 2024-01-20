@@ -1,3 +1,14 @@
+# Unreleased
+
+- Speedup `issubclass()` checks against simple runtime-checkable protocols by
+  around 6% (backporting https://github.com/python/cpython/pull/112717, by Alex
+  Waygood).
+- Fix a regression in the implementation of protocols where `typing.Protocol`
+  classes that were not marked as `@runtime-checkable` would be unnecessarily
+  introspected, potentially causing exceptions to be raised if the protocol had
+  problematic members. Patch by Alex Waygood, backporting
+  https://github.com/python/cpython/pull/113401.
+
 # Release 4.9.0 (December 9, 2023)
 
 This feature release adds `typing_extensions.ReadOnly`, as specified
