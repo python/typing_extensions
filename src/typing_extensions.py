@@ -692,15 +692,20 @@ if sys.version_info >= (3, 13):
 else:
     def runtime_checkable(cls):
         """Mark a protocol class as a runtime protocol.
+
         Such protocol can be used with isinstance() and issubclass().
         Raise TypeError if applied to a non-protocol class.
         This allows a simple-minded structural check very similar to
         one trick ponies in collections.abc such as Iterable.
+
         For example::
+
             @runtime_checkable
             class Closable(Protocol):
                 def close(self): ...
+
             assert isinstance(open('/some/file'), Closable)
+
         Warning: this will check only the presence of the required methods,
         not their type signatures!
         """
