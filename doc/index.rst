@@ -373,7 +373,7 @@ Special typing primitives
    or lower and fails with a :py:exc:`TypeError` in Python 3.13 and higher.
 
    ``typing_extensions`` supports the experimental :data:`ReadOnly` qualifier
-   proposed by :pep:`705`. It is reflected in the following attributes::
+   proposed by :pep:`705`. It is reflected in the following attributes:
 
    .. attribute:: __readonly_keys__
 
