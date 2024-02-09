@@ -36,7 +36,7 @@ from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, f
 from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_type, Never, assert_never, LiteralString
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
 from typing_extensions import clear_overloads, get_overloads, overload
-from typing_extensions import NamedTuple
+from typing_extensions import NamedTuple, TypeNarrower
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar, get_protocol_members, is_protocol
 from typing_extensions import Doc
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
@@ -4772,6 +4772,50 @@ class TypeGuardTests(BaseTestCase):
             isinstance(1, TypeGuard[int])
         with self.assertRaises(TypeError):
             issubclass(int, TypeGuard)
+
+
+class TypeNarrowerTests(BaseTestCase):
+    def test_basics(self):
+        TypeNarrower[int]  # OK
+        self.assertEqual(TypeNarrower[int], TypeNarrower[int])
+
+        def foo(arg) -> TypeNarrower[int]: ...
+        self.assertEqual(gth(foo), {'return': TypeNarrower[int]})
+
+    def test_repr(self):
+        if hasattr(typing, 'TypeNarrower'):
+            mod_name = 'typing'
+        else:
+            mod_name = 'typing_extensions'
+        self.assertEqual(repr(TypeNarrower), f'{mod_name}.TypeNarrower')
+        cv = TypeNarrower[int]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeNarrower[int]')
+        cv = TypeNarrower[Employee]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeNarrower[{__name__}.Employee]')
+        cv = TypeNarrower[Tuple[int]]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeNarrower[typing.Tuple[int]]')
+
+    def test_cannot_subclass(self):
+        with self.assertRaises(TypeError):
+            class C(type(TypeNarrower)):
+                pass
+        with self.assertRaises(TypeError):
+            class C(type(TypeNarrower[int])):
+                pass
+
+    def test_cannot_init(self):
+        with self.assertRaises(TypeError):
+            TypeNarrower()
+        with self.assertRaises(TypeError):
+            type(TypeNarrower)()
+        with self.assertRaises(TypeError):
+            type(TypeNarrower[Optional[int]])()
+
+    def test_no_isinstance(self):
+        with self.assertRaises(TypeError):
+            isinstance(1, TypeNarrower[int])
+        with self.assertRaises(TypeError):
+            issubclass(int, TypeNarrower)
 
 
 class LiteralStringTests(BaseTestCase):

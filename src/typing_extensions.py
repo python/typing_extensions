@@ -83,6 +83,7 @@ __all__ = [
     'TypeAlias',
     'TypeAliasType',
     'TypeGuard',
+    'TypeNarrower',
     'TYPE_CHECKING',
     'Never',
     'NoReturn',
@@ -1825,6 +1826,98 @@ else:
 
         ``TypeGuard`` also works with type variables.  For more information, see
         PEP 647 (User-Defined Type Guards).
+        """)
+
+# 3.13+
+if hasattr(typing, 'TypeNarrower'):
+    TypeNarrower = typing.TypeNarrower
+# 3.9
+elif sys.version_info[:2] >= (3, 9):
+    @_ExtensionsSpecialForm
+    def TypeNarrower(self, parameters):
+        """Special typing form used to annotate the return type of a user-defined
+        type narrower function.  ``TypeNarrower`` only accepts a single type argument.
+        At runtime, functions marked this way should return a boolean.
+
+        ``TypeNarrower`` aims to benefit *type narrowing* -- a technique used by static
+        type checkers to determine a more precise type of an expression within a
+        program's code flow.  Usually type narrowing is done by analyzing
+        conditional code flow and applying the narrowing to a block of code.  The
+        conditional expression here is sometimes referred to as a "type guard".
+
+        Sometimes it would be convenient to use a user-defined boolean function
+        as a type guard.  Such a function should use ``TypeNarrower[...]`` as its
+        return type to alert static type checkers to this intention.
+
+        Using  ``-> TypeNarrower`` tells the static type checker that for a given
+        function:
+
+        1. The return value is a boolean.
+        2. If the return value is ``True``, the type of its argument
+        is the intersection of the type inside ``TypeGuard`` and the argument's
+        previously known type.
+
+        For example::
+
+            def is_awaitable(val: object) -> TypeNarrower[Awaitable[Any]]:
+                return hasattr(val, '__await__')
+
+            def f(val: Union[int, Awaitable[int]]) -> int:
+                if is_awaitable(val):
+                    assert_type(val, Awaitable[int])
+                else:
+                    assert_type(val, int)
+
+        ``TypeNarrower`` also works with type variables.  For more information, see
+        PEP 742 (Narrowing types with TypeNarrower).
+        """
+        item = typing._type_check(parameters, f'{self} accepts only a single type.')
+        return typing._GenericAlias(self, (item,))
+# 3.8
+else:
+    class _TypeNarrowerForm(_ExtensionsSpecialForm, _root=True):
+        def __getitem__(self, parameters):
+            item = typing._type_check(parameters,
+                                      f'{self._name} accepts only a single type')
+            return typing._GenericAlias(self, (item,))
+
+    TypeNarrower = _TypeNarrowerForm(
+        'TypeNarrower',
+        doc="""Special typing form used to annotate the return type of a user-defined
+        type narrower function.  ``TypeNarrower`` only accepts a single type argument.
+        At runtime, functions marked this way should return a boolean.
+
+        ``TypeNarrower`` aims to benefit *type narrowing* -- a technique used by static
+        type checkers to determine a more precise type of an expression within a
+        program's code flow.  Usually type narrowing is done by analyzing
+        conditional code flow and applying the narrowing to a block of code.  The
+        conditional expression here is sometimes referred to as a "type guard".
+
+        Sometimes it would be convenient to use a user-defined boolean function
+        as a type guard.  Such a function should use ``TypeNarrower[...]`` as its
+        return type to alert static type checkers to this intention.
+
+        Using  ``-> TypeNarrower`` tells the static type checker that for a given
+        function:
+
+        1. The return value is a boolean.
+        2. If the return value is ``True``, the type of its argument
+        is the intersection of the type inside ``TypeGuard`` and the argument's
+        previously known type.
+
+        For example::
+
+            def is_awaitable(val: object) -> TypeNarrower[Awaitable[Any]]:
+                return hasattr(val, '__await__')
+
+            def f(val: Union[int, Awaitable[int]]) -> int:
+                if is_awaitable(val):
+                    assert_type(val, Awaitable[int])
+                else:
+                    assert_type(val, int)
+
+        ``TypeNarrower`` also works with type variables.  For more information, see
+        PEP 742 (Narrowing types with TypeNarrower).
         """)
 
 

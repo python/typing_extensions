@@ -350,6 +350,12 @@ Special typing primitives
 
    See :py:data:`typing.TypeGuard` and :pep:`647`. In ``typing`` since 3.10.
 
+.. data:: TypeNarrower
+
+   See :pep:`742`. Similar to :data:`TypeGuard`, but allows more type narrowing.
+
+   .. versionadded:: 4.10.0
+
 .. class:: TypedDict(dict, total=True)
 
    See :py:class:`typing.TypedDict` and :pep:`589`. In ``typing`` since 3.8.

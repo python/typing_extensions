@@ -1,5 +1,7 @@
 # Unreleased
 
+- Add support for PEP 742, adding `typing_extensions.TypeNarrower`. Patch
+  by Jelle Zijlstra.
 - Speedup `issubclass()` checks against simple runtime-checkable protocols by
   around 6% (backporting https://github.com/python/cpython/pull/112717, by Alex
   Waygood).
