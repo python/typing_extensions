@@ -3553,7 +3553,8 @@ class TypedDictTests(BaseTestCase):
     @skipIf(sys.version_info < (3, 13), "Change in behavior in 3.13")
     def test_keywords_syntax_raises_on_3_13(self):
         with self.assertRaises(TypeError):
-            Emp = TypedDict('Emp', name=str, id=int)
+            with self.assertWarns(DeprecationWarning):
+                Emp = TypedDict('Emp', name=str, id=int)
 
     @skipIf(sys.version_info >= (3, 13), "3.13 removes support for kwargs")
     def test_basics_keywords_syntax(self):
