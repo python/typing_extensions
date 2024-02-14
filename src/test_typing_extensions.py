@@ -36,7 +36,7 @@ from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, f
 from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_type, Never, assert_never, LiteralString
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
 from typing_extensions import clear_overloads, get_overloads, overload
-from typing_extensions import NamedTuple, TypeNarrower
+from typing_extensions import NamedTuple, TypeIs
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar, get_protocol_members, is_protocol
 from typing_extensions import Doc
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
@@ -4774,48 +4774,48 @@ class TypeGuardTests(BaseTestCase):
             issubclass(int, TypeGuard)
 
 
-class TypeNarrowerTests(BaseTestCase):
+class TypeIsTests(BaseTestCase):
     def test_basics(self):
-        TypeNarrower[int]  # OK
-        self.assertEqual(TypeNarrower[int], TypeNarrower[int])
+        TypeIs[int]  # OK
+        self.assertEqual(TypeIs[int], TypeIs[int])
 
-        def foo(arg) -> TypeNarrower[int]: ...
-        self.assertEqual(gth(foo), {'return': TypeNarrower[int]})
+        def foo(arg) -> TypeIs[int]: ...
+        self.assertEqual(gth(foo), {'return': TypeIs[int]})
 
     def test_repr(self):
-        if hasattr(typing, 'TypeNarrower'):
+        if hasattr(typing, 'TypeIs'):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
-        self.assertEqual(repr(TypeNarrower), f'{mod_name}.TypeNarrower')
-        cv = TypeNarrower[int]
-        self.assertEqual(repr(cv), f'{mod_name}.TypeNarrower[int]')
-        cv = TypeNarrower[Employee]
-        self.assertEqual(repr(cv), f'{mod_name}.TypeNarrower[{__name__}.Employee]')
-        cv = TypeNarrower[Tuple[int]]
-        self.assertEqual(repr(cv), f'{mod_name}.TypeNarrower[typing.Tuple[int]]')
+        self.assertEqual(repr(TypeIs), f'{mod_name}.TypeIs')
+        cv = TypeIs[int]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeIs[int]')
+        cv = TypeIs[Employee]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeIs[{__name__}.Employee]')
+        cv = TypeIs[Tuple[int]]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeIs[typing.Tuple[int]]')
 
     def test_cannot_subclass(self):
         with self.assertRaises(TypeError):
-            class C(type(TypeNarrower)):
+            class C(type(TypeIs)):
                 pass
         with self.assertRaises(TypeError):
-            class C(type(TypeNarrower[int])):
+            class C(type(TypeIs[int])):
                 pass
 
     def test_cannot_init(self):
         with self.assertRaises(TypeError):
-            TypeNarrower()
+            TypeIs()
         with self.assertRaises(TypeError):
-            type(TypeNarrower)()
+            type(TypeIs)()
         with self.assertRaises(TypeError):
-            type(TypeNarrower[Optional[int]])()
+            type(TypeIs[Optional[int]])()
 
     def test_no_isinstance(self):
         with self.assertRaises(TypeError):
-            isinstance(1, TypeNarrower[int])
+            isinstance(1, TypeIs[int])
         with self.assertRaises(TypeError):
-            issubclass(int, TypeNarrower)
+            issubclass(int, TypeIs)
 
 
 class LiteralStringTests(BaseTestCase):

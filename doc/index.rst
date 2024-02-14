@@ -350,7 +350,7 @@ Special typing primitives
 
    See :py:data:`typing.TypeGuard` and :pep:`647`. In ``typing`` since 3.10.
 
-.. data:: TypeNarrower
+.. data:: TypeIs
 
    See :pep:`742`. Similar to :data:`TypeGuard`, but allows more type narrowing.
 
