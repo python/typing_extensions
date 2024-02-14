@@ -1,5 +1,8 @@
 # Unreleased
 
+- Drop runtime error when a mutable `TypedDict` key overrides a read-only
+  one. Type checkers should still flag this as an error. Patch by Jelle
+  Zijlstra.
 - Speedup `issubclass()` checks against simple runtime-checkable protocols by
   around 6% (backporting https://github.com/python/cpython/pull/112717, by Alex
   Waygood).

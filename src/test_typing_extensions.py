@@ -4143,13 +4143,12 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Child1.__readonly_keys__, frozenset({'a'}))
         self.assertEqual(Child1.__mutable_keys__, frozenset({'b'}))
 
-    def test_cannot_make_mutable_key_readonly(self):
+    def test_make_mutable_key_readonly(self):
         class Base(TypedDict):
             a: int
 
-        with self.assertRaises(TypeError):
-            class Child(Base):
-                a: ReadOnly[int]
+        class Child(Base):
+            a: ReadOnly[int]  # type checker error, but allowed at runtime
 
     def test_can_make_readonly_key_mutable(self):
         class Base(TypedDict):
