@@ -1,6 +1,6 @@
 # Unreleased
 
-- Drop runtime error when a mutable `TypedDict` key overrides a read-only
+- Drop runtime error when a read-only `TypedDict` item overrides a mutable
   one. Type checkers should still flag this as an error. Patch by Jelle
   Zijlstra.
 - Speedup `issubclass()` checks against simple runtime-checkable protocols by
