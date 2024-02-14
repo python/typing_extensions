@@ -3553,7 +3553,8 @@ class TypedDictTests(BaseTestCase):
     @skipIf(sys.version_info < (3, 13), "Change in behavior in 3.13")
     def test_keywords_syntax_raises_on_3_13(self):
         with self.assertRaises(TypeError):
-            Emp = TypedDict('Emp', name=str, id=int)
+            with self.assertWarns(DeprecationWarning):
+                Emp = TypedDict('Emp', name=str, id=int)
 
     @skipIf(sys.version_info >= (3, 13), "3.13 removes support for kwargs")
     def test_basics_keywords_syntax(self):
@@ -4142,13 +4143,12 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Child1.__readonly_keys__, frozenset({'a'}))
         self.assertEqual(Child1.__mutable_keys__, frozenset({'b'}))
 
-    def test_cannot_make_mutable_key_readonly(self):
+    def test_make_mutable_key_readonly(self):
         class Base(TypedDict):
             a: int
 
-        with self.assertRaises(TypeError):
-            class Child(Base):
-                a: ReadOnly[int]
+        class Child(Base):
+            a: ReadOnly[int]  # type checker error, but allowed at runtime
 
     def test_can_make_readonly_key_mutable(self):
         class Base(TypedDict):
