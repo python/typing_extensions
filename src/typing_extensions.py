@@ -942,6 +942,7 @@ else:
                 else:
                     optional_keys.add(annotation_key)
                 if ReadOnly in qualifiers:
+                    mutable_keys.discard(annotation_key)
                     readonly_keys.add(annotation_key)
                 else:
                     mutable_keys.add(annotation_key)
