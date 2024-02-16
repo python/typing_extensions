@@ -1,5 +1,7 @@
 # Unreleased
 
+- Add support for PEP 742, adding `typing_extensions.TypeIs`. Patch
+  by Jelle Zijlstra.
 - Drop runtime error when a read-only `TypedDict` item overrides a mutable
   one. Type checkers should still flag this as an error. Patch by Jelle
   Zijlstra.
