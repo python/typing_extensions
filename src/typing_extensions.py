@@ -920,7 +920,7 @@ else:
             optional_keys = set()
             readonly_keys = set()
             mutable_keys = set()
-            extra_items_type = _marker
+            extra_items_type = None
 
             for base in bases:
                 base_dict = base.__dict__
@@ -930,18 +930,18 @@ else:
                 optional_keys.update(base_dict.get('__optional_keys__', ()))
                 readonly_keys.update(base_dict.get('__readonly_keys__', ()))
                 mutable_keys.update(base_dict.get('__mutable_keys__', ()))
-                if '__extra_items__' in base_dict:
-                    extra_items_type = base_dict['__extra_items__']
-
-            if closed and extra_items_type is _marker:
+                if (base_extra_items_type := base_dict.get('__extra_items__', None)) is not None:
+                    extra_items_type = base_extra_items_type
+                
+            if closed and extra_items_type is None:
                 extra_items_type = Never
             if closed and "__extra_items__" in own_annotations:
                 annotation_type = own_annotations.pop("__extra_items__")
                 qualifiers = set(_get_typeddict_qualifiers(annotation_type))
                 if Required in qualifiers or NotRequired in qualifiers:
                     raise TypeError(
-                        f"Special key __extra_items__ does not support"
-                        " Required and NotRequired"
+                        "Special key __extra_items__ does not support "
+                        "Required and NotRequired"
                     )
                 extra_items_type = annotation_type
 
@@ -972,8 +972,7 @@ else:
             if not hasattr(tp_dict, '__total__'):
                 tp_dict.__total__ = total
             tp_dict.__closed__ = closed
-            if extra_items_type is not _marker:
-                tp_dict.__extra_items__ = extra_items_type
+            tp_dict.__extra_items__ = extra_items_type
             return tp_dict
 
         __call__ = dict  # static method
@@ -1047,6 +1046,9 @@ else:
                 "using the functional syntax, pass an empty dictionary, e.g. "
             ) + example + "."
             warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
+            if closed is not False and closed is not True:
+                kwargs["closed"] = closed
+                closed = False
             fields = kwargs
         elif kwargs:
             raise TypeError("TypedDict takes either a dict or keyword arguments,"
