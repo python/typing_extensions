@@ -52,6 +52,9 @@ TYPING_3_11_0 = sys.version_info[:3] >= (3, 11, 0)
 # 3.12 changes the representation of Unpack[] (PEP 692)
 TYPING_3_12_0 = sys.version_info[:3] >= (3, 12, 0)
 
+# 3.13 drops support for the keyword argument syntax of TypedDict
+TYPING_3_13_0 = sys.version_info[:3] >= (3, 13, 0)
+
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
 HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
@@ -3822,10 +3825,10 @@ class TypedDictTests(BaseTestCase):
 
         class Closed(TypedDict, closed=True):
             __extra_items__: None
-        
+
         class Unclosed(TypedDict, closed=False):
             ...
-        
+
         class ChildUnclosed(Closed, Unclosed):
             ...
 
@@ -3834,7 +3837,7 @@ class TypedDictTests(BaseTestCase):
 
         class ChildClosed(Unclosed, Closed):
             ...
-        
+
         self.assertFalse(ChildClosed.__closed__)
         self.assertEqual(ChildClosed.__extra_items__, type(None))
 
@@ -4195,14 +4198,14 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(AllTheThings.__optional_keys__, frozenset({'c', 'd'}))
         self.assertEqual(AllTheThings.__readonly_keys__, frozenset({'a', 'b', 'c'}))
         self.assertEqual(AllTheThings.__mutable_keys__, frozenset({'d'}))
-    
+
     def test_extra_keys_non_readonly(self):
         class Base(TypedDict, closed=True):
             __extra_items__: str
-        
+
         class Child(Base):
             a: NotRequired[int]
-        
+
         self.assertEqual(Child.__required_keys__, frozenset({}))
         self.assertEqual(Child.__optional_keys__, frozenset({'a'}))
         self.assertEqual(Child.__readonly_keys__, frozenset({}))
@@ -4211,28 +4214,28 @@ class TypedDictTests(BaseTestCase):
     def test_extra_keys_readonly(self):
         class Base(TypedDict, closed=True):
             __extra_items__: ReadOnly[str]
-        
+
         class Child(Base):
             a: NotRequired[str]
-        
+
         self.assertEqual(Child.__required_keys__, frozenset({}))
         self.assertEqual(Child.__optional_keys__, frozenset({'a'}))
         self.assertEqual(Child.__readonly_keys__, frozenset({}))
         self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
-    
+
     def test_extra_key_required(self):
         with self.assertRaisesRegex(
             TypeError,
-            "Special key __extra_items__ does not support Required and NotRequired"
+            "Special key __extra_items__ does not support Required"
         ):
             TypedDict("A", {"__extra_items__": Required[int]}, closed=True)
 
         with self.assertRaisesRegex(
             TypeError,
-            "Special key __extra_items__ does not support Required and NotRequired"
+            "Special key __extra_items__ does not support NotRequired"
         ):
             TypedDict("A", {"__extra_items__": NotRequired[int]}, closed=True)
-    
+
     def test_regular_extra_items(self):
         class ExtraReadOnly(TypedDict):
             __extra_items__: ReadOnly[str]
@@ -4263,7 +4266,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(ExtraNotRequired.__mutable_keys__, frozenset({'__extra_items__'}))
         self.assertEqual(ExtraNotRequired.__extra_items__, None)
         self.assertFalse(ExtraNotRequired.__closed__)
-    
+
     def test_closed_inheritance(self):
         class Base(TypedDict, closed=True):
             __extra_items__: ReadOnly[Union[str, None]]
@@ -4298,7 +4301,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(GrandChild.__annotations__, {"__extra_items__": int, "a": int})
         self.assertEqual(GrandChild.__extra_items__, str)
         self.assertTrue(GrandChild.__closed__)
-    
+
     def test_implicit_extra_items(self):
         class Base(TypedDict):
             a: int
@@ -4318,6 +4321,11 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(ChildB.__extra_items__, type(None))
         self.assertTrue(ChildB.__closed__)
 
+    @skipIf(
+        TYPING_3_13_0,
+        "The keyword argument alternative to define a "
+        "TypedDict type using the functional syntax is no longer supported"
+    )
     def test_backwards_compatibility(self):
         with self.assertWarns(DeprecationWarning):
             TD = TypedDict("TD", closed=int)

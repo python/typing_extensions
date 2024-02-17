@@ -930,18 +930,24 @@ else:
                 optional_keys.update(base_dict.get('__optional_keys__', ()))
                 readonly_keys.update(base_dict.get('__readonly_keys__', ()))
                 mutable_keys.update(base_dict.get('__mutable_keys__', ()))
-                if (base_extra_items_type := base_dict.get('__extra_items__', None)) is not None:
+                base_extra_items_type = base_dict.get('__extra_items__', None)
+                if base_extra_items_type is not None:
                     extra_items_type = base_extra_items_type
-                
+
             if closed and extra_items_type is None:
                 extra_items_type = Never
             if closed and "__extra_items__" in own_annotations:
                 annotation_type = own_annotations.pop("__extra_items__")
                 qualifiers = set(_get_typeddict_qualifiers(annotation_type))
-                if Required in qualifiers or NotRequired in qualifiers:
+                if Required in qualifiers:
                     raise TypeError(
                         "Special key __extra_items__ does not support "
-                        "Required and NotRequired"
+                        "Required"
+                    )
+                if NotRequired in qualifiers:
+                    raise TypeError(
+                        "Special key __extra_items__ does not support "
+                        "NotRequired"
                     )
                 extra_items_type = annotation_type
 
