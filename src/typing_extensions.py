@@ -875,7 +875,7 @@ else:
                 break
 
     class _TypedDictMeta(type):
-        def __new__(cls, name, bases, ns, *, total=True):
+        def __new__(cls, name, bases, ns, *, total=True, closed=False):
             """Create new typed dict class object.
 
             This method is called when TypedDict is subclassed,
@@ -920,6 +920,7 @@ else:
             optional_keys = set()
             readonly_keys = set()
             mutable_keys = set()
+            extra_items_type = _marker
 
             for base in bases:
                 base_dict = base.__dict__
@@ -929,6 +930,20 @@ else:
                 optional_keys.update(base_dict.get('__optional_keys__', ()))
                 readonly_keys.update(base_dict.get('__readonly_keys__', ()))
                 mutable_keys.update(base_dict.get('__mutable_keys__', ()))
+                if '__extra_items__' in base_dict:
+                    extra_items_type = base_dict['__extra_items__']
+
+            if closed and extra_items_type is _marker:
+                extra_items_type = Never
+            if closed and "__extra_items__" in own_annotations:
+                annotation_type = own_annotations.pop("__extra_items__")
+                qualifiers = set(_get_typeddict_qualifiers(annotation_type))
+                if Required in qualifiers or NotRequired in qualifiers:
+                    raise TypeError(
+                        f"Special key __extra_items__ does not support"
+                        " Required and NotRequired"
+                    )
+                extra_items_type = annotation_type
 
             annotations.update(own_annotations)
             for annotation_key, annotation_type in own_annotations.items():
@@ -956,6 +971,9 @@ else:
             tp_dict.__mutable_keys__ = frozenset(mutable_keys)
             if not hasattr(tp_dict, '__total__'):
                 tp_dict.__total__ = total
+            tp_dict.__closed__ = closed
+            if extra_items_type is not _marker:
+                tp_dict.__extra_items__ = extra_items_type
             return tp_dict
 
         __call__ = dict  # static method
@@ -969,7 +987,7 @@ else:
     _TypedDict = type.__new__(_TypedDictMeta, 'TypedDict', (), {})
 
     @_ensure_subclassable(lambda bases: (_TypedDict,))
-    def TypedDict(typename, fields=_marker, /, *, total=True, **kwargs):
+    def TypedDict(typename, fields=_marker, /, *, total=True, closed=False, **kwargs):
         """A simple typed namespace. At runtime it is equivalent to a plain dict.
 
         TypedDict creates a dictionary type such that a type checker will expect all
@@ -1050,7 +1068,7 @@ else:
             # Setting correct module is necessary to make typed dict classes pickleable.
             ns['__module__'] = module
 
-        td = _TypedDictMeta(typename, (), ns, total=total)
+        td = _TypedDictMeta(typename, (), ns, total=total, closed=closed)
         td.__orig_bases__ = (TypedDict,)
         return td
 

@@ -394,6 +394,32 @@ Special typing primitives
       are mutable if they do not carry the :data:`ReadOnly` qualifier.
 
       .. versionadded:: 4.9.0
+    
+    The experimental ``closed`` keyword argument and the special key
+    ``"__extra_items__"`` proposed in :pep:`728` are supported.
+
+    When ``closed`` is unspecified or ``closed=False`` is given,
+    ``"__extra_items__"`` behave like a regular key. Otherwise, this becomes a
+    special key that does not show up in ``__readonly_keys__``,
+    ``__mutable_keys__``, ``__required_keys__``, ``__optional_keys``, or
+    ``__annotations__``.
+
+    For runtime introspection, two attributes can be looked at:
+
+    .. attribute:: __closed__
+
+        A boolean flag indicating the value of the keyword argument ``closed``
+        on the current ``TypedDict``.
+
+        .. versionadded:: 4.10.0
+
+    .. attribute:: __extra_items__
+
+        The type annotation of the extra items allowed on the ``TypedDict``.
+        This attribute does not appear on a TypedDict that has itself and all
+        its bases non-closed.
+
+        .. versionadded:: 4.10.0
 
    .. versionchanged:: 4.3.0
 
@@ -426,6 +452,11 @@ Special typing primitives
    .. versionchanged:: 4.9.0
 
       Support for the :data:`ReadOnly` qualifier was added.
+
+   .. versionchanged:: 4.10.0
+
+      The keyword argument ``closed`` and the special key ``"__extra_items__"``
+      when ``closed=True`` is given were supported.
 
 .. class:: TypeVar(name, *constraints, bound=None, covariant=False,
                    contravariant=False, infer_variance=False, default=...)

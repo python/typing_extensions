@@ -4177,6 +4177,121 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(AllTheThings.__optional_keys__, frozenset({'c', 'd'}))
         self.assertEqual(AllTheThings.__readonly_keys__, frozenset({'a', 'b', 'c'}))
         self.assertEqual(AllTheThings.__mutable_keys__, frozenset({'d'}))
+    
+    def test_extra_keys_non_readonly(self):
+        class Base(TypedDict, closed=True):
+            __extra_items__: str
+        
+        class Child(Base):
+            a: NotRequired[int]
+        
+        self.assertEqual(Child.__required_keys__, frozenset({}))
+        self.assertEqual(Child.__optional_keys__, frozenset({'a'}))
+        self.assertEqual(Child.__readonly_keys__, frozenset({}))
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
+
+    def test_extra_keys_readonly(self):
+        class Base(TypedDict, closed=True):
+            __extra_items__: ReadOnly[str]
+        
+        class Child(Base):
+            a: NotRequired[str]
+        
+        self.assertEqual(Child.__required_keys__, frozenset({}))
+        self.assertEqual(Child.__optional_keys__, frozenset({'a'}))
+        self.assertEqual(Child.__readonly_keys__, frozenset({}))
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
+    
+    def test_extra_key_required(self):
+        with self.assertRaisesRegex(
+            TypeError,
+            "Special key __extra_items__ does not support Required and NotRequired"
+        ):
+            TypedDict("A", {"__extra_items__": Required[int]}, closed=True)
+
+        with self.assertRaisesRegex(
+            TypeError,
+            "Special key __extra_items__ does not support Required and NotRequired"
+        ):
+            TypedDict("A", {"__extra_items__": NotRequired[int]}, closed=True)
+    
+    def test_regular_extra_items(self):
+        class ExtraReadOnly(TypedDict):
+            __extra_items__: ReadOnly[str]
+
+        class ExtraRequired(TypedDict):
+            __extra_items__: Required[str]
+
+        class ExtraNotRequired(TypedDict):
+            __extra_items__: NotRequired[str]
+        
+        self.assertEqual(ExtraReadOnly.__required_keys__, frozenset({'__extra_items__'}))
+        self.assertEqual(ExtraReadOnly.__optional_keys__, frozenset({}))
+        self.assertEqual(ExtraReadOnly.__readonly_keys__, frozenset({'__extra_items__'}))
+        self.assertEqual(ExtraReadOnly.__mutable_keys__, frozenset({}))
+
+        self.assertEqual(ExtraRequired.__required_keys__, frozenset({'__extra_items__'}))
+        self.assertEqual(ExtraRequired.__optional_keys__, frozenset({}))
+        self.assertEqual(ExtraRequired.__readonly_keys__, frozenset({}))
+        self.assertEqual(ExtraRequired.__mutable_keys__, frozenset({'__extra_items__'}))
+
+        self.assertEqual(ExtraNotRequired.__required_keys__, frozenset({}))
+        self.assertEqual(ExtraNotRequired.__optional_keys__, frozenset({'__extra_items__'}))
+        self.assertEqual(ExtraNotRequired.__readonly_keys__, frozenset({}))
+        self.assertEqual(ExtraNotRequired.__mutable_keys__, frozenset({'__extra_items__'}))
+    
+    def test_closed_inheritance(self):
+        class Base(TypedDict, closed=True):
+            __extra_items__: ReadOnly[Union[str, None]]
+        
+        class Child(Base):
+            a: int
+            __extra_items__: int
+
+        class GrandChild(Child, closed=True):
+            __extra_items__: str
+
+        self.assertEqual(Base.__required_keys__, frozenset({}))
+        self.assertEqual(Base.__optional_keys__, frozenset({}))
+        self.assertEqual(Base.__readonly_keys__, frozenset({}))
+        self.assertEqual(Base.__mutable_keys__, frozenset({}))
+        self.assertEqual(Base.__extra_items__, ReadOnly[Union[str, None]])
+
+        self.assertEqual(Child.__required_keys__, frozenset({'a', "__extra_items__"}))
+        self.assertEqual(Child.__optional_keys__, frozenset({}))
+        self.assertEqual(Child.__readonly_keys__, frozenset({}))
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a', "__extra_items__"}))
+        self.assertEqual(Child.__extra_items__, ReadOnly[Union[str, None]])
+
+        self.assertEqual(GrandChild.__required_keys__, frozenset({'a', "__extra_items__"}))
+        self.assertEqual(GrandChild.__optional_keys__, frozenset({}))
+        self.assertEqual(GrandChild.__readonly_keys__, frozenset({}))
+        self.assertEqual(GrandChild.__mutable_keys__, frozenset({'a', "__extra_items__"}))
+        self.assertEqual(GrandChild.__extra_items__, str)
+
+        self.assertEqual(Base.__annotations__, {})
+        self.assertEqual(Child.__annotations__, {"__extra_items__": int, "a": int})
+        self.assertEqual(GrandChild.__annotations__, {"__extra_items__": int, "a": int})
+
+        self.assertTrue(Base.__closed__)
+        self.assertFalse(Child.__closed__)
+        self.assertTrue(GrandChild.__closed__)
+    
+    def test_absent_extra_items(self):
+        class Base(TypedDict):
+            a: int
+        
+        class ChildA(Base, closed=True):
+            ...
+
+        class ChildB(Base, closed=True):
+            __extra_items__: None
+        
+        self.assertNotIn("__extra_items__", Base.__dict__)
+        self.assertIn("__extra_items__", ChildA.__dict__)
+        self.assertIn("__extra_items__", ChildB.__dict__)
+        self.assertEqual(ChildA.__extra_items__, Never)
+        self.assertEqual(ChildB.__extra_items__, type(None))
 
 
 class AnnotatedTests(BaseTestCase):
