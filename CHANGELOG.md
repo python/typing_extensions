@@ -1,5 +1,7 @@
 # Unreleased
 
+- Add support for PEP 728, supporting the `closed` keyword argument and the
+  special `__extra_items__` key for TypedDict. Patch by Zixuan James Li.
 - Add support for PEP 742, adding `typing_extensions.TypeIs`. Patch
   by Jelle Zijlstra.
 - Drop runtime error when a read-only `TypedDict` item overrides a mutable
