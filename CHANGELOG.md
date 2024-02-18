@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.10.0rc1 (February 17, 2024)
 
 - Add support for PEP 728, supporting the `closed` keyword argument and the
   special `__extra_items__` key for TypedDict. Patch by Zixuan James Li.
