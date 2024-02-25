@@ -1,3 +1,10 @@
+# Release 4.10.0 (February 24, 2024)
+
+This feature release adds support for PEP 728 (TypedDict with extra
+items) and PEP 742 (``TypeIs``).
+
+There are no changes since 4.10.0rc1.
+
 # Release 4.10.0rc1 (February 17, 2024)
 
 - Add support for PEP 728, supporting the `closed` keyword argument and the
