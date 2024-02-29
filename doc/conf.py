@@ -32,4 +32,17 @@ add_module_names = False
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'alabaster'
-html_static_path = ['_static']
+
+from sphinx.writers.html import HTMLTranslator
+from docutils.nodes import Element, Node, Text
+
+class MyTranslator(HTMLTranslator):
+    """Adds a link target to name without `typing_extensions.` prefix."""
+    def visit_desc_signature(self, node: Element) -> None:
+        desc_name = node.get("fullname")
+        if desc_name:
+            self.body.append(f'<span id="{desc_name}"></span>')
+        super().visit_desc_signature(node)
+
+def setup(app):
+     app.set_translator('html', MyTranslator)
