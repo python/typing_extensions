@@ -5,6 +5,8 @@
 
 import os.path
 import sys
+from sphinx.writers.html5 import HTML5Translator
+from docutils.nodes import Element
 
 sys.path.insert(0, os.path.abspath('.'))
 
@@ -26,9 +28,22 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 intersphinx_mapping = {'py': ('https://docs.python.org/3.12', None)}
 
+add_module_names = False
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'alabaster'
-html_static_path = ['_static']
+
+
+class MyTranslator(HTML5Translator):
+    """Adds a link target to name without `typing_extensions.` prefix."""
+    def visit_desc_signature(self, node: Element) -> None:
+        desc_name = node.get("fullname")
+        if desc_name:
+            self.body.append(f'<span id="{desc_name}"></span>')
+        super().visit_desc_signature(node)
+
+
+def setup(app):
+    app.set_translator('html', MyTranslator)

@@ -1,3 +1,4 @@
+.. module:: typing_extensions
 
 Welcome to typing_extensions's documentation!
 =============================================
