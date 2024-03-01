@@ -33,10 +33,10 @@ add_module_names = False
 
 html_theme = 'alabaster'
 
-from sphinx.writers.html import HTMLTranslator
+from sphinx.writers.html5 import HTML5Translator
 from docutils.nodes import Element, Node, Text
 
-class MyTranslator(HTMLTranslator):
+class MyTranslator(HTML5Translator):
     """Adds a link target to name without `typing_extensions.` prefix."""
     def visit_desc_signature(self, node: Element) -> None:
         desc_name = node.get("fullname")
