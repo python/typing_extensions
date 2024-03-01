@@ -5,6 +5,8 @@
 
 import os.path
 import sys
+from sphinx.writers.html5 import HTML5Translator
+from docutils.nodes import Element
 
 sys.path.insert(0, os.path.abspath('.'))
 
@@ -33,8 +35,6 @@ add_module_names = False
 
 html_theme = 'alabaster'
 
-from sphinx.writers.html5 import HTML5Translator
-from docutils.nodes import Element, Node, Text
 
 class MyTranslator(HTML5Translator):
     """Adds a link target to name without `typing_extensions.` prefix."""
@@ -44,5 +44,6 @@ class MyTranslator(HTML5Translator):
             self.body.append(f'<span id="{desc_name}"></span>')
         super().visit_desc_signature(node)
 
+
 def setup(app):
-     app.set_translator('html', MyTranslator)
+    app.set_translator('html', MyTranslator)
