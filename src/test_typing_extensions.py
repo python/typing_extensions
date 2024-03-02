@@ -5508,7 +5508,7 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 10, 1):
             exclude |= {"Literal"}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'Any', 'NewType'}
+            exclude |= {'final', 'Any', 'NewType', 'ForwardRef'}
         if sys.version_info < (3, 12):
             exclude |= {
                 'SupportsAbs', 'SupportsBytes',
