@@ -110,7 +110,7 @@ jobs:
           cd typing_inspect
           uv pip install --system -r test-requirements.txt --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: uv pip install --system ./typing-extensions-latest
+        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run typing_inspect tests
@@ -156,9 +156,9 @@ jobs:
       - name: Install pyanalyze test requirements
         run: |
           cd pyanalyze
-          uv pip install --system .[tests] --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system 'pyanalyze[tests] @ .' --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: uv pip install --system ./typing-extensions-latest
+        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run pyanalyze tests
@@ -204,9 +204,9 @@ jobs:
       - name: Install typeguard test requirements
         run: |
           cd typeguard
-          uv pip install --system -e .[test]  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system "typeguard[test] @ ."  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: uv pip install --system ./typing-extensions-latest
+        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run typeguard tests
@@ -257,10 +257,10 @@ jobs:
       - name: Install typed-argument-parser test requirements
         run: |
           cd typed-argument-parser
-          uv pip install --system -e .  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system -e "typed-argument-parser @ ."  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
           uv pip install --system pytest  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: uv pip install --system ./typing-extensions-latest
+        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run typed-argument-parser tests
@@ -309,7 +309,7 @@ jobs:
           uv pip install --system -r test-requirements.txt  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
           uv pip install --system -e .
       - name: Install typing_extensions latest
-        run: uv pip install --system ./typing-extensions-latest
+        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run stubtest & mypyc tests
