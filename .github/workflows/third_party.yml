@@ -257,7 +257,7 @@ jobs:
       - name: Install typed-argument-parser test requirements
         run: |
           cd typed-argument-parser
-          uv pip install --system -e "typed-argument-parser @ ."  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system "typed-argument-parser @ ."  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
           uv pip install --system pytest  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
         run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
