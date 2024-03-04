@@ -103,12 +103,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install typing_inspect test dependencies
-        run: pip install -r typing_inspect/test-requirements.txt
+        run: uv pip install -r typing_inspect/test-requirements.txt --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: pip install ./typing-extensions-latest
+        run: uv pip install ./typing-extensions-latest
       - name: List all installed dependencies
-        run: pip freeze --all
+        run: uv pip freeze
       - name: Run typing_inspect tests
         run: |
           cd typing_inspect
@@ -147,12 +149,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install pyanalyze test requirements
-        run: pip install ./pyanalyze[tests]
+        run: uv pip install ./pyanalyze[tests] --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: pip install ./typing-extensions-latest
+        run: uv pip install ./typing-extensions-latest
       - name: List all installed dependencies
-        run: pip freeze --all
+        run: uv pip freeze
       - name: Run pyanalyze tests
         run: |
           cd pyanalyze
@@ -191,12 +195,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install typeguard test requirements
-        run: pip install -e ./typeguard[test]
+        run: uv pip install -e ./typeguard[test]  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: pip install ./typing-extensions-latest
+        run: uv pip install ./typing-extensions-latest
       - name: List all installed dependencies
-        run: pip freeze --all
+        run: uv pip freeze
       - name: Run typeguard tests
         run: |
           cd typeguard
@@ -234,6 +240,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Configure git for typed-argument-parser tests
         # typed-argument parser does this in their CI,
         # and the tests fail unless we do this
@@ -242,12 +250,12 @@ jobs:
           git config --global user.name "Your Name"
       - name: Install typed-argument-parser test requirements
         run: |
-          pip install -e ./typed-argument-parser
-          pip install pytest
+          uv pip install -e ./typed-argument-parser  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install pytest  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: pip install ./typing-extensions-latest
+        run: uv pip install ./typing-extensions-latest
       - name: List all installed dependencies
-        run: pip freeze --all
+        run: uv pip freeze
       - name: Run typed-argument-parser tests
         run: |
           cd typed-argument-parser
@@ -286,15 +294,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install mypy test requirements
         run: |
           cd mypy
-          pip install -r test-requirements.txt
-          pip install -e .
+          uv pip install -r test-requirements.txt  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install -e .
       - name: Install typing_extensions latest
-        run: pip install ./typing-extensions-latest
+        run: uv pip install ./typing-extensions-latest
       - name: List all installed dependencies
-        run: pip freeze --all
+        run: uv pip freeze
       - name: Run stubtest & mypyc tests
         run: |
           cd mypy
