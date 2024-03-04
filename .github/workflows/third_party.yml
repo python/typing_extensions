@@ -106,9 +106,11 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install typing_inspect test dependencies
-        run: uv pip install -r typing_inspect/test-requirements.txt --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+        run: |
+          cd typing_inspect
+          uv pip install --system -r test-requirements.txt --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: uv pip install ./typing-extensions-latest
+        run: uv pip install --system ./typing-extensions-latest
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run typing_inspect tests
@@ -152,9 +154,11 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install pyanalyze test requirements
-        run: uv pip install ./pyanalyze[tests] --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+        run: |
+          cd pyanalyze
+          uv pip install --system .[tests] --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: uv pip install ./typing-extensions-latest
+        run: uv pip install --system ./typing-extensions-latest
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run pyanalyze tests
@@ -198,9 +202,11 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install typeguard test requirements
-        run: uv pip install -e ./typeguard[test]  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+        run: |
+          cd typeguard
+          uv pip install --system -e .[test]  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: uv pip install ./typing-extensions-latest
+        run: uv pip install --system ./typing-extensions-latest
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run typeguard tests
@@ -250,10 +256,11 @@ jobs:
           git config --global user.name "Your Name"
       - name: Install typed-argument-parser test requirements
         run: |
-          uv pip install -e ./typed-argument-parser  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
-          uv pip install pytest  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          cd typed-argument-parser
+          uv pip install --system -e .  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system pytest  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
-        run: uv pip install ./typing-extensions-latest
+        run: uv pip install --system ./typing-extensions-latest
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run typed-argument-parser tests
@@ -299,10 +306,10 @@ jobs:
       - name: Install mypy test requirements
         run: |
           cd mypy
-          uv pip install -r test-requirements.txt  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
-          uv pip install -e .
+          uv pip install --system -r test-requirements.txt  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system -e .
       - name: Install typing_extensions latest
-        run: uv pip install ./typing-extensions-latest
+        run: uv pip install --system ./typing-extensions-latest
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run stubtest & mypyc tests
