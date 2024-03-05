@@ -4206,10 +4206,10 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(
             get_type_hints(AllTheThings, include_extras=True),
             {
-                'a': typing.Annotated[typing.Required[typing.ReadOnly[int]], 'why not'],
-                'b': typing.Required[typing.Annotated[typing.ReadOnly[int], 'why not']],
-                'c': typing.ReadOnly[typing.NotRequired[typing.Annotated[int, 'why not']]],
-                'd': typing.NotRequired[typing.Annotated[int, 'why not']],
+                'a': Annotated[Required[ReadOnly[int]], 'why not'],
+                'b': Required[Annotated[ReadOnly[int], 'why not']],
+                'c': ReadOnly[NotRequired[Annotated[int, 'why not']]],
+                'd': NotRequired[Annotated[int, 'why not']],
             },
         )
 
