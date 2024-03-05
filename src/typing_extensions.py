@@ -1122,9 +1122,9 @@ else:
         return val
 
 
-if hasattr(typing, "Required"):  # 3.11+
+if hasattr(typing, "ReadOnly"):  # 3.13+
     get_type_hints = typing.get_type_hints
-else:  # <=3.10
+else:  # <=3.13
     # replaces _strip_annotations()
     def _strip_extras(t):
         """Strips Annotated, Required and NotRequired from a given type."""
