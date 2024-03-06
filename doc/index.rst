@@ -760,6 +760,11 @@ Functions
 
       Interaction with :data:`Required` and :data:`NotRequired`.
 
+   .. versionchanged:: 4.11.0
+
+      When ``include_extra=False``, ``get_type_hints()`` now strips
+      :data:`ReadOnly` from the annotation.
+
 .. function:: is_protocol(tp)
 
    Determine if a type is a :class:`Protocol`. This works with protocols

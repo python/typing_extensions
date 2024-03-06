@@ -4199,6 +4199,20 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(AllTheThings.__readonly_keys__, frozenset({'a', 'b', 'c'}))
         self.assertEqual(AllTheThings.__mutable_keys__, frozenset({'d'}))
 
+        self.assertEqual(
+            get_type_hints(AllTheThings, include_extras=False),
+            {'a': int, 'b': int, 'c': int, 'd': int},
+        )
+        self.assertEqual(
+            get_type_hints(AllTheThings, include_extras=True),
+            {
+                'a': Annotated[Required[ReadOnly[int]], 'why not'],
+                'b': Required[Annotated[ReadOnly[int], 'why not']],
+                'c': ReadOnly[NotRequired[Annotated[int, 'why not']]],
+                'd': NotRequired[Annotated[int, 'why not']],
+            },
+        )
+
     def test_extra_keys_non_readonly(self):
         class Base(TypedDict, closed=True):
             __extra_items__: str
