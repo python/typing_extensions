@@ -6230,7 +6230,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         A[int, bool, str]
 
         with self.assertRaises(
-            TypeError, "Too few arguments for .+; actual 1, expected at least 2"
+            TypeError, msg="Too few arguments for .+; actual 1, expected at least 2"
         ):
             Test = A[int]
 
