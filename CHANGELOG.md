@@ -1,8 +1,62 @@
-# Release 4.9.0 (???)
+# Release 4.11.0 (WIP)
 
+- When `include_extra=False`, `get_type_hints()` now strips `ReadOnly` from the annotation.
+
+# Release 4.10.0 (February 24, 2024)
+
+This feature release adds support for PEP 728 (TypedDict with extra
+items) and PEP 742 (``TypeIs``).
+
+There are no changes since 4.10.0rc1.
+
+# Release 4.10.0rc1 (February 17, 2024)
+
+- Add support for PEP 728, supporting the `closed` keyword argument and the
+  special `__extra_items__` key for TypedDict. Patch by Zixuan James Li.
+- Add support for PEP 742, adding `typing_extensions.TypeIs`. Patch
+  by Jelle Zijlstra.
+- Drop runtime error when a read-only `TypedDict` item overrides a mutable
+  one. Type checkers should still flag this as an error. Patch by Jelle
+  Zijlstra.
+- Speedup `issubclass()` checks against simple runtime-checkable protocols by
+  around 6% (backporting https://github.com/python/cpython/pull/112717, by Alex
+  Waygood).
+- Fix a regression in the implementation of protocols where `typing.Protocol`
+  classes that were not marked as `@runtime_checkable` would be unnecessarily
+  introspected, potentially causing exceptions to be raised if the protocol had
+  problematic members. Patch by Alex Waygood, backporting
+  https://github.com/python/cpython/pull/113401.
+
+# Release 4.9.0 (December 9, 2023)
+
+This feature release adds `typing_extensions.ReadOnly`, as specified
+by PEP 705, and makes various other improvements, especially to
+`@typing_extensions.deprecated()`.
+
+There are no changes since 4.9.0rc1.
+
+# Release 4.9.0rc1 (November 29, 2023)
+
+- Add support for PEP 705, adding `typing_extensions.ReadOnly`. Patch
+  by Jelle Zijlstra.
 - All parameters on `NewType.__call__` are now positional-only. This means that
   the signature of `typing_extensions.NewType.__call__` now exactly matches the
   signature of `typing.NewType.__call__`. Patch by Alex Waygood.
+- Fix bug with using `@deprecated` on a mixin class. Inheriting from a
+  deprecated class now raises a `DeprecationWarning`. Patch by Jelle Zijlstra.
+- `@deprecated` now gives a better error message if you pass a non-`str`
+  argument to the `msg` parameter. Patch by Alex Waygood.
+- `@deprecated` is now implemented as a class for better introspectability.
+  Patch by Jelle Zijlstra.
+- Exclude `__match_args__` from `Protocol` members.
+  Backport of https://github.com/python/cpython/pull/110683 by Nikita Sobolev.
+- When creating a `typing_extensions.NamedTuple` class, ensure `__set_name__`
+  is called on all objects that define `__set_name__` and exist in the values
+  of the `NamedTuple` class's class dictionary. Patch by Alex Waygood,
+  backporting https://github.com/python/cpython/pull/111876.
+- Improve the error message when trying to call `issubclass()` against a
+  `Protocol` that has non-method members. Patch by Alex Waygood (backporting
+  https://github.com/python/cpython/pull/112344, by Randolph Scholz).
 
 # Release 4.8.0 (September 17, 2023)
 

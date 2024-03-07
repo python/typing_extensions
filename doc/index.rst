@@ -1,3 +1,4 @@
+.. module:: typing_extensions
 
 Welcome to typing_extensions's documentation!
 =============================================
@@ -318,6 +319,12 @@ Special typing primitives
       present in a protocol class's :py:term:`method resolution order`. See
       :issue:`245` for some examples.
 
+.. data:: ReadOnly
+
+   See :pep:`705`. Indicates that a :class:`TypedDict` item may not be modified.
+
+   .. versionadded:: 4.9.0
+
 .. data:: Required
 
    See :py:data:`typing.Required` and :pep:`655`. In ``typing`` since 3.11.
@@ -344,7 +351,13 @@ Special typing primitives
 
    See :py:data:`typing.TypeGuard` and :pep:`647`. In ``typing`` since 3.10.
 
-.. class:: TypedDict
+.. data:: TypeIs
+
+   See :pep:`742`. Similar to :data:`TypeGuard`, but allows more type narrowing.
+
+   .. versionadded:: 4.10.0
+
+.. class:: TypedDict(dict, total=True)
 
    See :py:class:`typing.TypedDict` and :pep:`589`. In ``typing`` since 3.8.
 
@@ -365,6 +378,55 @@ Special typing primitives
    in Python 3.11 and removed in Python 3.13. ``typing_extensions.TypedDict``
    raises a :py:exc:`DeprecationWarning` when this syntax is used in Python 3.12
    or lower and fails with a :py:exc:`TypeError` in Python 3.13 and higher.
+
+   ``typing_extensions`` supports the experimental :data:`ReadOnly` qualifier
+   proposed by :pep:`705`. It is reflected in the following attributes:
+
+   .. attribute:: __readonly_keys__
+
+      A :py:class:`frozenset` containing the names of all read-only keys. Keys
+      are read-only if they carry the :data:`ReadOnly` qualifier.
+
+      .. versionadded:: 4.9.0
+
+   .. attribute:: __mutable_keys__
+
+      A :py:class:`frozenset` containing the names of all mutable keys. Keys
+      are mutable if they do not carry the :data:`ReadOnly` qualifier.
+
+      .. versionadded:: 4.9.0
+    
+    The experimental ``closed`` keyword argument and the special key
+    ``__extra_items__`` proposed in :pep:`728` are supported.
+
+    When ``closed`` is unspecified or ``closed=False`` is given,
+    ``__extra_items__`` behaves like a regular key. Otherwise, this becomes a
+    special key that does not show up in ``__readonly_keys__``,
+    ``__mutable_keys__``, ``__required_keys__``, ``__optional_keys``, or
+    ``__annotations__``.
+
+    For runtime introspection, two attributes can be looked at:
+
+    .. attribute:: __closed__
+
+        A boolean flag indicating whether the current ``TypedDict`` is
+        considered closed. This is not inherited by the ``TypedDict``'s
+        subclasses.
+
+        .. versionadded:: 4.10.0
+
+    .. attribute:: __extra_items__
+
+        The type annotation of the extra items allowed on the ``TypedDict``.
+        This attribute defaults to ``None`` on a TypedDict that has itself and
+        all its bases non-closed. This default is different from ``type(None)``
+        that represents ``__extra_items__: None`` defined on a closed
+        ``TypedDict``.
+
+        If ``__extra_items__`` is not defined or inherited on a closed
+        ``TypedDict``, this defaults to ``Never``.
+
+        .. versionadded:: 4.10.0
 
    .. versionchanged:: 4.3.0
 
@@ -393,6 +455,15 @@ Special typing primitives
       (``TD = TypedDict("TD", None)``) is also deprecated. Both will be
       disallowed in Python 3.15. To create a TypedDict class with 0 fields,
       use ``class TD(TypedDict): pass`` or ``TD = TypedDict("TD", {})``.
+
+   .. versionchanged:: 4.9.0
+
+      Support for the :data:`ReadOnly` qualifier was added.
+
+   .. versionchanged:: 4.10.0
+
+      The keyword argument ``closed`` and the special key ``__extra_items__``
+      when ``closed=True`` is given were supported.
 
 .. class:: TypeVar(name, *constraints, bound=None, covariant=False,
                    contravariant=False, infer_variance=False, default=...)
@@ -549,9 +620,14 @@ Decorators
 
 .. decorator:: deprecated(msg, *, category=DeprecationWarning, stacklevel=1)
 
-   See :pep:`702`. Experimental; not yet part of the standard library.
+   See :pep:`702`. In the :mod:`warnings` module since Python 3.13.
 
    .. versionadded:: 4.5.0
+
+   .. versionchanged:: 4.9.0
+
+      Inheriting from a deprecated class now also raises a runtime
+      :py:exc:`DeprecationWarning`.
 
 .. decorator:: final
 
@@ -683,6 +759,11 @@ Functions
    .. versionchanged:: 4.1.0
 
       Interaction with :data:`Required` and :data:`NotRequired`.
+
+   .. versionchanged:: 4.11.0
+
+      When ``include_extra=False``, ``get_type_hints()`` now strips
+      :data:`ReadOnly` from the annotation.
 
 .. function:: is_protocol(tp)
 
