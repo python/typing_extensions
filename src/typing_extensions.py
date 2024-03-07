@@ -2649,6 +2649,7 @@ else:
 if not hasattr(typing, "TypeVarTuple"):
     def _check_generic(cls, parameters, elen=_marker):
         """Check correct count for parameters of a generic cls (internal helper).
+
         This gives a nice error message in case of count mismatch.
         """
         if not elen:
@@ -2681,7 +2682,7 @@ if not hasattr(typing, "TypeVarTuple"):
 
                     expect_val = f"at least {elen}"
 
-            raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters"
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
                             f" for {cls}; actual {alen}, expected {expect_val}")
 else:
     # Python 3.11+
@@ -2717,7 +2718,7 @@ else:
 
                     expect_val = f"at least {elen}"
 
-            raise TypeError(f"Too {'many' if alen > elen else 'few'} parameters"
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
                             f" for {cls}; actual {alen}, expected {expect_val}")
 
 typing._check_generic = _check_generic
@@ -2742,10 +2743,9 @@ if hasattr(typing, '_collect_type_vars'):
                 not _is_unpack(t)
             ):
                 if getattr(t, '__default__', None) is not None:
-                    if not default_encountered:
-                        default_encountered = True
+                    default_encountered = True
                 elif default_encountered:
-                    raise TypeError(f'type parameter {t!r} without a default'
+                    raise TypeError(f'Type parameter {t!r} without a default'
                                     ' follows type parameter with a default')
 
                 tvars.append(t)
@@ -2780,10 +2780,9 @@ else:
             elif hasattr(t, '__typing_subst__'):
                 if t not in parameters:
                     if getattr(t, '__default__', None) is not None:
-                        if not default_encountered:
-                            default_encountered = True
+                        default_encountered = True
                     elif default_encountered:
-                        raise TypeError(f'type parameter {t!r} without a default'
+                        raise TypeError(f'Type parameter {t!r} without a default'
                                         ' follows type parameter with a default')
 
                     parameters.append(t)
