@@ -5714,7 +5714,7 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIsInstance(a, G)
                 self.assertEqual(a.x, 3)
 
-                with self.assertRaisesRegex(TypeError, f'Too many parameters'):
+                with self.assertRaisesRegex(TypeError, 'Too many parameters'):
                     G[int, str]
 
     @skipUnless(TYPING_3_9_0, "tuple.__class_getitem__ was added in 3.9")
