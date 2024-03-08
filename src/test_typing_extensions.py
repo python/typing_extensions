@@ -3262,14 +3262,12 @@ class ProtocolTests(BaseTestCase):
         self.assertEqual(MemoizedFunc.__parameters__, (Ts, T, T2))
         self.assertTrue(MemoizedFunc._is_protocol)
 
-        things = "arguments"
-
         # A bug was fixed in 3.11.1
         # (https://github.com/python/cpython/commit/74920aa27d0c57443dd7f704d6272cca9c507ab3)
         # That means this assertion doesn't pass on 3.11.0,
         # but it passes on all other Python versions
         if sys.version_info[:3] != (3, 11, 0):
-            with self.assertRaisesRegex(TypeError, f"Too few {things}"):
+            with self.assertRaisesRegex(TypeError, "Too few arguments"):
                 MemoizedFunc[int]
 
         X = MemoizedFunc[int, T, T2]
