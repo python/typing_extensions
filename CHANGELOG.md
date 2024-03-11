@@ -1,5 +1,7 @@
-# Release 4.11.0 (WIP)
+# Unreleased
 
+- Fix minor discrepancy between error messages produced by `typing`
+  and `typing_extensions` on Python 3.10. Patch by Jelle Zijlstra.
 - When `include_extra=False`, `get_type_hints()` now strips `ReadOnly` from the annotation.
 
 # Release 4.10.0 (February 24, 2024)

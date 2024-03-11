@@ -3262,12 +3262,14 @@ class ProtocolTests(BaseTestCase):
         self.assertEqual(MemoizedFunc.__parameters__, (Ts, T, T2))
         self.assertTrue(MemoizedFunc._is_protocol)
 
+        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
+
         # A bug was fixed in 3.11.1
         # (https://github.com/python/cpython/commit/74920aa27d0c57443dd7f704d6272cca9c507ab3)
         # That means this assertion doesn't pass on 3.11.0,
         # but it passes on all other Python versions
         if sys.version_info[:3] != (3, 11, 0):
-            with self.assertRaisesRegex(TypeError, "Too few arguments"):
+            with self.assertRaisesRegex(TypeError, f"Too few {things}"):
                 MemoizedFunc[int]
 
         X = MemoizedFunc[int, T, T2]
@@ -5709,7 +5711,8 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIsInstance(a, G)
                 self.assertEqual(a.x, 3)
 
-                with self.assertRaisesRegex(TypeError, 'Too many arguments'):
+                things = "arguments" if sys.version_info >= (3, 10) else "parameters"
+                with self.assertRaisesRegex(TypeError, f'Too many {things}'):
                     G[int, str]
 
     @skipUnless(TYPING_3_9_0, "tuple.__class_getitem__ was added in 3.9")
