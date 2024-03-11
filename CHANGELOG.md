@@ -1,3 +1,8 @@
+# Unreleased
+
+- Fix minor discrepancy between error messages produced by `typing`
+  and `typing_extensions` on Python 3.10. Patch by Jelle Zijlstra.
+
 # Release 4.10.0 (February 24, 2024)
 
 This feature release adds support for PEP 728 (TypedDict with extra
