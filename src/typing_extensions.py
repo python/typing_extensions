@@ -1126,15 +1126,15 @@ else:
         return val
 
 
-if hasattr(typing, "Required"):  # 3.11+
+if hasattr(typing, "ReadOnly"):  # 3.13+
     get_type_hints = typing.get_type_hints
-else:  # <=3.10
+else:  # <=3.13
     # replaces _strip_annotations()
     def _strip_extras(t):
         """Strips Annotated, Required and NotRequired from a given type."""
         if isinstance(t, _AnnotatedAlias):
             return _strip_extras(t.__origin__)
-        if hasattr(t, "__origin__") and t.__origin__ in (Required, NotRequired):
+        if hasattr(t, "__origin__") and t.__origin__ in (Required, NotRequired, ReadOnly):
             return _strip_extras(t.__args__[0])
         if isinstance(t, typing._GenericAlias):
             stripped_args = tuple(_strip_extras(a) for a in t.__args__)

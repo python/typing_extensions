@@ -1,3 +1,4 @@
+.. module:: typing_extensions
 
 Welcome to typing_extensions's documentation!
 =============================================
@@ -395,37 +396,37 @@ Special typing primitives
 
       .. versionadded:: 4.9.0
     
-    The experimental ``closed`` keyword argument and the special key
-    ``__extra_items__`` proposed in :pep:`728` are supported.
+   The experimental ``closed`` keyword argument and the special key
+   ``__extra_items__`` proposed in :pep:`728` are supported.
 
-    When ``closed`` is unspecified or ``closed=False`` is given,
-    ``__extra_items__`` behaves like a regular key. Otherwise, this becomes a
-    special key that does not show up in ``__readonly_keys__``,
-    ``__mutable_keys__``, ``__required_keys__``, ``__optional_keys``, or
-    ``__annotations__``.
+   When ``closed`` is unspecified or ``closed=False`` is given,
+   ``__extra_items__`` behaves like a regular key. Otherwise, this becomes a
+   special key that does not show up in ``__readonly_keys__``,
+   ``__mutable_keys__``, ``__required_keys__``, ``__optional_keys``, or
+   ``__annotations__``.
 
-    For runtime introspection, two attributes can be looked at:
+   For runtime introspection, two attributes can be looked at:
 
-    .. attribute:: __closed__
+   .. attribute:: __closed__
 
-        A boolean flag indicating whether the current ``TypedDict`` is
-        considered closed. This is not inherited by the ``TypedDict``'s
-        subclasses.
+      A boolean flag indicating whether the current ``TypedDict`` is
+      considered closed. This is not inherited by the ``TypedDict``'s
+      subclasses.
 
-        .. versionadded:: 4.10.0
+      .. versionadded:: 4.10.0
 
-    .. attribute:: __extra_items__
+   .. attribute:: __extra_items__
 
-        The type annotation of the extra items allowed on the ``TypedDict``.
-        This attribute defaults to ``None`` on a TypedDict that has itself and
-        all its bases non-closed. This default is different from ``type(None)``
-        that represents ``__extra_items__: None`` defined on a closed
-        ``TypedDict``.
+      The type annotation of the extra items allowed on the ``TypedDict``.
+      This attribute defaults to ``None`` on a TypedDict that has itself and
+      all its bases non-closed. This default is different from ``type(None)``
+      that represents ``__extra_items__: None`` defined on a closed
+      ``TypedDict``.
 
-        If ``__extra_items__`` is not defined or inherited on a closed
-        ``TypedDict``, this defaults to ``Never``.
+      If ``__extra_items__`` is not defined or inherited on a closed
+      ``TypedDict``, this defaults to ``Never``.
 
-        .. versionadded:: 4.10.0
+      .. versionadded:: 4.10.0
 
    .. versionchanged:: 4.3.0
 
@@ -758,6 +759,11 @@ Functions
    .. versionchanged:: 4.1.0
 
       Interaction with :data:`Required` and :data:`NotRequired`.
+
+   .. versionchanged:: 4.11.0
+
+      When ``include_extra=False``, ``get_type_hints()`` now strips
+      :data:`ReadOnly` from the annotation.
 
 .. function:: is_protocol(tp)
 
