@@ -3262,7 +3262,7 @@ class ProtocolTests(BaseTestCase):
         self.assertEqual(MemoizedFunc.__parameters__, (Ts, T, T2))
         self.assertTrue(MemoizedFunc._is_protocol)
 
-        things = "arguments" if sys.version_info >= (3, 11) else "parameters"
+        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
 
         # A bug was fixed in 3.11.1
         # (https://github.com/python/cpython/commit/74920aa27d0c57443dd7f704d6272cca9c507ab3)
@@ -5711,7 +5711,7 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIsInstance(a, G)
                 self.assertEqual(a.x, 3)
 
-                things = "arguments" if sys.version_info >= (3, 11) else "parameters"
+                things = "arguments" if sys.version_info >= (3, 10) else "parameters"
 
                 with self.assertRaisesRegex(TypeError, f'Too many {things}'):
                     G[int, str]
