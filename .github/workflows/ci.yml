@@ -73,9 +73,12 @@ jobs:
           # accidentally pick up typing_extensions as installed by a dependency
           cd src
           python -m unittest test_typing_extensions.py
+
+      - name: Test CPython typing test suite
+        run: |
           # Run the typing test suite from CPython with typing_extensions installed,
           # because we monkeypatch typing under some circumstances.
-          python -c 'import typing_extensions; import test.__main__' test_typing -v
+          python -c 'import test.__main__' test_typing -v
 
   linting:
     name: Lint
