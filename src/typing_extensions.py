@@ -164,7 +164,7 @@ def _check_generic(cls, parameters, elen=_marker):
             num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
             if (num_tv_tuples > 0) and (alen >= elen - num_tv_tuples):
                 return
-        if (3, 10) <= sys.version_info < (3, 11):
+        if sys.version_info >= (3, 10):
             word = "arguments"
         else:
             word = "parameters"
