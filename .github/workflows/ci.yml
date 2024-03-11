@@ -76,7 +76,7 @@ jobs:
 
       - name: Test CPython typing test suite
         # Test suite fails on PyPy even without typing_extensions
-        if: !startsWith(matrix.python-version, 'pypy')
+        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
         run: |
           # Run the typing test suite from CPython with typing_extensions installed,
           # because we monkeypatch typing under some circumstances.
