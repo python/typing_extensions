@@ -1,5 +1,7 @@
 # Unreleased
 
+- Fix the runtime behavior of type parameters with defaults (PEP 696).
+  Patch by Nadir Chowdhury.
 - Fix minor discrepancy between error messages produced by `typing`
   and `typing_extensions` on Python 3.10. Patch by Jelle Zijlstra.
 - When `include_extra=False`, `get_type_hints()` now strips `ReadOnly` from the annotation.
