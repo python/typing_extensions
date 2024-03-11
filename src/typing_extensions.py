@@ -164,11 +164,8 @@ def _check_generic(cls, parameters, elen=_marker):
             num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
             if (num_tv_tuples > 0) and (alen >= elen - num_tv_tuples):
                 return
-        if sys.version_info >= (3, 10):
-            word = "arguments"
-        else:
-            word = "parameters"
-        raise TypeError(f"Too {'many' if alen > elen else 'few'} {word} for {cls};"
+        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
+        raise TypeError(f"Too {'many' if alen > elen else 'few'} {things} for {cls};"
                         f" actual {alen}, expected {elen}")
 
 
