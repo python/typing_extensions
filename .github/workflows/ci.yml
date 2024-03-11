@@ -78,7 +78,9 @@ jobs:
         run: |
           # Run the typing test suite from CPython with typing_extensions installed,
           # because we monkeypatch typing under some circumstances.
-          python -c 'import test.__main__' test_typing -v
+          python -c 'import typing_extensions; import test.__main__' test_typing -v
+        # Test suite fails on PyPy even without typing_extensions
+        if: !startsWith(matrix.python-version, 'pypy')
 
   linting:
     name: Lint
