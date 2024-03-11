@@ -2682,7 +2682,8 @@ if not hasattr(typing, "TypeVarTuple"):
 
                     expect_val = f"at least {elen}"
 
-            raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
+            things = "arguments" if sys.version_info >= (3, 10) else "parameters"
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} {things}"
                             f" for {cls}; actual {alen}, expected {expect_val}")
 else:
     # Python 3.11+
