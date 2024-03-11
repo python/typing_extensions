@@ -30,7 +30,8 @@ A stub file for `typing_extensions` is maintained
 [in typeshed](https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi).
 Because of the special status that `typing_extensions` holds in the typing ecosystem,
 the stubs are placed in the standard library in typeshed and distributed as
-part of the stubs bundled with individual type checkers.
+part of the stubs bundled with individual type checkers. Contributors adding new features
+to `typing_extensions` are encouraged to also contribute stubs to typeshed.
 
 # Running tests
 
