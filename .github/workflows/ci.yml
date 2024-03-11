@@ -75,7 +75,7 @@ jobs:
           python -m unittest test_typing_extensions.py
           # Run the typing test suite from CPython with typing_extensions installed,
           # because we monkeypatch typing under some circumstances.
-          python -c 'import typing_extensions; import test.__main__' test_typing
+          python -c 'import typing_extensions; import test.__main__' test_typing -v
 
   linting:
     name: Lint
