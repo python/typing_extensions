@@ -2700,9 +2700,6 @@ else:
             expect_val = elen
             if hasattr(cls, "__parameters__"):
                 parameters = [p for p in cls.__parameters__ if not _is_unpack(p)]
-                num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
-                if (num_tv_tuples > 0) and (alen >= elen - num_tv_tuples):
-                    return
 
                 # deal with TypeVarLike defaults
                 # required TypeVarLikes cannot appear after a defaulted one.
@@ -2788,9 +2785,9 @@ else:
 
                     parameters.append(t)
             else:
-                if _should_collect_from_parameters(t):
-                    parameters.extend(
-                        [t for t in t.__parameters__ if t not in parameters])
+                for x in getattr(t, '__parameters__', ()):
+                    if x not in parameters:
+                        parameters.append(x)
 
         return tuple(parameters)
 
