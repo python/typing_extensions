@@ -5712,7 +5712,6 @@ class NamedTupleTests(BaseTestCase):
                 self.assertEqual(a.x, 3)
 
                 things = "arguments" if sys.version_info >= (3, 10) else "parameters"
-
                 with self.assertRaisesRegex(TypeError, f'Too many {things}'):
                     G[int, str]
 
@@ -6214,6 +6213,27 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
 
         class A(Generic[Unpack[Ts]]): ...
         Alias = Optional[Unpack[Ts]]
+
+    def test_erroneous_generic(self):
+        DefaultStrT = typing_extensions.TypeVar('DefaultStrT', default=str)
+        T = TypeVar('T')
+
+        with self.assertRaises(TypeError):
+            Test = Generic[DefaultStrT, T]
+
+    def test_need_more_params(self):
+        DefaultStrT = typing_extensions.TypeVar('DefaultStrT', default=str)
+        T = typing_extensions.TypeVar('T')
+        U = typing_extensions.TypeVar('U')
+
+        class A(Generic[T, U, DefaultStrT]): ...
+        A[int, bool]
+        A[int, bool, str]
+
+        with self.assertRaises(
+            TypeError, msg="Too few arguments for .+; actual 1, expected at least 2"
+        ):
+            Test = A[int]
 
     def test_pickle(self):
         global U, U_co, U_contra, U_default  # pickle wants to reference the class by name

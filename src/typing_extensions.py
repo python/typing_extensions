@@ -147,28 +147,6 @@ class _Sentinel:
 _marker = _Sentinel()
 
 
-def _check_generic(cls, parameters, elen=_marker):
-    """Check correct count for parameters of a generic cls (internal helper).
-    This gives a nice error message in case of count mismatch.
-    """
-    if not elen:
-        raise TypeError(f"{cls} is not a generic class")
-    if elen is _marker:
-        if not hasattr(cls, "__parameters__") or not cls.__parameters__:
-            raise TypeError(f"{cls} is not a generic class")
-        elen = len(cls.__parameters__)
-    alen = len(parameters)
-    if alen != elen:
-        if hasattr(cls, "__parameters__"):
-            parameters = [p for p in cls.__parameters__ if not _is_unpack(p)]
-            num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
-            if (num_tv_tuples > 0) and (alen >= elen - num_tv_tuples):
-                return
-        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
-        raise TypeError(f"Too {'many' if alen > elen else 'few'} {things} for {cls};"
-                        f" actual {alen}, expected {elen}")
-
-
 if sys.version_info >= (3, 10):
     def _should_collect_from_parameters(t):
         return isinstance(
@@ -180,27 +158,6 @@ elif sys.version_info >= (3, 9):
 else:
     def _should_collect_from_parameters(t):
         return isinstance(t, typing._GenericAlias) and not t._special
-
-
-def _collect_type_vars(types, typevar_types=None):
-    """Collect all type variable contained in types in order of
-    first appearance (lexicographic order). For example::
-
-        _collect_type_vars((T, List[S, T])) == (T, S)
-    """
-    if typevar_types is None:
-        typevar_types = typing.TypeVar
-    tvars = []
-    for t in types:
-        if (
-            isinstance(t, typevar_types) and
-            t not in tvars and
-            not _is_unpack(t)
-        ):
-            tvars.append(t)
-        if _should_collect_from_parameters(t):
-            tvars.extend([t for t in t.__parameters__ if t not in tvars])
-    return tuple(tvars)
 
 
 NoReturn = typing.NoReturn
@@ -2690,9 +2647,151 @@ else:
 #   counting generic parameters, so that when we subscript a generic,
 #   the runtime doesn't try to substitute the Unpack with the subscripted type.
 if not hasattr(typing, "TypeVarTuple"):
-    typing._collect_type_vars = _collect_type_vars
-    typing._check_generic = _check_generic
+    def _check_generic(cls, parameters, elen=_marker):
+        """Check correct count for parameters of a generic cls (internal helper).
 
+        This gives a nice error message in case of count mismatch.
+        """
+        if not elen:
+            raise TypeError(f"{cls} is not a generic class")
+        if elen is _marker:
+            if not hasattr(cls, "__parameters__") or not cls.__parameters__:
+                raise TypeError(f"{cls} is not a generic class")
+            elen = len(cls.__parameters__)
+        alen = len(parameters)
+        if alen != elen:
+            expect_val = elen
+            if hasattr(cls, "__parameters__"):
+                parameters = [p for p in cls.__parameters__ if not _is_unpack(p)]
+                num_tv_tuples = sum(isinstance(p, TypeVarTuple) for p in parameters)
+                if (num_tv_tuples > 0) and (alen >= elen - num_tv_tuples):
+                    return
+
+                # deal with TypeVarLike defaults
+                # required TypeVarLikes cannot appear after a defaulted one.
+                if alen < elen:
+                    # since we validate TypeVarLike default in _collect_type_vars
+                    # or _collect_parameters we can safely check parameters[alen]
+                    if getattr(parameters[alen], '__default__', None) is not None:
+                        return
+
+                    num_default_tv = sum(getattr(p, '__default__', None)
+                                         is not None for p in parameters)
+
+                    elen -= num_default_tv
+
+                    expect_val = f"at least {elen}"
+
+            things = "arguments" if sys.version_info >= (3, 10) else "parameters"
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} {things}"
+                            f" for {cls}; actual {alen}, expected {expect_val}")
+else:
+    # Python 3.11+
+
+    def _check_generic(cls, parameters, elen):
+        """Check correct count for parameters of a generic cls (internal helper).
+
+        This gives a nice error message in case of count mismatch.
+        """
+        if not elen:
+            raise TypeError(f"{cls} is not a generic class")
+        alen = len(parameters)
+        if alen != elen:
+            expect_val = elen
+            if hasattr(cls, "__parameters__"):
+                parameters = [p for p in cls.__parameters__ if not _is_unpack(p)]
+
+                # deal with TypeVarLike defaults
+                # required TypeVarLikes cannot appear after a defaulted one.
+                if alen < elen:
+                    # since we validate TypeVarLike default in _collect_type_vars
+                    # or _collect_parameters we can safely check parameters[alen]
+                    if getattr(parameters[alen], '__default__', None) is not None:
+                        return
+
+                    num_default_tv = sum(getattr(p, '__default__', None)
+                                         is not None for p in parameters)
+
+                    elen -= num_default_tv
+
+                    expect_val = f"at least {elen}"
+
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
+                            f" for {cls}; actual {alen}, expected {expect_val}")
+
+typing._check_generic = _check_generic
+
+# Python 3.11+ _collect_type_vars was renamed to _collect_parameters
+if hasattr(typing, '_collect_type_vars'):
+    def _collect_type_vars(types, typevar_types=None):
+        """Collect all type variable contained in types in order of
+        first appearance (lexicographic order). For example::
+
+            _collect_type_vars((T, List[S, T])) == (T, S)
+        """
+        if typevar_types is None:
+            typevar_types = typing.TypeVar
+        tvars = []
+        # required TypeVarLike cannot appear after TypeVarLike with default
+        default_encountered = False
+        for t in types:
+            if (
+                isinstance(t, typevar_types) and
+                t not in tvars and
+                not _is_unpack(t)
+            ):
+                if getattr(t, '__default__', None) is not None:
+                    default_encountered = True
+                elif default_encountered:
+                    raise TypeError(f'Type parameter {t!r} without a default'
+                                    ' follows type parameter with a default')
+
+                tvars.append(t)
+            if _should_collect_from_parameters(t):
+                tvars.extend([t for t in t.__parameters__ if t not in tvars])
+        return tuple(tvars)
+
+    typing._collect_type_vars = _collect_type_vars
+else:
+    def _collect_parameters(args):
+        """Collect all type variables and parameter specifications in args
+        in order of first appearance (lexicographic order).
+
+        For example::
+
+            assert _collect_parameters((T, Callable[P, T])) == (T, P)
+        """
+        parameters = []
+        # required TypeVarLike cannot appear after TypeVarLike with default
+        default_encountered = False
+        for t in args:
+            if isinstance(t, type):
+                # We don't want __parameters__ descriptor of a bare Python class.
+                pass
+            elif isinstance(t, tuple):
+                # `t` might be a tuple, when `ParamSpec` is substituted with
+                # `[T, int]`, or `[int, *Ts]`, etc.
+                for x in t:
+                    for collected in _collect_parameters([x]):
+                        if collected not in parameters:
+                            parameters.append(collected)
+            elif hasattr(t, '__typing_subst__'):
+                if t not in parameters:
+                    if getattr(t, '__default__', None) is not None:
+                        default_encountered = True
+                    elif default_encountered:
+                        raise TypeError(f'Type parameter {t!r} without a default'
+                                        ' follows type parameter with a default')
+
+                    parameters.append(t)
+            else:
+                for x in getattr(t, '__parameters__', ()):
+                    if x not in parameters:
+                        parameters.append(x)
+
+        return tuple(parameters)
+
+    typing._collect_parameters = _collect_parameters
 
 # Backport typing.NamedTuple as it exists in Python 3.13.
 # In 3.11, the ability to define generic `NamedTuple`s was supported.
