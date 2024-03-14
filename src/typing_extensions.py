@@ -792,7 +792,11 @@ def _ensure_subclassable(mro_entries):
     return inner
 
 
-if hasattr(typing, "ReadOnly"):
+# Update this to something like >=3.13.0b1 if and when
+# PEP 728 is implemented in CPython
+_PEP_728_IMPLEMENTED = False
+
+if _PEP_728_IMPLEMENTED:
     # The standard library TypedDict in Python 3.8 does not store runtime information
     # about which (if any) keys are optional.  See https://bugs.python.org/issue38834
     # The standard library TypedDict in Python 3.9.0/1 does not honour the "total"
@@ -803,7 +807,8 @@ if hasattr(typing, "ReadOnly"):
     # Aaaand on 3.12 we add __orig_bases__ to TypedDict
     # to enable better runtime introspection.
     # On 3.13 we deprecate some odd ways of creating TypedDicts.
-    # PEP 705 proposes adding the ReadOnly[] qualifier.
+    # Also on 3.13, PEP 705 adds the ReadOnly[] qualifier.
+    # PEP 728 (still pending) makes more changes.
     TypedDict = typing.TypedDict
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
