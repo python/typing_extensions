@@ -5531,7 +5531,7 @@ class AllTests(BaseTestCase):
             }
         if sys.version_info < (3, 13):
             exclude |= {'NamedTuple', 'Protocol', 'runtime_checkable'}
-        if not hasattr(typing, 'ReadOnly'):
+        if not typing_extensions._PEP_728_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
