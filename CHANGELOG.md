@@ -1,6 +1,6 @@
-# Unreleased
+# Release 4.11.0rc1 (March 24, 2024)
 
-- Fix tests on 3.13.0a5. Patch by Jelle Zijlstra.
+- Fix tests on Python 3.13.0a5. Patch by Jelle Zijlstra.
 - Fix the runtime behavior of type parameters with defaults (PEP 696).
   Patch by Nadir Chowdhury.
 - Fix minor discrepancy between error messages produced by `typing`
