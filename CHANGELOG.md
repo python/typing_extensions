@@ -1,3 +1,10 @@
+# Release 4.11.0 (April 5, 2024)
+
+This feature release provides improvements to various recently
+added features, most importantly type parameter defaults (PEP 696).
+
+There are no changes since 4.11.0rc1.
+
 # Release 4.11.0rc1 (March 24, 2024)
 
 - Fix tests on Python 3.13.0a5. Patch by Jelle Zijlstra.
