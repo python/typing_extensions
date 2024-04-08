@@ -61,7 +61,7 @@ jobs:
         with:
           path: typing-extensions-latest
       - name: Setup pdm for pydantic tests
-        uses: pdm-project/setup-pdm@v3
+        uses: pdm-project/setup-pdm@v4
         with:
           python-version: ${{ matrix.python-version }}
           allow-python-prereleases: true
