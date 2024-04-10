@@ -3,7 +3,7 @@
 - Fix tests on Python 3.13.0a6. 3.13.0a6 adds a new
   `__static_attributes__` attribute to all classes in Python,
   which broke some assumptions made by the implementation of
-  `typing_extenions.Protocol`.
+  `typing_extensions.Protocol`.
 
 # Release 4.11.0 (April 5, 2024)
 
