@@ -442,6 +442,9 @@ if sys.version_info >= (3, 9):
 if sys.version_info >= (3, 12):
     _EXCLUDED_ATTRS.add("__type_params__")
 
+if sys.version_info >= (3, 13):
+    _EXCLUDED_ATTRS.add("__static_attributes__")
+
 _EXCLUDED_ATTRS = frozenset(_EXCLUDED_ATTRS)
 
 
