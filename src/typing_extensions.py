@@ -2355,7 +2355,7 @@ else:  # <=3.10
         return obj
 
 
-if hasattr(typing, "assert_never"):  # 3.11+
+if hasattr(typing, "_ASSERT_NEVER_REPR_MAX_LENGTH"):  # 3.11+
     _ASSERT_NEVER_REPR_MAX_LENGTH = typing._ASSERT_NEVER_REPR_MAX_LENGTH
 else:  # <=3.10
     _ASSERT_NEVER_REPR_MAX_LENGTH = 100
