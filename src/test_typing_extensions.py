@@ -293,7 +293,7 @@ class AssertNeverTests(BaseTestCase):
             assert_never(huge_value)
         self.assertLess(
             len(cm.exception.args[0]),
-            typing._ASSERT_NEVER_REPR_MAX_LENGTH * 2,
+            typing_extensions._ASSERT_NEVER_REPR_MAX_LENGTH * 2,
         )
 
 

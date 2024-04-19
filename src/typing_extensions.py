@@ -2356,10 +2356,14 @@ else:  # <=3.10
 
 
 if hasattr(typing, "assert_never"):  # 3.11+
-    assert_never = typing.assert_never
+    _ASSERT_NEVER_REPR_MAX_LENGTH = typing._ASSERT_NEVER_REPR_MAX_LENGTH
 else:  # <=3.10
     _ASSERT_NEVER_REPR_MAX_LENGTH = 100
 
+
+if hasattr(typing, "assert_never"):  # 3.11+
+    assert_never = typing.assert_never
+else:  # <=3.10
     def assert_never(arg: Never, /) -> Never:
         """Assert to the type checker that a line of code is unreachable.
 
