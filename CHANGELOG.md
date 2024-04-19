@@ -4,6 +4,9 @@
   `__static_attributes__` attribute to all classes in Python,
   which broke some assumptions made by the implementation of
   `typing_extensions.Protocol`.
+- At runtime, `assert_never` now includes the repr of the argument
+  in the `AssertionError`. Patch by Hashem, backporting of the original
+  fix https://github.com/python/cpython/pull/91720 by Jelle Zijlstra.
 
 # Release 4.11.0 (April 5, 2024)
 
