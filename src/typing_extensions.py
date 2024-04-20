@@ -2355,6 +2355,12 @@ else:  # <=3.10
         return obj
 
 
+if hasattr(typing, "_ASSERT_NEVER_REPR_MAX_LENGTH"):  # 3.11+
+    _ASSERT_NEVER_REPR_MAX_LENGTH = typing._ASSERT_NEVER_REPR_MAX_LENGTH
+else:  # <=3.10
+    _ASSERT_NEVER_REPR_MAX_LENGTH = 100
+
+
 if hasattr(typing, "assert_never"):  # 3.11+
     assert_never = typing.assert_never
 else:  # <=3.10
@@ -2378,7 +2384,10 @@ else:  # <=3.10
         At runtime, this throws an exception when called.
 
         """
-        raise AssertionError("Expected code to be unreachable")
+        value = repr(arg)
+        if len(value) > _ASSERT_NEVER_REPR_MAX_LENGTH:
+            value = value[:_ASSERT_NEVER_REPR_MAX_LENGTH] + '...'
+        raise AssertionError(f"Expected code to be unreachable, but got: {value}")
 
 
 if sys.version_info >= (3, 12):  # 3.12+
