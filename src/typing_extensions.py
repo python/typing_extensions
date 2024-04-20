@@ -676,8 +676,9 @@ else:
                             ' got %r' % cls)
         cls._is_runtime_protocol = True
 
-        # typing.Protocol classes on <=3.11 breaks if we execute this block,
+        # typing.Protocol classes on <=3.11 break if we execute this block,
         # because typing.Protocol classes on <=3.11 don't have a
+        # `__protocol_attrs__` attribute, and this block relies on the
         # `__protocol_attrs__` attribute. Meanwhile, typing.Protocol classes on 3.12.2+
         # break if we *don't* execute this block, because *they* assume that all
         # protocol classes have a `__non_callable_proto_members__` attribute
