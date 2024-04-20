@@ -4,6 +4,9 @@
   `__static_attributes__` attribute to all classes in Python,
   which broke some assumptions made by the implementation of
   `typing_extensions.Protocol`.
+- Fix `AttributeError` when using `typing_extensions.runtime_checkable`
+  in combination with `typing.Protocol` on Python 3.12.2 or newer.
+  Patch by Alex Waygood.
 
 # Release 4.11.0 (April 5, 2024)
 

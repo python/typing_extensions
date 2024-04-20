@@ -3523,6 +3523,18 @@ class ProtocolTests(BaseTestCase):
         )
         self.assertIs(type(exc.__cause__), CustomError)
 
+    def test_extensions_runtimecheckable_on_typing_Protocol(self):
+        @runtime_checkable
+        class Functor(typing.Protocol):
+            def foo(self) -> None: ...
+
+        self.assertNotIsSubclass(object, Functor)
+
+        class Bar:
+            def foo(self): pass
+
+        self.assertIsSubclass(Bar, Functor)
+
 
 class Point2DGeneric(Generic[T], TypedDict):
     a: T
