@@ -676,9 +676,14 @@ else:
                             ' got %r' % cls)
         cls._is_runtime_protocol = True
 
-        # Only execute the following block if it's a typing_extensions.Protocol class.
-        # typing.Protocol classes don't need it.
-        if isinstance(cls, _ProtocolMeta):
+        # typing.Protocol classes on <=3.11 break if we execute this block,
+        # because typing.Protocol classes on <=3.11 don't have a
+        # `__protocol_attrs__` attribute, and this block relies on the
+        # `__protocol_attrs__` attribute. Meanwhile, typing.Protocol classes on 3.12.2+
+        # break if we *don't* execute this block, because *they* assume that all
+        # protocol classes have a `__non_callable_proto_members__` attribute
+        # (which this block sets)
+        if isinstance(cls, _ProtocolMeta) or sys.version_info >= (3, 12, 2):
             # PEP 544 prohibits using issubclass()
             # with protocols that have non-method members.
             # See gh-113320 for why we compute this attribute here,
