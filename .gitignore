@@ -11,6 +11,7 @@ venv*/
 .tox/
 .venv*/
 .vscode/
+.python-version
 
 *.swp
 *.pyc
