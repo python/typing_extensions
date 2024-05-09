@@ -1,9 +1,10 @@
 # Unreleased
 
-- Fix tests on Python 3.13.0a6. 3.13.0a6 adds a new
+- Fix tests on Python 3.13.0a6 and newer. 3.13.0a6 adds a new
   `__static_attributes__` attribute to all classes in Python,
   which broke some assumptions made by the implementation of
-  `typing_extensions.Protocol`.
+  `typing_extensions.Protocol`. Similarly, 3.13.0b1 adds the new
+  `__firstlineno__` attribute to all classes.
 - Fix `AttributeError` when using `typing_extensions.runtime_checkable`
   in combination with `typing.Protocol` on Python 3.12.2 or newer.
   Patch by Alex Waygood.

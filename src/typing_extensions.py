@@ -427,25 +427,10 @@ _PROTO_ALLOWLIST = {
 }
 
 
-_EXCLUDED_ATTRS = {
-    "__abstractmethods__", "__annotations__", "__weakref__", "_is_protocol",
-    "_is_runtime_protocol", "__dict__", "__slots__", "__parameters__",
-    "__orig_bases__", "__module__", "_MutableMapping__marker", "__doc__",
-    "__subclasshook__", "__orig_class__", "__init__", "__new__",
-    "__protocol_attrs__", "__non_callable_proto_members__",
-    "__match_args__",
+_EXCLUDED_ATTRS = frozenset(typing.EXCLUDED_ATTRIBUTES) | {
+    "__match_args__", "__protocol_attrs__", "__non_callable_proto_members__",
+    "__final__",
 }
-
-if sys.version_info >= (3, 9):
-    _EXCLUDED_ATTRS.add("__class_getitem__")
-
-if sys.version_info >= (3, 12):
-    _EXCLUDED_ATTRS.add("__type_params__")
-
-if sys.version_info >= (3, 13):
-    _EXCLUDED_ATTRS.add("__static_attributes__")
-
-_EXCLUDED_ATTRS = frozenset(_EXCLUDED_ATTRS)
 
 
 def _get_protocol_attrs(cls):
