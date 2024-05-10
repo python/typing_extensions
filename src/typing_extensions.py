@@ -2764,7 +2764,8 @@ else:
             raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
                             f" for {cls}; actual {alen}, expected {expect_val}")
 
-typing._check_generic = _check_generic
+if not _PEP_696_IMPLEMENTED:
+    typing._check_generic = _check_generic
 
 # Python 3.11+ _collect_type_vars was renamed to _collect_parameters
 if hasattr(typing, '_collect_type_vars'):
@@ -2836,7 +2837,8 @@ else:
 
         return tuple(parameters)
 
-    typing._collect_parameters = _collect_parameters
+    if not _PEP_696_IMPLEMENTED:
+        typing._collect_parameters = _collect_parameters
 
 # Backport typing.NamedTuple as it exists in Python 3.13.
 # In 3.11, the ability to define generic `NamedTuple`s was supported.
