@@ -2709,7 +2709,10 @@ if not hasattr(typing, "TypeVarTuple"):
                 if alen < elen:
                     # since we validate TypeVarLike default in _collect_type_vars
                     # or _collect_parameters we can safely check parameters[alen]
-                    if getattr(parameters[alen], '__default__', NoDefault) is not NoDefault:
+                    if (
+                        getattr(parameters[alen], '__default__', NoDefault)
+                        is not NoDefault
+                    ):
                         return
 
                     num_default_tv = sum(getattr(p, '__default__', NoDefault)
@@ -2743,7 +2746,10 @@ else:
                 if alen < elen:
                     # since we validate TypeVarLike default in _collect_type_vars
                     # or _collect_parameters we can safely check parameters[alen]
-                    if getattr(parameters[alen], '__default__', NoDefault) is not NoDefault:
+                    if (
+                        getattr(parameters[alen], '__default__', NoDefault)
+                        is not NoDefault
+                    ):
                         return
 
                     num_default_tv = sum(getattr(p, '__default__', NoDefault)
