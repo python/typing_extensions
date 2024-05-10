@@ -6300,6 +6300,14 @@ class NoDefaultTests(BaseTestCase):
         with self.assertRaises(TypeError):
             NoDefault()
 
+    @skipIf(
+        sys.version_info[:5] == (3, 13, 0, "beta", 1),
+        "incorrectly raises TypeError in the first 3.13 beta"
+    )
+    def test_immutable(self):
+        with self.assertRaises(AttributeError):
+            NoDefault.foo = 'bar'
+
 
 class TypeVarInferVarianceTests(BaseTestCase):
     def test_typevar(self):

@@ -1361,6 +1361,8 @@ if hasattr(typing, "NoDefault"):
     NoDefault = typing.NoDefault
 else:
     class NoDefaultType:
+        __slots__ = ()
+
         def __new__(cls):
             return globals().get("NoDefault") or object.__new__(cls)
 
