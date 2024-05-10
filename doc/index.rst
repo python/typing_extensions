@@ -301,7 +301,7 @@ Special typing primitives
 
    .. versionchanged:: 4.12.0
 
-      ParamSpecs now have a ``nodefault()`` method, for compatibility
+      ParamSpecs now have a ``has_default()`` method, for compatibility
       with :py:class:`typing.ParamSpec` on Python 3.13+.
 
 .. class:: ParamSpecArgs
@@ -515,7 +515,7 @@ Special typing primitives
 
    .. versionchanged:: 4.12.0
 
-      TypeVars now have a ``nodefault()`` method, for compatibility
+      TypeVars now have a ``has_default()`` method, for compatibility
       with :py:class:`typing.TypeVar` on Python 3.13+.
 
 .. class:: TypeVarTuple(name, *, default=NoDefault)
@@ -546,7 +546,7 @@ Special typing primitives
 
    .. versionchanged:: 4.12.0
 
-      TypeVarTuples now have a ``nodefault()`` method, for compatibility
+      TypeVarTuples now have a ``has_default()`` method, for compatibility
       with :py:class:`typing.TypeVarTuple` on Python 3.13+.
 
 .. data:: Unpack
