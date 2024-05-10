@@ -38,7 +38,7 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args,
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple, TypeIs
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar, get_protocol_members, is_protocol
-from typing_extensions import Doc
+from typing_extensions import Doc, NoDefault
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 
 # Flags used to mark tests that only apply after a specific
@@ -59,9 +59,9 @@ TYPING_3_13_0 = sys.version_info[:3] >= (3, 13, 0)
 # versions, but not all
 HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
 
-skip_if_early_py313_alpha = skipIf(
-    sys.version_info[:4] == (3, 13, 0, 'alpha') and sys.version_info.serial < 3,
-    "Bugfixes will be released in 3.13.0a3"
+skip_if_py313_beta_1 = skipIf(
+    sys.version_info[:5] == (3, 13, 0, 'beta', 1),
+    "Bugfixes will be released in 3.13.0b2"
 )
 
 ANN_MODULE_SOURCE = '''\
@@ -3485,7 +3485,6 @@ class ProtocolTests(BaseTestCase):
         self.assertIsInstance(Foo(), ProtocolWithMixedMembers)
         self.assertNotIsInstance(42, ProtocolWithMixedMembers)
 
-    @skip_if_early_py313_alpha
     def test_protocol_issubclass_error_message(self):
         @runtime_checkable
         class Vec2D(Protocol):
@@ -5917,7 +5916,6 @@ class NamedTupleTests(BaseTestCase):
 
         self.assertEqual(CallNamedTuple.__orig_bases__, (NamedTuple,))
 
-    @skip_if_early_py313_alpha
     def test_setname_called_on_values_in_class_dictionary(self):
         class Vanilla:
             def __set_name__(self, owner, name):
@@ -5989,7 +5987,6 @@ class NamedTupleTests(BaseTestCase):
         TYPING_3_12_0,
         "__set_name__ behaviour changed on py312+ to use BaseException.add_note()"
     )
-    @skip_if_early_py313_alpha
     def test_setname_raises_the_same_as_on_other_classes_py312_plus(self):
         class CustomException(BaseException): pass
 
@@ -6029,7 +6026,6 @@ class NamedTupleTests(BaseTestCase):
             normal_exception.__notes__[0].replace("NormalClass", "NamedTupleClass")
         )
 
-    @skip_if_early_py313_alpha
     def test_strange_errors_when_accessing_set_name_itself(self):
         class CustomException(Exception): pass
 
@@ -6207,12 +6203,15 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
     def test_typevar_none(self):
         U = typing_extensions.TypeVar('U')
         U_None = typing_extensions.TypeVar('U_None', default=None)
-        self.assertEqual(U.__default__, None)
-        self.assertEqual(U_None.__default__, type(None))
+        self.assertIs(U.__default__, NoDefault)
+        self.assertFalse(U.has_default())
+        self.assertEqual(U_None.__default__, None)
+        self.assertTrue(U_None.has_default())
 
     def test_paramspec(self):
         P = ParamSpec('P', default=(str, int))
         self.assertEqual(P.__default__, (str, int))
+        self.assertTrue(P.has_default())
         self.assertIsInstance(P, ParamSpec)
         if hasattr(typing, "ParamSpec"):
             self.assertIsInstance(P, typing.ParamSpec)
@@ -6225,11 +6224,13 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
 
         P_default = ParamSpec('P_default', default=...)
         self.assertIs(P_default.__default__, ...)
+        self.assertTrue(P_default.has_default())
 
     def test_typevartuple(self):
         Ts = TypeVarTuple('Ts', default=Unpack[Tuple[str, int]])
         self.assertEqual(Ts.__default__, Unpack[Tuple[str, int]])
         self.assertIsInstance(Ts, TypeVarTuple)
+        self.assertTrue(Ts.has_default())
         if hasattr(typing, "TypeVarTuple"):
             self.assertIsInstance(Ts, typing.TypeVarTuple)
             typing_Ts = typing.TypeVarTuple('Ts')
@@ -6274,6 +6275,32 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
                 self.assertEqual(z.__contravariant__, typevar.__contravariant__)
                 self.assertEqual(z.__bound__, typevar.__bound__)
                 self.assertEqual(z.__default__, typevar.__default__)
+
+
+class NoDefaultTests(BaseTestCase):
+    @skip_if_py313_beta_1
+    def test_pickling(self):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            s = pickle.dumps(NoDefault, proto)
+            loaded = pickle.loads(s)
+            self.assertIs(NoDefault, loaded)
+
+    def test_constructor(self):
+        self.assertIs(NoDefault, type(NoDefault)())
+        with self.assertRaises(TypeError):
+            type(NoDefault)(1)
+
+    def test_repr(self):
+        self.assertRegex(repr(NoDefault), r'typing(_extensions)?\.NoDefault')
+
+    def test_no_call(self):
+        with self.assertRaises(TypeError):
+            NoDefault()
+
+    @skip_if_py313_beta_1
+    def test_immutable(self):
+        with self.assertRaises(AttributeError):
+            NoDefault.foo = 'bar'
 
 
 class TypeVarInferVarianceTests(BaseTestCase):

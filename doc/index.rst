@@ -253,13 +253,19 @@ Special typing primitives
 
       The improvements from Python 3.10 and 3.11 were backported.
 
+.. data:: NoDefault
+
+   See :py:class:`typing.NoDefault`. In ``typing`` since 3.13.0.
+
+   .. versionadded:: 4.12.0
+
 .. data:: NotRequired
 
    See :py:data:`typing.NotRequired` and :pep:`655`. In ``typing`` since 3.11.
 
    .. versionadded:: 4.0.0
 
-.. class:: ParamSpec(name, *, default=...)
+.. class:: ParamSpec(name, *, default=NoDefault)
 
    See :py:class:`typing.ParamSpec` and :pep:`612`. In ``typing`` since 3.10.
 
@@ -283,6 +289,20 @@ Special typing primitives
 
       Passing an ellipsis literal (``...``) to *default* now works on Python
       3.10 and lower.
+
+   .. versionchanged:: 4.12.0
+
+      The :attr:`!__default__` attribute is now set to ``None`` if
+      ``default=None`` is passed, and to :data:`NoDefault` if no value is passed.
+
+      Previously, passing ``None`` would result in :attr:`!__default__` being set
+      to :py:class:`types.NoneType`, and passing no value for the parameter would
+      result in :attr:`!__default__` being set to ``None``.
+
+   .. versionchanged:: 4.12.0
+
+      ParamSpecs now have a ``has_default()`` method, for compatibility
+      with :py:class:`typing.ParamSpec` on Python 3.13+.
 
 .. class:: ParamSpecArgs
 
@@ -395,7 +415,7 @@ Special typing primitives
       are mutable if they do not carry the :data:`ReadOnly` qualifier.
 
       .. versionadded:: 4.9.0
-    
+
    The experimental ``closed`` keyword argument and the special key
    ``__extra_items__`` proposed in :pep:`728` are supported.
 
@@ -466,7 +486,7 @@ Special typing primitives
       when ``closed=True`` is given were supported.
 
 .. class:: TypeVar(name, *constraints, bound=None, covariant=False,
-                   contravariant=False, infer_variance=False, default=...)
+                   contravariant=False, infer_variance=False, default=NoDefault)
 
    See :py:class:`typing.TypeVar`.
 
@@ -484,7 +504,21 @@ Special typing primitives
 
       The implementation was changed for compatibility with Python 3.12.
 
-.. class:: TypeVarTuple(name, *, default=...)
+   .. versionchanged:: 4.12.0
+
+      The :attr:`!__default__` attribute is now set to ``None`` if
+      ``default=None`` is passed, and to :data:`NoDefault` if no value is passed.
+
+      Previously, passing ``None`` would result in :attr:`!__default__` being set
+      to :py:class:`types.NoneType`, and passing no value for the parameter would
+      result in :attr:`!__default__` being set to ``None``.
+
+   .. versionchanged:: 4.12.0
+
+      TypeVars now have a ``has_default()`` method, for compatibility
+      with :py:class:`typing.TypeVar` on Python 3.13+.
+
+.. class:: TypeVarTuple(name, *, default=NoDefault)
 
    See :py:class:`typing.TypeVarTuple` and :pep:`646`. In ``typing`` since 3.11.
 
@@ -500,6 +534,20 @@ Special typing primitives
    .. versionchanged:: 4.6.0
 
       The implementation was changed for compatibility with Python 3.12.
+
+   .. versionchanged:: 4.12.0
+
+      The :attr:`!__default__` attribute is now set to ``None`` if
+      ``default=None`` is passed, and to :data:`NoDefault` if no value is passed.
+
+      Previously, passing ``None`` would result in :attr:`!__default__` being set
+      to :py:class:`types.NoneType`, and passing no value for the parameter would
+      result in :attr:`!__default__` being set to ``None``.
+
+   .. versionchanged:: 4.12.0
+
+      TypeVarTuples now have a ``has_default()`` method, for compatibility
+      with :py:class:`typing.TypeVarTuple` on Python 3.13+.
 
 .. data:: Unpack
 
