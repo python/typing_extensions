@@ -38,7 +38,7 @@ from typing_extensions import assert_type, get_type_hints, get_origin, get_args,
 from typing_extensions import clear_overloads, get_overloads, overload
 from typing_extensions import NamedTuple, TypeIs
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar, get_protocol_members, is_protocol
-from typing_extensions import Doc
+from typing_extensions import Doc, NoDefault
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 
 # Flags used to mark tests that only apply after a specific
@@ -6207,12 +6207,15 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
     def test_typevar_none(self):
         U = typing_extensions.TypeVar('U')
         U_None = typing_extensions.TypeVar('U_None', default=None)
-        self.assertEqual(U.__default__, None)
-        self.assertEqual(U_None.__default__, type(None))
+        self.assertIs(U.__default__, NoDefault)
+        self.assertFalse(U.has_default())
+        self.assertEqual(U_None.__default__, None)
+        self.assertTrue(U_None.has_default())
 
     def test_paramspec(self):
         P = ParamSpec('P', default=(str, int))
         self.assertEqual(P.__default__, (str, int))
+        self.assertTrue(P.has_default())
         self.assertIsInstance(P, ParamSpec)
         if hasattr(typing, "ParamSpec"):
             self.assertIsInstance(P, typing.ParamSpec)
@@ -6225,11 +6228,13 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
 
         P_default = ParamSpec('P_default', default=...)
         self.assertIs(P_default.__default__, ...)
+        self.assertTrue(P_default.has_default())
 
     def test_typevartuple(self):
         Ts = TypeVarTuple('Ts', default=Unpack[Tuple[str, int]])
         self.assertEqual(Ts.__default__, Unpack[Tuple[str, int]])
         self.assertIsInstance(Ts, TypeVarTuple)
+        self.assertTrue(Ts.has_default())
         if hasattr(typing, "TypeVarTuple"):
             self.assertIsInstance(Ts, typing.TypeVarTuple)
             typing_Ts = typing.TypeVarTuple('Ts')
@@ -6274,6 +6279,26 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
                 self.assertEqual(z.__contravariant__, typevar.__contravariant__)
                 self.assertEqual(z.__bound__, typevar.__bound__)
                 self.assertEqual(z.__default__, typevar.__default__)
+
+
+class NoDefaultTests(BaseTestCase):
+    def test_pickling(self):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            s = pickle.dumps(NoDefault, proto)
+            loaded = pickle.loads(s)
+            self.assertIs(NoDefault, loaded)
+
+    def test_constructor(self):
+        self.assertIs(NoDefault, type(NoDefault)())
+        with self.assertRaises(TypeError):
+            NoDefault(1)
+
+    def test_repr(self):
+        self.assertRegex(repr(NoDefault), r'typing(_extensions)?\.NoDefault')
+
+    def test_no_call(self):
+        with self.assertRaises(TypeError):
+            NoDefault()
 
 
 class TypeVarInferVarianceTests(BaseTestCase):

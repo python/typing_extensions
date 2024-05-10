@@ -116,6 +116,7 @@ __all__ = [
     'MutableMapping',
     'MutableSequence',
     'MutableSet',
+    'NoDefault',
     'Optional',
     'Pattern',
     'Reversible',
@@ -134,6 +135,7 @@ __all__ = [
 # for backward compatibility
 PEP_560 = True
 GenericMeta = type
+_PEP_696_IMPLEMENTED = sys.version_info >= (3, 13, 0, "beta")
 
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
@@ -1355,17 +1357,35 @@ else:
     )
 
 
+if hasattr(typing, "NoDefault"):
+    NoDefault = typing.NoDefault
+else:
+    class NoDefaultType:
+        def __new__(cls):
+            return globals().get("NoDefault") or object.__new__(cls)
+
+        def __repr__(self):
+            return "typing_extensions.NoDefault"
+
+        def __reduce__(self):
+            return "NoDefault"
+
+    NoDefault = NoDefaultType()
+    del NoDefaultType
+
+
 def _set_default(type_param, default):
+    type_param.has_default = lambda: default is not NoDefault
     if isinstance(default, (tuple, list)):
         type_param.__default__ = tuple((typing._type_check(d, "Default must be a type")
                                         for d in default))
-    elif default != _marker:
+    elif default in (None, NoDefault):
+        type_param.__default__ = default
+    else:
         if isinstance(type_param, ParamSpec) and default is ...:  # ... not valid <3.11
             type_param.__default__ = default
         else:
             type_param.__default__ = typing._type_check(default, "Default must be a type")
-    else:
-        type_param.__default__ = None
 
 
 def _set_module(typevarlike):
@@ -1388,32 +1408,35 @@ class _TypeVarLikeMeta(type):
         return isinstance(__instance, cls._backported_typevarlike)
 
 
-# Add default and infer_variance parameters from PEP 696 and 695
-class TypeVar(metaclass=_TypeVarLikeMeta):
-    """Type variable."""
+if _PEP_696_IMPLEMENTED:
+    from typing import TypeVar
+else:
+    # Add default and infer_variance parameters from PEP 696 and 695
+    class TypeVar(metaclass=_TypeVarLikeMeta):
+        """Type variable."""
 
-    _backported_typevarlike = typing.TypeVar
+        _backported_typevarlike = typing.TypeVar
 
-    def __new__(cls, name, *constraints, bound=None,
-                covariant=False, contravariant=False,
-                default=_marker, infer_variance=False):
-        if hasattr(typing, "TypeAliasType"):
-            # PEP 695 implemented (3.12+), can pass infer_variance to typing.TypeVar
-            typevar = typing.TypeVar(name, *constraints, bound=bound,
-                                     covariant=covariant, contravariant=contravariant,
-                                     infer_variance=infer_variance)
-        else:
-            typevar = typing.TypeVar(name, *constraints, bound=bound,
-                                     covariant=covariant, contravariant=contravariant)
-            if infer_variance and (covariant or contravariant):
-                raise ValueError("Variance cannot be specified with infer_variance.")
-            typevar.__infer_variance__ = infer_variance
-        _set_default(typevar, default)
-        _set_module(typevar)
-        return typevar
+        def __new__(cls, name, *constraints, bound=None,
+                    covariant=False, contravariant=False,
+                    default=NoDefault, infer_variance=False):
+            if hasattr(typing, "TypeAliasType"):
+                # PEP 695 implemented (3.12+), can pass infer_variance to typing.TypeVar
+                typevar = typing.TypeVar(name, *constraints, bound=bound,
+                                         covariant=covariant, contravariant=contravariant,
+                                         infer_variance=infer_variance)
+            else:
+                typevar = typing.TypeVar(name, *constraints, bound=bound,
+                                         covariant=covariant, contravariant=contravariant)
+                if infer_variance and (covariant or contravariant):
+                    raise ValueError("Variance cannot be specified with infer_variance.")
+                typevar.__infer_variance__ = infer_variance
+            _set_default(typevar, default)
+            _set_module(typevar)
+            return typevar
 
-    def __init_subclass__(cls) -> None:
-        raise TypeError(f"type '{__name__}.TypeVar' is not an acceptable base type")
+        def __init_subclass__(cls) -> None:
+            raise TypeError(f"type '{__name__}.TypeVar' is not an acceptable base type")
 
 
 # Python 3.10+ has PEP 612
@@ -1478,8 +1501,12 @@ else:
                 return NotImplemented
             return self.__origin__ == other.__origin__
 
+
+if _PEP_696_IMPLEMENTED:
+    from typing import ParamSpec
+
 # 3.10+
-if hasattr(typing, 'ParamSpec'):
+elif hasattr(typing, 'ParamSpec'):
 
     # Add default parameter - PEP 696
     class ParamSpec(metaclass=_TypeVarLikeMeta):
@@ -1489,7 +1516,7 @@ if hasattr(typing, 'ParamSpec'):
 
         def __new__(cls, name, *, bound=None,
                     covariant=False, contravariant=False,
-                    infer_variance=False, default=_marker):
+                    infer_variance=False, default=NoDefault):
             if hasattr(typing, "TypeAliasType"):
                 # PEP 695 implemented, can pass infer_variance to typing.TypeVar
                 paramspec = typing.ParamSpec(name, bound=bound,
@@ -1572,7 +1599,7 @@ else:
             return ParamSpecKwargs(self)
 
         def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
-                     infer_variance=False, default=_marker):
+                     infer_variance=False, default=NoDefault):
             super().__init__([self])
             self.__name__ = name
             self.__covariant__ = bool(covariant)
@@ -2226,7 +2253,10 @@ else:  # 3.8
         return isinstance(obj, _UnpackAlias)
 
 
-if hasattr(typing, "TypeVarTuple"):  # 3.11+
+if _PEP_696_IMPLEMENTED:
+    from typing import TypeVarTuple
+
+elif hasattr(typing, "TypeVarTuple"):  # 3.11+
 
     # Add default parameter - PEP 696
     class TypeVarTuple(metaclass=_TypeVarLikeMeta):
@@ -2234,7 +2264,7 @@ if hasattr(typing, "TypeVarTuple"):  # 3.11+
 
         _backported_typevarlike = typing.TypeVarTuple
 
-        def __new__(cls, name, *, default=_marker):
+        def __new__(cls, name, *, default=NoDefault):
             tvt = typing.TypeVarTuple(name)
             _set_default(tvt, default)
             _set_module(tvt)
@@ -2294,7 +2324,7 @@ else:  # <=3.10
         def __iter__(self):
             yield self.__unpacked__
 
-        def __init__(self, name, *, default=_marker):
+        def __init__(self, name, *, default=NoDefault):
             self.__name__ = name
             _DefaultMixin.__init__(self, default)
 
@@ -2679,11 +2709,11 @@ if not hasattr(typing, "TypeVarTuple"):
                 if alen < elen:
                     # since we validate TypeVarLike default in _collect_type_vars
                     # or _collect_parameters we can safely check parameters[alen]
-                    if getattr(parameters[alen], '__default__', None) is not None:
+                    if getattr(parameters[alen], '__default__', NoDefault) is not NoDefault:
                         return
 
-                    num_default_tv = sum(getattr(p, '__default__', None)
-                                         is not None for p in parameters)
+                    num_default_tv = sum(getattr(p, '__default__', NoDefault)
+                                         is not NoDefault for p in parameters)
 
                     elen -= num_default_tv
 
@@ -2713,11 +2743,11 @@ else:
                 if alen < elen:
                     # since we validate TypeVarLike default in _collect_type_vars
                     # or _collect_parameters we can safely check parameters[alen]
-                    if getattr(parameters[alen], '__default__', None) is not None:
+                    if getattr(parameters[alen], '__default__', NoDefault) is not NoDefault:
                         return
 
-                    num_default_tv = sum(getattr(p, '__default__', None)
-                                         is not None for p in parameters)
+                    num_default_tv = sum(getattr(p, '__default__', NoDefault)
+                                         is not NoDefault for p in parameters)
 
                     elen -= num_default_tv
 
@@ -2747,7 +2777,7 @@ if hasattr(typing, '_collect_type_vars'):
                 t not in tvars and
                 not _is_unpack(t)
             ):
-                if getattr(t, '__default__', None) is not None:
+                if getattr(t, '__default__', NoDefault) is not NoDefault:
                     default_encountered = True
                 elif default_encountered:
                     raise TypeError(f'Type parameter {t!r} without a default'
@@ -2784,7 +2814,7 @@ else:
                             parameters.append(collected)
             elif hasattr(t, '__typing_subst__'):
                 if t not in parameters:
-                    if getattr(t, '__default__', None) is not None:
+                    if getattr(t, '__default__', NoDefault) is not NoDefault:
                         default_encountered = True
                     elif default_encountered:
                         raise TypeError(f'Type parameter {t!r} without a default'

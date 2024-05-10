@@ -1,6 +1,17 @@
 # Unreleased
 
-- Fix tests on Python 3.13.0a6 and newer. 3.13.0a6 adds a new
+- Backport the `typing.NoDefault` sentinel object from Python 3.13.
+  TypeVars, ParamSpecs and TypeVarTuples without default values now have
+  their `__default__` attribute set to this sentinel value.
+- TypeVars, ParamSpecs and TypeVarTuples now have a `has_default()`
+  method, matching `typing.TypeVar`, `typing.ParamSpec` and
+  `typing.TypeVarTuple` on Python 3.13+.
+- TypeVars, ParamSpecs and TypeVarTuples with `default=None` passed to
+  their constructors now have their `__default__` attribute set to `None`
+  at runtime rather than `types.NoneType`.
+- Fix most tests for `TypeVar`, `ParamSpec` and `TypeVarTuple` on Python
+  3.13.0b1 and newer.
+- Fix `Protocol` tests on Python 3.13.0a6 and newer. 3.13.0a6 adds a new
   `__static_attributes__` attribute to all classes in Python,
   which broke some assumptions made by the implementation of
   `typing_extensions.Protocol`. Similarly, 3.13.0b1 adds the new
