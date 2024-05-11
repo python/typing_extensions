@@ -423,6 +423,7 @@ else:
     def _is_dunder(attr):
         return attr.startswith('__') and attr.endswith('__')
 
+    # Python <3.9 doesn't have typing._SpecialGenericAlias
     _special_generic_alias_base = getattr(
         typing, "_SpecialGenericAlias", typing._GenericAlias
     )
@@ -430,16 +431,19 @@ else:
     class _SpecialGenericAlias(_special_generic_alias_base, _root=True):
         def __init__(self, origin, nparams, *, inst=True, name=None, defaults=()):
             if _special_generic_alias_base is typing._GenericAlias:
+                # Python <3.9
                 self.__origin__ = origin
                 self._nparams = nparams
                 super().__init__(origin, nparams, special=True, inst=inst, name=name)
             else:
+                # Python >= 3.9
                 super().__init__(origin, nparams, inst=inst, name=name)
             self._defaults = defaults
 
         def __setattr__(self, attr, val):
             allowed_attrs = {'_name', '_inst', '_nparams', '_defaults'}
             if _special_generic_alias_base is typing._GenericAlias:
+                # Python <3.9
                 allowed_attrs.add("__origin__")
             if _is_dunder(attr) or attr in allowed_attrs:
                 object.__setattr__(self, attr, val)
