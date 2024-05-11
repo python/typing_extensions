@@ -41,6 +41,8 @@ from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeV
 from typing_extensions import Doc, NoDefault
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 
+NoneType = type(None)
+
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
 TYPING_3_9_0 = sys.version_info[:3] >= (3, 9, 0)
@@ -1626,6 +1628,17 @@ class CollectionsAbcTests(BaseTestCase):
         self.assertNotIsInstance(type(g), G)
         self.assertNotIsInstance(g, G)
 
+    def test_generator_default(self):
+        g1 = typing_extensions.Generator[int]
+        g2 = typing_extensions.Generator[int, None, None]
+        self.assertEqual(get_args(g1), (int, type(None), type(None)))
+        self.assertEqual(get_args(g1), get_args(g2))
+
+        g3 = typing_extensions.Generator[int, float]
+        g4 = typing_extensions.Generator[int, float, None]
+        self.assertEqual(get_args(g3), (int, float, type(None)))
+        self.assertEqual(get_args(g3), get_args(g4))
+
 
 class OtherABCTests(BaseTestCase):
 
@@ -1638,6 +1651,12 @@ class OtherABCTests(BaseTestCase):
         self.assertIsInstance(cm, typing_extensions.ContextManager)
         self.assertNotIsInstance(42, typing_extensions.ContextManager)
 
+    def test_contextmanager_type_params(self):
+        cm1 = typing_extensions.ContextManager[int]
+        self.assertEqual(get_args(cm1), (int, typing.Optional[bool]))
+        cm2 = typing_extensions.ContextManager[int, None]
+        self.assertEqual(get_args(cm2), (int, NoneType))
+
     def test_async_contextmanager(self):
         class NotACM:
             pass
@@ -1649,11 +1668,20 @@ class OtherABCTests(BaseTestCase):
 
         cm = manager()
         self.assertNotIsInstance(cm, typing_extensions.AsyncContextManager)
-        self.assertEqual(typing_extensions.AsyncContextManager[int].__args__, (int,))
+        self.assertEqual(
+            typing_extensions.AsyncContextManager[int].__args__,
+            (int, typing.Optional[bool])
+        )
         with self.assertRaises(TypeError):
             isinstance(42, typing_extensions.AsyncContextManager[int])
         with self.assertRaises(TypeError):
-            typing_extensions.AsyncContextManager[int, str]
+            typing_extensions.AsyncContextManager[int, str, float]
+
+    def test_asynccontextmanager_type_params(self):
+        cm1 = typing_extensions.AsyncContextManager[int]
+        self.assertEqual(get_args(cm1), (int, typing.Optional[bool]))
+        cm2 = typing_extensions.AsyncContextManager[int, None]
+        self.assertEqual(get_args(cm2), (int, NoneType))
 
 
 class TypeTests(BaseTestCase):
@@ -5533,28 +5561,25 @@ class AllTests(BaseTestCase):
         self.assertLessEqual(exclude, actual_names)
 
     def test_typing_extensions_defers_when_possible(self):
-        exclude = {
-            'dataclass_transform',
-            'overload',
-            'ParamSpec',
-            'TypeVar',
-            'TypeVarTuple',
-            'get_type_hints',
-        }
+        exclude = set()
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 10, 1):
             exclude |= {"Literal"}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'Any', 'NewType'}
+            exclude |= {'final', 'Any', 'NewType', 'overload'}
         if sys.version_info < (3, 12):
             exclude |= {
                 'SupportsAbs', 'SupportsBytes',
                 'SupportsComplex', 'SupportsFloat', 'SupportsIndex', 'SupportsInt',
-                'SupportsRound', 'Unpack',
+                'SupportsRound', 'Unpack', 'dataclass_transform',
             }
         if sys.version_info < (3, 13):
-            exclude |= {'NamedTuple', 'Protocol', 'runtime_checkable'}
+            exclude |= {
+                'NamedTuple', 'Protocol', 'runtime_checkable', 'Generator',
+                'AsyncGenerator', 'ContextManager', 'AsyncContextManager',
+                'ParamSpec', 'TypeVar', 'TypeVarTuple', 'get_type_hints',
+            }
         if not typing_extensions._PEP_728_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
