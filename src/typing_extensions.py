@@ -423,7 +423,9 @@ else:
     def _is_dunder(attr):
         return attr.startswith('__') and attr.endswith('__')
 
-    _special_generic_alias_base = getattr(typing, "_SpecialGenericAlias", typing._GenericAlias)
+    _special_generic_alias_base = getattr(
+        typing, "_SpecialGenericAlias", typing._GenericAlias
+    )
 
     class _SpecialGenericAlias(_special_generic_alias_base, _root=True):
         def __init__(self, origin, nparams, *, inst=True, name=None, defaults=()):
@@ -450,7 +452,8 @@ else:
                 params = (params,)
             msg = "Parameters to generic types must be types."
             params = tuple(typing._type_check(p, msg) for p in params)
-            if (self._defaults
+            if (
+                self._defaults
                 and len(params) < self._nparams
                 and len(params) + len(self._defaults) >= self._nparams
             ):
@@ -464,10 +467,12 @@ else:
                     expected = str(self._nparams)
                 if not self._nparams:
                     raise TypeError(f"{self} is not a generic class")
-                raise TypeError(f"Too {'many' if actual_len > self._nparams else 'few'} arguments for {self};"
-                                f" actual {actual_len}, expected {expected}")
+                raise TypeError(
+                    f"Too {'many' if actual_len > self._nparams else 'few'}"
+                    f" arguments for {self};"
+                    f" actual {actual_len}, expected {expected}"
+                )
             return self.copy_with(params)
-
 
     _NoneType = type(None)
     Generator = _SpecialGenericAlias(
