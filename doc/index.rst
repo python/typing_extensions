@@ -885,8 +885,8 @@ Annotation metadata
 Pure aliases
 ~~~~~~~~~~~~
 
-These are simply re-exported from the :mod:`typing` module on all supported
-versions of Python. They are listed here for completeness.
+Most of these are simply re-exported from the :mod:`typing` module on all supported
+versions of Python, but all are listed here for completeness.
 
 .. class:: AbstractSet
 
@@ -904,9 +904,18 @@ versions of Python. They are listed here for completeness.
 
    See :py:class:`typing.AsyncContextManager`. In ``typing`` since 3.5.4 and 3.6.2.
 
+   .. versionchanged:: 4.12.0
+
+      ``AsyncContextManager`` now has an optional second parameter, defaulting to
+      ``Optional[bool]``, signifying the return type of the ``__aexit__`` method.
+
 .. class:: AsyncGenerator
 
    See :py:class:`typing.AsyncGenerator`. In ``typing`` since 3.6.1.
+
+   .. versionchanged:: 4.12.0
+
+      The second type parameter is now optional (it defaults to ``None``).
 
 .. class:: AsyncIterable
 
@@ -956,6 +965,11 @@ versions of Python. They are listed here for completeness.
 
    See :py:class:`typing.ContextManager`. In ``typing`` since 3.5.4.
 
+   .. versionchanged:: 4.12.0
+
+      ``AsyncContextManager`` now has an optional second parameter, defaulting to
+      ``Optional[bool]``, signifying the return type of the ``__aexit__`` method.
+
 .. class:: Coroutine
 
    See :py:class:`typing.Coroutine`. In ``typing`` since 3.5.3.
@@ -995,6 +1009,11 @@ versions of Python. They are listed here for completeness.
    See :py:class:`typing.Generator`.
 
    .. versionadded:: 4.7.0
+
+   .. versionchanged:: 4.12.0
+
+      The second type and third type parameters are now optional
+      (they both default to ``None``).
 
 .. class:: Generic
 

@@ -1,6 +1,7 @@
 import abc
 import collections
 import collections.abc
+import contextlib
 import functools
 import inspect
 import operator
@@ -408,15 +409,94 @@ Coroutine = typing.Coroutine
 AsyncIterable = typing.AsyncIterable
 AsyncIterator = typing.AsyncIterator
 Deque = typing.Deque
-ContextManager = typing.ContextManager
-AsyncContextManager = typing.AsyncContextManager
 DefaultDict = typing.DefaultDict
 OrderedDict = typing.OrderedDict
 Counter = typing.Counter
 ChainMap = typing.ChainMap
-AsyncGenerator = typing.AsyncGenerator
 Text = typing.Text
 TYPE_CHECKING = typing.TYPE_CHECKING
+
+
+if sys.version_info >= (3, 13, 0, "beta"):
+    from typing import ContextManager, AsyncContextManager, Generator, AsyncGenerator
+else:
+    def _is_dunder(attr):
+        return attr.startswith('__') and attr.endswith('__')
+
+    # Python <3.9 doesn't have typing._SpecialGenericAlias
+    _special_generic_alias_base = getattr(
+        typing, "_SpecialGenericAlias", typing._GenericAlias
+    )
+
+    class _SpecialGenericAlias(_special_generic_alias_base, _root=True):
+        def __init__(self, origin, nparams, *, inst=True, name=None, defaults=()):
+            if _special_generic_alias_base is typing._GenericAlias:
+                # Python <3.9
+                self.__origin__ = origin
+                self._nparams = nparams
+                super().__init__(origin, nparams, special=True, inst=inst, name=name)
+            else:
+                # Python >= 3.9
+                super().__init__(origin, nparams, inst=inst, name=name)
+            self._defaults = defaults
+
+        def __setattr__(self, attr, val):
+            allowed_attrs = {'_name', '_inst', '_nparams', '_defaults'}
+            if _special_generic_alias_base is typing._GenericAlias:
+                # Python <3.9
+                allowed_attrs.add("__origin__")
+            if _is_dunder(attr) or attr in allowed_attrs:
+                object.__setattr__(self, attr, val)
+            else:
+                setattr(self.__origin__, attr, val)
+
+        @typing._tp_cache
+        def __getitem__(self, params):
+            if not isinstance(params, tuple):
+                params = (params,)
+            msg = "Parameters to generic types must be types."
+            params = tuple(typing._type_check(p, msg) for p in params)
+            if (
+                self._defaults
+                and len(params) < self._nparams
+                and len(params) + len(self._defaults) >= self._nparams
+            ):
+                params = (*params, *self._defaults[len(params) - self._nparams:])
+            actual_len = len(params)
+
+            if actual_len != self._nparams:
+                if self._defaults:
+                    expected = f"at least {self._nparams - len(self._defaults)}"
+                else:
+                    expected = str(self._nparams)
+                if not self._nparams:
+                    raise TypeError(f"{self} is not a generic class")
+                raise TypeError(
+                    f"Too {'many' if actual_len > self._nparams else 'few'}"
+                    f" arguments for {self};"
+                    f" actual {actual_len}, expected {expected}"
+                )
+            return self.copy_with(params)
+
+    _NoneType = type(None)
+    Generator = _SpecialGenericAlias(
+        collections.abc.Generator, 3, defaults=(_NoneType, _NoneType)
+    )
+    AsyncGenerator = _SpecialGenericAlias(
+        collections.abc.AsyncGenerator, 2, defaults=(_NoneType,)
+    )
+    ContextManager = _SpecialGenericAlias(
+        contextlib.AbstractContextManager,
+        2,
+        name="ContextManager",
+        defaults=(typing.Optional[bool],)
+    )
+    AsyncContextManager = _SpecialGenericAlias(
+        contextlib.AbstractAsyncContextManager,
+        2,
+        name="AsyncContextManager",
+        defaults=(typing.Optional[bool],)
+    )
 
 
 _PROTO_ALLOWLIST = {
@@ -3344,7 +3424,6 @@ Container = typing.Container
 Dict = typing.Dict
 ForwardRef = typing.ForwardRef
 FrozenSet = typing.FrozenSet
-Generator = typing.Generator
 Generic = typing.Generic
 Hashable = typing.Hashable
 IO = typing.IO

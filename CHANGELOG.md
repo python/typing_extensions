@@ -22,6 +22,15 @@
 - At runtime, `assert_never` now includes the repr of the argument
   in the `AssertionError`. Patch by Hashem, backporting of the original
   fix https://github.com/python/cpython/pull/91720 by Jelle Zijlstra.
+- The second and third parameters of `typing_extensions.Generator`,
+  and the second parameter of `typing_extensions.AsyncGenerator`,
+  now default to `None`. This matches the behaviour of `typing.Generator`
+  and `typing.AsyncGenerator` on Python 3.13+.
+- `typing.ContextManager` and `typing.AsyncContextManager` now have an
+  optional second parameter, which defaults to `Optional[bool]`. The new
+  parameter signifies the return type of the `__(a)exit__` method,
+  matching `typing.ContextManager` and `typing.AsyncContextManager` on
+  Python 3.13+.
 
 # Release 4.11.0 (April 5, 2024)
 
