@@ -967,8 +967,8 @@ versions of Python, but all are listed here for completeness.
 
    .. versionchanged:: 4.12.0
 
-      ``AsyncContextManager`` now has an optional second parameter, defaulting to
-      ``Optional[bool]``, signifying the return type of the ``__aexit__`` method.
+      ``ContextManager`` now has an optional second parameter, defaulting to
+      ``Optional[bool]``, signifying the return type of the ``__exit__`` method.
 
 .. class:: Coroutine
 
