@@ -6439,6 +6439,7 @@ class NoDefaultTests(BaseTestCase):
             loaded = pickle.loads(s)
             self.assertIs(NoDefault, loaded)
 
+    @skip_if_py313_beta_1
     def test_doc(self):
         self.assertIsInstance(NoDefault.__doc__, str)
 
