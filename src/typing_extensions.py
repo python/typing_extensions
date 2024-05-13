@@ -2858,7 +2858,7 @@ def _is_unpacked_typevartuple(x) -> bool:
     return (
         bool(args)
         and len(args) == 1
-        and type(args[0]) in _TYPEVARTUPLE_TYPES)
+        and type(args[0]) in _TYPEVARTUPLE_TYPES
     )
 
 
