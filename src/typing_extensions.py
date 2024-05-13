@@ -1440,7 +1440,16 @@ else:
 if hasattr(typing, "NoDefault"):
     NoDefault = typing.NoDefault
 else:
-    class NoDefaultType:
+    class NoDefaultTypeMeta(type):
+        def __setattr__(cls, attr, value):
+            # TypeError is consistent with the behavior of NoneType
+            raise TypeError(
+                f"cannot set {attr!r} attribute of immutable type {cls.__name__!r}"
+            )
+
+    class NoDefaultType(metaclass=NoDefaultTypeMeta):
+        """The type of the NoDefault singleton."""
+
         __slots__ = ()
 
         def __new__(cls):
@@ -1453,7 +1462,7 @@ else:
             return "NoDefault"
 
     NoDefault = NoDefaultType()
-    del NoDefaultType
+    del NoDefaultType, NoDefaultTypeMeta
 
 
 def _set_default(type_param, default):

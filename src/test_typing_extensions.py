@@ -6439,6 +6439,9 @@ class NoDefaultTests(BaseTestCase):
             loaded = pickle.loads(s)
             self.assertIs(NoDefault, loaded)
 
+    def test_doc(self):
+        self.assertIsInstance(NoDefault.__doc__, str)
+
     def test_constructor(self):
         self.assertIs(NoDefault, type(NoDefault)())
         with self.assertRaises(TypeError):
@@ -6455,6 +6458,14 @@ class NoDefaultTests(BaseTestCase):
     def test_immutable(self):
         with self.assertRaises(AttributeError):
             NoDefault.foo = 'bar'
+        with self.assertRaises(AttributeError):
+            NoDefault.foo
+
+        # TypeError is consistent with the behavior of NoneType
+        with self.assertRaises(TypeError):
+            type(NoDefault).foo = 3
+        with self.assertRaises(AttributeError):
+            type(NoDefault).foo
 
 
 class TypeVarInferVarianceTests(BaseTestCase):
