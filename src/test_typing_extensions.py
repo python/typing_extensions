@@ -21,11 +21,6 @@ from pathlib import Path
 from unittest import TestCase, main, skipUnless, skipIf
 from unittest.mock import patch
 import typing
-from typing import Optional, Union, AnyStr
-from typing import T, KT, VT  # Not in __all__.
-from typing import Tuple, List, Set, Dict, Iterable, Iterator, Callable
-from typing import Generic
-from typing import no_type_check
 import warnings
 
 import typing_extensions
@@ -36,12 +31,15 @@ from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, f
 from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_type, Never, assert_never, LiteralString
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
 from typing_extensions import clear_overloads, get_overloads, overload
-from typing_extensions import NamedTuple, TypeIs
+from typing_extensions import NamedTuple, TypeIs, no_type_check, Dict
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar, get_protocol_members, is_protocol
-from typing_extensions import Doc, NoDefault
+from typing_extensions import Doc, NoDefault, List, Union, AnyStr, Iterable, Generic, Optional, Set, Tuple, Callable
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 
 NoneType = type(None)
+T = TypeVar("T")
+KT = TypeVar("KT")
+VT = TypeVar("VT")
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
@@ -67,7 +65,7 @@ skip_if_py313_beta_1 = skipIf(
 )
 
 ANN_MODULE_SOURCE = '''\
-from typing import Optional
+from typing import List, Optional
 from functools import wraps
 
 __annotations__[1] = 2
