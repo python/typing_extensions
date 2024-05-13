@@ -31,7 +31,7 @@ from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, f
 from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_type, Never, assert_never, LiteralString
 from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
 from typing_extensions import clear_overloads, get_overloads, overload
-from typing_extensions import NamedTuple, TypeIs, no_type_check, Dict
+from typing_extensions import NamedTuple, TypeIs, no_type_check, Dict, CapsuleType
 from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar, get_protocol_members, is_protocol
 from typing_extensions import Doc, NoDefault, List, Union, AnyStr, Iterable, Generic, Optional, Set, Tuple, Callable
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
@@ -6763,6 +6763,12 @@ class DocTests(BaseTestCase):
         for proto in range(pickle.HIGHEST_PROTOCOL):
             pickled = pickle.dumps(doc_info, protocol=proto)
             self.assertEqual(doc_info, pickle.loads(pickled))
+
+
+class CapsuleTypeTests(BaseTestCase):
+    def test_capsule_type(self):
+        import _datetime
+        self.assertIsInstance(_datetime.datetime_CAPI, CapsuleType)
 
 
 if __name__ == '__main__':

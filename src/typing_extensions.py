@@ -1,3 +1,4 @@
+import _socket
 import abc
 import collections
 import collections.abc
@@ -56,6 +57,7 @@ __all__ = [
 
     # One-off things.
     'Annotated',
+    'CapsuleType',
     'assert_never',
     'assert_type',
     'clear_overloads',
@@ -3409,6 +3411,9 @@ else:
             if not isinstance(other, Doc):
                 return NotImplemented
             return self.documentation == other.documentation
+
+
+CapsuleType = getattr(_types, "CapsuleType", type(_socket.CAPI))
 
 
 # Aliases for items that have always been in typing.
