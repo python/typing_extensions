@@ -6767,7 +6767,7 @@ class DocTests(BaseTestCase):
 
 @skipUnless(
     hasattr(typing_extensions, "CapsuleType"),
-    "CapsuleType is not available on all platforms"
+    "CapsuleType is not available on all Python implementations"
 )
 class CapsuleTypeTests(BaseTestCase):
     def test_capsule_type(self):
