@@ -6430,6 +6430,24 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
                 self.assertEqual(z.__bound__, typevar.__bound__)
                 self.assertEqual(z.__default__, typevar.__default__)
 
+    def test_allow_default_after_non_default_in_alias(self):
+        T_default = TypeVar('T_default', default=int)
+        T = TypeVar('T')
+        Ts = TypeVarTuple('Ts')
+
+        a1 = Callable[[T_default], T]
+        self.assertEqual(a1.__args__, (T_default, T))
+
+        if sys.version_info >= (3, 9):
+            a2 = dict[T_default, T]
+            self.assertEqual(a2.__args__, (T_default, T))
+
+        a3 = typing.Dict[T_default, T]
+        self.assertEqual(a3.__args__, (T_default, T))
+
+        a4 = Callable[[Unpack[Ts]], T]
+        self.assertEqual(a4.__args__, (Unpack[Ts], T))
+
 
 class NoDefaultTests(BaseTestCase):
     @skip_if_py313_beta_1

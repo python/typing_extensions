@@ -2847,6 +2847,19 @@ else:
 if not _PEP_696_IMPLEMENTED:
     typing._check_generic = _check_generic
 
+
+def _has_generic_or_protocol_as_origin() -> bool:
+    try:
+        frame = sys._getframe(2)
+    # not all platforms have sys._getframe()
+    except AttributeError:
+        return False  # err on the side of leniency
+    else:
+        return frame.f_locals.get("origin") in {
+            typing.Generic, Protocol, typing.Protocol
+        }
+
+
 # Python 3.11+ _collect_type_vars was renamed to _collect_parameters
 if hasattr(typing, '_collect_type_vars'):
     def _collect_type_vars(types, typevar_types=None):
@@ -2858,19 +2871,24 @@ if hasattr(typing, '_collect_type_vars'):
         if typevar_types is None:
             typevar_types = typing.TypeVar
         tvars = []
+
         # required TypeVarLike cannot appear after TypeVarLike with default
+        # if it was a direct call to `Generic[]` or `Protocol[]`
         default_encountered = False
+        enforce_default_ordering = _has_generic_or_protocol_as_origin()
+
         for t in types:
             if (
                 isinstance(t, typevar_types) and
                 t not in tvars and
                 not _is_unpack(t)
             ):
-                if getattr(t, '__default__', NoDefault) is not NoDefault:
-                    default_encountered = True
-                elif default_encountered:
-                    raise TypeError(f'Type parameter {t!r} without a default'
-                                    ' follows type parameter with a default')
+                if enforce_default_ordering:
+                    if getattr(t, '__default__', NoDefault) is not NoDefault:
+                        default_encountered = True
+                    elif default_encountered:
+                        raise TypeError(f'Type parameter {t!r} without a default'
+                                        ' follows type parameter with a default')
 
                 tvars.append(t)
             if _should_collect_from_parameters(t):
@@ -2888,8 +2906,12 @@ else:
             assert _collect_parameters((T, Callable[P, T])) == (T, P)
         """
         parameters = []
+
         # required TypeVarLike cannot appear after TypeVarLike with default
+        # if it was a direct call to `Generic[]` or `Protocol[]`
         default_encountered = False
+        enforce_default_ordering = _has_generic_or_protocol_as_origin()
+
         for t in args:
             if isinstance(t, type):
                 # We don't want __parameters__ descriptor of a bare Python class.
@@ -2903,11 +2925,12 @@ else:
                             parameters.append(collected)
             elif hasattr(t, '__typing_subst__'):
                 if t not in parameters:
-                    if getattr(t, '__default__', NoDefault) is not NoDefault:
-                        default_encountered = True
-                    elif default_encountered:
-                        raise TypeError(f'Type parameter {t!r} without a default'
-                                        ' follows type parameter with a default')
+                    if enforce_default_ordering:
+                        if getattr(t, '__default__', NoDefault) is not NoDefault:
+                            default_encountered = True
+                        elif default_encountered:
+                            raise TypeError(f'Type parameter {t!r} without a default'
+                                            ' follows type parameter with a default')
 
                     parameters.append(t)
             else:
