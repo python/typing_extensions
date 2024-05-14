@@ -6430,6 +6430,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
                 self.assertEqual(z.__bound__, typevar.__bound__)
                 self.assertEqual(z.__default__, typevar.__default__)
 
+    @skip_if_py313_beta_1
     def test_allow_default_after_non_default_in_alias(self):
         T_default = TypeVar('T_default', default=int)
         T = TypeVar('T')
