@@ -2896,10 +2896,10 @@ if hasattr(typing, '_collect_type_vars'):
         tvars = []
 
         # required TypeVarLike cannot appear after TypeVarLike with default
-        # if it was a direct call to `Generic[]` or `Protocol[]`
         default_encountered = False
         # or after TypeVarTuple
         type_var_tuple_encountered = False
+        # if it was a direct call to `Generic[]` or `Protocol[]`
         enforce_default_ordering = _has_generic_or_protocol_as_origin()
         for t in types:
             if _is_unpacked_typevartuple(t):
@@ -2954,7 +2954,9 @@ else:
             elif hasattr(t, '__typing_subst__'):
                 if t not in parameters:
                     if enforce_default_ordering:
-                        has_default = getattr(t, '__default__', NoDefault) is not NoDefault
+                        has_default = (
+                            getattr(t, '__default__', NoDefault) is not NoDefault
+                        )
 
                         if type_var_tuple_encountered and has_default:
                             raise TypeError('Type parameter with a default'
