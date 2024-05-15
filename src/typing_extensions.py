@@ -2934,8 +2934,8 @@ else:
         parameters = []
 
         # required TypeVarLike cannot appear after TypeVarLike with default
-        # if it was a direct call to `Generic[]` or `Protocol[]`
         default_encountered = False
+        # if it was a direct call to `Generic[]` or `Protocol[]`
         enforce_default_ordering = _has_generic_or_protocol_as_origin()
 
         # or after TypeVarTuple
