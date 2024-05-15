@@ -2895,12 +2895,14 @@ if hasattr(typing, '_collect_type_vars'):
             typevar_types = typing.TypeVar
         tvars = []
 
-        # required TypeVarLike cannot appear after TypeVarLike with default
-        default_encountered = False
-        # or after TypeVarTuple
-        type_var_tuple_encountered = False
+        # A required TypeVarLike cannot appear after TypeVarLike with default
         # if it was a direct call to `Generic[]` or `Protocol[]`
         enforce_default_ordering = _has_generic_or_protocol_as_origin()
+        default_encountered = False
+
+        # A TypeVarLike with a default also cannot appear after a TypeVarTuple
+        type_var_tuple_encountered = False
+
         for t in types:
             if _is_unpacked_typevartuple(t):
                 type_var_tuple_encountered = True
@@ -2934,12 +2936,12 @@ else:
         parameters = []
 
         # required TypeVarLike cannot appear after TypeVarLike with default
-        default_encountered = False
         # if it was a direct call to `Generic[]` or `Protocol[]`
-        enforce_default_ordering = _has_generic_or_protocol_as_origin()
+        default_encountered = False
 
-        # or after TypeVarTuple
+        # Also, a TypeVarLike with a default cannot appear after TypeVarTuple
         type_var_tuple_encountered = False
+
         for t in args:
             if isinstance(t, type):
                 # We don't want __parameters__ descriptor of a bare Python class.
