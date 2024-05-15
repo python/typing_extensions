@@ -1440,7 +1440,16 @@ else:
 if hasattr(typing, "NoDefault"):
     NoDefault = typing.NoDefault
 else:
-    class NoDefaultType:
+    class NoDefaultTypeMeta(type):
+        def __setattr__(cls, attr, value):
+            # TypeError is consistent with the behavior of NoneType
+            raise TypeError(
+                f"cannot set {attr!r} attribute of immutable type {cls.__name__!r}"
+            )
+
+    class NoDefaultType(metaclass=NoDefaultTypeMeta):
+        """The type of the NoDefault singleton."""
+
         __slots__ = ()
 
         def __new__(cls):
@@ -1453,7 +1462,7 @@ else:
             return "NoDefault"
 
     NoDefault = NoDefaultType()
-    del NoDefaultType
+    del NoDefaultType, NoDefaultTypeMeta
 
 
 def _set_default(type_param, default):
@@ -2860,6 +2869,20 @@ def _has_generic_or_protocol_as_origin() -> bool:
         }
 
 
+_TYPEVARTUPLE_TYPES = {TypeVarTuple, getattr(typing, "TypeVarTuple", None)}
+
+
+def _is_unpacked_typevartuple(x) -> bool:
+    if get_origin(x) is not Unpack:
+        return False
+    args = get_args(x)
+    return (
+        bool(args)
+        and len(args) == 1
+        and type(args[0]) in _TYPEVARTUPLE_TYPES
+    )
+
+
 # Python 3.11+ _collect_type_vars was renamed to _collect_parameters
 if hasattr(typing, '_collect_type_vars'):
     def _collect_type_vars(types, typevar_types=None):
@@ -2875,16 +2898,19 @@ if hasattr(typing, '_collect_type_vars'):
         # required TypeVarLike cannot appear after TypeVarLike with default
         # if it was a direct call to `Generic[]` or `Protocol[]`
         default_encountered = False
+        # or after TypeVarTuple
+        type_var_tuple_encountered = False
         enforce_default_ordering = _has_generic_or_protocol_as_origin()
-
         for t in types:
-            if (
-                isinstance(t, typevar_types) and
-                t not in tvars and
-                not _is_unpack(t)
-            ):
+            if _is_unpacked_typevartuple(t):
+                type_var_tuple_encountered = True
+            elif isinstance(t, typevar_types) and t not in tvars:
                 if enforce_default_ordering:
-                    if getattr(t, '__default__', NoDefault) is not NoDefault:
+                    has_default = getattr(t, '__default__', NoDefault) is not NoDefault
+                    if has_default:
+                        if type_var_tuple_encountered:
+                            raise TypeError('Type parameter with a default'
+                                            ' follows TypeVarTuple')
                         default_encountered = True
                     elif default_encountered:
                         raise TypeError(f'Type parameter {t!r} without a default'
@@ -2912,6 +2938,8 @@ else:
         default_encountered = False
         enforce_default_ordering = _has_generic_or_protocol_as_origin()
 
+        # or after TypeVarTuple
+        type_var_tuple_encountered = False
         for t in args:
             if isinstance(t, type):
                 # We don't want __parameters__ descriptor of a bare Python class.
@@ -2926,7 +2954,13 @@ else:
             elif hasattr(t, '__typing_subst__'):
                 if t not in parameters:
                     if enforce_default_ordering:
-                        if getattr(t, '__default__', NoDefault) is not NoDefault:
+                        has_default = getattr(t, '__default__', NoDefault) is not NoDefault
+
+                        if type_var_tuple_encountered and has_default:
+                            raise TypeError('Type parameter with a default'
+                                            ' follows TypeVarTuple')
+
+                        if has_default:
                             default_encountered = True
                         elif default_encountered:
                             raise TypeError(f'Type parameter {t!r} without a default'
@@ -2934,6 +2968,8 @@ else:
 
                     parameters.append(t)
             else:
+                if _is_unpacked_typevartuple(t):
+                    type_var_tuple_encountered = True
                 for x in getattr(t, '__parameters__', ()):
                     if x not in parameters:
                         parameters.append(x)
@@ -3432,6 +3468,23 @@ else:
             if not isinstance(other, Doc):
                 return NotImplemented
             return self.documentation == other.documentation
+
+
+_CapsuleType = getattr(_types, "CapsuleType", None)
+
+if _CapsuleType is None:
+    try:
+        import _socket
+    except ImportError:
+        pass
+    else:
+        _CAPI = getattr(_socket, "CAPI", None)
+        if _CAPI is not None:
+            _CapsuleType = type(_CAPI)
+
+if _CapsuleType is not None:
+    CapsuleType = _CapsuleType
+    __all__.append("CapsuleType")
 
 
 # Aliases for items that have always been in typing.
