@@ -2895,12 +2895,12 @@ if hasattr(typing, '_collect_type_vars'):
             typevar_types = typing.TypeVar
         tvars = []
 
-        # A required TypeVarLike cannot appear after TypeVarLike with default
+        # A required TypeVarLike cannot appear after a TypeVarLike with a default
         # if it was a direct call to `Generic[]` or `Protocol[]`
         enforce_default_ordering = _has_generic_or_protocol_as_origin()
         default_encountered = False
 
-        # A TypeVarLike with a default also cannot appear after a TypeVarTuple
+        # Also, a TypeVarLike with a default cannot appear after a TypeVarTuple
         type_var_tuple_encountered = False
 
         for t in types:
@@ -2935,11 +2935,12 @@ else:
         """
         parameters = []
 
-        # required TypeVarLike cannot appear after TypeVarLike with default
+        # A required TypeVarLike cannot appear after a TypeVarLike with default
         # if it was a direct call to `Generic[]` or `Protocol[]`
+        enforce_default_ordering = _has_generic_or_protocol_as_origin()
         default_encountered = False
 
-        # Also, a TypeVarLike with a default cannot appear after TypeVarTuple
+        # Also, a TypeVarLike with a default cannot appear after a TypeVarTuple
         type_var_tuple_encountered = False
 
         for t in args:
