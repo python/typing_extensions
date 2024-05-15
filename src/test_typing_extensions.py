@@ -6765,5 +6765,15 @@ class DocTests(BaseTestCase):
             self.assertEqual(doc_info, pickle.loads(pickled))
 
 
+@skipUnless(
+    hasattr(typing_extensions, "CapsuleType"),
+    "CapsuleType is not available on all Python implementations"
+)
+class CapsuleTypeTests(BaseTestCase):
+    def test_capsule_type(self):
+        import _datetime
+        self.assertIsInstance(_datetime.datetime_CAPI, typing_extensions.CapsuleType)
+
+
 if __name__ == '__main__':
     main()

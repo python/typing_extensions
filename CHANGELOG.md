@@ -32,6 +32,7 @@
   signifies the return type of the `__(a)exit__` method, matching
   `typing.ContextManager` and `typing.AsyncContextManager` on Python
   3.13+.
+- Backport `types.CapsuleType` from Python 3.13.
 
 # Release 4.11.0 (April 5, 2024)
 

@@ -3411,6 +3411,23 @@ else:
             return self.documentation == other.documentation
 
 
+_CapsuleType = getattr(_types, "CapsuleType", None)
+
+if _CapsuleType is None:
+    try:
+        import _socket
+    except ImportError:
+        pass
+    else:
+        _CAPI = getattr(_socket, "CAPI", None)
+        if _CAPI is not None:
+            _CapsuleType = type(_CAPI)
+
+if _CapsuleType is not None:
+    CapsuleType = _CapsuleType
+    __all__.append("CapsuleType")
+
+
 # Aliases for items that have always been in typing.
 # Explicitly assign these (rather than using `from typing import *` at the top),
 # so that we get a CI error if one of these is deleted from typing.py

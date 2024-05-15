@@ -882,6 +882,20 @@ Annotation metadata
       The documentation string passed to :class:`Doc`.
 
 
+Capsule objects
+~~~~~~~~~~~~~~~
+
+.. class:: CapsuleType
+
+   The type of :py:ref:`capsule objects <capsules>`.
+   See :py:class:`types.CapsuleType`, where it has existed since Python 3.13.
+
+   Note that this may not exist on all implementations of Python; it is only
+   guaranteed to exist on CPython.
+
+   .. versionadded:: 4.12.0
+
+
 Pure aliases
 ~~~~~~~~~~~~
 
