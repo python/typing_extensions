@@ -6380,6 +6380,14 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         self.assertIs(P_default.__default__, ...)
         self.assertTrue(P_default.has_default())
 
+    def test_paramspec_none(self):
+        U = ParamSpec('U')
+        U_None = ParamSpec('U_None', default=None)
+        self.assertIs(U.__default__, NoDefault)
+        self.assertFalse(U.has_default())
+        self.assertIs(U_None.__default__, None)
+        self.assertTrue(U_None.has_default())
+
     def test_typevartuple(self):
         Ts = TypeVarTuple('Ts', default=Unpack[Tuple[str, int]])
         self.assertEqual(Ts.__default__, Unpack[Tuple[str, int]])
@@ -6394,7 +6402,26 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         class A(Generic[Unpack[Ts]]): ...
         Alias = Optional[Unpack[Ts]]
 
-    def test_erroneous_generic(self):
+    def test_no_default_after_typevar_tuple(self):
+        T = TypeVar("T", default=int)
+        Ts = TypeVarTuple("Ts")
+        Ts_default = TypeVarTuple("Ts_default", default=Unpack[Tuple[str, int]])
+
+        with self.assertRaises(TypeError):
+            class X(Generic[Unpack[Ts], T]): ...
+
+        with self.assertRaises(TypeError):
+            class Y(Generic[Unpack[Ts_default], T]): ...
+
+    def test_typevartuple_none(self):
+        U = TypeVarTuple('U')
+        U_None = TypeVarTuple('U_None', default=None)
+        self.assertIs(U.__default__, NoDefault)
+        self.assertFalse(U.has_default())
+        self.assertIs(U_None.__default__, None)
+        self.assertTrue(U_None.has_default())
+
+    def test_no_default_after_non_default(self):
         DefaultStrT = typing_extensions.TypeVar('DefaultStrT', default=str)
         T = TypeVar('T')
 

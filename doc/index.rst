@@ -549,6 +549,12 @@ Special typing primitives
       TypeVarTuples now have a ``has_default()`` method, for compatibility
       with :py:class:`typing.TypeVarTuple` on Python 3.13+.
 
+   .. versionchanged:: 4.12.0
+
+      It is now disallowed to use a `TypeVar` with a default value after a
+      `TypeVarTuple` in a type parameter list. This matches the CPython
+      implementation of PEP 696 on Python 3.13+.
+
 .. data:: Unpack
 
    See :py:data:`typing.Unpack` and :pep:`646`. In ``typing`` since 3.11.

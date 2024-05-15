@@ -2856,6 +2856,21 @@ else:
 if not _PEP_696_IMPLEMENTED:
     typing._check_generic = _check_generic
 
+
+_TYPEVARTUPLE_TYPES = {TypeVarTuple, getattr(typing, "TypeVarTuple", None)}
+
+
+def _is_unpacked_typevartuple(x) -> bool:
+    if get_origin(x) is not Unpack:
+        return False
+    args = get_args(x)
+    return (
+        bool(args)
+        and len(args) == 1
+        and type(args[0]) in _TYPEVARTUPLE_TYPES
+    )
+
+
 # Python 3.11+ _collect_type_vars was renamed to _collect_parameters
 if hasattr(typing, '_collect_type_vars'):
     def _collect_type_vars(types, typevar_types=None):
@@ -2869,13 +2884,17 @@ if hasattr(typing, '_collect_type_vars'):
         tvars = []
         # required TypeVarLike cannot appear after TypeVarLike with default
         default_encountered = False
+        # or after TypeVarTuple
+        type_var_tuple_encountered = False
         for t in types:
-            if (
-                isinstance(t, typevar_types) and
-                t not in tvars and
-                not _is_unpack(t)
-            ):
-                if getattr(t, '__default__', NoDefault) is not NoDefault:
+            if _is_unpacked_typevartuple(t):
+                type_var_tuple_encountered = True
+            elif isinstance(t, typevar_types) and t not in tvars:
+                has_default = getattr(t, '__default__', NoDefault) is not NoDefault
+                if has_default:
+                    if type_var_tuple_encountered:
+                        raise TypeError('Type parameter with a default'
+                                        ' follows TypeVarTuple')
                     default_encountered = True
                 elif default_encountered:
                     raise TypeError(f'Type parameter {t!r} without a default'
@@ -2899,6 +2918,8 @@ else:
         parameters = []
         # required TypeVarLike cannot appear after TypeVarLike with default
         default_encountered = False
+        # or after TypeVarTuple
+        type_var_tuple_encountered = False
         for t in args:
             if isinstance(t, type):
                 # We don't want __parameters__ descriptor of a bare Python class.
@@ -2912,7 +2933,13 @@ else:
                             parameters.append(collected)
             elif hasattr(t, '__typing_subst__'):
                 if t not in parameters:
-                    if getattr(t, '__default__', NoDefault) is not NoDefault:
+                    has_default = getattr(t, '__default__', NoDefault) is not NoDefault
+
+                    if type_var_tuple_encountered and has_default:
+                        raise TypeError('Type parameter with a default'
+                                        ' follows TypeVarTuple')
+
+                    if has_default:
                         default_encountered = True
                     elif default_encountered:
                         raise TypeError(f'Type parameter {t!r} without a default'
@@ -2920,6 +2947,8 @@ else:
 
                     parameters.append(t)
             else:
+                if _is_unpacked_typevartuple(t):
+                    type_var_tuple_encountered = True
                 for x in getattr(t, '__parameters__', ()):
                     if x not in parameters:
                         parameters.append(x)
