@@ -18,6 +18,9 @@
 - It is now disallowed to use a `TypeVar` with a default value after a
   `TypeVarTuple` in a type parameter list. This matches the CPython
   implementation of PEP 696 on Python 3.13+.
+- Fix bug in PEP-696 implementation where default values for `ParamSpec`s
+  would be cast to tuples if a list was provided as the default value.
+  Patch by Alex Waygood.
 - Fix `Protocol` tests on Python 3.13.0a6 and newer. 3.13.0a6 adds a new
   `__static_attributes__` attribute to all classes in Python,
   which broke some assumptions made by the implementation of

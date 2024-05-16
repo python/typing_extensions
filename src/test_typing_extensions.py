@@ -6363,8 +6363,8 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         self.assertTrue(U_None.has_default())
 
     def test_paramspec(self):
-        P = ParamSpec('P', default=(str, int))
-        self.assertEqual(P.__default__, (str, int))
+        P = ParamSpec('P', default=[str, int])
+        self.assertEqual(P.__default__, [str, int])
         self.assertTrue(P.has_default())
         self.assertIsInstance(P, ParamSpec)
         if hasattr(typing, "ParamSpec"):

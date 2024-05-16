@@ -1468,8 +1468,9 @@ else:
 def _set_default(type_param, default):
     type_param.has_default = lambda: default is not NoDefault
     if isinstance(default, (tuple, list)):
-        type_param.__default__ = tuple((typing._type_check(d, "Default must be a type")
-                                        for d in default))
+        type_param.__default__ = type(default)(
+            typing._type_check(d, "Default must be a type") for d in default
+        )
     elif default in (None, NoDefault):
         type_param.__default__ = default
     else:
