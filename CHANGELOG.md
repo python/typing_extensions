@@ -29,8 +29,8 @@ Full changelog:
   - It is now disallowed to use a `TypeVar` with a default value after a
     `TypeVarTuple` in a type parameter list. This matches the CPython
     implementation of PEP 696 on Python 3.13+.
-  - Fix bug in PEP-696 implementation where default values for `ParamSpec`s
-    would be cast to tuples if a list was provided as the default value.
+  - Fix bug in PEP-696 implementation where a default value for a `ParamSpec`
+    would be cast to a tuple if a list was provided.
     Patch by Alex Waygood.
 - Fix `Protocol` tests on Python 3.13.0a6 and newer. 3.13.0a6 adds a new
   `__static_attributes__` attribute to all classes in Python,
@@ -54,7 +54,8 @@ Full changelog:
   `typing.ContextManager` and `typing.AsyncContextManager` on Python
   3.13+.
 - Backport `types.CapsuleType` from Python 3.13.
-- Releases are now made using [Trusted Publishers](https://docs.pypi.org/trusted-publishers/), improving the security of the release process. Patch by Jelle Zijlstra.
+- Releases are now made using [Trusted Publishers](https://docs.pypi.org/trusted-publishers/)
+  improving the security of the release process. Patch by Jelle Zijlstra.
 
 # Release 4.12.0a1 and 4.12.0a2 (May 16, 2024)
 
