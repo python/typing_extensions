@@ -1216,3 +1216,23 @@ versions of Python, but all are listed here for completeness.
    See :py:func:`typing.no_type_check_decorator`.
 
    .. versionadded:: 4.7.0
+
+Security
+--------
+
+``typing_extensions`` is among the most widely used packages in the
+Python ecosystem. Therefore, we take security seriously and strive
+to use a transparent, secure release process.
+
+We commit to the following in order to keep the package secure in the
+future:
+
+* ``typing_extensions`` will never include any native extensions, only
+  pure Python code.
+* ``typing_extensions`` will not have any third-party dependencies.
+* We will follow best practices for a secure release process.
+
+If you have any feedback on our security process, please `open an issue
+<https://github.com/python/typing_extensions/issues/new>`__. To report
+an issue privately, use `GitHub's private reporting feature
+<https://github.com/python/typing_extensions/security>`__.
