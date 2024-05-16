@@ -1513,11 +1513,15 @@ else:
                 if infer_variance and (covariant or contravariant):
                     raise ValueError("Variance cannot be specified with infer_variance.")
                 typevar.__infer_variance__ = infer_variance
+
             _set_default(typevar, default)
             _set_module(typevar)
 
             def _tvar_prepare_subst(alias, args):
-                if alias.__parameters__.index(typevar) == len(args) and typevar.has_default():
+                if (
+                    typevar.has_default()
+                    and alias.__parameters__.index(typevar) == len(args)
+                ):
                     args += (typevar.__default__,)
                 return args
 
@@ -1596,6 +1600,7 @@ if _PEP_696_IMPLEMENTED:
 
 # 3.10+
 elif hasattr(typing, 'ParamSpec'):
+
     # Add default parameter - PEP 696
     class ParamSpec(metaclass=_TypeVarLikeMeta):
         """Parameter specification."""
@@ -1628,12 +1633,12 @@ elif hasattr(typing, 'ParamSpec'):
                 if i >= len(args):
                     raise TypeError(f"Too few arguments for {alias}")
                 # Special case where Z[[int, str, bool]] == Z[int, str, bool] in PEP 612.
-                if len(params) == 1 and not _is_param_expr(args[0]):
+                if len(params) == 1 and not typing._is_param_expr(args[0]):
                     assert i == 0
                     args = (args,)
                 # Convert lists to tuples to help other libraries cache the results.
                 elif isinstance(args[i], list):
-                    args = (*args[:i], tuple(args[i]), *args[i+1:])
+                    args = (*args[:i], tuple(args[i]), *args[i + 1:])
                 return args
 
             paramspec.__typing_prepare_subst__ = _paramspec_prepare_subst
@@ -2374,6 +2379,7 @@ if _PEP_696_IMPLEMENTED:
     from typing import TypeVarTuple
 
 elif hasattr(typing, "TypeVarTuple"):  # 3.11+
+
     def _unpack_args(*args):
         newargs = []
         for arg in args:
@@ -2400,7 +2406,9 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
                 typevartuple_index = params.index(tvt)
                 for param in params[typevartuple_index + 1:]:
                     if isinstance(param, TypeVarTuple):
-                        raise TypeError(f"More than one TypeVarTuple parameter in {alias}")
+                        raise TypeError(
+                            f"More than one TypeVarTuple parameter in {alias}"
+                        )
 
                 alen = len(args)
                 plen = len(params)
@@ -2413,7 +2421,10 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
                         subargs = getattr(arg, '__typing_unpacked_tuple_args__', None)
                         if subargs and len(subargs) == 2 and subargs[-1] is ...:
                             if var_tuple_index is not None:
-                                raise TypeError("More than one unpacked arbitrary-length tuple argument")
+                                raise TypeError(
+                                    "More than one unpacked "
+                                    "arbitrary-length tuple argument"
+                                )
                             var_tuple_index = k
                             fillarg = subargs[0]
                 if var_tuple_index is not None:
@@ -2421,7 +2432,7 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
                     right = min(right, alen - var_tuple_index - 1)
                 elif left + right > alen:
                     raise TypeError(f"Too few arguments for {alias};"
-                                    f" actual {alen}, expected at least {plen-1}")
+                                    f" actual {alen}, expected at least {plen - 1}")
                 if left == alen - right and tvt.has_default():
                     replacement = _unpack_args(tvt.__default__)
                 else:
@@ -2429,9 +2440,9 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
 
                 return (
                     *args[:left],
-                    *([fillarg]*(typevartuple_index - left)),
+                    *([fillarg] * (typevartuple_index - left)),
                     replacement,
-                    *([fillarg]*(plen - right - left - typevartuple_index - 1)),
+                    *([fillarg] * (plen - right - left - typevartuple_index - 1)),
                     *args[alen - right:],
                 )
 
