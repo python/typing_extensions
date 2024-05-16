@@ -2857,6 +2857,18 @@ if not _PEP_696_IMPLEMENTED:
     typing._check_generic = _check_generic
 
 
+def _has_generic_or_protocol_as_origin() -> bool:
+    try:
+        frame = sys._getframe(2)
+    # not all platforms have sys._getframe()
+    except AttributeError:
+        return False  # err on the side of leniency
+    else:
+        return frame.f_locals.get("origin") in {
+            typing.Generic, Protocol, typing.Protocol
+        }
+
+
 _TYPEVARTUPLE_TYPES = {TypeVarTuple, getattr(typing, "TypeVarTuple", None)}
 
 
@@ -2882,23 +2894,29 @@ if hasattr(typing, '_collect_type_vars'):
         if typevar_types is None:
             typevar_types = typing.TypeVar
         tvars = []
-        # required TypeVarLike cannot appear after TypeVarLike with default
+
+        # A required TypeVarLike cannot appear after a TypeVarLike with a default
+        # if it was a direct call to `Generic[]` or `Protocol[]`
+        enforce_default_ordering = _has_generic_or_protocol_as_origin()
         default_encountered = False
-        # or after TypeVarTuple
+
+        # Also, a TypeVarLike with a default cannot appear after a TypeVarTuple
         type_var_tuple_encountered = False
+
         for t in types:
             if _is_unpacked_typevartuple(t):
                 type_var_tuple_encountered = True
             elif isinstance(t, typevar_types) and t not in tvars:
-                has_default = getattr(t, '__default__', NoDefault) is not NoDefault
-                if has_default:
-                    if type_var_tuple_encountered:
-                        raise TypeError('Type parameter with a default'
-                                        ' follows TypeVarTuple')
-                    default_encountered = True
-                elif default_encountered:
-                    raise TypeError(f'Type parameter {t!r} without a default'
-                                    ' follows type parameter with a default')
+                if enforce_default_ordering:
+                    has_default = getattr(t, '__default__', NoDefault) is not NoDefault
+                    if has_default:
+                        if type_var_tuple_encountered:
+                            raise TypeError('Type parameter with a default'
+                                            ' follows TypeVarTuple')
+                        default_encountered = True
+                    elif default_encountered:
+                        raise TypeError(f'Type parameter {t!r} without a default'
+                                        ' follows type parameter with a default')
 
                 tvars.append(t)
             if _should_collect_from_parameters(t):
@@ -2916,10 +2934,15 @@ else:
             assert _collect_parameters((T, Callable[P, T])) == (T, P)
         """
         parameters = []
-        # required TypeVarLike cannot appear after TypeVarLike with default
+
+        # A required TypeVarLike cannot appear after a TypeVarLike with default
+        # if it was a direct call to `Generic[]` or `Protocol[]`
+        enforce_default_ordering = _has_generic_or_protocol_as_origin()
         default_encountered = False
-        # or after TypeVarTuple
+
+        # Also, a TypeVarLike with a default cannot appear after a TypeVarTuple
         type_var_tuple_encountered = False
+
         for t in args:
             if isinstance(t, type):
                 # We don't want __parameters__ descriptor of a bare Python class.
@@ -2933,17 +2956,20 @@ else:
                             parameters.append(collected)
             elif hasattr(t, '__typing_subst__'):
                 if t not in parameters:
-                    has_default = getattr(t, '__default__', NoDefault) is not NoDefault
+                    if enforce_default_ordering:
+                        has_default = (
+                            getattr(t, '__default__', NoDefault) is not NoDefault
+                        )
 
-                    if type_var_tuple_encountered and has_default:
-                        raise TypeError('Type parameter with a default'
-                                        ' follows TypeVarTuple')
+                        if type_var_tuple_encountered and has_default:
+                            raise TypeError('Type parameter with a default'
+                                            ' follows TypeVarTuple')
 
-                    if has_default:
-                        default_encountered = True
-                    elif default_encountered:
-                        raise TypeError(f'Type parameter {t!r} without a default'
-                                        ' follows type parameter with a default')
+                        if has_default:
+                            default_encountered = True
+                        elif default_encountered:
+                            raise TypeError(f'Type parameter {t!r} without a default'
+                                            ' follows type parameter with a default')
 
                     parameters.append(t)
             else:
