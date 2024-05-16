@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: "3.x"
       - name: Check package metadata
-        run: python scripts/check_package.py {{ github.ref }}
+        run: python scripts/check_package.py ${{ github.ref }}
       - name: Install pypa/build
         run: |
           # Be wary of running `pip install` here, since it becomes easy for us to
