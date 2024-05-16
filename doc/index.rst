@@ -1229,7 +1229,7 @@ future:
 
 * ``typing_extensions`` will never include any native extensions, only
   pure Python code.
-* ``typing_extensions`` will not depend on any third-party dependencies.
+* ``typing_extensions`` will not have any third-party dependencies.
 * We will follow best practices for a secure release process.
 
 If you have any feedback on our security process, please `open an issue
