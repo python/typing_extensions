@@ -1,7 +1,7 @@
 # Based on
 # https://packaging.python.org/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 
-name: Publish Python distribution to PyPI
+name: Test builds and publish Python distribution to PyPI
 
 on:
   push:
@@ -9,6 +9,13 @@ on:
       - main
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -22,9 +29,13 @@ jobs:
         with:
           python-version: "3.x"
       - name: Install pypa/build
-        run: python3 -m pip install --user build
+        run: |
+          # Be wary of running `pip install` here, since it becomes easy for us to
+          # accidentally pick up typing_extensions as installed by a dependency
+          python -m pip install --upgrade build
+          python -m pip list
       - name: Build a binary wheel and a source tarball
-        run: python3 -m build
+        run: python -m build
       - name: Store the distribution packages
         uses: actions/upload-artifact@v3
         with:
@@ -52,9 +63,10 @@ jobs:
         run: |
           export path_to_file=$(find dist -type f -name "typing_extensions-*.whl")
           echo "::notice::Installing wheel: $path_to_file"
-          python3 -m pip install --user $path_to_file
+          python -m pip install --user $path_to_file
+          python -m pip list
       - name: Run typing_extensions tests against installed package
-        run: rm src/typing_extensions.py && python3 src/test_typing_extensions.py
+        run: rm src/typing_extensions.py && python src/test_typing_extensions.py
 
   test-sdist:
     name: Test source distribution
@@ -77,9 +89,10 @@ jobs:
         run: |
           export path_to_file=$(find dist -type f -name "typing_extensions-*.tar.gz")
           echo "::notice::Installing source distribution: $path_to_file"
-          python3 -m pip install --user $path_to_file
+          python -m pip install --user $path_to_file
+          python -m pip list
       - name: Run typing_extensions tests against installed package
-        run: rm src/typing_extensions.py && python3 src/test_typing_extensions.py
+        run: rm src/typing_extensions.py && python src/test_typing_extensions.py
 
   publish-to-pypi:
     name: >-
