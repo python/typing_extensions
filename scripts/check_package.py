@@ -21,7 +21,8 @@ def check(github_ref: str | None) -> None:
         version = github_ref.removeprefix("refs/tags/")
         if version != pyproject_version:
             raise ValidationError(
-                f"Version mismatch: GitHub ref is {version}, but pyproject.toml is {pyproject_version}"
+                f"Version mismatch: GitHub ref is {version}, "
+                f"but pyproject.toml is {pyproject_version}"
             )
 
     requires_python = data["project"]["requires-python"]
