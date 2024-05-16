@@ -143,5 +143,7 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+      - name: Ensure exactly one sdist and one wheel have been downloaded
+        run: test $(ls *.tar.gz | wc -l) = 1 && test $(ls *.whl | wc -l) = 1
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
