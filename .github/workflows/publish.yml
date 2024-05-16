@@ -54,7 +54,7 @@ jobs:
           echo "::notice::Installing wheel: $path_to_file"
           python3 -m pip install --user $path_to_file
       - name: Run typing_extensions tests against installed package
-        run: python3 -m src.test_typing_extensions
+        run: rm src/typing_extensions.py && python3 src/test_typing_extensions.py
 
   test-sdist:
     name: Test source distribution
@@ -79,7 +79,7 @@ jobs:
           echo "::notice::Installing source distribution: $path_to_file"
           python3 -m pip install --user $path_to_file
       - name: Run typing_extensions tests against installed package
-        run: python3 -m src.test_typing_extensions
+        run: rm src/typing_extensions.py && python3 src/test_typing_extensions.py
 
   publish-to-pypi:
     name: >-
