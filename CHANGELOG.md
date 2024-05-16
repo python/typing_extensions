@@ -1,29 +1,37 @@
-# Release 4.12.0a1 and 4.12.0a2
+# Release 4.12.0rc1 (May 16, 2024)
 
-These releases primarily test a revised release workflow. If all goes
-well, release 4.12.0rc1 will follow soon.
+This release focuses on compatibility with the upcoming release of
+Python 3.13. Most changes are related to the implementation of type
+parameter defaults (PEP 696).
 
-- Backport the `typing.NoDefault` sentinel object from Python 3.13.
-  TypeVars, ParamSpecs and TypeVarTuples without default values now have
-  their `__default__` attribute set to this sentinel value.
-- TypeVars, ParamSpecs and TypeVarTuples now have a `has_default()`
-  method, matching `typing.TypeVar`, `typing.ParamSpec` and
-  `typing.TypeVarTuple` on Python 3.13+.
-- TypeVars, ParamSpecs and TypeVarTuples with `default=None` passed to
-  their constructors now have their `__default__` attribute set to `None`
-  at runtime rather than `types.NoneType`.
-- Fix most tests for `TypeVar`, `ParamSpec` and `TypeVarTuple` on Python
-  3.13.0b1 and newer.
-- Backport CPython PR [#118774](https://github.com/python/cpython/pull/118774),
-  allowing type parameters without default values to follow those with
-  default values in some type parameter lists. Patch by Alex Waygood,
-  backporting a CPython PR by Jelle Zijlstra.
-- It is now disallowed to use a `TypeVar` with a default value after a
-  `TypeVarTuple` in a type parameter list. This matches the CPython
-  implementation of PEP 696 on Python 3.13+.
-- Fix bug in PEP-696 implementation where default values for `ParamSpec`s
-  would be cast to tuples if a list was provided as the default value.
-  Patch by Alex Waygood.
+Thanks to all of the people who contributed patches, especially Alex
+Waygood, who did most of the work adapting typing-extensions to the
+CPython PEP 696 implementation.
+
+Full changelog:
+
+- Improve the implementation of type parameter defaults (PEP 696)
+  - Backport the `typing.NoDefault` sentinel object from Python 3.13.
+    TypeVars, ParamSpecs and TypeVarTuples without default values now have
+    their `__default__` attribute set to this sentinel value.
+  - TypeVars, ParamSpecs and TypeVarTuples now have a `has_default()`
+    method, matching `typing.TypeVar`, `typing.ParamSpec` and
+    `typing.TypeVarTuple` on Python 3.13+.
+  - TypeVars, ParamSpecs and TypeVarTuples with `default=None` passed to
+    their constructors now have their `__default__` attribute set to `None`
+    at runtime rather than `types.NoneType`.
+  - Fix most tests for `TypeVar`, `ParamSpec` and `TypeVarTuple` on Python
+    3.13.0b1 and newer.
+  - Backport CPython PR [#118774](https://github.com/python/cpython/pull/118774),
+    allowing type parameters without default values to follow those with
+    default values in some type parameter lists. Patch by Alex Waygood,
+    backporting a CPython PR by Jelle Zijlstra.
+  - It is now disallowed to use a `TypeVar` with a default value after a
+    `TypeVarTuple` in a type parameter list. This matches the CPython
+    implementation of PEP 696 on Python 3.13+.
+  - Fix bug in PEP-696 implementation where a default value for a `ParamSpec`
+    would be cast to a tuple if a list was provided.
+    Patch by Alex Waygood.
 - Fix `Protocol` tests on Python 3.13.0a6 and newer. 3.13.0a6 adds a new
   `__static_attributes__` attribute to all classes in Python,
   which broke some assumptions made by the implementation of
@@ -46,6 +54,13 @@ well, release 4.12.0rc1 will follow soon.
   `typing.ContextManager` and `typing.AsyncContextManager` on Python
   3.13+.
 - Backport `types.CapsuleType` from Python 3.13.
+- Releases are now made using [Trusted Publishers](https://docs.pypi.org/trusted-publishers/)
+  improving the security of the release process. Patch by Jelle Zijlstra.
+
+# Release 4.12.0a1 and 4.12.0a2 (May 16, 2024)
+
+These releases primarily test a revised release workflow. If all goes
+well, release 4.12.0rc1 will follow soon.
 
 # Release 4.11.0 (April 5, 2024)
 
