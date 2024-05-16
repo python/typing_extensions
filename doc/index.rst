@@ -1234,4 +1234,5 @@ future:
 
 If you have any feedback on our security process, please `open an issue
 <https://github.com/python/typing_extensions/issues/new>`__. To report
-an issue privately, email security@python.org.
+an issue privately, use `GitHub's private reporting feature
+<https://github.com/python/typing_extensions/security>`__.
