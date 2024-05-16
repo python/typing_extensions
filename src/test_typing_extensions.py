@@ -4997,7 +4997,7 @@ class ParamSpecTests(BaseTestCase):
         P = ParamSpec('P')
         P_co = ParamSpec('P_co', covariant=True)
         P_contra = ParamSpec('P_contra', contravariant=True)
-        P_default = ParamSpec('P_default', default=int)
+        P_default = ParamSpec('P_default', default=[int])
         for proto in range(pickle.HIGHEST_PROTOCOL):
             with self.subTest(f'Pickle protocol {proto}'):
                 for paramspec in (P, P_co, P_contra, P_default):
@@ -6363,8 +6363,8 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         self.assertTrue(U_None.has_default())
 
     def test_paramspec(self):
-        P = ParamSpec('P', default=(str, int))
-        self.assertEqual(P.__default__, (str, int))
+        P = ParamSpec('P', default=[str, int])
+        self.assertEqual(P.__default__, [str, int])
         self.assertTrue(P.has_default())
         self.assertIsInstance(P, ParamSpec)
         if hasattr(typing, "ParamSpec"):
@@ -6456,6 +6456,17 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
                 self.assertEqual(z.__contravariant__, typevar.__contravariant__)
                 self.assertEqual(z.__bound__, typevar.__bound__)
                 self.assertEqual(z.__default__, typevar.__default__)
+
+    def test_strange_defaults_are_allowed(self):
+        # Leave it to type checkers to check whether strange default values
+        # should be allowed or disallowed
+        def not_a_type(): ...
+
+        for typevarlike_cls in TypeVar, ParamSpec, TypeVarTuple:
+            for default in not_a_type, 42, bytearray(), (int, not_a_type, 42):
+                with self.subTest(typevarlike_cls=typevarlike_cls, default=default):
+                    T = typevarlike_cls("T", default=default)
+                    self.assertEqual(T.__default__, default)
 
     @skip_if_py313_beta_1
     def test_allow_default_after_non_default_in_alias(self):
