@@ -4,11 +4,11 @@
 name: Test builds and publish Python distribution to PyPI
 
 on:
+  release:
+    types: [published]
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -87,6 +87,31 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+      - name: Unpack and test source distribution
+        run: |
+          export path_to_file=$(find dist -type f -name "typing_extensions-*.tar.gz")
+          echo "::notice::Unpacking source distribution: $path_to_file"
+          tar xzf $path_to_file
+          cd ${path_to_file%.tar.gz}
+          python src/test_typing_extensions.py
+
+  test-sdist-installed:
+    name: Test installed source distribution
+    needs:
+      - build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+      - name: Download all the dists
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: dist/
       - name: Install source distribution
         run: |
           export path_to_file=$(find dist -type f -name "typing_extensions-*.tar.gz")
@@ -102,11 +127,12 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/') # only publish to PyPI on tag pushes
     needs:
       - test-sdist
+      - test-sdist-installed
       - test-wheel
       - build
     runs-on: ubuntu-latest
     environment:
-      name: pypi
+      name: publish
       url: https://pypi.org/p/typing-extensions
     permissions:
       id-token: write # IMPORTANT: mandatory for trusted publishing
