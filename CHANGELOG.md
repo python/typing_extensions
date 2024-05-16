@@ -1,4 +1,7 @@
-# Unreleased
+# Release 4.12.0a1
+
+This release primarily tests a revised release workflow. If all goes
+well, release 4.12.0rc1 will follow soon.
 
 - Backport the `typing.NoDefault` sentinel object from Python 3.13.
   TypeVars, ParamSpecs and TypeVarTuples without default values now have
