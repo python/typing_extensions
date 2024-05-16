@@ -6403,7 +6403,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         Alias = Optional[Unpack[Ts]]
 
     @skipIf(
-        sys.version_info < (3, 11),
+        sys.version_info < (3, 11, 1),
         "Not yet backported for older versions of Python"
     )
     def test_typevartuple_specialization(self):
@@ -6416,7 +6416,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         self.assertEqual(A[float, Unpack[tuple[int, ...]]].__args__, (float, Unpack[tuple[int, ...]]))
 
     @skipIf(
-        sys.version_info < (3, 11),
+        sys.version_info < (3, 11, 1),
         "Not yet backported for older versions of Python"
     )
     def test_typevar_and_typevartuple_specialization(self):
@@ -6516,7 +6516,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         self.assertEqual(a4.__args__, (Unpack[Ts], T))
 
     @skipIf(
-        sys.version_info < (3, 11),
+        sys.version_info < (3, 11, 1),
         "Not yet backported for older versions of Python"
     )
     def test_paramspec_specialization(self):
@@ -6528,7 +6528,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         self.assertEqual(A[float, [range]].__args__, (float, (range,)))
 
     @skipIf(
-        sys.version_info < (3, 11),
+        sys.version_info < (3, 11, 1),
         "Not yet backported for older versions of Python"
     )
     def test_typevar_and_paramspec_specialization(self):
@@ -6542,7 +6542,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         self.assertEqual(A[float, int, [range]].__args__, (float, int, (range,)))
 
     @skipIf(
-        sys.version_info < (3, 11),
+        sys.version_info < (3, 11, 1),
         "Not yet backported for older versions of Python"
     )
     def test_paramspec_and_typevar_specialization(self):
