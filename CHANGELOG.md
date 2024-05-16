@@ -54,6 +54,7 @@ Full changelog:
   `typing.ContextManager` and `typing.AsyncContextManager` on Python
   3.13+.
 - Backport `types.CapsuleType` from Python 3.13.
+- Releases are now made using [Trusted Publishers](https://docs.pypi.org/trusted-publishers/), improving the security of the release process. Patch by Jelle Zijlstra.
 
 # Release 4.12.0a1 and 4.12.0a2 (May 16, 2024)
 
