@@ -1513,8 +1513,19 @@ else:
                 if infer_variance and (covariant or contravariant):
                     raise ValueError("Variance cannot be specified with infer_variance.")
                 typevar.__infer_variance__ = infer_variance
+
             _set_default(typevar, default)
             _set_module(typevar)
+
+            def _tvar_prepare_subst(alias, args):
+                if (
+                    typevar.has_default()
+                    and alias.__parameters__.index(typevar) == len(args)
+                ):
+                    args += (typevar.__default__,)
+                return args
+
+            typevar.__typing_prepare_subst__ = _tvar_prepare_subst
             return typevar
 
         def __init_subclass__(cls) -> None:
@@ -1613,6 +1624,24 @@ elif hasattr(typing, 'ParamSpec'):
 
             _set_default(paramspec, default)
             _set_module(paramspec)
+
+            def _paramspec_prepare_subst(alias, args):
+                params = alias.__parameters__
+                i = params.index(paramspec)
+                if i == len(args) and paramspec.has_default():
+                    args = [*args, paramspec.__default__]
+                if i >= len(args):
+                    raise TypeError(f"Too few arguments for {alias}")
+                # Special case where Z[[int, str, bool]] == Z[int, str, bool] in PEP 612.
+                if len(params) == 1 and not typing._is_param_expr(args[0]):
+                    assert i == 0
+                    args = (args,)
+                # Convert lists to tuples to help other libraries cache the results.
+                elif isinstance(args[i], list):
+                    args = (*args[:i], tuple(args[i]), *args[i + 1:])
+                return args
+
+            paramspec.__typing_prepare_subst__ = _paramspec_prepare_subst
             return paramspec
 
         def __init_subclass__(cls) -> None:
@@ -2311,6 +2340,17 @@ elif sys.version_info[:2] >= (3, 9):  # 3.9+
     class _UnpackAlias(typing._GenericAlias, _root=True):
         __class__ = typing.TypeVar
 
+        @property
+        def __typing_unpacked_tuple_args__(self):
+            assert self.__origin__ is Unpack
+            assert len(self.__args__) == 1
+            arg, = self.__args__
+            if isinstance(arg, (typing._GenericAlias, _types.GenericAlias)):
+                if arg.__origin__ is not tuple:
+                    raise TypeError("Unpack[...] must be used with a tuple type")
+                return arg.__args__
+            return None
+
     @_UnpackSpecialForm
     def Unpack(self, parameters):
         item = typing._type_check(parameters, f'{self._name} accepts only a single type.')
@@ -2340,6 +2380,16 @@ if _PEP_696_IMPLEMENTED:
 
 elif hasattr(typing, "TypeVarTuple"):  # 3.11+
 
+    def _unpack_args(*args):
+        newargs = []
+        for arg in args:
+            subargs = getattr(arg, '__typing_unpacked_tuple_args__', None)
+            if subargs is not None and not (subargs and subargs[-1] is ...):
+                newargs.extend(subargs)
+            else:
+                newargs.append(arg)
+        return newargs
+
     # Add default parameter - PEP 696
     class TypeVarTuple(metaclass=_TypeVarLikeMeta):
         """Type variable tuple."""
@@ -2350,6 +2400,53 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
             tvt = typing.TypeVarTuple(name)
             _set_default(tvt, default)
             _set_module(tvt)
+
+            def _typevartuple_prepare_subst(alias, args):
+                params = alias.__parameters__
+                typevartuple_index = params.index(tvt)
+                for param in params[typevartuple_index + 1:]:
+                    if isinstance(param, TypeVarTuple):
+                        raise TypeError(
+                            f"More than one TypeVarTuple parameter in {alias}"
+                        )
+
+                alen = len(args)
+                plen = len(params)
+                left = typevartuple_index
+                right = plen - typevartuple_index - 1
+                var_tuple_index = None
+                fillarg = None
+                for k, arg in enumerate(args):
+                    if not isinstance(arg, type):
+                        subargs = getattr(arg, '__typing_unpacked_tuple_args__', None)
+                        if subargs and len(subargs) == 2 and subargs[-1] is ...:
+                            if var_tuple_index is not None:
+                                raise TypeError(
+                                    "More than one unpacked "
+                                    "arbitrary-length tuple argument"
+                                )
+                            var_tuple_index = k
+                            fillarg = subargs[0]
+                if var_tuple_index is not None:
+                    left = min(left, var_tuple_index)
+                    right = min(right, alen - var_tuple_index - 1)
+                elif left + right > alen:
+                    raise TypeError(f"Too few arguments for {alias};"
+                                    f" actual {alen}, expected at least {plen - 1}")
+                if left == alen - right and tvt.has_default():
+                    replacement = _unpack_args(tvt.__default__)
+                else:
+                    replacement = args[left: alen - right]
+
+                return (
+                    *args[:left],
+                    *([fillarg] * (typevartuple_index - left)),
+                    replacement,
+                    *([fillarg] * (plen - right - left - typevartuple_index - 1)),
+                    *args[alen - right:],
+                )
+
+            tvt.__typing_prepare_subst__ = _typevartuple_prepare_subst
             return tvt
 
         def __init_subclass__(self, *args, **kwds):
