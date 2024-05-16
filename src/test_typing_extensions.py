@@ -1,5 +1,4 @@
 import sys
-import os
 import abc
 import gc
 import io
@@ -5718,8 +5717,7 @@ class AllTests(BaseTestCase):
                     getattr(typing, item))
 
     def test_typing_extensions_compiles_with_opt(self):
-        file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                 'typing_extensions.py')
+        file_path = typing_extensions.__file__
         try:
             subprocess.check_output(f'{sys.executable} -OO {file_path}',
                                     stderr=subprocess.STDOUT,

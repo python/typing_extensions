@@ -1,0 +1,149 @@
+# Based on
+# https://packaging.python.org/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
+
+name: Test builds and publish Python distribution to PyPI
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Check package metadata
+        run: python scripts/check_package.py ${{ github.ref }}
+      - name: Install pypa/build
+        run: |
+          # Be wary of running `pip install` here, since it becomes easy for us to
+          # accidentally pick up typing_extensions as installed by a dependency
+          python -m pip install --upgrade build
+          python -m pip list
+      - name: Build a binary wheel and a source tarball
+        run: python -m build
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  test-wheel:
+    name: Test wheel
+    needs:
+      - build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Install wheel
+        run: |
+          export path_to_file=$(find dist -type f -name "typing_extensions-*.whl")
+          echo "::notice::Installing wheel: $path_to_file"
+          python -m pip install --user $path_to_file
+          python -m pip list
+      - name: Run typing_extensions tests against installed package
+        run: rm src/typing_extensions.py && python src/test_typing_extensions.py
+
+  test-sdist:
+    name: Test source distribution
+    needs:
+      - build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Unpack and test source distribution
+        run: |
+          export path_to_file=$(find dist -type f -name "typing_extensions-*.tar.gz")
+          echo "::notice::Unpacking source distribution: $path_to_file"
+          tar xzf $path_to_file -C dist/
+          cd ${path_to_file%.tar.gz}
+          python src/test_typing_extensions.py
+
+  test-sdist-installed:
+    name: Test installed source distribution
+    needs:
+      - build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Install source distribution
+        run: |
+          export path_to_file=$(find dist -type f -name "typing_extensions-*.tar.gz")
+          echo "::notice::Installing source distribution: $path_to_file"
+          python -m pip install --user $path_to_file
+          python -m pip list
+      - name: Run typing_extensions tests against installed package
+        run: rm src/typing_extensions.py && python src/test_typing_extensions.py
+
+  publish-to-pypi:
+    name: >-
+      Publish Python distribution to PyPI
+    if: github.event_name == 'release' # only publish to PyPI on releases
+    needs:
+      - test-sdist
+      - test-sdist-installed
+      - test-wheel
+      - build
+    runs-on: ubuntu-latest
+    environment:
+      name: publish
+      url: https://pypi.org/p/typing-extensions
+    permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Ensure exactly one sdist and one wheel have been downloaded
+        run: test $(ls *.tar.gz | wc -l) = 1 && test $(ls *.whl | wc -l) = 1
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
