@@ -5046,7 +5046,11 @@ class ParamSpecTests(BaseTestCase):
         # and makes other tests fail:
         try:
             proc = subprocess.run(
-                [sys.executable, "-c", code], check=True, capture_output=True, text=True,
+                [sys.executable, "-c", code],
+                check=True,
+                capture_output=True,
+                text=True,
+                shell=True,
             )
         except subprocess.CalledProcessError as exc:
             print("stdout", exc.stdout, sep="\n")
