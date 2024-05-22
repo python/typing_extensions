@@ -5044,9 +5044,14 @@ class ParamSpecTests(BaseTestCase):
 
         # Run this in an isolated process or it pollutes the environment
         # and makes other tests fail:
-        proc = subprocess.run(
-            [sys.executable, "-c", code], check=True, capture_output=True, text=True,
-        )
+        try:
+            proc = subprocess.run(
+                [sys.executable, "-c", code], check=True, capture_output=True, text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            print("stdout", exc.stdout, sep="\n")
+            print("stderr", exc.stderr, sep="\n")
+            raise
 
         # Sanity checks that assert the test is working as expected
         self.assertIsInstance(proc.stdout, str)
