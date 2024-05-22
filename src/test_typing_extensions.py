@@ -11,6 +11,7 @@ from functools import lru_cache
 import importlib
 import inspect
 import pickle
+import os
 import re
 import subprocess
 import tempfile
@@ -5046,7 +5047,11 @@ class ParamSpecTests(BaseTestCase):
         # and makes other tests fail:
         try:
             proc = subprocess.run(
-                [sys.executable, "-c", code], check=True, capture_output=True, text=True,
+                [sys.executable, "-c", code],
+                check=True,
+                capture_output=True,
+                text=True,
+                env=os.environ
             )
         except subprocess.CalledProcessError as exc:
             print("stdout", exc.stdout, sep="\n")
