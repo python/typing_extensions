@@ -1711,7 +1711,7 @@ else:
 
         def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
                      infer_variance=False, default=NoDefault):
-            super().__init__([self])
+            list.__init__(self, [self])
             self.__name__ = name
             self.__covariant__ = bool(covariant)
             self.__contravariant__ = bool(contravariant)
