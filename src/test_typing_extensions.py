@@ -5027,9 +5027,6 @@ class ParamSpecTests(BaseTestCase):
         code = textwrap.dedent(
             """\
             import sys, typing
-            import os
-            print(f'{os.getcwd()=}')
-            print(f'{os.environ["PYTHONPATH"]=}')
 
             def trace_call(*args):
                 return trace_call
