@@ -10,7 +10,6 @@ import copy
 from functools import lru_cache
 import importlib
 import inspect
-import os
 import pickle
 import re
 import subprocess
@@ -5051,7 +5050,7 @@ class ParamSpecTests(BaseTestCase):
                 check=True,
                 capture_output=True,
                 text=True,
-                env={**os.environ, "PYTHONPATH": "."},
+                cwd=".",
             )
         except subprocess.CalledProcessError as exc:
             print("stdout", exc.stdout, sep="\n")
