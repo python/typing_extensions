@@ -92,7 +92,9 @@ jobs:
           export path_to_file=$(find dist -type f -name "typing_extensions-*.tar.gz")
           echo "::notice::Unpacking source distribution: $path_to_file"
           tar xzf $path_to_file -C dist/
+          ls -a
           cd ${path_to_file%.tar.gz}
+          ls -a
           python src/test_typing_extensions.py
 
   test-sdist-installed:
