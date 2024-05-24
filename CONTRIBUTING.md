@@ -61,24 +61,10 @@ may have installed.
 - Update the version number in `typing_extensions/pyproject.toml` and in
   `typing_extensions/CHANGELOG.md`.
 
-- Make sure your environment is up to date
-
- - `git checkout main`
- - `git pull`
- - `python -m pip install --upgrade build twine`
-
-- Build the source and wheel distributions:
-
-  - `rm -rf dist/`
-  - `python -m build .`
-
-- Install the built distributions locally and test (if you were using `tox`, you already
-  tested the source distribution).
-
-- Run `twine upload dist/*`. Remember to use `__token__` as the username
-  and pass your API token as the password.
-
 - Create a new GitHub release at https://github.com/python/typing_extensions/releases/new.
   Details:
   - The tag should be just the version number, e.g. `4.1.1`.
   - Copy the release notes from `CHANGELOG.md`.
+
+- Release automation will finish the release. You'll have to manually
+  approve the last step before upload.
