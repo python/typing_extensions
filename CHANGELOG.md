@@ -1,4 +1,7 @@
-# Unreleased
+# Release 4.12.0 (May 23, 2024)
+
+This release is mostly the same as 4.12.0rc1 but fixes one more
+longstanding bug.
 
 - Fix incorrect behaviour of `typing_extensions.ParamSpec` on Python 3.8 and
   3.9 that meant that
