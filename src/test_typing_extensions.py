@@ -64,13 +64,14 @@ skip_if_py313_beta_1 = skipIf(
 )
 
 ANN_MODULE_SOURCE = '''\
+import sys
 from typing import List, Optional
 from functools import wraps
 
 try:
     __annotations__[1] = 2
 except NameError:
-    pass  # 3.14+
+    assert sys.version_info >= (3, 14)
 
 class C:
 
@@ -83,7 +84,7 @@ class M(type):
     try:
         __annotations__['123'] = 123
     except NameError:
-        pass  # 3.14+
+        assert sys.version_info >= (3, 14)
     o: type = object
 
 (pars): bool = True
