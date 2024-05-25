@@ -1,3 +1,8 @@
+# Unreleased
+
+- Preliminary changes for compatibility with the draft implementation
+  of PEP 649 in Python 3.14.
+
 # Release 4.12.0 (May 23, 2024)
 
 This release is mostly the same as 4.12.0rc1 but fixes one more
