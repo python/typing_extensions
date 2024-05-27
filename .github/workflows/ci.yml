@@ -110,9 +110,6 @@ jobs:
       - name: Lint implementation
         run: flake8 --color always
 
-      - name: Lint tests
-        run: flake8 --config=.flake8-tests src/test_typing_extensions.py --color always
-
   create-issue-on-failure:
     name: Create an issue if daily tests failed
     runs-on: ubuntu-latest

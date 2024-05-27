@@ -1,5 +1,4 @@
 [flake8]
-
 max-line-length = 90
 ignore =
   # irrelevant plugins
@@ -11,8 +10,7 @@ ignore =
   W503,
   # consistency with mypy
   W504
-exclude =
-  # tests have more relaxed formatting rules
-  # and its own specific config in .flake8-tests
-  src/test_typing_extensions.py,
+per-file-ignores =
+  # stylistic rules we don't care about in tests
+  src/test_typing_extensions.py:E302,E306,E501,E701,E704,
 noqa_require_code = true
