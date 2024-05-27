@@ -5,8 +5,9 @@
 
 import os.path
 import sys
-from sphinx.writers.html5 import HTML5Translator
+
 from docutils.nodes import Element
+from sphinx.writers.html5 import HTML5Translator
 
 sys.path.insert(0, os.path.abspath('.'))
 

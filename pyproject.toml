@@ -57,6 +57,46 @@ Documentation = "https://typing-extensions.readthedocs.io/"
 name = "Guido van Rossum, Jukka Lehtosalo, Łukasz Langa, Michael Lee"
 email = "levkivskyi@gmail.com"
 
+[project.optional-dependencies]
+dev = ["ruff==0.4.5"]
+
 [tool.flit.sdist]
 include = ["CHANGELOG.md", "README.md", "tox.ini", "*/*test*.py"]
 exclude = []
+
+[tool.ruff]
+line-length = 90
+target-version = "py38"
+fix = true
+
+[tool.ruff.lint]
+select = [
+    "B",
+    "C4",
+    "E",
+    "F",
+    "I",
+    "ISC001",
+    "PGH004",
+    "RUF",
+    "SIM201",
+    "SIM202",
+    "UP",
+    "W",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"!src/typing_extensions.py" = [
+    "B018",
+    "B024",
+    "C4",
+    "E302",
+    "E306",
+    "E501",
+    "E701",
+    "UP",
+]
+
+[tool.ruff.lint.isort]
+extra-standard-library = ["tomllib"]
+known-first-party = ["typing_extensions", "_typed_dict_test_helper"]

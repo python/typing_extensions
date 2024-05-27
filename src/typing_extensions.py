@@ -413,12 +413,12 @@ DefaultDict = typing.DefaultDict
 OrderedDict = typing.OrderedDict
 Counter = typing.Counter
 ChainMap = typing.ChainMap
-Text = typing.Text
+Text = typing.Text  # noqa: UP019
 TYPE_CHECKING = typing.TYPE_CHECKING
 
 
 if sys.version_info >= (3, 13, 0, "beta"):
-    from typing import ContextManager, AsyncContextManager, Generator, AsyncGenerator
+    from typing import AsyncContextManager, AsyncGenerator, ContextManager, Generator
 else:
     def _is_dunder(attr):
         return attr.startswith('__') and attr.endswith('__')
@@ -739,8 +739,8 @@ else:
         not their type signatures!
         """
         if not issubclass(cls, typing.Generic) or not getattr(cls, '_is_protocol', False):
-            raise TypeError('@runtime_checkable can be only applied to protocol classes,'
-                            ' got %r' % cls)
+            raise TypeError(f'@runtime_checkable can be only applied to protocol classes,'
+                            f' got {cls!r}')
         cls._is_runtime_protocol = True
 
         # typing.Protocol classes on <=3.11 break if we execute this block,
@@ -1265,7 +1265,7 @@ else:
 
         def __reduce__(self):
             return operator.getitem, (
-                Annotated, (self.__origin__,) + self.__metadata__
+                Annotated, (self.__origin__, *self.__metadata__)
             )
 
         def __eq__(self, other):
@@ -1391,7 +1391,7 @@ else:
             get_args(Callable[[], T][int]) == ([], int)
         """
         if isinstance(tp, _AnnotatedAlias):
-            return (tp.__origin__,) + tp.__metadata__
+            return (tp.__origin__, *tp.__metadata__)
         if isinstance(tp, (typing._GenericAlias, _typing_GenericAlias)):
             if getattr(tp, "_special", False):
                 return ()
@@ -1805,7 +1805,7 @@ def _concatenate_getitem(self, parameters):
 # 3.10+
 if hasattr(typing, 'Concatenate'):
     Concatenate = typing.Concatenate
-    _ConcatenateGenericAlias = typing._ConcatenateGenericAlias  # noqa: F811
+    _ConcatenateGenericAlias = typing._ConcatenateGenericAlias
 # 3.9
 elif sys.version_info[:2] >= (3, 9):
     @_ExtensionsSpecialForm
@@ -3236,7 +3236,7 @@ else:
 if hasattr(collections.abc, "Buffer"):
     Buffer = collections.abc.Buffer
 else:
-    class Buffer(abc.ABC):
+    class Buffer(abc.ABC):  # noqa: B024
         """Base class for classes that implement the buffer protocol.
 
         The buffer protocol allows Python objects to expose a low-level
