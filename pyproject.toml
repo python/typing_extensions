@@ -64,7 +64,6 @@ exclude = []
 [tool.ruff]
 line-length = 90
 target-version = "py38"
-fix = true
 
 [tool.ruff.lint]
 select = [
