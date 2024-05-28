@@ -122,10 +122,14 @@ skip_if_py313_beta_1 = skipIf(
 )
 
 ANN_MODULE_SOURCE = '''\
+import sys
 from typing import List, Optional
 from functools import wraps
 
-__annotations__[1] = 2
+try:
+    __annotations__[1] = 2
+except NameError:
+    assert sys.version_info >= (3, 14)
 
 class C:
 
@@ -135,8 +139,10 @@ from typing import Tuple
 x: int = 5; y: str = x; f: Tuple[int, int]
 
 class M(type):
-
-    __annotations__['123'] = 123
+    try:
+        __annotations__['123'] = 123
+    except NameError:
+        assert sys.version_info >= (3, 14)
     o: type = object
 
 (pars): bool = True
@@ -1368,7 +1374,10 @@ class GetTypeHintTests(BaseTestCase):
             del sys.modules[modname]
 
     def test_get_type_hints_modules(self):
-        ann_module_type_hints = {1: 2, 'f': Tuple[int, int], 'x': int, 'y': str}
+        if sys.version_info >= (3, 14):
+            ann_module_type_hints = {'f': Tuple[int, int], 'x': int, 'y': str}
+        else:
+            ann_module_type_hints = {1: 2, 'f': Tuple[int, int], 'x': int, 'y': str}
         self.assertEqual(gth(self.ann_module), ann_module_type_hints)
         self.assertEqual(gth(self.ann_module2), {})
         self.assertEqual(gth(self.ann_module3), {})
@@ -1377,7 +1386,10 @@ class GetTypeHintTests(BaseTestCase):
         self.assertEqual(gth(self.ann_module.C, self.ann_module.__dict__),
                          {'y': Optional[self.ann_module.C]})
         self.assertIsInstance(gth(self.ann_module.j_class), dict)
-        self.assertEqual(gth(self.ann_module.M), {'123': 123, 'o': type})
+        if sys.version_info >= (3, 14):
+            self.assertEqual(gth(self.ann_module.M), {'o': type})
+        else:
+            self.assertEqual(gth(self.ann_module.M), {'123': 123, 'o': type})
         self.assertEqual(gth(self.ann_module.D),
                          {'j': str, 'k': str, 'y': Optional[self.ann_module.C]})
         self.assertEqual(gth(self.ann_module.Y), {'z': int})
@@ -3050,7 +3062,7 @@ class ProtocolTests(BaseTestCase):
 
         acceptable_extra_attrs = {
             '_is_protocol', '_is_runtime_protocol', '__parameters__',
-            '__init__', '__annotations__', '__subclasshook__',
+            '__init__', '__annotations__', '__subclasshook__', '__annotate__'
         }
         self.assertLessEqual(vars(NonP).keys(), vars(C).keys() | acceptable_extra_attrs)
         self.assertLessEqual(

@@ -942,7 +942,13 @@ else:
                 tp_dict.__orig_bases__ = bases
 
             annotations = {}
-            own_annotations = ns.get('__annotations__', {})
+            if "__annotations__" in ns:
+                own_annotations = ns["__annotations__"]
+            elif "__annotate__" in ns:
+                # TODO: Use inspect.VALUE here, and make the annotations lazily evaluated
+                own_annotations = ns["__annotate__"](1)
+            else:
+                own_annotations = {}
             msg = "TypedDict('Name', {f0: t0, f1: t1, ...}); each t must be a type"
             if _TAKES_MODULE:
                 own_annotations = {
@@ -3104,7 +3110,13 @@ else:
                     raise TypeError(
                         'can only inherit from a NamedTuple type and Generic')
             bases = tuple(tuple if base is _NamedTuple else base for base in bases)
-            types = ns.get('__annotations__', {})
+            if "__annotations__" in ns:
+                types = ns["__annotations__"]
+            elif "__annotate__" in ns:
+                # TODO: Use inspect.VALUE here, and make the annotations lazily evaluated
+                types = ns["__annotate__"](1)
+            else:
+                types = {}
             default_names = []
             for field_name in types:
                 if field_name in ns:
