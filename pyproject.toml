@@ -57,9 +57,6 @@ Documentation = "https://typing-extensions.readthedocs.io/"
 name = "Guido van Rossum, Jukka Lehtosalo, Łukasz Langa, Michael Lee"
 email = "levkivskyi@gmail.com"
 
-[project.optional-dependencies]
-dev = ["ruff==0.4.5"]
-
 [tool.flit.sdist]
 include = ["CHANGELOG.md", "README.md", "tox.ini", "*/*test*.py"]
 exclude = []

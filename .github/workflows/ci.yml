@@ -101,7 +101,7 @@ jobs:
           cache: "pip"
           cache-dependency-path: "test-requirements.txt"
       - name: Install dependencies
-        run: pip install -e '.[dev]'
+        run: pip install -r test-requirements.txt
       - name: Lint implementation
         run: ruff check
 
