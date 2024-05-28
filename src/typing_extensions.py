@@ -413,7 +413,7 @@ DefaultDict = typing.DefaultDict
 OrderedDict = typing.OrderedDict
 Counter = typing.Counter
 ChainMap = typing.ChainMap
-Text = typing.Text  # noqa: UP019
+Text = typing.Text
 TYPE_CHECKING = typing.TYPE_CHECKING
 
 

@@ -823,11 +823,11 @@ class RequiredTests(BaseTestCase):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
-        self.assertEqual(repr(Required), mod_name + '.Required')
+        self.assertEqual(repr(Required), f'{mod_name}.Required')
         cv = Required[int]
-        self.assertEqual(repr(cv), mod_name + '.Required[int]')
+        self.assertEqual(repr(cv), f'{mod_name}.Required[int]')
         cv = Required[Employee]
-        self.assertEqual(repr(cv), mod_name + '.Required[%s.Employee]' % __name__)
+        self.assertEqual(repr(cv), f'{mod_name}.Required[{__name__}.Employee]')
 
     def test_cannot_subclass(self):
         with self.assertRaises(TypeError):
@@ -868,11 +868,11 @@ class NotRequiredTests(BaseTestCase):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
-        self.assertEqual(repr(NotRequired), mod_name + '.NotRequired')
+        self.assertEqual(repr(NotRequired), f'{mod_name}.NotRequired')
         cv = NotRequired[int]
-        self.assertEqual(repr(cv), mod_name + '.NotRequired[int]')
+        self.assertEqual(repr(cv), f'{mod_name}.NotRequired[int]')
         cv = NotRequired[Employee]
-        self.assertEqual(repr(cv), mod_name + '.NotRequired[%s.Employee]' % __name__)
+        self.assertEqual(repr(cv), f'{mod_name}.NotRequired[{ __name__}.Employee]')
 
     def test_cannot_subclass(self):
         with self.assertRaises(TypeError):
@@ -930,7 +930,7 @@ class LiteralTests(BaseTestCase):
         Literal[int]
         Literal[Literal[1, 2], Literal[4, 5]]
         Literal[3j + 2, ..., ()]
-        Literal[b"foo", u"bar"]
+        Literal[b"foo", "bar"]
         Literal[{"foo": 3, "bar": 4}]
         Literal[T]
 
@@ -1805,7 +1805,7 @@ class GeneratorTests(BaseTestCase):
         self.assertIsSubclass(D, A)
         self.assertIsSubclass(D, B)
 
-        class M(): ...
+        class M: ...
         collections.abc.Generator.register(M)
         self.assertIsSubclass(M, typing_extensions.Generator)
 
@@ -3332,7 +3332,7 @@ class ProtocolTests(BaseTestCase):
         @runtime_checkable
         class P(Protocol):
             x: int = None
-        class B(object): pass
+        class B: pass
         self.assertNotIsInstance(B(), P)
         class C:
             x = 1
@@ -5301,7 +5301,7 @@ class LiteralStringTests(BaseTestCase):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
-        self.assertEqual(repr(LiteralString), '{}.LiteralString'.format(mod_name))
+        self.assertEqual(repr(LiteralString), f'{mod_name}.LiteralString')
 
     def test_cannot_subscript(self):
         with self.assertRaises(TypeError):
@@ -5355,7 +5355,7 @@ class SelfTests(BaseTestCase):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
-        self.assertEqual(repr(Self), '{}.Self'.format(mod_name))
+        self.assertEqual(repr(Self), f'{mod_name}.Self')
 
     def test_cannot_subscript(self):
         with self.assertRaises(TypeError):
@@ -5614,7 +5614,7 @@ class FinalDecoratorTests(BaseTestCase):
             def prop(self): ...
 
             @final
-            @lru_cache()  # noqa: B019
+            @lru_cache  # noqa: B019
             def cached(self): ...
 
         # Use getattr_static because the descriptor returns the
