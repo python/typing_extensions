@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from typing import Generic, Optional, T
-from typing_extensions import TypedDict, Annotated, Required
+
+from typing_extensions import Annotated, Required, TypedDict
 
 
 # this class must not be imported into test_typing_extensions.py at top level, otherwise

@@ -1,2 +1,1 @@
-flake8
-flake8-bugbear
+ruff==0.4.5

@@ -1,39 +1,97 @@
-import sys
 import abc
-import gc
-import io
-import contextlib
 import collections
-from collections import defaultdict
 import collections.abc
+import contextlib
 import copy
-from functools import lru_cache
+import gc
 import importlib
 import inspect
+import io
 import pickle
 import re
 import subprocess
+import sys
 import tempfile
 import textwrap
 import types
-from pathlib import Path
-from unittest import TestCase, main, skipUnless, skipIf
-from unittest.mock import patch
 import typing
 import warnings
+from collections import defaultdict
+from functools import lru_cache
+from pathlib import Path
+from unittest import TestCase, main, skipIf, skipUnless
+from unittest.mock import patch
 
 import typing_extensions
-from typing_extensions import NoReturn, Any, ClassVar, Final, IntVar, Literal, Type, NewType, TypedDict, Self
-from typing_extensions import TypeAlias, ParamSpec, Concatenate, ParamSpecArgs, ParamSpecKwargs, TypeGuard
-from typing_extensions import Awaitable, AsyncIterator, AsyncContextManager, Required, NotRequired, ReadOnly
-from typing_extensions import Protocol, runtime, runtime_checkable, Annotated, final, is_typeddict
-from typing_extensions import TypeVarTuple, Unpack, dataclass_transform, reveal_type, Never, assert_never, LiteralString
-from typing_extensions import assert_type, get_type_hints, get_origin, get_args, get_original_bases
-from typing_extensions import clear_overloads, get_overloads, overload, Iterator
-from typing_extensions import NamedTuple, TypeIs, no_type_check, Dict
-from typing_extensions import override, deprecated, Buffer, TypeAliasType, TypeVar, get_protocol_members, is_protocol
-from typing_extensions import Doc, NoDefault, List, Union, AnyStr, Iterable, Generic, Optional, Set, Tuple, Callable
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
+from typing_extensions import (
+    Annotated,
+    Any,
+    AnyStr,
+    AsyncContextManager,
+    AsyncIterator,
+    Awaitable,
+    Buffer,
+    Callable,
+    ClassVar,
+    Concatenate,
+    Dict,
+    Doc,
+    Final,
+    Generic,
+    IntVar,
+    Iterable,
+    Iterator,
+    List,
+    Literal,
+    LiteralString,
+    NamedTuple,
+    Never,
+    NewType,
+    NoDefault,
+    NoReturn,
+    NotRequired,
+    Optional,
+    ParamSpec,
+    ParamSpecArgs,
+    ParamSpecKwargs,
+    Protocol,
+    ReadOnly,
+    Required,
+    Self,
+    Set,
+    Tuple,
+    Type,
+    TypeAlias,
+    TypeAliasType,
+    TypedDict,
+    TypeGuard,
+    TypeIs,
+    TypeVar,
+    TypeVarTuple,
+    Union,
+    Unpack,
+    assert_never,
+    assert_type,
+    clear_overloads,
+    dataclass_transform,
+    deprecated,
+    final,
+    get_args,
+    get_origin,
+    get_original_bases,
+    get_overloads,
+    get_protocol_members,
+    get_type_hints,
+    is_protocol,
+    is_typeddict,
+    no_type_check,
+    overload,
+    override,
+    reveal_type,
+    runtime,
+    runtime_checkable,
+)
 
 NoneType = type(None)
 T = TypeVar("T")
@@ -179,14 +237,14 @@ def g_bad_ann():
 class BaseTestCase(TestCase):
     def assertIsSubclass(self, cls, class_or_tuple, msg=None):
         if not issubclass(cls, class_or_tuple):
-            message = f'{cls!r} is not a subclass of {repr(class_or_tuple)}'
+            message = f'{cls!r} is not a subclass of {class_or_tuple!r}'
             if msg is not None:
                 message += f' : {msg}'
             raise self.failureException(message)
 
     def assertNotIsSubclass(self, cls, class_or_tuple, msg=None):
         if issubclass(cls, class_or_tuple):
-            message = f'{cls!r} is a subclass of {repr(class_or_tuple)}'
+            message = f'{cls!r} is a subclass of {class_or_tuple!r}'
             if msg is not None:
                 message += f' : {msg}'
             raise self.failureException(message)
@@ -765,11 +823,11 @@ class RequiredTests(BaseTestCase):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
-        self.assertEqual(repr(Required), mod_name + '.Required')
+        self.assertEqual(repr(Required), f'{mod_name}.Required')
         cv = Required[int]
-        self.assertEqual(repr(cv), mod_name + '.Required[int]')
+        self.assertEqual(repr(cv), f'{mod_name}.Required[int]')
         cv = Required[Employee]
-        self.assertEqual(repr(cv), mod_name + '.Required[%s.Employee]' % __name__)
+        self.assertEqual(repr(cv), f'{mod_name}.Required[{__name__}.Employee]')
 
     def test_cannot_subclass(self):
         with self.assertRaises(TypeError):
@@ -810,11 +868,11 @@ class NotRequiredTests(BaseTestCase):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
-        self.assertEqual(repr(NotRequired), mod_name + '.NotRequired')
+        self.assertEqual(repr(NotRequired), f'{mod_name}.NotRequired')
         cv = NotRequired[int]
-        self.assertEqual(repr(cv), mod_name + '.NotRequired[int]')
+        self.assertEqual(repr(cv), f'{mod_name}.NotRequired[int]')
         cv = NotRequired[Employee]
-        self.assertEqual(repr(cv), mod_name + '.NotRequired[%s.Employee]' % __name__)
+        self.assertEqual(repr(cv), f'{mod_name}.NotRequired[{ __name__}.Employee]')
 
     def test_cannot_subclass(self):
         with self.assertRaises(TypeError):
@@ -872,7 +930,7 @@ class LiteralTests(BaseTestCase):
         Literal[int]
         Literal[Literal[1, 2], Literal[4, 5]]
         Literal[3j + 2, ..., ()]
-        Literal[b"foo", u"bar"]
+        Literal[b"foo", "bar"]
         Literal[{"foo": 3, "bar": 4}]
         Literal[T]
 
@@ -1747,7 +1805,7 @@ class GeneratorTests(BaseTestCase):
         self.assertIsSubclass(D, A)
         self.assertIsSubclass(D, B)
 
-        class M(): ...
+        class M: ...
         collections.abc.Generator.register(M)
         self.assertIsSubclass(M, typing_extensions.Generator)
 
@@ -2988,7 +3046,7 @@ class ProtocolTests(BaseTestCase):
         class NonPR(PR): pass
         class C(metaclass=abc.ABCMeta):
             x = 1
-        class D(metaclass=abc.ABCMeta):  # noqa: B024
+        class D(metaclass=abc.ABCMeta):
             def meth(self): pass  # noqa: B027
         self.assertNotIsInstance(C(), NonP)
         self.assertNotIsInstance(D(), NonPR)
@@ -3274,7 +3332,7 @@ class ProtocolTests(BaseTestCase):
         @runtime_checkable
         class P(Protocol):
             x: int = None
-        class B(object): pass
+        class B: pass
         self.assertNotIsInstance(B(), P)
         class C:
             x = 1
@@ -5243,7 +5301,7 @@ class LiteralStringTests(BaseTestCase):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
-        self.assertEqual(repr(LiteralString), '{}.LiteralString'.format(mod_name))
+        self.assertEqual(repr(LiteralString), f'{mod_name}.LiteralString')
 
     def test_cannot_subscript(self):
         with self.assertRaises(TypeError):
@@ -5297,7 +5355,7 @@ class SelfTests(BaseTestCase):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
-        self.assertEqual(repr(Self), '{}.Self'.format(mod_name))
+        self.assertEqual(repr(Self), f'{mod_name}.Self')
 
     def test_cannot_subscript(self):
         with self.assertRaises(TypeError):
@@ -5556,7 +5614,7 @@ class FinalDecoratorTests(BaseTestCase):
             def prop(self): ...
 
             @final
-            @lru_cache()  # noqa: B019
+            @lru_cache  # noqa: B019
             def cached(self): ...
 
         # Use getattr_static because the descriptor returns the
@@ -6312,8 +6370,8 @@ class TypeVarTests(BaseTestCase):
             X = TypeVar('X')
             # use a string because str doesn't implement
             # __or__/__ror__ itself
-            self.assertEqual(X | "x", Union[X, "x"])  # noqa: F821
-            self.assertEqual("x" | X, Union["x", X])  # noqa: F821
+            self.assertEqual(X | "x", Union[X, "x"])
+            self.assertEqual("x" | X, Union["x", X])
             # make sure the order is correct
             self.assertEqual(get_args(X | "x"), (X, typing.ForwardRef("x")))
             self.assertEqual(get_args("x" | X), (typing.ForwardRef("x"), X))

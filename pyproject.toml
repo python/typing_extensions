@@ -60,3 +60,42 @@ email = "levkivskyi@gmail.com"
 [tool.flit.sdist]
 include = ["CHANGELOG.md", "README.md", "tox.ini", "*/*test*.py"]
 exclude = []
+
+[tool.ruff]
+line-length = 90
+target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+    "B",
+    "C4",
+    "E",
+    "F",
+    "I",
+    "ISC001",
+    "PGH004",
+    "RUF",
+    "SIM201",
+    "SIM202",
+    "UP",
+    "W",
+]
+
+# Ignore various "modernization" rules that tell you off for importing/using
+# deprecated things from the typing module, etc.
+ignore = ["UP006", "UP007", "UP013", "UP014", "UP019", "UP035", "UP038"]
+
+[tool.ruff.lint.per-file-ignores]
+"!src/typing_extensions.py" = [
+    "B018",
+    "B024",
+    "C4",
+    "E302",
+    "E306",
+    "E501",
+    "E701",
+]
+
+[tool.ruff.lint.isort]
+extra-standard-library = ["tomllib"]
+known-first-party = ["typing_extensions", "_typed_dict_test_helper"]

@@ -13,6 +13,7 @@ permissions:
   contents: read
 
 env:
+  FORCE_COLOR: 1
   PIP_DISABLE_PIP_VERSION_CHECK: 1
 
 concurrency:
@@ -99,16 +100,10 @@ jobs:
           python-version: "3"
           cache: "pip"
           cache-dependency-path: "test-requirements.txt"
-
       - name: Install dependencies
-        run: |
-          pip install -r test-requirements.txt
-          # not included in test-requirements.txt as it depends on typing-extensions,
-          # so it's a pain to have it installed locally
-          pip install flake8-noqa
-
+        run: pip install -r test-requirements.txt
       - name: Lint implementation
-        run: flake8 --color always
+        run: ruff check
 
   create-issue-on-failure:
     name: Create an issue if daily tests failed
