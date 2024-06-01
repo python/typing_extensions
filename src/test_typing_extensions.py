@@ -4769,6 +4769,14 @@ class AnnotatedTests(BaseTestCase):
         X = List[Annotated[T, 5]]
         self.assertEqual(X[int], List[Annotated[int, 5]])
 
+    def test_nested_annotated_with_unhashable_metadata(self):
+        X = Annotated[
+            List[Annotated[str, {"unhashable_metadata"}]],
+            "metadata"
+        ]
+        self.assertEqual(X.__origin__, List[Annotated[str, {"unhashable_metadata"}]])
+        self.assertEqual(X.__metadata__, ("metadata",))
+
 
 class GetTypeHintsTests(BaseTestCase):
     def test_get_type_hints(self):

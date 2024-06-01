@@ -2958,9 +2958,9 @@ def _has_generic_or_protocol_as_origin() -> bool:
     except AttributeError:
         return False  # err on the side of leniency
     else:
-        return frame.f_locals.get("origin") in {
+        return frame.f_locals.get("origin") in (
             typing.Generic, Protocol, typing.Protocol
-        }
+        )
 
 
 _TYPEVARTUPLE_TYPES = {TypeVarTuple, getattr(typing, "TypeVarTuple", None)}

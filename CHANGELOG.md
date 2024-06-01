@@ -2,6 +2,9 @@
 
 - Preliminary changes for compatibility with the draft implementation
   of PEP 649 in Python 3.14.
+- Fix regression in v4.12.0 where nested `Annotated` types would cause
+  `TypeError` to be raised if the nested `Annotated` type had unhashable
+  metadata.
 
 # Release 4.12.0 (May 23, 2024)
 
