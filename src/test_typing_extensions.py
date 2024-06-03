@@ -6620,7 +6620,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
     @skip_if_py313_beta_1
     def test_generic_with_broken_eq(self):
         # See https://github.com/python/typing_extensions/pull/422 for context
-        class BrokenEq(abc.ABCMeta):
+        class BrokenEq(type):
             def __eq__(self, other):
                 if other is typing_extensions.Protocol:
                     raise TypeError("I'm broken")
