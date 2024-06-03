@@ -2958,7 +2958,8 @@ def _has_generic_or_protocol_as_origin() -> bool:
     except AttributeError:
         return False  # err on the side of leniency
     else:
-        # If we somehow get invoked from outside typing.py, also err on the side of leniency
+        # If we somehow get invoked from outside typing.py,
+        # also err on the side of leniency
         if frame.f_globals.get("__name__") != "typing":
             return False
         origin = frame.f_locals.get("origin")
