@@ -2954,8 +2954,10 @@ if not _PEP_696_IMPLEMENTED:
 def _has_generic_or_protocol_as_origin() -> bool:
     try:
         frame = sys._getframe(2)
-    # not all platforms have sys._getframe()
-    except AttributeError:
+    # - Catch AttributeError: not all Python implementations have sys._getframe()
+    # - Catch ValueError: maybe we're called from an unexpected module
+    #   and the call stack isn't deep enough
+    except (AttributeError, ValueError):
         return False  # err on the side of leniency
     else:
         # If we somehow get invoked from outside typing.py,
