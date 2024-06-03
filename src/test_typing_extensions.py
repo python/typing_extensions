@@ -6617,6 +6617,22 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         a4 = Callable[[Unpack[Ts]], T]
         self.assertEqual(a4.__args__, (Unpack[Ts], T))
 
+    @skip_if_py313_beta_1
+    def test_generic_with_broken_eq(self):
+        # See https://github.com/python/typing_extensions/pull/422 for context
+        class BrokenEq(type):
+            def __eq__(self, other):
+                if other is typing_extensions.Protocol:
+                    raise TypeError("I'm broken")
+                return False
+
+        class G(Generic[T], metaclass=BrokenEq):
+            pass
+
+        alias = G[int]
+        self.assertIs(get_origin(alias), G)
+        self.assertEqual(get_args(alias), (int,))
+
     @skipIf(
         sys.version_info < (3, 11, 1),
         "Not yet backported for older versions of Python"
