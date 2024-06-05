@@ -3613,7 +3613,7 @@ _PEP_649_OR_749_IMPLEMENTED = (
 )
 
 
-class Format(int, enum.Enum):
+class Format(enum.IntEnum):
     VALUE = 1
     FORWARDREF = 2
     SOURCE = 3
