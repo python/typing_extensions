@@ -3659,9 +3659,7 @@ else:
             typing_extensions.get_annotations(obj, format=Format.FORWARDREF)
 
         """
-        if format not in (Format.VALUE, Format.FORWARDREF, Format.SOURCE):
-            raise ValueError(f"format must be one of {Format.VALUE}, "
-                             f"{Format.FORWARDREF}, {Format.SOURCE}")
+        format = Format(format)
 
         if eval_str and format != Format.VALUE:
             raise ValueError("eval_str=True is only supported with format=Format.VALUE")
