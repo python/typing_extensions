@@ -1,5 +1,8 @@
 # Unreleased
 
+- Add `typing_extensions.get_annotations`, a backport of
+  `inspect.get_annotations` that adds features specified
+  by PEP 649. Patch by Jelle Zijlstra.
 - Fix regression in v4.12.0 where specialization of certain
   generics with an overridden `__eq__` method would raise errors.
   Patch by Jelle Zijlstra.

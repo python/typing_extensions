@@ -747,6 +747,25 @@ Functions
 
    .. versionadded:: 4.2.0
 
+.. function:: get_annotations(obj, *, globals=None, locals=None, eval_str=False, format=Format.VALUE)
+
+   See :py:func:`inspect.get_annotations`. In the standard library since Python 3.10.
+
+   ``typing_extensions`` adds the keyword argument ``format``, as specified
+   by :pep:`649`. The supported formats are listed in the :class:`Format` enum.
+   The default format, :attr:`Format.VALUE`, behaves the same across all versions.
+   For the other two formats, ``typing_extensions`` provides a rough approximation
+   of the :pep:`649` behavior on versions of Python that do not support it.
+
+   The purpose of this backport is to allow users who would like to use
+   :attr:`Format.FORWARDREF` or :attr:`Format.SOURCE` semantics once
+   :pep:`649` is implemented, but who also
+   want to support earlier Python versions, to simply write::
+
+      typing_extensions.get_annotations(obj, format=Format.FORWARDREF)
+
+   .. versionadded:: 4.13.0
+
 .. function:: get_args(tp)
 
    See :py:func:`typing.get_args`. In ``typing`` since 3.8.
@@ -857,6 +876,45 @@ Functions
 
    .. versionadded:: 4.1.0
 
+Enums
+~~~~~
+
+.. class:: Format
+
+   The formats for evaluating annotations introduced by :pep:`649`.
+   Members of this enum can be passed as the *format* argument
+   to :func:`get_annotations`.
+
+   The final place of this enum in the standard library has not yet
+   been determined (see :pep:`649` and :pep:`749`), but the names
+   and integer values are stable and will continue to work.
+
+   .. attribute:: VALUE
+
+      Equal to 1. The default value. The function will return the conventional Python values
+      for the annotations. This format is identical to the return value for
+      the function under earlier versions of Python.
+
+   .. attribute:: FORWARDREF
+
+      Equal to 2. When :pep:`649` is implemented, this format will attempt to return the
+      conventional Python values for the annotations. However, if it encounters
+      an undefined name, it dynamically creates a proxy object (a ForwardRef)
+      that substitutes for that value in the expression.
+
+      ``typing_extensions`` emulates this value on versions of Python which do
+      not support :pep:`649` by returning the same value as for ``VALUE`` semantics.
+
+   .. attribute:: SOURCE
+
+      Equal to 3. When :pep:`649` is implemented, this format will produce an annotation
+      dictionary where the values have been replaced by strings containing
+      an approximation of the original source code for the annotation expressions.
+
+      ``typing_extensions`` emulates this by evaluating the annotations using
+      ``VALUE`` semantics and then stringifying the results.
+
+   .. versionadded:: 4.13.0
 
 Annotation metadata
 ~~~~~~~~~~~~~~~~~~~
