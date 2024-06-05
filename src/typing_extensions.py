@@ -3660,7 +3660,8 @@ else:
 
         """
         if format not in (Format.VALUE, Format.FORWARDREF, Format.SOURCE):
-            raise ValueError(f"format must be one of {Format.VALUE}, {Format.FORWARDREF}, {Format.SOURCE}")
+            raise ValueError(f"format must be one of {Format.VALUE}, "
+                             f"{Format.FORWARDREF}, {Format.SOURCE}")
 
         if eval_str and format != Format.VALUE:
             raise ValueError("eval_str=True is only supported with format=Format.VALUE")
@@ -3686,7 +3687,7 @@ else:
         elif isinstance(obj, _types.ModuleType):
             # module
             ann = getattr(obj, '__annotations__', None)
-            obj_globals = getattr(obj, '__dict__')
+            obj_globals = obj.__dict__
             obj_locals = None
             unwrap = None
         elif callable(obj):

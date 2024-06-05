@@ -23,9 +23,13 @@ from pathlib import Path
 from unittest import TestCase, main, skipIf, skipUnless
 from unittest.mock import patch
 
+import _inspect_stock_annotations
+import _inspect_stringized_annotations
+import _inspect_stringized_annotations_2
 import typing_extensions
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 from typing_extensions import (
+    _PEP_649_OR_749_IMPLEMENTED,
     Annotated,
     Any,
     AnyStr,
@@ -94,7 +98,6 @@ from typing_extensions import (
     reveal_type,
     runtime,
     runtime_checkable,
-    _PEP_649_OR_749_IMPLEMENTED,
 )
 
 NoneType = type(None)
@@ -7051,7 +7054,7 @@ class TestGetAnnotations(BaseTestCase):
         def f1(a: int):
             pass
 
-        def f2(a: "undefined"):
+        def f2(a: "undefined"):  # noqa: F821
             pass
 
         self.assertEqual(
@@ -7129,7 +7132,7 @@ class TestGetAnnotations(BaseTestCase):
         )
 
     def test_stock_annotations_in_module(self):
-        import _inspect_stock_annotations as isa
+        isa = _inspect_stock_annotations
 
         for kwargs in [
             {},
@@ -7244,7 +7247,7 @@ class TestGetAnnotations(BaseTestCase):
         )
 
     def test_stock_annotations_on_wrapper(self):
-        import _inspect_stock_annotations as isa
+        isa = _inspect_stock_annotations
 
         wrapped = times_three(isa.function)
         self.assertEqual(wrapped(1, "x"), isa.MyClass(3, "xxx"))
@@ -7272,7 +7275,7 @@ class TestGetAnnotations(BaseTestCase):
         )
 
     def test_stringized_annotations_in_module(self):
-        import _inspect_stringized_annotations as isa
+        isa = _inspect_stringized_annotations
         for kwargs in [
             {},
             {"eval_str": False},
@@ -7342,13 +7345,13 @@ class TestGetAnnotations(BaseTestCase):
                 )
 
     def test_stringized_annotations_in_empty_module(self):
-        import _inspect_stringized_annotations_2 as isa2
+        isa2 = _inspect_stringized_annotations_2
         self.assertEqual(get_annotations(isa2), {})
         self.assertEqual(get_annotations(isa2, eval_str=True), {})
         self.assertEqual(get_annotations(isa2, eval_str=False), {})
 
     def test_stringized_annotations_on_wrapper(self):
-        import _inspect_stringized_annotations as isa
+        isa = _inspect_stringized_annotations
         wrapped = times_three(isa.function)
         self.assertEqual(wrapped(1, "x"), isa.MyClass(3, "xxx"))
         self.assertIsNot(wrapped.__globals__, isa.function.__globals__)
@@ -7366,7 +7369,7 @@ class TestGetAnnotations(BaseTestCase):
         )
 
     def test_stringized_annotations_on_class(self):
-        import _inspect_stringized_annotations as isa
+        isa = _inspect_stringized_annotations
         # test that local namespace lookups work
         self.assertEqual(
             get_annotations(isa.MyClassWithLocalAnnotations),
