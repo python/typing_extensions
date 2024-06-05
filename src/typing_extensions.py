@@ -3622,7 +3622,8 @@ class Format(int, enum.Enum):
 if _PEP_649_OR_749_IMPLEMENTED:
     get_annotations = inspect.get_annotations
 else:
-    def get_annotations(obj, *, globals=None, locals=None, eval_str=False):
+    def get_annotations(obj, *, globals=None, locals=None, eval_str=False,
+                        format=Format.VALUE):
         """Compute the annotations dict for an object.
 
         obj may be a callable, class, or module.
@@ -3632,41 +3633,38 @@ else:
         it's called; calling it twice on the same object will return two
         different but equivalent dicts.
 
-        This function handles several details for you:
+        This is a backport of `inspect.get_annotations`, which has been
+        in the standard library since Python 3.10. See the standard library
+        documentation for more:
 
-        * If eval_str is true, values of type str will
-            be un-stringized using eval().  This is intended
-            for use with stringized annotations
-            ("from __future__ import annotations").
-        * If obj doesn't have an annotations dict, returns an
-            empty dict.  (Functions and methods always have an
-            annotations dict; classes, modules, and other types of
-            callables may not.)
-        * Ignores inherited annotations on classes.  If a class
-            doesn't have its own annotations dict, returns an empty dict.
-        * All accesses to object members and dict values are done
-            using getattr() and dict.get() for safety.
-        * Always, always, always returns a freshly-created dict.
+            https://docs.python.org/3/library/inspect.html#inspect.get_annotations
 
-        eval_str controls whether or not values of type str are replaced
-        with the result of calling eval() on those values:
+        This backport adds the *format* argument introduced by PEP 649. The
+        three formats supported are:
+        * VALUE: the annotations are returned as-is. This is the default and
+          it is compatible with the behavior on previous Python versions.
+        * FORWARDREF: return annotations as-is if possible, but replace any
+          undefined names with ForwardRef objects. The implementation proposed by
+          PEP 649 relies on language changes that cannot be backported; the
+          typing-extensions implementation simply returns the same result as VALUE.
+        * SOURCE: return annotations as strings, in a format close to the original
+          source. Again, this behavior cannot be replicated directly in a backport.
+          As an approximation, typing-extensions retrieves the annotations under
+          VALUE semantics and then stringifies them.
 
-        * If eval_str is true, eval() is called on values of type str.
-        * If eval_str is false (the default), values of type str are unchanged.
+        The purpose of this backport is to allow users who would like to use
+        FORWARDREF or SOURCE semantics once PEP 649 is implemented, but who also
+        want to support earlier Python versions, to simply write:
 
-        globals and locals are passed in to eval(); see the documentation
-        for eval() for more information.  If either globals or locals is
-        None, this function may replace that value with a context-specific
-        default, contingent on type(obj):
+            typing_extensions.get_annotations(obj, format=Format.FORWARDREF)
 
-        * If obj is a module, globals defaults to obj.__dict__.
-        * If obj is a class, globals defaults to
-            sys.modules[obj.__module__].__dict__ and locals
-            defaults to the obj class namespace.
-        * If obj is a callable, globals defaults to obj.__globals__,
-            although if obj is a wrapped function (using
-            functools.update_wrapper()) it is first unwrapped.
         """
+        if format not in (Format.VALUE, Format.FORWARDREF, Format.SOURCE):
+            raise ValueError(f"format must be one of {Format.VALUE}, {Format.FORWARDREF}, {Format.SOURCE}")
+
+        if eval_str and format != Format.VALUE:
+            raise ValueError("eval_str=True is only supported with format=Format.VALUE")
+
         if isinstance(obj, type):
             # class
             obj_dict = getattr(obj, '__dict__', None)
@@ -3699,6 +3697,9 @@ else:
             obj_globals = getattr(obj, '__globals__', None)
             obj_locals = None
             unwrap = obj
+        elif hasattr(obj, '__annotations__'):
+            ann = obj.__annotations__
+            obj_globals = obj_locals = unwrap = None
         else:
             raise TypeError(f"{obj!r} is not a module, class, or callable.")
 
@@ -3712,6 +3713,11 @@ else:
             return {}
 
         if not eval_str:
+            if format == Format.SOURCE:
+                return {
+                    key: value if isinstance(value, str) else typing._type_repr(value)
+                    for key, value in ann.items()
+                }
             return dict(ann)
 
         if unwrap is not None:
