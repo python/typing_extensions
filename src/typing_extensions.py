@@ -3661,7 +3661,7 @@ else:
         """
         format = Format(format)
 
-        if eval_str and format != Format.VALUE:
+        if eval_str and format is not Format.VALUE:
             raise ValueError("eval_str=True is only supported with format=Format.VALUE")
 
         if isinstance(obj, type):
@@ -3712,7 +3712,7 @@ else:
             return {}
 
         if not eval_str:
-            if format == Format.SOURCE:
+            if format is Format.SOURCE:
                 return {
                     key: value if isinstance(value, str) else typing._type_repr(value)
                     for key, value in ann.items()
