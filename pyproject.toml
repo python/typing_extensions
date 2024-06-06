@@ -58,7 +58,7 @@ name = "Guido van Rossum, Jukka Lehtosalo, Łukasz Langa, Michael Lee"
 email = "levkivskyi@gmail.com"
 
 [tool.flit.sdist]
-include = ["CHANGELOG.md", "README.md", "tox.ini", "*/*test*.py", "*/*inspect*.py"]
+include = ["CHANGELOG.md", "README.md", "tox.ini", "*/*test*.py"]
 exclude = []
 
 [tool.ruff]
@@ -83,7 +83,7 @@ select = [
 
 # Ignore various "modernization" rules that tell you off for importing/using
 # deprecated things from the typing module, etc.
-ignore = ["UP006", "UP007", "UP013", "UP014", "UP019", "UP035", "UP037", "UP038"]
+ignore = ["UP006", "UP007", "UP013", "UP014", "UP019", "UP035", "UP038"]
 
 [tool.ruff.lint.per-file-ignores]
 "!src/typing_extensions.py" = [
@@ -98,10 +98,4 @@ ignore = ["UP006", "UP007", "UP013", "UP014", "UP019", "UP035", "UP037", "UP038"
 
 [tool.ruff.lint.isort]
 extra-standard-library = ["tomllib"]
-known-first-party = [
-    "typing_extensions",
-    "_typed_dict_test_helper",
-    "_inspect_stock_annotations",
-    "_inspect_stringized_annotations",
-    "_inspect_stringized_annotations_2",
-]
+known-first-party = ["typing_extensions", "_typed_dict_test_helper"]
