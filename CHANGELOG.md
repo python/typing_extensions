@@ -1,8 +1,9 @@
-# Unreleased
+# Release 4.12.2 (June 7, 2024)
 
 - Fix regression in v4.12.0 where specialization of certain
   generics with an overridden `__eq__` method would raise errors.
   Patch by Jelle Zijlstra.
+- Fix tests so they pass on 3.13.0b2
 
 # Release 4.12.1 (June 1, 2024)
 

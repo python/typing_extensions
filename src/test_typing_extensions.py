@@ -6617,7 +6617,10 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         a4 = Callable[[Unpack[Ts]], T]
         self.assertEqual(a4.__args__, (Unpack[Ts], T))
 
-    @skip_if_py313_beta_1
+    @skipIf(
+        typing_extensions.Protocol is typing.Protocol,
+        "Test currently fails with the CPython version of Protocol and that's not our fault"
+    )
     def test_generic_with_broken_eq(self):
         # See https://github.com/python/typing_extensions/pull/422 for context
         class BrokenEq(type):
