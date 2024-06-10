@@ -2,6 +2,7 @@ import abc
 import collections
 import collections.abc
 import contextlib
+import enum
 import functools
 import inspect
 import operator
@@ -64,6 +65,8 @@ __all__ = [
     'Doc',
     'get_overloads',
     'final',
+    'Format',
+    'get_annotations',
     'get_args',
     'get_origin',
     'get_original_bases',
@@ -3598,6 +3601,145 @@ if _CapsuleType is not None:
     CapsuleType = _CapsuleType
     __all__.append("CapsuleType")
 
+
+# Using this convoluted approach so that this keeps working
+# whether we end up using PEP 649 as written, PEP 749, or
+# some other variation: in any case, inspect.get_annotations
+# will continue to exist and will gain a `format` parameter.
+_PEP_649_OR_749_IMPLEMENTED = (
+    hasattr(inspect, 'get_annotations')
+    and inspect.get_annotations.__kwdefaults__ is not None
+    and "format" in inspect.get_annotations.__kwdefaults__
+)
+
+
+class Format(enum.IntEnum):
+    VALUE = 1
+    FORWARDREF = 2
+    SOURCE = 3
+
+
+if _PEP_649_OR_749_IMPLEMENTED:
+    get_annotations = inspect.get_annotations
+else:
+    def get_annotations(obj, *, globals=None, locals=None, eval_str=False,
+                        format=Format.VALUE):
+        """Compute the annotations dict for an object.
+
+        obj may be a callable, class, or module.
+        Passing in an object of any other type raises TypeError.
+
+        Returns a dict.  get_annotations() returns a new dict every time
+        it's called; calling it twice on the same object will return two
+        different but equivalent dicts.
+
+        This is a backport of `inspect.get_annotations`, which has been
+        in the standard library since Python 3.10. See the standard library
+        documentation for more:
+
+            https://docs.python.org/3/library/inspect.html#inspect.get_annotations
+
+        This backport adds the *format* argument introduced by PEP 649. The
+        three formats supported are:
+        * VALUE: the annotations are returned as-is. This is the default and
+          it is compatible with the behavior on previous Python versions.
+        * FORWARDREF: return annotations as-is if possible, but replace any
+          undefined names with ForwardRef objects. The implementation proposed by
+          PEP 649 relies on language changes that cannot be backported; the
+          typing-extensions implementation simply returns the same result as VALUE.
+        * SOURCE: return annotations as strings, in a format close to the original
+          source. Again, this behavior cannot be replicated directly in a backport.
+          As an approximation, typing-extensions retrieves the annotations under
+          VALUE semantics and then stringifies them.
+
+        The purpose of this backport is to allow users who would like to use
+        FORWARDREF or SOURCE semantics once PEP 649 is implemented, but who also
+        want to support earlier Python versions, to simply write:
+
+            typing_extensions.get_annotations(obj, format=Format.FORWARDREF)
+
+        """
+        format = Format(format)
+
+        if eval_str and format is not Format.VALUE:
+            raise ValueError("eval_str=True is only supported with format=Format.VALUE")
+
+        if isinstance(obj, type):
+            # class
+            obj_dict = getattr(obj, '__dict__', None)
+            if obj_dict and hasattr(obj_dict, 'get'):
+                ann = obj_dict.get('__annotations__', None)
+                if isinstance(ann, _types.GetSetDescriptorType):
+                    ann = None
+            else:
+                ann = None
+
+            obj_globals = None
+            module_name = getattr(obj, '__module__', None)
+            if module_name:
+                module = sys.modules.get(module_name, None)
+                if module:
+                    obj_globals = getattr(module, '__dict__', None)
+            obj_locals = dict(vars(obj))
+            unwrap = obj
+        elif isinstance(obj, _types.ModuleType):
+            # module
+            ann = getattr(obj, '__annotations__', None)
+            obj_globals = obj.__dict__
+            obj_locals = None
+            unwrap = None
+        elif callable(obj):
+            # this includes types.Function, types.BuiltinFunctionType,
+            # types.BuiltinMethodType, functools.partial, functools.singledispatch,
+            # "class funclike" from Lib/test/test_inspect... on and on it goes.
+            ann = getattr(obj, '__annotations__', None)
+            obj_globals = getattr(obj, '__globals__', None)
+            obj_locals = None
+            unwrap = obj
+        elif hasattr(obj, '__annotations__'):
+            ann = obj.__annotations__
+            obj_globals = obj_locals = unwrap = None
+        else:
+            raise TypeError(f"{obj!r} is not a module, class, or callable.")
+
+        if ann is None:
+            return {}
+
+        if not isinstance(ann, dict):
+            raise ValueError(f"{obj!r}.__annotations__ is neither a dict nor None")
+
+        if not ann:
+            return {}
+
+        if not eval_str:
+            if format is Format.SOURCE:
+                return {
+                    key: value if isinstance(value, str) else typing._type_repr(value)
+                    for key, value in ann.items()
+                }
+            return dict(ann)
+
+        if unwrap is not None:
+            while True:
+                if hasattr(unwrap, '__wrapped__'):
+                    unwrap = unwrap.__wrapped__
+                    continue
+                if isinstance(unwrap, functools.partial):
+                    unwrap = unwrap.func
+                    continue
+                break
+            if hasattr(unwrap, "__globals__"):
+                obj_globals = unwrap.__globals__
+
+        if globals is None:
+            globals = obj_globals
+        if locals is None:
+            locals = obj_locals
+
+        return_value = {key:
+            value if not isinstance(value, str) else eval(value, globals, locals)
+            for key, value in ann.items() }
+        return return_value
 
 # Aliases for items that have always been in typing.
 # Explicitly assign these (rather than using `from typing import *` at the top),
