@@ -1,8 +1,11 @@
-# Release 4.12.2 (June 7, 2024)
+# Unreleased
 
 - Add `typing_extensions.get_annotations`, a backport of
   `inspect.get_annotations` that adds features specified
-  by PEP 649. Patch by Jelle Zijlstra.
+  by PEP 649. Patches by Jelle Zijlstra and Alex Waygood.
+
+# Release 4.12.2 (June 7, 2024)
+
 - Fix regression in v4.12.0 where specialization of certain
   generics with an overridden `__eq__` method would raise errors.
   Patch by Jelle Zijlstra.
