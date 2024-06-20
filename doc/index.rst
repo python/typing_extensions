@@ -367,6 +367,12 @@ Special typing primitives
 
    .. versionadded:: 4.6.0
 
+.. data:: TypeExpr
+
+   See :pep:`747`. A type hint representing a type expression.
+
+   .. versionadded:: 4.13.0
+
 .. data:: TypeGuard
 
    See :py:data:`typing.TypeGuard` and :pep:`647`. In ``typing`` since 3.10.
