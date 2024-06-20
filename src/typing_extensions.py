@@ -2067,13 +2067,13 @@ elif sys.version_info[:2] >= (3, 9):
         return typing._GenericAlias(self, (item,))
 # 3.8
 else:
-    class _TypeExorForm(_ExtensionsSpecialForm, _root=True):
+    class _TypeExprForm(_ExtensionsSpecialForm, _root=True):
         def __getitem__(self, parameters):
             item = typing._type_check(parameters,
                                       f'{self._name} accepts only a single type')
             return typing._GenericAlias(self, (item,))
 
-    TypeExpr = _TypeExorForm(
+    TypeExpr = _TypeExprForm(
         'TypeExpr',
         doc="""Special typing form used to represent a type expression.
 
