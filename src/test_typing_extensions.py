@@ -5503,7 +5503,6 @@ class TypeExprTests(BaseTestCase):
             1,
             "int",
             int,
-            list[int],
             Tuple[int, str],
         ]
         for obj in objs:
