@@ -2051,7 +2051,13 @@ if hasattr(typing, 'TypeExpr'):
     TypeExpr = typing.TypeExpr
 # 3.9
 elif sys.version_info[:2] >= (3, 9):
-    @_ExtensionsSpecialForm
+    class _TypeExprForm(_ExtensionsSpecialForm, _root=True):
+        # TypeExpr(X) is equivalent to X but indicates to the type checker
+        # that the object is a TypeExpr.
+        def __call__(self, obj, /):
+            return obj
+
+    @_TypeExprForm
     def TypeExpr(self, parameters):
         """Special typing form used to represent a type expression.
 
@@ -2072,6 +2078,9 @@ else:
             item = typing._type_check(parameters,
                                       f'{self._name} accepts only a single type')
             return typing._GenericAlias(self, (item,))
+
+        def __call__(self, obj, /):
+            return obj
 
     TypeExpr = _TypeExprForm(
         'TypeExpr',

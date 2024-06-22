@@ -5498,9 +5498,24 @@ class TypeExprTests(BaseTestCase):
             class D(type(TypeExpr[int])):
                 pass
 
-    def test_cannot_init(self):
+    def test_call(self):
+        objs = [
+            1,
+            "int",
+            int,
+            list[int],
+            Tuple[int, str],
+        ]
+        for obj in objs:
+            with self.subTest(obj=obj):
+                self.assertIs(TypeExpr(obj), obj)
+
         with self.assertRaises(TypeError):
             TypeExpr()
+        with self.assertRaises(TypeError):
+            TypeExpr("too", "many")
+
+    def test_cannot_init_type(self):
         with self.assertRaises(TypeError):
             type(TypeExpr)()
         with self.assertRaises(TypeError):
