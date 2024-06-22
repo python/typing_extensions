@@ -68,6 +68,7 @@ from typing_extensions import (
     TypeAlias,
     TypeAliasType,
     TypedDict,
+    TypeExpr,
     TypeGuard,
     TypeIs,
     TypeVar,
@@ -5466,6 +5467,64 @@ class TypeIsTests(BaseTestCase):
             isinstance(1, TypeIs[int])
         with self.assertRaises(TypeError):
             issubclass(int, TypeIs)
+
+
+class TypeExprTests(BaseTestCase):
+    def test_basics(self):
+        TypeExpr[int]  # OK
+        self.assertEqual(TypeExpr[int], TypeExpr[int])
+
+        def foo(arg) -> TypeExpr[int]: ...
+        self.assertEqual(gth(foo), {'return': TypeExpr[int]})
+
+    def test_repr(self):
+        if hasattr(typing, 'TypeExpr'):
+            mod_name = 'typing'
+        else:
+            mod_name = 'typing_extensions'
+        self.assertEqual(repr(TypeExpr), f'{mod_name}.TypeExpr')
+        cv = TypeExpr[int]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeExpr[int]')
+        cv = TypeExpr[Employee]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeExpr[{__name__}.Employee]')
+        cv = TypeExpr[Tuple[int]]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeExpr[typing.Tuple[int]]')
+
+    def test_cannot_subclass(self):
+        with self.assertRaises(TypeError):
+            class C(type(TypeExpr)):
+                pass
+        with self.assertRaises(TypeError):
+            class D(type(TypeExpr[int])):
+                pass
+
+    def test_call(self):
+        objs = [
+            1,
+            "int",
+            int,
+            Tuple[int, str],
+        ]
+        for obj in objs:
+            with self.subTest(obj=obj):
+                self.assertIs(TypeExpr(obj), obj)
+
+        with self.assertRaises(TypeError):
+            TypeExpr()
+        with self.assertRaises(TypeError):
+            TypeExpr("too", "many")
+
+    def test_cannot_init_type(self):
+        with self.assertRaises(TypeError):
+            type(TypeExpr)()
+        with self.assertRaises(TypeError):
+            type(TypeExpr[Optional[int]])()
+
+    def test_no_isinstance(self):
+        with self.assertRaises(TypeError):
+            isinstance(1, TypeExpr[int])
+        with self.assertRaises(TypeError):
+            issubclass(int, TypeExpr)
 
 
 class LiteralStringTests(BaseTestCase):

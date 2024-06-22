@@ -1,5 +1,7 @@
 # Unreleased
 
+- Add `typing_extensions.TypeExpr` from PEP 747. Patch by
+  Jelle Zijlstra.
 - Add `typing_extensions.get_annotations`, a backport of
   `inspect.get_annotations` that adds features specified
   by PEP 649. Patches by Jelle Zijlstra and Alex Waygood.

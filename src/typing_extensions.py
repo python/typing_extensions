@@ -86,6 +86,7 @@ __all__ = [
     'Text',
     'TypeAlias',
     'TypeAliasType',
+    'TypeExpr',
     'TypeGuard',
     'TypeIs',
     'TYPE_CHECKING',
@@ -2043,6 +2044,55 @@ else:
 
         ``TypeIs`` also works with type variables.  For more information, see
         PEP 742 (Narrowing types with TypeIs).
+        """)
+
+# 3.14+?
+if hasattr(typing, 'TypeExpr'):
+    TypeExpr = typing.TypeExpr
+# 3.9
+elif sys.version_info[:2] >= (3, 9):
+    class _TypeExprForm(_ExtensionsSpecialForm, _root=True):
+        # TypeExpr(X) is equivalent to X but indicates to the type checker
+        # that the object is a TypeExpr.
+        def __call__(self, obj, /):
+            return obj
+
+    @_TypeExprForm
+    def TypeExpr(self, parameters):
+        """Special typing form used to represent a type expression.
+
+        Usage:
+
+            def cast[T](typ: TypeExpr[T], value: Any) -> T: ...
+
+            reveal_type(cast(int, "x"))  # int
+
+        See PEP 747 for more information.
+        """
+        item = typing._type_check(parameters, f'{self} accepts only a single type.')
+        return typing._GenericAlias(self, (item,))
+# 3.8
+else:
+    class _TypeExprForm(_ExtensionsSpecialForm, _root=True):
+        def __getitem__(self, parameters):
+            item = typing._type_check(parameters,
+                                      f'{self._name} accepts only a single type')
+            return typing._GenericAlias(self, (item,))
+
+        def __call__(self, obj, /):
+            return obj
+
+    TypeExpr = _TypeExprForm(
+        'TypeExpr',
+        doc="""Special typing form used to represent a type expression.
+
+        Usage:
+
+            def cast[T](typ: TypeExpr[T], value: Any) -> T: ...
+
+            reveal_type(cast(int, "x"))  # int
+
+        See PEP 747 for more information.
         """)
 
 
