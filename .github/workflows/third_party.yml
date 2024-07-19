@@ -110,6 +110,7 @@ jobs:
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install typing_inspect test dependencies
         run: |
+          set -x
           cd typing_inspect
           uv pip install --system -r test-requirements.txt --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
@@ -158,6 +159,7 @@ jobs:
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install pyanalyze test requirements
         run: |
+          set -x
           cd pyanalyze
           uv pip install --system 'pyanalyze[tests] @ .' --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
@@ -206,6 +208,7 @@ jobs:
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install typeguard test requirements
         run: |
+          set -x
           cd typeguard
           uv pip install --system "typeguard[test] @ ."  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
@@ -259,6 +262,7 @@ jobs:
           git config --global user.name "Your Name"
       - name: Install typed-argument-parser test requirements
         run: |
+          set -x
           cd typed-argument-parser
           uv pip install --system "typed-argument-parser @ ."  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
           uv pip install --system pytest  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
@@ -308,6 +312,7 @@ jobs:
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install mypy test requirements
         run: |
+          set -x
           cd mypy
           uv pip install --system -r test-requirements.txt  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
           uv pip install --system -e .
