@@ -5,6 +5,9 @@
 - Add `typing_extensions.get_annotations`, a backport of
   `inspect.get_annotations` that adds features specified
   by PEP 649. Patches by Jelle Zijlstra and Alex Waygood.
+- Copy the coroutine status of functions and methods wrapped
+  with `@typing_extensions.deprecated`. Patch by Sebastian
+  Rittau.
 
 # Release 4.12.2 (June 7, 2024)
 

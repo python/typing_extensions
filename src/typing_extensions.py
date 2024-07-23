@@ -2899,11 +2899,15 @@ else:
                 return arg
             elif callable(arg):
                 import functools
+                import inspect
 
                 @functools.wraps(arg)
                 def wrapper(*args, **kwargs):
                     warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                     return arg(*args, **kwargs)
+
+                if inspect.iscoroutinefunction(arg):
+                    wrapper = inspect.markcoroutinefunction(wrapper)
 
                 arg.__deprecated__ = wrapper.__deprecated__ = msg
                 return wrapper

@@ -850,6 +850,29 @@ class DeprecatedTests(BaseTestCase):
             isinstance(cell.cell_contents, deprecated) for cell in d.__closure__
         ))
 
+    def test_inspect(self):
+        @deprecated("depr")
+        def sync():
+            pass
+
+        @deprecated("depr")
+        async def coro():
+            pass
+
+        class Cls:
+            @deprecated("depr")
+            def sync(self):
+                pass
+
+            @deprecated("depr")
+            async def coro(self):
+                pass
+
+        self.assertFalse(inspect.iscoroutinefunction(sync))
+        self.assertTrue(inspect.iscoroutinefunction(coro))
+        self.assertFalse(inspect.iscoroutinefunction(Cls.sync))
+        self.assertTrue(inspect.iscoroutinefunction(Cls.coro))
+
 
 class AnyTests(BaseTestCase):
     def test_can_subclass(self):
