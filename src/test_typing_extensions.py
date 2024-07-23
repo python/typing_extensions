@@ -1,4 +1,5 @@
 import abc
+import asyncio
 import collections
 import collections.abc
 import contextlib
@@ -879,6 +880,11 @@ class DeprecatedTests(BaseTestCase):
         else:
             self.assertFalse(inspect.iscoroutinefunction(coro))
             self.assertFalse(inspect.iscoroutinefunction(Cls.coro))
+
+        self.assertFalse(asyncio.coroutines.iscoroutinefunction(sync))
+        self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.sync))
+        self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
+        self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
 
 
 class AnyTests(BaseTestCase):
