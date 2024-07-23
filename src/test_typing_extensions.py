@@ -118,6 +118,9 @@ TYPING_3_12_0 = sys.version_info[:3] >= (3, 12, 0)
 # 3.13 drops support for the keyword argument syntax of TypedDict
 TYPING_3_13_0 = sys.version_info[:3] >= (3, 13, 0)
 
+# 3.13.0rc1 changes @deprecated behavior
+TYPING_3_13_BETA = sys.version_info[:4] == (3, 13, 0, 'beta')
+
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
 HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
@@ -870,7 +873,7 @@ class DeprecatedTests(BaseTestCase):
 
         self.assertFalse(inspect.iscoroutinefunction(sync))
         self.assertFalse(inspect.iscoroutinefunction(Cls.sync))
-        if sys.version_info >= (3, 12):
+        if sys.version_info >= (3, 12) and not TYPING_3_13_BETA:
             self.assertTrue(inspect.iscoroutinefunction(coro))
             self.assertTrue(inspect.iscoroutinefunction(Cls.coro))
         else:
