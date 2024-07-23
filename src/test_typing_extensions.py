@@ -875,7 +875,7 @@ class Cls:
         pass
 
 class DeprecatedCoroTests(BaseTestCase):
-    @skipUnless(TYPING_3_12_ONLY or TYPING_3_13_0_RC, "@deprecated was added to warnings in Python 3.13")
+    @skipUnless(TYPING_3_12_ONLY or TYPING_3_13_0_RC, "inspect.iscoroutinefunction works differently on Python < 3.12")
     def test_inspect_py313(self):
         self.assertFalse(inspect.iscoroutinefunction(func))
         self.assertFalse(inspect.iscoroutinefunction(Cls.func))
@@ -887,7 +887,7 @@ class DeprecatedCoroTests(BaseTestCase):
         self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
         self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
 
-    @skipIf(TYPING_3_12_0, "Behavior changed with Python 3.12")
+    @skipIf(TYPING_3_12_0, "inspect.iscoroutinefunction works differently on Python 3.12+")
     def test_inspect_py311(self):
         # This doesn't work in Python < 3.12.
         # self.assertTrue(inspect.iscoroutinefunction(func))
