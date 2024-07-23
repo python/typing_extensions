@@ -123,7 +123,7 @@ TYPING_3_12_ONLY = (3, 12) <= sys.version_info < (3, 13)
 TYPING_3_13_0 = sys.version_info[:3] >= (3, 13, 0)
 
 # 3.13.0.rc1 fixes a problem with @deprecated
-TYPING_3_13_0_RC = sys.version_info[:3] >= (3, 13, 0) and sys.version_info[:4] != (3, 13, 0, 'beta')
+TYPING_3_13_0_RC = sys.version_info[:3] >= (3, 13, 0, "candidate")
 
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
@@ -875,30 +875,18 @@ class Cls:
         pass
 
 class DeprecatedCoroTests(BaseTestCase):
+    def test_asyncio_iscoroutinefunction(self):
+        self.assertFalse(asyncio.coroutines.iscoroutinefunction(func))
+        self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.func))
+        self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
+        self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
+
     @skipUnless(TYPING_3_12_ONLY or TYPING_3_13_0_RC, "inspect.iscoroutinefunction works differently on Python < 3.12")
-    def test_inspect_py313(self):
+    def test_inspect_iscoroutinefunction(self):
         self.assertFalse(inspect.iscoroutinefunction(func))
         self.assertFalse(inspect.iscoroutinefunction(Cls.func))
         self.assertTrue(inspect.iscoroutinefunction(coro))
         self.assertTrue(inspect.iscoroutinefunction(Cls.coro))
-
-        self.assertFalse(asyncio.coroutines.iscoroutinefunction(func))
-        self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.func))
-        self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
-        self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
-
-    @skipIf(TYPING_3_12_0, "inspect.iscoroutinefunction works differently on Python 3.12+")
-    def test_inspect_py311(self):
-        # This doesn't work in Python < 3.12.
-        # self.assertTrue(inspect.iscoroutinefunction(func))
-        # self.assertTrue(inspect.iscoroutinefunction(Cls.func))
-        self.assertFalse(inspect.iscoroutinefunction(coro))
-        self.assertFalse(inspect.iscoroutinefunction(Cls.coro))
-
-        self.assertFalse(asyncio.coroutines.iscoroutinefunction(func))
-        self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.func))
-        self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
-        self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
 
 
 class AnyTests(BaseTestCase):
