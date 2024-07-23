@@ -123,7 +123,7 @@ TYPING_3_12_ONLY = (3, 12) <= sys.version_info < (3, 13)
 TYPING_3_13_0 = sys.version_info[:3] >= (3, 13, 0)
 
 # 3.13.0.rc1 fixes a problem with @deprecated
-TYPING_3_13_0_RC = sys.version_info[:3] >= (3, 13, 0, "candidate")
+TYPING_3_13_0_RC = sys.version_info[:4] >= (3, 13, 0, "candidate")
 
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
