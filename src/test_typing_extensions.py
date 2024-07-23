@@ -116,11 +116,14 @@ TYPING_3_11_0 = sys.version_info[:3] >= (3, 11, 0)
 # and adds PEP 695 to CPython's grammar
 TYPING_3_12_0 = sys.version_info[:3] >= (3, 12, 0)
 
+# @deprecated works differently in Python 3.12
+TYPING_3_12_ONLY = (3, 12) <= sys.version_info < (3, 13)
+
 # 3.13 drops support for the keyword argument syntax of TypedDict
 TYPING_3_13_0 = sys.version_info[:3] >= (3, 13, 0)
 
-# 3.13.0rc1 changes @deprecated behavior
-TYPING_3_13_BETA = sys.version_info[:4] == (3, 13, 0, 'beta')
+# 3.13.0.rc1 fixes a problem with @deprecated
+TYPING_3_13_0_RC = sys.version_info[:3] >= (3, 13, 0) and sys.version_info[:4] != (3, 13, 0, 'beta')
 
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
@@ -854,35 +857,46 @@ class DeprecatedTests(BaseTestCase):
             isinstance(cell.cell_contents, deprecated) for cell in d.__closure__
         ))
 
-    def test_inspect(self):
-        @deprecated("depr")
-        def sync():
-            pass
+@deprecated("depr")
+def func():
+    pass
 
-        @deprecated("depr")
-        async def coro():
-            pass
+@deprecated("depr")
+async def coro():
+    pass
 
-        class Cls:
-            @deprecated("depr")
-            def sync(self):
-                pass
+class Cls:
+    @deprecated("depr")
+    def func(self):
+        pass
 
-            @deprecated("depr")
-            async def coro(self):
-                pass
+    @deprecated("depr")
+    async def coro(self):
+        pass
 
-        self.assertFalse(inspect.iscoroutinefunction(sync))
-        self.assertFalse(inspect.iscoroutinefunction(Cls.sync))
-        if sys.version_info >= (3, 12) and not TYPING_3_13_BETA:
-            self.assertTrue(inspect.iscoroutinefunction(coro))
-            self.assertTrue(inspect.iscoroutinefunction(Cls.coro))
-        else:
-            self.assertFalse(inspect.iscoroutinefunction(coro))
-            self.assertFalse(inspect.iscoroutinefunction(Cls.coro))
+class DeprecatedCoroTests(BaseTestCase):
+    @skipUnless(TYPING_3_12_ONLY or TYPING_3_13_0_RC, "@deprecated was added to warnings in Python 3.13")
+    def test_inspect_py313(self):
+        self.assertFalse(inspect.iscoroutinefunction(func))
+        self.assertFalse(inspect.iscoroutinefunction(Cls.func))
+        self.assertTrue(inspect.iscoroutinefunction(coro))
+        self.assertTrue(inspect.iscoroutinefunction(Cls.coro))
 
-        self.assertFalse(asyncio.coroutines.iscoroutinefunction(sync))
-        self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.sync))
+        self.assertFalse(asyncio.coroutines.iscoroutinefunction(func))
+        self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.func))
+        self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
+        self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
+
+    @skipIf(TYPING_3_12_0, "Behavior changed with Python 3.12")
+    def test_inspect_py311(self):
+        # This doesn't work in Python < 3.12.
+        # self.assertTrue(inspect.iscoroutinefunction(func))
+        # self.assertTrue(inspect.iscoroutinefunction(Cls.func))
+        self.assertFalse(inspect.iscoroutinefunction(coro))
+        self.assertFalse(inspect.iscoroutinefunction(Cls.coro))
+
+        self.assertFalse(asyncio.coroutines.iscoroutinefunction(func))
+        self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.func))
         self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
         self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
 
