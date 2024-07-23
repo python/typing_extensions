@@ -2906,7 +2906,7 @@ else:
                     warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                     return arg(*args, **kwargs)
 
-                if inspect.iscoroutinefunction(arg):
+                if sys.version_info >= (3, 12) and inspect.iscoroutinefunction(arg):
                     wrapper = inspect.markcoroutinefunction(wrapper)
 
                 arg.__deprecated__ = wrapper.__deprecated__ = msg

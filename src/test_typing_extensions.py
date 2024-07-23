@@ -869,9 +869,13 @@ class DeprecatedTests(BaseTestCase):
                 pass
 
         self.assertFalse(inspect.iscoroutinefunction(sync))
-        self.assertTrue(inspect.iscoroutinefunction(coro))
         self.assertFalse(inspect.iscoroutinefunction(Cls.sync))
-        self.assertTrue(inspect.iscoroutinefunction(Cls.coro))
+        if sys.version_info >= (3, 12):
+            self.assertTrue(inspect.iscoroutinefunction(coro))
+            self.assertTrue(inspect.iscoroutinefunction(Cls.coro))
+        else:
+            self.assertFalse(inspect.iscoroutinefunction(coro))
+            self.assertFalse(inspect.iscoroutinefunction(Cls.coro))
 
 
 class AnyTests(BaseTestCase):
