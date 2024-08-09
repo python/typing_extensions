@@ -1681,12 +1681,16 @@ class GetUtilitiesTestCase(TestCase):
         # In 3.9 and lower we use typing_extensions's hacky implementation
         # of ParamSpec, which gets incorrectly wrapped in a list
         self.assertIn(get_args(Callable[P, int]), [(P, int), ([P], int)])
-        self.assertEqual(get_args(Callable[Concatenate[int, P], int]),
-                         (Concatenate[int, P], int))
         self.assertEqual(get_args(Required[int]), (int,))
         self.assertEqual(get_args(NotRequired[int]), (int,))
         self.assertEqual(get_args(Unpack[Ts]), (Ts,))
         self.assertEqual(get_args(Unpack), ())
+        self.assertEqual(get_args(Callable[Concatenate[int, P], int]),
+                         (Concatenate[int, P], int))
+        if sys.version_info >= (3, 9, 2):
+            # Cannot construct Callable[Concatenate[int, ...] with non-types
+            self.assertEqual(get_args(Callable[Concatenate[int, ...], int]),
+                        (Concatenate[int, ...], int))
 
 
 class CollectionsAbcTests(BaseTestCase):
@@ -5228,6 +5232,10 @@ class ParamSpecTests(BaseTestCase):
                 self.assertEqual(G2.__args__, (int, Concatenate[int, P_2]))
                 self.assertEqual(G2.__parameters__, (P_2,))
 
+                G3 = klass[int, Concatenate[int, ...]]
+                self.assertEqual(G3.__args__, (int, Concatenate[int, ...]))
+                self.assertEqual(G3.__parameters__, ())
+
         # The following are some valid uses cases in PEP 612 that don't work:
         # These do not work in 3.9, _type_check blocks the list and ellipsis.
         # G3 = X[int, [int, bool]]
@@ -5323,6 +5331,11 @@ class ConcatenateTests(BaseTestCase):
         c = Concatenate[MyClass, P]
         self.assertNotEqual(c, Concatenate)
 
+        # Test Ellipsis Concatenation
+        d = Concatenate[MyClass, ...]
+        self.assertNotEqual(d, c)
+        self.assertNotEqual(d, Concatenate)
+
     def test_valid_uses(self):
         P = ParamSpec('P')
         T = TypeVar('T')
@@ -5339,6 +5352,21 @@ class ConcatenateTests(BaseTestCase):
             self.assertEqual(C3.__origin__, C4.__origin__)
             self.assertNotEqual(C3, C4)
 
+        # Callable with Ellipsis cannot be constructed in 3.8 and below 3.9.2
+        if sys.version_info[:2] <= (3, 9, 2):
+            return
+
+        C5 = Callable[Concatenate[int, ...], int]
+        C6 = Callable[Concatenate[int, T, ...], T]
+        self.assertEqual(C5.__origin__, C6.__origin__)
+        self.assertNotEqual(C5, C6)
+
+        # Test collections.abc.Callable too.
+        C7 = collections.abc.Callable[Concatenate[int, ...], int]
+        C8 = collections.abc.Callable[Concatenate[int, T, ...], T]
+        self.assertEqual(C7.__origin__, C8.__origin__)
+        self.assertNotEqual(C7, C8)
+
     def test_invalid_uses(self):
         P = ParamSpec('P')
         T = TypeVar('T')
@@ -5351,9 +5379,17 @@ class ConcatenateTests(BaseTestCase):
 
         with self.assertRaisesRegex(
             TypeError,
-            'The last parameter to Concatenate should be a ParamSpec variable',
+            'The last parameter to Concatenate should be a ParamSpec variable or ellipsis',
         ):
             Concatenate[P, T]
+
+        # Cannot construct a Callable with Ellipsis in 3.8 as args must be types
+        if sys.version_info[:2] >= (3, 9, 2):
+            with self.assertRaisesRegex(
+                TypeError,
+                'is not a generic class',
+            ):
+                Callable[Concatenate[int, ...], Any][T]
 
         if not TYPING_3_11_0:
             with self.assertRaisesRegex(
@@ -5362,14 +5398,37 @@ class ConcatenateTests(BaseTestCase):
             ):
                 Concatenate[1, P]
 
+            with self.assertRaisesRegex(
+                TypeError,
+                'each arg must be a type.',
+            ):
+                Concatenate[1, ..., P]
+
+    @skipUnless(TYPING_3_11_0, "Cannot be backported to <=3.9"
+                               "Cannot use ... with 3.10 typing._ConcatenateGenericAlias")
+    def test_alias(self):
+        P = ParamSpec("P")
+        C1 = Callable[Concatenate[int, P], Any]
+        # Python <= 3.9 fails because parameters to generic types must be types.
+        # For Python 3.10 & typing._ConcatenateGenericAlias will
+        # as Ellipsis is not supported for ParamSpec
+        # Fallback to 3.10 & typing_extensions._ConcatenateGenericAlias not implemented
+        C1[...]
+
     def test_basic_introspection(self):
         P = ParamSpec('P')
         C1 = Concatenate[int, P]
         C2 = Concatenate[int, T, P]
+        C3 = Concatenate[int, ...]
+        C4 = Concatenate[int, T, ...]
         self.assertEqual(C1.__origin__, Concatenate)
         self.assertEqual(C1.__args__, (int, P))
         self.assertEqual(C2.__origin__, Concatenate)
         self.assertEqual(C2.__args__, (int, T, P))
+        self.assertEqual(C3.__origin__, Concatenate)
+        self.assertEqual(C3.__args__, (int, Ellipsis))
+        self.assertEqual(C4.__origin__, Concatenate)
+        self.assertEqual(C4.__args__, (int, T, Ellipsis))
 
     def test_eq(self):
         P = ParamSpec('P')
@@ -5379,6 +5438,13 @@ class ConcatenateTests(BaseTestCase):
         self.assertEqual(C1, C2)
         self.assertEqual(hash(C1), hash(C2))
         self.assertNotEqual(C1, C3)
+
+        C4 = Concatenate[int, ...]
+        C5 = Concatenate[int, ...]
+        C6 = Concatenate[int, T, ...]
+        self.assertEqual(C4, C5)
+        self.assertEqual(hash(C4), hash(C5))
+        self.assertNotEqual(C4, C6)
 
 
 class TypeGuardTests(BaseTestCase):
@@ -6050,7 +6116,7 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 10, 1):
             exclude |= {"Literal"}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'Any', 'NewType', 'overload'}
+            exclude |= {'final', 'Any', 'NewType', 'overload', 'Concatenate'}
         if sys.version_info < (3, 12):
             exclude |= {
                 'SupportsAbs', 'SupportsBytes',
