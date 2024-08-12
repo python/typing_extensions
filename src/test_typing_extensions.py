@@ -5384,7 +5384,7 @@ class ConcatenateTests(BaseTestCase):
             Concatenate[P, T]
 
         # Cannot construct a Callable with Ellipsis in 3.8 as args must be types
-        if sys.version_info[:2] >= (3, 9, 2):
+        if sys.version_info >= (3, 9, 2):
             with self.assertRaisesRegex(
                 TypeError,
                 'is not a generic class',
@@ -5404,16 +5404,16 @@ class ConcatenateTests(BaseTestCase):
             ):
                 Concatenate[1, ..., P]
 
-    @skipUnless(TYPING_3_11_0, "Cannot be backported to <=3.9"
-                               "Cannot use ... with 3.10 typing._ConcatenateGenericAlias")
+    @skipUnless(TYPING_3_11_0 or (3, 10, 0) <= sys.version_info < (3, 10, 2),
+                "Cannot be backported to <=3.9"
+                "Cannot use ... with 3.10.2+ typing._ConcatenateGenericAlias")
     def test_alias(self):
-        P = ParamSpec("P")
-        C1 = Callable[Concatenate[int, P], Any]
-        # Python <= 3.9 fails because parameters to generic types must be types.
-        # For Python 3.10 & typing._ConcatenateGenericAlias will
-        # as Ellipsis is not supported for ParamSpec
-        # Fallback to 3.10 & typing_extensions._ConcatenateGenericAlias not implemented
-        C1[...]
+        P = ParamSpec('P')
+        X = Callable[Concatenate[int, P], Any]
+
+        C1 = X[...]
+        self.assertEqual(C1.__parameters__, ())
+        self.assertEqual(C1.__args__, (Concatenate[int, ...], Any))
 
     def test_basic_introspection(self):
         P = ParamSpec('P')

@@ -1800,7 +1800,7 @@ else:
     _ConcatenateGenericAlias = typing._ConcatenateGenericAlias
 
 # 3.10.2+
-if sys.version_info[:3] >= (3, 10, 2):
+if sys.version_info >= (3, 10, 2):
     _ellipsis_dummy = ParamSpec('_ellipsis_dummy')
 
     @typing._tp_cache
@@ -1848,7 +1848,7 @@ else:
         return _ConcatenateGenericAlias(self, parameters)
 
 # 3.11+; Concatenate does not accept ellipsis in 3.10
-if hasattr(typing, 'Concatenate') and sys.version_info[:2] >= (3, 11):
+if hasattr(typing, 'Concatenate') and sys.version_info >= (3, 11):
     Concatenate = typing.Concatenate
 # 3.9-3.10
 elif sys.version_info[:2] >= (3, 9):
