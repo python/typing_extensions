@@ -3516,16 +3516,41 @@ else:
         def __repr__(self) -> str:
             return self.__name__
 
-        def __getitem__(self, parameters):
-            if not isinstance(parameters, tuple):
-                parameters = (parameters,)
-            parameters = [
-                typing._type_check(
-                    item, f'Subscripting {self.__name__} requires a type.'
-                )
-                for item in parameters
-            ]
-            return typing._GenericAlias(self, tuple(parameters))
+        if sys.version_info >= (3, 11):
+            def __getitem__(self, parameters):
+                if not isinstance(parameters, tuple):
+                    parameters = (parameters,)
+                    parameters = [
+                        typing._type_check(
+                            item, f'Subscripting {self.__name__} requires a type.'
+                        )
+                        for item in parameters
+                    ]
+                return typing._GenericAlias(self, tuple(parameters))
+        else:
+            def _check_parameter(self, item, typ=_marker):
+                # Allow [], [int], [int, str], [int, ...], [int, T]
+                if not isinstance(typ, ParamSpec) and typ is not _marker:
+                    return typing._type_check(
+                            item, f'Subscripting {self.__name__} requires a type.'
+                    )
+                if item is ...:
+                    return ...
+                elif isinstance(item, list) and typ is not _marker:
+                    return [self._check_parameter(arg) for arg in item]
+                else:
+                    return typing._type_check(
+                        item, f'Subscripting {self.__name__} requires a type.'
+                    ) 
+
+            def __getitem__(self, parameters):
+                if not isinstance(parameters, tuple):
+                    parameters = (parameters,)
+                    parameters = [
+                        self._check_parameter(item, typ)
+                        for item, typ in zip(parameters, self.__type_params__)
+                ]
+                return typing._GenericAlias(self, tuple(parameters))
 
         def __reduce__(self):
             return self.__name__

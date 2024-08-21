@@ -7207,6 +7207,34 @@ class TypeAliasTypeTests(BaseTestCase):
         fully_subscripted = still_generic[float]
         self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
         self.assertIs(get_origin(fully_subscripted), ListOrSetT)
+        
+        # Test ParamSpec and Ellipsis
+        P = ParamSpec('P')
+        CallableP = TypeAliasType("CallableP", Callable[P, Any], type_params=(P,))
+        # () -> Any
+        callable_no_arg = CallableP[[]]
+        self.assertEqual(get_args(callable_no_arg), ([],))
+        # (int) -> Any
+        callable_arg_raw = CallableP[int]
+        self.assertEqual(get_args(callable_arg_raw), (int,))
+        callable_arg = CallableP[[int]]
+        self.assertEqual(get_args(callable_arg), ([int],))
+        # (int, int) -> Any
+        callable_arg2 = CallableP[[int, int]]
+        self.assertEqual(get_args(callable_arg2), ([int, int],))
+        # (...) -> Any
+        callable_ellipsis = CallableP[...]
+        self.assertEqual(get_args(callable_ellipsis), (...,))
+        callable_ellipsis2 = CallableP[(...,)]
+        self.assertEqual(callable_ellipsis, callable_ellipsis2)
+        # (int, ...) -> Any
+        callable_arg_more = CallableP[[int, ...]]
+        self.assertEqual(get_args(callable_arg_more), ([int, ...],))
+        # (T) -> Any
+        callable_generic = CallableP[[T]]
+        self.assertEqual(get_args(callable_generic), ([T],))
+        callable_generic_raw = CallableP[T]
+        self.assertEqual(get_args(callable_generic_raw), (T,))
 
     def test_pickle(self):
         global Alias
