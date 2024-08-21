@@ -7207,7 +7207,7 @@ class TypeAliasTypeTests(BaseTestCase):
         fully_subscripted = still_generic[float]
         self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
         self.assertIs(get_origin(fully_subscripted), ListOrSetT)
-        
+
         # Test ParamSpec and Ellipsis
         P = ParamSpec('P')
         CallableP = TypeAliasType("CallableP", Callable[P, Any], type_params=(P,))

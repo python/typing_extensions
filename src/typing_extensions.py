@@ -1,3 +1,4 @@
+# pyright: reportShadowedImports=false
 import abc
 import collections
 import collections.abc
@@ -3541,7 +3542,7 @@ else:
                 else:
                     return typing._type_check(
                         item, f'Subscripting {self.__name__} requires a type.'
-                    ) 
+                    )
 
             def __getitem__(self, parameters):
                 if not isinstance(parameters, tuple):
