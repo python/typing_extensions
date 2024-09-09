@@ -2932,12 +2932,20 @@ else:
                 __init_subclass__.__deprecated__ = msg
                 return arg
             elif callable(arg):
+                import asyncio.coroutines
                 import functools
+                import inspect
 
                 @functools.wraps(arg)
                 def wrapper(*args, **kwargs):
                     warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                     return arg(*args, **kwargs)
+
+                if asyncio.coroutines.iscoroutinefunction(arg):
+                    if sys.version_info >= (3, 12):
+                        wrapper = inspect.markcoroutinefunction(wrapper)
+                    else:
+                        wrapper._is_coroutine = asyncio.coroutines._is_coroutine
 
                 arg.__deprecated__ = wrapper.__deprecated__ = msg
                 return wrapper
