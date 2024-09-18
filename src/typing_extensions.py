@@ -3537,7 +3537,10 @@ else:
                         )
                         for item in parameters
                     ]
-                return typing._GenericAlias(self, tuple(parameters))
+                alias = typing._GenericAlias(self, tuple(parameters))
+                alias.__value__ = self.__value__
+                alias.__type_params__ = self.__type_params__
+                return alias
         else:
             def _check_parameter(self, item, typ=_marker):
                 # Allow [], [int], [int, str], [int, ...], [int, T]
@@ -3561,7 +3564,10 @@ else:
                         self._check_parameter(item, typ)
                         for item, typ in zip(parameters, self.__type_params__)
                 ]
-                return typing._GenericAlias(self, tuple(parameters))
+                alias = typing._GenericAlias(self, tuple(parameters))
+                alias.__value__ = self.__value__
+                alias.__type_params__ = self.__type_params__
+                return alias
 
         def __reduce__(self):
             return self.__name__
