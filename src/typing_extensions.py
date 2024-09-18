@@ -3531,7 +3531,7 @@ else:
             def __getitem__(self, parameters):
                 if not isinstance(parameters, tuple):
                     parameters = (parameters,)
-                    parameters = [
+                parameters = [
                         typing._type_check(
                             item, f'Subscripting {self.__name__} requires a type.'
                         )
@@ -3560,7 +3560,7 @@ else:
             def __getitem__(self, parameters):
                 if not isinstance(parameters, tuple):
                     parameters = (parameters,)
-                    parameters = [
+                parameters = [
                         self._check_parameter(item, typ)
                         for item, typ in zip(parameters, self.__type_params__)
                 ]

@@ -7237,7 +7237,7 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(get_args(subscripted), (int,))
         self.assertIs(get_origin(subscripted), ListOrSetT)
         with self.assertRaises(TypeError):
-            subscripted[str]
+            subscripted[int]  # TypeError: ListOrSetT[int] is not a generic class
 
         still_generic = ListOrSetT[Iterable[T]]
         self.assertEqual(get_args(still_generic), (Iterable[T],))
@@ -7273,6 +7273,14 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(get_args(callable_generic), ([T],))
         callable_generic_raw = CallableP[T]
         self.assertEqual(get_args(callable_generic_raw), (T,))
+        
+        # test invalid usage
+        if not TYPING_3_11_0:
+            with self.assertRaises(TypeError):
+                ListOrSetT[Generic[T]]
+            with self.assertRaises(TypeError):
+                ListOrSetT[(Generic[T], )]
+        
 
     def test_pickle(self):
         global Alias
