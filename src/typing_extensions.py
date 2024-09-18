@@ -1,4 +1,3 @@
-# pyright: reportShadowedImports=false
 import abc
 import collections
 import collections.abc
