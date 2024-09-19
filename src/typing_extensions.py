@@ -3543,25 +3543,40 @@ else:
         else:
             def _check_parameter(self, item, typ=_marker):
                 # Allow [], [int], [int, str], [int, ...], [int, T]
-                if not isinstance(typ, ParamSpec) and typ is not _marker:
-                    return typing._type_check(
-                            item, f'Subscripting {self.__name__} requires a type.'
+                if isinstance(item, _UnpackAlias):
+                    args = (
+                        item.__args__ # e.g. (int, str)
+                        if sys.version_info[:2] >= (3, 9)
+                        else item.__args__  # (typing.Tuple[int, float],)
                     )
-                if item is ...:
-                    return ...
+                    # Unpack
+                    yield from [checked
+                                for arg in args
+                                for checked in self._check_parameter(arg)]
+                elif item is ...:
+                    yield ...
                 elif isinstance(item, list) and typ is not _marker:
-                    return [self._check_parameter(arg) for arg in item]
+                    yield [checked
+                           for arg in item
+                           for checked in self._check_parameter(arg)]
                 else:
-                    return typing._type_check(
+                    yield typing._type_check(
                         item, f'Subscripting {self.__name__} requires a type.'
                     )
 
             def __getitem__(self, parameters):
                 if not isinstance(parameters, tuple):
                     parameters = (parameters,)
+                param_difference = (len(parameters) - len(self.__type_params__))
+                if param_difference > 0:
+                    # invalid case that does not raise an error, fill with dummys
+                    type_params = [*self.__type_params__, *[Any] * param_difference]
+                else:
+                    type_params = self.__type_params__
                 parameters = [
-                        self._check_parameter(item, typ)
-                        for item, typ in zip(parameters, self.__type_params__)
+                        checked
+                        for item, typ in zip(parameters, type_params)
+                        for checked in self._check_parameter(item, typ)
                 ]
                 alias = typing._GenericAlias(self, tuple(parameters))
                 alias.__name__ = self.__name__
