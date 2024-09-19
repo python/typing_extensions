@@ -3572,13 +3572,13 @@ class ProtocolTests(BaseTestCase):
         self.assertEqual(Alias, Alias2)
 
     def test_protocols_pickleable(self):
-        global P, CP  # pickle wants to reference the class by name
+        global GlobalProto, CP  # pickle wants to reference the class by name
         T = TypeVar('T')
 
         @runtime_checkable
-        class P(Protocol[T]):
+        class GlobalProto(Protocol[T]):
             x = 1
-        class CP(P[int]):
+        class CP(GlobalProto[int]):
             pass
 
         c = CP()
@@ -3591,7 +3591,7 @@ class ProtocolTests(BaseTestCase):
             self.assertEqual(x.bar, 'abc')
             self.assertEqual(x.x, 1)
             self.assertEqual(x.__dict__, {'foo': 42, 'bar': 'abc'})
-            s = pickle.dumps(P)
+            s = pickle.dumps(GlobalProto)
             D = pickle.loads(s)
             class E:
                 x = 1
@@ -7232,6 +7232,7 @@ class TypeAliasTypeTests(BaseTestCase):
             Alias | "Ref"
 
     def test_getitem(self):
+        T = TypeVar("T")
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
         subscripted = ListOrSetT[int]
         self.assertEqual(get_args(subscripted), (int,))
