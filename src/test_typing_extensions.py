@@ -7339,9 +7339,7 @@ class TypeAliasTypeTests(BaseTestCase):
 
         # Test with Concatenate
         callable_concat = CallableP[Concatenate[Any, T2, P], Any]
-        reveal_type(callable_concat)
         self.assertEqual(callable_concat.__parameters__, (T2, P))
-        self.assertEqual(get_args(callable_concat), (Concatenate[Any, T2, P], Any))
 
         # TypeVarTuple
         Ts = TypeVarTuple("Ts")
@@ -7359,6 +7357,15 @@ class TypeAliasTypeTests(BaseTestCase):
         invalud_tuple_C = Variadic[[int, T]]
         self.assertEqual(invalud_tuple_C.__parameters__, ())
         self.assertEqual(get_args(invalud_tuple_C), ([int, T],))
+        
+    @skipUnless(TYPING_3_11_0, "Concatenate not unpacked anymore")
+    def test_further_invalid_cases(self):
+        P = ParamSpec('P')
+        T = TypeVar("T")
+        T2 = TypeVar("T2")
+        CallableP = TypeAliasType("CallableP", Callable[P, T], type_params=(P,))
+        callable_concat = CallableP[Concatenate[Any, T2, P], Any]
+        self.assertEqual(get_args(callable_concat), (Concatenate[Any, T2, P], Any))
 
     def test_pickle(self):
         global Alias

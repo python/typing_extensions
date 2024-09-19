@@ -3543,15 +3543,10 @@ else:
         else:
             def _check_parameter(self, item, typ=_marker):
                 # Allow [], [int], [int, str], [int, ...], [int, T]
-                if isinstance(item, _UnpackAlias):
-                    args = (
-                        item.__args__ # e.g. (int, str)
-                        if sys.version_info[:2] >= (3, 9)
-                        else item.__args__  # (typing.Tuple[int, float],)
-                    )
+                if isinstance(item, (_UnpackAlias, _ConcatenateGenericAlias)):
                     # Unpack
                     yield from [checked
-                                for arg in args
+                                for arg in item.__args__
                                 for checked in self._check_parameter(arg)]
                 elif item is ...:
                     yield ...
@@ -3578,7 +3573,12 @@ else:
                         for item, typ in zip(parameters, type_params)
                         for checked in self._check_parameter(item, typ)
                 ]
-                alias = typing._GenericAlias(self, tuple(parameters))
+                if sys.version_info[:2] == (3, 10):
+                    alias = typing._GenericAlias(self, tuple(parameters),
+                                                 _typevar_types=(TypeVar, ParamSpec)
+                                                 )
+                else:
+                    alias = typing._GenericAlias(self, tuple(parameters))
                 alias.__name__ = self.__name__
                 alias.__value__ = self.__value__
                 alias.__type_params__ = self.__type_params__
