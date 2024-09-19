@@ -7317,7 +7317,7 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(get_args(too_many), (int, bool))
         self.assertEqual(too_many.__parameters__, ())
 
-        ListOrSet2T = TypeAliasType("ListOrSetT", Union[List[T], Set[T2]], type_params=(T, T2))
+        ListOrSet2T = TypeAliasType("ListOrSet2T", Union[List[T], Set[T2]], type_params=(T, T2))
         not_enough = ListOrSet2T[int]
         self.assertEqual(get_args(not_enough), (int,))
         self.assertEqual(not_enough.__parameters__, ())
@@ -7325,6 +7325,40 @@ class TypeAliasTypeTests(BaseTestCase):
         not_enough2 = ListOrSet2T[T]
         self.assertEqual(get_args(not_enough2), (T,))
         self.assertEqual(not_enough2.__parameters__, (T,))
+        # ParamSpec
+        P = ParamSpec('P')
+        CallableP = TypeAliasType("CallableP", Callable[P, T], type_params=(P,))
+
+        callable_not_enough = CallableP[int]
+        self.assertEqual(callable_not_enough.__parameters__, ())
+        self.assertEqual(get_args(callable_not_enough), (int, ))
+
+        callable_too_many = CallableP[str, float, T2, int]
+        self.assertEqual(callable_too_many.__parameters__, (T2, ))
+        self.assertEqual(get_args(callable_too_many), (str, float, T2, int, ))
+
+        # Test with Concatenate
+        callable_concat = CallableP[Concatenate[Any, T2, P], Any]
+        reveal_type(callable_concat)
+        self.assertEqual(callable_concat.__parameters__, (T2, P))
+        self.assertEqual(get_args(callable_concat), (Concatenate[Any, T2, P], Any))
+
+        # TypeVarTuple
+        Ts = TypeVarTuple("Ts")
+        Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
+        # No Unpack
+        invalid_tuple_A = Variadic[Tuple[int, T]]
+        self.assertEqual(invalid_tuple_A.__parameters__, (T, ))
+        self.assertEqual(get_args(invalid_tuple_A), (Tuple[int, T], ))
+
+        # To type tuple
+        invalid_tuple_B = Variadic[int, T]
+        self.assertEqual(invalid_tuple_B.__parameters__, (T, ))
+
+        # No Tuple, but list
+        invalud_tuple_C = Variadic[[int, T]]
+        self.assertEqual(invalud_tuple_C.__parameters__, ())
+        self.assertEqual(get_args(invalud_tuple_C), ([int, T],))
 
     def test_pickle(self):
         global Alias
