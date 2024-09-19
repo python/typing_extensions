@@ -7165,12 +7165,37 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(ListOrSetT.__type_params__, (T,))
         self.assertEqual(ListOrSetT.__parameters__, (T,))
 
+        subscripted = ListOrSetT[int]
+        self.assertEqual(subscripted.__name__, "ListOrSetT")
+        self.assertEqual(subscripted.__value__, Union[List[T], Set[T]],)
+        self.assertEqual(subscripted.__type_params__, (T, ))
+        self.assertEqual(subscripted.__parameters__, ())
+
+        T2 = TypeVar("T2")
+        subscriptedT = ListOrSetT[T2]
+        self.assertEqual(subscriptedT.__name__, "ListOrSetT")
+        self.assertEqual(subscriptedT.__value__, Union[List[T], Set[T]],)
+        self.assertEqual(subscriptedT.__type_params__, (T, ))
+        self.assertEqual(subscriptedT.__parameters__, (T2, ))
+
         Ts = TypeVarTuple("Ts")
         Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
         self.assertEqual(Variadic.__name__, "Variadic")
         self.assertEqual(Variadic.__value__, Tuple[int, Unpack[Ts]])
         self.assertEqual(Variadic.__type_params__, (Ts,))
         self.assertEqual(Variadic.__parameters__, tuple(iter(Ts)))
+
+        subscripted_tuple = Variadic[Unpack[Tuple[int, float]]]
+        self.assertEqual(subscripted_tuple.__name__, "Variadic")
+        self.assertEqual(subscripted_tuple.__value__, Tuple[int, Unpack[Ts]])
+        self.assertEqual(subscripted_tuple.__type_params__, (Ts,))
+        self.assertEqual(subscripted_tuple.__parameters__, ())
+
+        subscripted_tupleT = Variadic[Unpack[Tuple[int, T]]]
+        self.assertEqual(subscripted_tupleT.__name__, "Variadic")
+        self.assertEqual(subscripted_tupleT.__value__, Tuple[int, Unpack[Ts]])
+        self.assertEqual(subscripted_tupleT.__type_params__, (Ts,))
+        self.assertEqual(subscripted_tupleT.__parameters__, (T, ))
 
     def test_cannot_set_attributes(self):
         Simple = TypeAliasType("Simple", int)
@@ -7282,6 +7307,24 @@ class TypeAliasTypeTests(BaseTestCase):
             with self.assertRaises(TypeError):
                 ListOrSetT[(Generic[T], )]
 
+    def test_invalid_cases(self):
+        # If these cases fail the specificiation might have changed
+        T = TypeVar("T")
+        T2 = TypeVar("T2")
+        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
+        too_many = ListOrSetT[int, bool]
+
+        self.assertEqual(get_args(too_many), (int, bool))
+        self.assertEqual(too_many.__parameters__, ())
+
+        ListOrSet2T = TypeAliasType("ListOrSetT", Union[List[T], Set[T2]], type_params=(T, T2))
+        not_enough = ListOrSet2T[int]
+        self.assertEqual(get_args(not_enough), (int,))
+        self.assertEqual(not_enough.__parameters__, ())
+
+        not_enough2 = ListOrSet2T[T]
+        self.assertEqual(get_args(not_enough2), (T,))
+        self.assertEqual(not_enough2.__parameters__, (T,))
 
     def test_pickle(self):
         global Alias

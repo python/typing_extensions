@@ -3564,6 +3564,7 @@ else:
                         for item, typ in zip(parameters, self.__type_params__)
                 ]
                 alias = typing._GenericAlias(self, tuple(parameters))
+                alias.__name__ = self.__name__
                 alias.__value__ = self.__value__
                 alias.__type_params__ = self.__type_params__
                 return alias
