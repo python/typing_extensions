@@ -3541,19 +3541,19 @@ else:
                 alias.__type_params__ = self.__type_params__
                 return alias
         else:
-            def _check_parameter(self, item, typ=_marker):
+            def _check_parameter(self, item, recursion=0):
                 # Allow [], [int], [int, str], [int, ...], [int, T]
                 if isinstance(item, (_UnpackAlias, _ConcatenateGenericAlias)):
                     # Unpack
                     yield from [checked
                                 for arg in item.__args__
-                                for checked in self._check_parameter(arg)]
+                                for checked in self._check_parameter(arg, recursion+1)]
                 elif item is ...:
                     yield ...
-                elif isinstance(item, list) and typ is not _marker:
+                elif isinstance(item, list) and recursion == 0:
                     yield [checked
                            for arg in item
-                           for checked in self._check_parameter(arg)]
+                           for checked in self._check_parameter(arg, recursion+1)]
                 else:
                     yield typing._type_check(
                         item, f'Subscripting {self.__name__} requires a type.'
@@ -3562,16 +3562,10 @@ else:
             def __getitem__(self, parameters):
                 if not isinstance(parameters, tuple):
                     parameters = (parameters,)
-                param_difference = (len(parameters) - len(self.__type_params__))
-                if param_difference > 0:
-                    # invalid case that does not raise an error, fill with dummys
-                    type_params = [*self.__type_params__, *[Any] * param_difference]
-                else:
-                    type_params = self.__type_params__
                 parameters = [
                         checked
-                        for item, typ in zip(parameters, type_params)
-                        for checked in self._check_parameter(item, typ)
+                        for item in parameters
+                        for checked in self._check_parameter(item)
                 ]
                 if sys.version_info[:2] == (3, 10):
                     alias = typing._GenericAlias(self, tuple(parameters),
