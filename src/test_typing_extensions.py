@@ -7193,9 +7193,23 @@ class TypeAliasTypeTests(BaseTestCase):
 
         subscripted_tupleT = Variadic[Unpack[Tuple[int, T]]]
         self.assertEqual(subscripted_tupleT.__name__, "Variadic")
-        self.assertEqual(subscripted_tupleT.__value__, Tuple[int, Unpack[Ts]])
-        self.assertEqual(subscripted_tupleT.__type_params__, (Ts,))
         self.assertEqual(subscripted_tupleT.__parameters__, (T, ))
+
+        # Use with Callable
+        # Use with Callable+Concatenate
+        subscripted_callable_concat = Variadic[Callable[Concatenate[Literal["s"],  P], T]]
+        self.assertEqual(subscripted_callable_concat.__parameters__, (P, T))
+
+        subcriped_callable_tvt = Variadic[Callable[[Unpack[Ts]], T]]
+        self.assertEqual(subcriped_callable_tvt.__parameters__, (Ts, T))
+
+        # Use with Callable+Unpack
+        CallableTs = TypeAliasType("CallableTs", Callable[[Unpack[Ts]], Any], type_params=(Ts, ))
+        self.assertEqual(CallableTs.__type_params__, (Ts,))
+        self.assertEqual(CallableTs.__parameters__, (*Ts,))
+
+        unpack_callable = CallableTs[Unpack[Tuple[int, T]]]
+        self.assertEqual(unpack_callable.__parameters__, (T,))
 
     def test_cannot_set_attributes(self):
         Simple = TypeAliasType("Simple", int)
@@ -7262,8 +7276,8 @@ class TypeAliasTypeTests(BaseTestCase):
         subscripted = ListOrSetT[int]
         self.assertEqual(get_args(subscripted), (int,))
         self.assertIs(get_origin(subscripted), ListOrSetT)
-        with self.assertRaises(TypeError):
-            subscripted[int]  # TypeError: ListOrSetT[int] is not a generic class
+        with self.assertRaises(TypeError, msg="not a generic class"):
+            subscripted[int]
 
         still_generic = ListOrSetT[Iterable[T]]
         self.assertEqual(get_args(still_generic), (Iterable[T],))
@@ -7279,36 +7293,116 @@ class TypeAliasTypeTests(BaseTestCase):
         callable_no_arg = CallableP[[]]
         self.assertEqual(get_args(callable_no_arg), ([],))
         # (int) -> Any
-        callable_arg_raw = CallableP[int]
-        self.assertEqual(get_args(callable_arg_raw), (int,))
-        callable_arg = CallableP[[int]]
-        self.assertEqual(get_args(callable_arg), ([int],))
+        callable_arg = CallableP[int]
+        self.assertEqual(get_args(callable_arg), (int,))
+
+        callable_arg_list = CallableP[[int]]
+        self.assertEqual(get_args(callable_arg_list), ([int],))
+
         # (int, int) -> Any
-        callable_arg2 = CallableP[[int, int]]
-        self.assertEqual(get_args(callable_arg2), ([int, int],))
+        callable_arg2 = CallableP[int, int]
+        self.assertEqual(get_args(callable_arg2), (int, int,))
+
+        callable_arg2_list = CallableP[[int, int]]
+        self.assertEqual(get_args(callable_arg2_list), ([int, int],))
         # (...) -> Any
         callable_ellipsis = CallableP[...]
         self.assertEqual(get_args(callable_ellipsis), (...,))
+
         callable_ellipsis2 = CallableP[(...,)]
         self.assertEqual(callable_ellipsis, callable_ellipsis2)
         # (int, ...) -> Any
         callable_arg_more = CallableP[[int, ...]]
         self.assertEqual(get_args(callable_arg_more), ([int, ...],))
         # (T) -> Any
-        callable_generic = CallableP[[T]]
-        self.assertEqual(get_args(callable_generic), ([T],))
         callable_generic_raw = CallableP[T]
         self.assertEqual(get_args(callable_generic_raw), (T,))
+        self.assertEqual(callable_generic_raw.__parameters__, (T,))
 
-        # test invalid usage
-        if not TYPING_3_11_0:
-            with self.assertRaises(TypeError):
-                ListOrSetT[Generic[T]]
-            with self.assertRaises(TypeError):
-                ListOrSetT[(Generic[T], )]
+        # Usage with Concatenate
+        callable_concat = CallableP[Concatenate[int, P]]
+        self.assertEqual(callable_concat.__parameters__, (P,))
+        if TYPING_3_11_0:
+            self.assertEqual(get_args(callable_concat), (Concatenate[int, P],))
+            concat_usage = callable_concat[str]
+            self.assertEqual(get_args(concat_usage), ((int, str),))
+            self.assertEqual(concat_usage, callable_concat[[str]])
+        elif TYPING_3_10_0:
+            self.assertEqual(get_args(callable_concat), (int, P,))
+            with self.assertRaises(TypeError, msg="Parameters to generic types must be types"):
+                callable_concat[str]
+            concat_usage = callable_concat[[str]]
+            self.assertEqual(get_args(concat_usage), (int, [str]))
+        else:
+            self.assertEqual(get_args(callable_concat), (int, P,))
+            with self.assertRaises(TypeError, msg="Parameters to generic types must be types"):
+                callable_concat[[str]]
+            concat_usage = callable_concat[str]
+            self.assertEqual(get_args(concat_usage), (int, str))
+
+        # More complex cases
+        Ts = TypeVarTuple("Ts")
+        CallableTs = TypeAliasType("CallableTs", Callable[[Unpack[Ts]], Any], type_params=(Ts, ))
+        unpack_callable = CallableTs[Unpack[Tuple[int, T]]]
+        if TYPING_3_11_0:
+            self.assertEqual(get_args(unpack_callable), (Unpack[Tuple[int, T]],))
+        else:
+            self.assertEqual(get_args(unpack_callable), (Tuple[int, T],))
+        self.assertEqual(unpack_callable.__parameters__, (T,))
+
+        Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
+        mixed_subscripedPT = Variadic[Callable[Concatenate[int,  P], T]]
+        self.assertEqual(mixed_subscripedPT.__parameters__, (P, T))
+        self.assertEqual(get_args(mixed_subscripedPT), (Callable[Concatenate[int,  P], T],))
+
+        done_subscripted_no_list = mixed_subscripedPT[T, Any] # Expected ParamSpec, ellipsis, or list of types
+        if TYPING_3_10_0:
+            done_subscripted_list = mixed_subscripedPT[[T], Any]
+            self.assertEqual(done_subscripted_list, done_subscripted_no_list)
+        else:
+            with self.assertRaises(TypeError, msg="Parameters to generic types must be types."):
+                mixed_subscripedPT[[T], Any]
+
+    @skipUnless(TYPING_3_11_0, "__args__ behaves differently")
+    def test_311_substitution(self):
+        # To pass these tests alias.__args__ in TypeAliasType.__getitem__ needs adjustment
+        # Unpack and Concatenate are unpacked in versions before
+        T = TypeVar("T")
+        Ts = TypeVarTuple("Ts")
+
+        CallableTs = TypeAliasType("CallableTs", Callable[[Unpack[Ts]], Any], type_params=(Ts, ))
+        unpack_callable = CallableTs[Unpack[Tuple[int, T]]]
+        self.assertEqual(get_args(unpack_callable), (Unpack[Tuple[int, T]],))
+
+        P = ParamSpec('P')
+        CallableP = TypeAliasType("CallableP", Callable[P, T], type_params=(P, T))
+        callable_concat = CallableP[Concatenate[int, P], Any]
+        self.assertEqual(get_args(callable_concat), (Concatenate[int, P], Any))
+
+    @skipUnless(TYPING_3_12_0, "__args__ behaves differently")
+    def test_312_substitution(self):
+        # To pass these tests alias.__args__ in TypeAliasType.__getitem__ needs to be adjustment
+        # Would raise: TypeError: Substitution of bare TypeVarTuple is not supported
+        T = TypeVar("T")
+        Ts = TypeVarTuple("Ts")
+        Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
+
+        subcriped_callable_tvt = Variadic[Callable[[Unpack[Ts]], T]]
+        variadic_tvt_callableA = subcriped_callable_tvt[str, object]
+        variadic_tvt_callableA2 = subcriped_callable_tvt[Unpack[Tuple[str]], object]
+        self.assertEqual(variadic_tvt_callableA, variadic_tvt_callableA2)
+
+        variadic_tvt_callableB = subcriped_callable_tvt[[str, int], object]
+        variadic_tvt_callableB2 = subcriped_callable_tvt[Unpack[Tuple[str, int]], object]
+        variadic_tvt_callableB3 = subcriped_callable_tvt[str, int, object]
+        self.assertNotEqual(variadic_tvt_callableB, variadic_tvt_callableB2)
+        self.assertEqual(variadic_tvt_callableB2, variadic_tvt_callableB3)
 
     def test_invalid_cases(self):
-        # If these cases fail the specificiation might have changed
+        # NOTE: If these cases fail the specificiation might have changed
+        # some of the cases could be seen as valid but are currently not
+
+        # More parameters
         T = TypeVar("T")
         T2 = TypeVar("T2")
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
@@ -7317,6 +7411,7 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(get_args(too_many), (int, bool))
         self.assertEqual(too_many.__parameters__, ())
 
+        # Not enough parameters
         ListOrSet2T = TypeAliasType("ListOrSet2T", Union[List[T], Set[T2]], type_params=(T, T2))
         not_enough = ListOrSet2T[int]
         self.assertEqual(get_args(not_enough), (int,))
@@ -7357,15 +7452,45 @@ class TypeAliasTypeTests(BaseTestCase):
         invalud_tuple_C = Variadic[[int, T]]
         self.assertEqual(invalud_tuple_C.__parameters__, ())
         self.assertEqual(get_args(invalud_tuple_C), ([int, T],))
-        
-    @skipUnless(TYPING_3_11_0, "Concatenate not unpacked anymore")
-    def test_further_invalid_cases(self):
-        P = ParamSpec('P')
+
+        # Callable
+        # NOTE: This these cases seem to be more like a limitation in the typing variant
+        # The final variable is parameterless if using a list here.
+        callable_T = CallableP[[T]]
+        self.assertEqual(get_args(callable_T), ([T],))
+        self.assertEqual(callable_T.__parameters__, ())
+        with self.assertRaises(TypeError, msg="is not a generic class"):
+            callable_T[str]
+
+        InvalidConcatP = CallableP[[int, P]]
+        self.assertEqual(get_args(InvalidConcatP), ([int, P],))
+        self.assertEqual(InvalidConcatP.__parameters__, ())
+        with self.assertRaises(TypeError, msg="is not a generic class"):
+            InvalidConcatP[str]
+
+        # Callable
+        # NOTE: This these cases seem to be more like a limitation in the typing variant
+        callable_T = CallableP[[T]]
+        self.assertEqual(get_args(callable_T), ([T],))
+        self.assertEqual(callable_T.__parameters__, ())
+        with self.assertRaises(TypeError, msg="is not a generic class"):
+            callable_T[str]
+
+        InvalidConcatP = CallableP[[int, P]]
+        self.assertEqual(get_args(InvalidConcatP), ([int, P],))
+        self.assertEqual(InvalidConcatP.__parameters__, ())
+        with self.assertRaises(TypeError, msg="is not a generic class"):
+            InvalidConcatP[str]
+
+    @skipIf(TYPING_3_11_0, "Most cases are allowed in 3.11+")
+    def test_invalid_cases_before_3_11(self):
         T = TypeVar("T")
-        T2 = TypeVar("T2")
-        CallableP = TypeAliasType("CallableP", Callable[P, T], type_params=(P,))
-        callable_concat = CallableP[Concatenate[Any, T2, P], Any]
-        self.assertEqual(get_args(callable_concat), (Concatenate[Any, T2, P], Any))
+        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
+        with self.assertRaises(TypeError):
+            ListOrSetT[Generic[T]]
+        with self.assertRaises(TypeError):
+            ListOrSetT[(Generic[T], )]
+
 
     def test_pickle(self):
         global Alias
