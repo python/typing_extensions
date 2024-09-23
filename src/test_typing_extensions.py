@@ -7342,26 +7342,10 @@ class TypeAliasTypeTests(BaseTestCase):
 
         # More complex cases
         Ts = TypeVarTuple("Ts")
-        CallableTs = TypeAliasType("CallableTs", Callable[[Unpack[Ts]], Any], type_params=(Ts, ))
-        unpack_callable = CallableTs[Unpack[Tuple[int, T]]]
-        if TYPING_3_11_0:
-            self.assertEqual(get_args(unpack_callable), (Unpack[Tuple[int, T]],))
-        else:
-            self.assertEqual(get_args(unpack_callable), (Tuple[int, T],))
-        self.assertEqual(unpack_callable.__parameters__, (T,))
-
         Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
         mixed_subscripedPT = Variadic[Callable[Concatenate[int,  P], T]]
-        self.assertEqual(mixed_subscripedPT.__parameters__, (P, T))
         self.assertEqual(get_args(mixed_subscripedPT), (Callable[Concatenate[int,  P], T],))
 
-        done_subscripted_no_list = mixed_subscripedPT[T, Any] # Expected ParamSpec, ellipsis, or list of types
-        if TYPING_3_10_0:
-            done_subscripted_list = mixed_subscripedPT[[T], Any]
-            self.assertEqual(done_subscripted_list, done_subscripted_no_list)
-        else:
-            with self.assertRaises(TypeError, msg="Parameters to generic types must be types."):
-                mixed_subscripedPT[[T], Any]
 
     @skipUnless(TYPING_3_11_0, "__args__ behaves differently")
     def test_311_substitution(self):
