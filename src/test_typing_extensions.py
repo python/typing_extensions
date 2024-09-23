@@ -7185,15 +7185,21 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(Variadic.__type_params__, (Ts,))
         self.assertEqual(Variadic.__parameters__, tuple(iter(Ts)))
 
-        subscripted_tuple = Variadic[Unpack[Tuple[int, float]]]
+        # Test bare
+        subscripted_tuple = Variadic[int, float]
         self.assertEqual(subscripted_tuple.__name__, "Variadic")
         self.assertEqual(subscripted_tuple.__value__, Tuple[int, Unpack[Ts]])
         self.assertEqual(subscripted_tuple.__type_params__, (Ts,))
         self.assertEqual(subscripted_tuple.__parameters__, ())
 
+        # Test with Unpack
         subscripted_tupleT = Variadic[Unpack[Tuple[int, T]]]
         self.assertEqual(subscripted_tupleT.__name__, "Variadic")
         self.assertEqual(subscripted_tupleT.__parameters__, (T, ))
+
+        # Test with Unpack and TypeVarTuple
+        subscripted_Ts = Variadic[Unpack[Ts]]
+        self.assertEqual(subscripted_Ts.__parameters__, (Ts, ))
 
         # Use with Callable
         # Use with Callable+Concatenate
