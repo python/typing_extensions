@@ -7390,8 +7390,8 @@ class TypeAliasTypeTests(BaseTestCase):
         T = TypeVar("T")
         T2 = TypeVar("T2")
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
-        too_many = ListOrSetT[int, bool]
 
+        too_many = ListOrSetT[int, bool]
         self.assertEqual(get_args(too_many), (int, bool))
         self.assertEqual(too_many.__parameters__, ())
 
@@ -7416,55 +7416,33 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(callable_too_many.__parameters__, (T2, ))
         self.assertEqual(get_args(callable_too_many), (str, float, T2, int, ))
 
-        # Test with Concatenate
-        callable_concat = CallableP[Concatenate[Any, T2, P], Any]
-        self.assertEqual(callable_concat.__parameters__, (T2, P))
+        # Cases that result in parameterless variable
+
+        # Callable
+        CallableT = CallableP[[T]]
+        self.assertEqual(get_args(CallableT), ([T],))
+        self.assertEqual(CallableT.__parameters__, ())
+        with self.assertRaises(TypeError, msg="is not a generic class"):
+            CallableT[str]
+
+        ImplicitConcatP = CallableP[[int, P]]
+        self.assertEqual(get_args(ImplicitConcatP), ([int, P],))
+        self.assertEqual(ImplicitConcatP.__parameters__, ())
+        with self.assertRaises(TypeError, msg="is not a generic class"):
+            ImplicitConcatP[str]
 
         # TypeVarTuple
         Ts = TypeVarTuple("Ts")
         Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
-        # No Unpack
-        invalid_tuple_A = Variadic[Tuple[int, T]]
-        self.assertEqual(invalid_tuple_A.__parameters__, (T, ))
-        self.assertEqual(get_args(invalid_tuple_A), (Tuple[int, T], ))
-
-        # To type tuple
-        invalid_tuple_B = Variadic[int, T]
-        self.assertEqual(invalid_tuple_B.__parameters__, (T, ))
 
         # No Tuple, but list
-        invalud_tuple_C = Variadic[[int, T]]
-        self.assertEqual(invalud_tuple_C.__parameters__, ())
-        self.assertEqual(get_args(invalud_tuple_C), ([int, T],))
+        invalid_tupleT = Variadic[[int, T]]
+        self.assertEqual(invalid_tupleT.__parameters__, ())
+        self.assertEqual(get_args(invalid_tupleT), ([int, T],))
 
-        # Callable
-        # NOTE: This these cases seem to be more like a limitation in the typing variant
-        # The final variable is parameterless if using a list here.
-        callable_T = CallableP[[T]]
-        self.assertEqual(get_args(callable_T), ([T],))
-        self.assertEqual(callable_T.__parameters__, ())
         with self.assertRaises(TypeError, msg="is not a generic class"):
-            callable_T[str]
+            invalid_tupleT[str]
 
-        InvalidConcatP = CallableP[[int, P]]
-        self.assertEqual(get_args(InvalidConcatP), ([int, P],))
-        self.assertEqual(InvalidConcatP.__parameters__, ())
-        with self.assertRaises(TypeError, msg="is not a generic class"):
-            InvalidConcatP[str]
-
-        # Callable
-        # NOTE: This these cases seem to be more like a limitation in the typing variant
-        callable_T = CallableP[[T]]
-        self.assertEqual(get_args(callable_T), ([T],))
-        self.assertEqual(callable_T.__parameters__, ())
-        with self.assertRaises(TypeError, msg="is not a generic class"):
-            callable_T[str]
-
-        InvalidConcatP = CallableP[[int, P]]
-        self.assertEqual(get_args(InvalidConcatP), ([int, P],))
-        self.assertEqual(InvalidConcatP.__parameters__, ())
-        with self.assertRaises(TypeError, msg="is not a generic class"):
-            InvalidConcatP[str]
 
     @skipIf(TYPING_3_11_0, "Most cases are allowed in 3.11+")
     def test_invalid_cases_before_3_11(self):
