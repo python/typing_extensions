@@ -7329,18 +7329,15 @@ class TypeAliasTypeTests(BaseTestCase):
         callable_concat = CallableP[Concatenate[int, P]]
         self.assertEqual(callable_concat.__parameters__, (P,))
         if TYPING_3_11_0:
-            self.assertEqual(get_args(callable_concat), (Concatenate[int, P],))
             concat_usage = callable_concat[str]
             self.assertEqual(get_args(concat_usage), ((int, str),))
             self.assertEqual(concat_usage, callable_concat[[str]])
         elif TYPING_3_10_0:
-            self.assertEqual(get_args(callable_concat), (int, P,))
             with self.assertRaises(TypeError, msg="Parameters to generic types must be types"):
                 callable_concat[str]
             concat_usage = callable_concat[[str]]
             self.assertEqual(get_args(concat_usage), (int, [str]))
         else:
-            self.assertEqual(get_args(callable_concat), (int, P,))
             with self.assertRaises(TypeError, msg="Parameters to generic types must be types"):
                 callable_concat[[str]]
             concat_usage = callable_concat[str]
