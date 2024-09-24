@@ -3539,61 +3539,55 @@ else:
                     return True
             return False
 
-        if sys.version_info >= (3, 11):
-            def __getitem__(self, parameters):
-                if len(self.__parameters__) == 0 and not self._is_subscriptable():
-                    raise TypeError("Only generic type aliases are subscriptable")
-                if not isinstance(parameters, tuple):
-                    parameters = (parameters,)
-                parameters = [
-                    typing._type_check(
-                        item, f'Subscripting {self.__name__} requires a type.'
-                    )
-                    for item in parameters
-                ]
-                alias = typing._GenericAlias(self, tuple(parameters))
-                alias.__value__ = self.__value__
-                alias.__type_params__ = self.__type_params__
-                return alias
-        else:
-            def _check_parameter(self, item, recursion=0):
+        if sys.version_info < (3, 11):
+            def _check_single_param(self, param, recursion=0):
                 # Allow [], [int], [int, str], [int, ...], [int, T]
-                if isinstance(item, (_UnpackAlias, _ConcatenateGenericAlias)):
+                if isinstance(param, (_UnpackAlias, _ConcatenateGenericAlias)):
                     # Unpack
                     yield from [checked
-                                for arg in item.__args__
-                                for checked in self._check_parameter(arg, recursion+1)]
-                elif item is ...:
+                                for arg in param.__args__
+                                for checked in self._check_single_param(arg, recursion+1)]
+                elif param is ...:
                     yield ...
-                elif isinstance(item, list) and recursion == 0:
+                elif isinstance(param, list) and recursion == 0:
                     yield [checked
-                           for arg in item
-                           for checked in self._check_parameter(arg, recursion+1)]
+                           for arg in param
+                           for checked in self._check_single_param(arg, recursion+1)]
                 else:
                     yield typing._type_check(
-                        item, f'Subscripting {self.__name__} requires a type.'
+                        param, f'Subscripting {self.__name__} requires a type.'
                     )
 
-            def __getitem__(self, parameters):
-                if len(self.__parameters__) == 0 and not self._is_subscriptable():
-                    raise TypeError("Only generic type aliases are subscriptable")
-                if not isinstance(parameters, tuple):
-                    parameters = (parameters,)
-                parameters = [
+        def _check_parameters(self, parameters):
+            if sys.version_info < (3, 11):
+                return [
                     checked
                     for item in parameters
-                    for checked in self._check_parameter(item)
+                    for checked in self._check_single_param(item)
                 ]
-                if sys.version_info[:2] == (3, 10):
-                    alias = typing._GenericAlias(self, tuple(parameters),
-                                                 _typevar_types=(TypeVar, ParamSpec)
-                                                 )
-                else:
-                    alias = typing._GenericAlias(self, tuple(parameters))
+            return [typing._type_check(
+                        item, f'Subscripting {self.__name__} requires a type.'
+                    )
+                    for item in parameters
+                    ]
+
+        def __getitem__(self, parameters):
+            if len(self.__parameters__) == 0 and not self._is_subscriptable():
+                raise TypeError("Only generic type aliases are subscriptable")
+            if not isinstance(parameters, tuple):
+                parameters = (parameters,)
+            parameters = self._check_parameters(parameters)
+            if sys.version_info[:2] == (3, 10):
+                alias = typing._GenericAlias(self, tuple(parameters),
+                                                _typevar_types=(TypeVar, ParamSpec)
+                                                )
+            else:
+                alias = typing._GenericAlias(self, tuple(parameters))
+            alias.__value__ = self.__value__
+            alias.__type_params__ = self.__type_params__
+            if not hasattr(alias, '__name__'):  # < 3.11
                 alias.__name__ = self.__name__
-                alias.__value__ = self.__value__
-                alias.__type_params__ = self.__type_params__
-                return alias
+            return alias
 
         def __reduce__(self):
             return self.__name__
