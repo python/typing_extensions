@@ -7457,6 +7457,24 @@ class TypeAliasTypeTests(BaseTestCase):
         with self.assertRaises(TypeError):
             ListOrSetT[(Generic[T], )]
 
+    def test_subscription_without_type_params(self):
+        Simple = TypeAliasType("Simple", int)
+        with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
+            Simple[int]
+        with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
+            Simple[[]]
+        with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
+            Simple[()]
+
+        # no TypeVar in type_params, however in value still allows subscription
+        T = TypeVar("T")
+        MissingTypeParams = TypeAliasType("MissingTypeParams", List[T], type_params=())
+        self.assertEqual(MissingTypeParams.__type_params__, ())
+        self.assertEqual(MissingTypeParams.__parameters__, ())
+        # These should not raise:
+        MissingTypeParams[int]
+        MissingTypeParams[[]]
+        MissingTypeParams[()]
 
     def test_pickle(self):
         global Alias

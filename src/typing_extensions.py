@@ -3526,9 +3526,22 @@ else:
         def __repr__(self) -> str:
             return self.__name__
 
+        def _is_subscriptable(self):
+            if len(self.__parameters__) > 0:
+                return True
+            if _should_collect_from_parameters(self.__value__):
+                if hasattr(typing, '_collect_type_vars'):
+                    more_parameters = _collect_type_vars((self.__value__,),
+                                                         (TypeVar, ParamSpec))
+                else:
+                    more_parameters = _collect_parameters((self.__value__,))
+                if more_parameters:
+                    return True
+            return False
+
         if sys.version_info >= (3, 11):
             def __getitem__(self, parameters):
-                if len(self.__type_params__) == 0:
+                if len(self.__parameters__) == 0 and not self._is_subscriptable():
                     raise TypeError("Only generic type aliases are subscriptable")
                 if not isinstance(parameters, tuple):
                     parameters = (parameters,)
@@ -3562,7 +3575,7 @@ else:
                     )
 
             def __getitem__(self, parameters):
-                if len(self.__type_params__) == 0:
+                if len(self.__parameters__) == 0 and not self._is_subscriptable():
                     raise TypeError("Only generic type aliases are subscriptable")
                 if not isinstance(parameters, tuple):
                     parameters = (parameters,)
