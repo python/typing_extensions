@@ -3572,13 +3572,13 @@ class ProtocolTests(BaseTestCase):
         self.assertEqual(Alias, Alias2)
 
     def test_protocols_pickleable(self):
-        global GlobalProto, CP  # pickle wants to reference the class by name
+        global P, CP  # pickle wants to reference the class by name
         T = TypeVar('T')
 
         @runtime_checkable
-        class GlobalProto(Protocol[T]):
+        class P(Protocol[T]):
             x = 1
-        class CP(GlobalProto[int]):
+        class CP(P[int]):
             pass
 
         c = CP()
@@ -3591,7 +3591,7 @@ class ProtocolTests(BaseTestCase):
             self.assertEqual(x.bar, 'abc')
             self.assertEqual(x.x, 1)
             self.assertEqual(x.__dict__, {'foo': 42, 'bar': 'abc'})
-            s = pickle.dumps(GlobalProto)
+            s = pickle.dumps(P)
             D = pickle.loads(s)
             class E:
                 x = 1
