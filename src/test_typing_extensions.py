@@ -7214,6 +7214,76 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(fully_subscripted.__value__, Union[List[T], Set[T]],)
         self.assertEqual(fully_subscripted.__type_params__, (T, ))
 
+    def test_alias_types_and_substitutions(self):
+        T = TypeVar('T')
+        T2 = TypeVar('T2')
+        T_default = TypeVar("T_default", default=int)
+        Ts = TypeVarTuple("Ts")
+        P = ParamSpec('P')
+
+        test_argument_cases = {
+            # arguments : expected parameters
+            int : (),
+            ... : (),
+            T2 : (T2,),
+            Union[int, List[T2]] : (T2,),
+            Ts : (Ts,),
+            Tuple[int, str] : (),
+            Tuple[T, T_default, T2] : (T, T_default, T2),
+            Tuple[Unpack[Ts]] : (Ts,),
+            Callable[[Unpack[Ts]], T2] : (Ts, T2),
+            Callable[P, T2] : (P, T2),
+            Callable[Concatenate[T2,  P], T_default] : (T2, P, T_default),
+            TypeAliasType("NestedAlias", List[T], type_params=(T,))[T2] : (T2,),
+        }
+        # currently a limitation, these args are no longer unpacked in 3.11
+        test_argument_cases_311_plus = {
+            Unpack[Ts] : (Ts,),
+            Unpack[Tuple[int, T2]] : (T2,),
+            Concatenate[int,  P] : (P,),
+        }
+        test_argument_cases.update(test_argument_cases_311_plus)
+
+        test_alias_cases = [
+            # Simple cases
+            TypeAliasType("ListT", List[T], type_params=(T,)),
+            TypeAliasType("UnionT", Union[int, List[T]], type_params=(T,)),
+            # Either value or type_params contain generic
+            TypeAliasType("ValueWithoutT", int, type_params=(T,)),
+            TypeAliasType("ValueTNoParams", List[T], type_params=()),
+            # Callable
+            TypeAliasType("CallableP", Callable[P, Any], type_params=(P, )),
+            TypeAliasType("CallableT", Callable[..., T], type_params=(T, )),
+            TypeAliasType("CallableTs", Callable[[Unpack[Ts]], Any], type_params=(Ts, )),
+            # TypeVarTuple
+            TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,)),
+            # TypeVar with default
+            TypeAliasType("TupleT_default", Tuple[T_default, T], type_params=(T, T_default)),
+            TypeAliasType("CallableT_default", Callable[[T], T_default], type_params=(T, T_default)),
+            # default order reversed
+            TypeAliasType("TupleT_default_reversed", Tuple[T_default, T], type_params=(T_default, T)),
+            TypeAliasType("CallableT_default_reversed", Callable[[T], T_default], type_params=(T_default, T)),
+        ]
+
+        for alias in test_alias_cases:
+            with self.subTest(alias=alias, args=[]):
+                subscripted = alias[[]]
+                self.assertEqual(get_args(subscripted), ([],))
+                self.assertEqual(subscripted.__parameters__, ())
+            with self.subTest(alias=alias, args=()):
+                subscripted = alias[()]
+                self.assertEqual(get_args(subscripted), ())
+                self.assertEqual(subscripted.__parameters__, ())
+            with self.subTest(alias=alias, args=(int, float)):
+                subscripted = alias[int, float]
+                self.assertEqual(get_args(subscripted), (int, float))
+                self.assertEqual(subscripted.__parameters__, ())
+            for expected_args, expected_parameters in test_argument_cases.items():
+                with self.subTest(alias=alias, args=expected_args):
+                    if expected_args in test_argument_cases_311_plus and sys.version_info < (3, 11):
+                        self.skipTest("args are unpacked before 3.11")
+                    self.assertEqual(get_args(alias[expected_args]), (expected_args,))
+                    self.assertEqual(alias[expected_args].__parameters__, expected_parameters)
 
     def test_cannot_set_attributes(self):
         Simple = TypeAliasType("Simple", int)
