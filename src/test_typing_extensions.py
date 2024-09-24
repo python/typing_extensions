@@ -9,6 +9,7 @@ import gc
 import importlib
 import inspect
 import io
+import itertools
 import pickle
 import re
 import subprocess
@@ -7894,6 +7895,71 @@ class TestGetAnnotations(BaseTestCase):
 
         f.__annotations__["x"] = str
         self.assertEqual(get_annotations(f), {"x": str})
+
+
+class TestGetAnnotationsMetaclasses(BaseTestCase):
+    def test_annotated_meta(self):
+        class Meta(type):
+            a: int
+
+        class X(metaclass=Meta):
+            pass
+
+        class Y(metaclass=Meta):
+            b: float
+
+        self.assertEqual(get_annotations(Meta), {"a": int})
+        self.assertEqual(get_annotations(X), {})
+        self.assertEqual(get_annotations(Y), {"b": float})
+
+    def test_unannotated_meta(self):
+        class Meta(type): pass
+
+        class X(metaclass=Meta):
+            a: str
+
+        class Y(X): pass
+
+        self.assertEqual(get_annotations(Meta), {})
+        self.assertEqual(get_annotations(Y), {})
+        self.assertEqual(get_annotations(X), {"a": str})
+
+    def test_ordering(self):
+        # Based on a sample by David Ellis
+        # https://discuss.python.org/t/pep-749-implementing-pep-649/54974/38
+
+        def make_classes():
+            class Meta(type):
+                a: int
+                expected_annotations = {"a": int}
+
+            class A(type, metaclass=Meta):
+                b: float
+                expected_annotations = {"b": float}
+
+            class B(metaclass=A):
+                c: str
+                expected_annotations = {"c": str}
+
+            class C(B):
+                expected_annotations = {}
+
+            class D(metaclass=Meta):
+                expected_annotations = {}
+
+            return Meta, A, B, C, D
+
+        classes = make_classes()
+        class_count = len(classes)
+        for order in itertools.permutations(range(class_count), class_count):
+            names = ", ".join(classes[i].__name__ for i in order)
+            with self.subTest(names=names):
+                classes = make_classes()  # Regenerate classes
+                for i in order:
+                    get_annotations(classes[i])
+                for c in classes:
+                    with self.subTest(c=c):
+                        self.assertEqual(get_annotations(c), c.expected_annotations)
 
 
 @skipIf(STRINGIZED_ANNOTATIONS_PEP_695 is None, "PEP 695 has yet to be")
