@@ -3528,14 +3528,16 @@ else:
 
         if sys.version_info >= (3, 11):
             def __getitem__(self, parameters):
+                if len(self.__type_params__) == 0:
+                    raise TypeError("Only generic type aliases are subscriptable")
                 if not isinstance(parameters, tuple):
                     parameters = (parameters,)
                 parameters = [
-                        typing._type_check(
-                            item, f'Subscripting {self.__name__} requires a type.'
-                        )
-                        for item in parameters
-                    ]
+                    typing._type_check(
+                        item, f'Subscripting {self.__name__} requires a type.'
+                    )
+                    for item in parameters
+                ]
                 alias = typing._GenericAlias(self, tuple(parameters))
                 alias.__value__ = self.__value__
                 alias.__type_params__ = self.__type_params__
@@ -3560,12 +3562,14 @@ else:
                     )
 
             def __getitem__(self, parameters):
+                if len(self.__type_params__) == 0:
+                    raise TypeError("Only generic type aliases are subscriptable")
                 if not isinstance(parameters, tuple):
                     parameters = (parameters,)
                 parameters = [
-                        checked
-                        for item in parameters
-                        for checked in self._check_parameter(item)
+                    checked
+                    for item in parameters
+                    for checked in self._check_parameter(item)
                 ]
                 if sys.version_info[:2] == (3, 10):
                     alias = typing._GenericAlias(self, tuple(parameters),
