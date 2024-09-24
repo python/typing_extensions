@@ -7166,19 +7166,6 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(ListOrSetT.__type_params__, (T,))
         self.assertEqual(ListOrSetT.__parameters__, (T,))
 
-        subscripted = ListOrSetT[int]
-        self.assertEqual(subscripted.__name__, "ListOrSetT")
-        self.assertEqual(subscripted.__value__, Union[List[T], Set[T]],)
-        self.assertEqual(subscripted.__type_params__, (T, ))
-        self.assertEqual(subscripted.__parameters__, ())
-
-        T2 = TypeVar("T2")
-        subscriptedT = ListOrSetT[T2]
-        self.assertEqual(subscriptedT.__name__, "ListOrSetT")
-        self.assertEqual(subscriptedT.__value__, Union[List[T], Set[T]],)
-        self.assertEqual(subscriptedT.__type_params__, (T, ))
-        self.assertEqual(subscriptedT.__parameters__, (T2, ))
-
         Ts = TypeVarTuple("Ts")
         Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
         self.assertEqual(Variadic.__name__, "Variadic")
@@ -7186,37 +7173,47 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(Variadic.__type_params__, (Ts,))
         self.assertEqual(Variadic.__parameters__, tuple(iter(Ts)))
 
-        # Test bare
-        subscripted_tuple = Variadic[int, float]
-        self.assertEqual(subscripted_tuple.__name__, "Variadic")
-        self.assertEqual(subscripted_tuple.__value__, Tuple[int, Unpack[Ts]])
-        self.assertEqual(subscripted_tuple.__type_params__, (Ts,))
-        self.assertEqual(subscripted_tuple.__parameters__, ())
+        P = ParamSpec('P')
+        CallableP = TypeAliasType("CallableP", Callable[P, Any], type_params=(P, ))
+        self.assertEqual(CallableP.__name__, "CallableP")
+        self.assertEqual(CallableP.__value__,  Callable[P, Any])
+        self.assertEqual(CallableP.__type_params__, (P,))
+        self.assertEqual(CallableP.__parameters__, (P,))
 
-        # Test with Unpack
-        subscripted_tupleT = Variadic[Unpack[Tuple[int, T]]]
-        self.assertEqual(subscripted_tupleT.__name__, "Variadic")
-        self.assertEqual(subscripted_tupleT.__parameters__, (T, ))
+    def test_attributes_from_origin(self):
+        T = TypeVar('T')
+        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
+        subscripted = ListOrSetT[int]
+        self.assertIs(get_origin(subscripted), ListOrSetT)
+        self.assertEqual(subscripted.__name__, "ListOrSetT")
+        self.assertEqual(subscripted.__value__, Union[List[T], Set[T]],)
+        self.assertEqual(subscripted.__type_params__, (T, ))
 
-        # Test with Unpack and TypeVarTuple
-        subscripted_Ts = Variadic[Unpack[Ts]]
-        self.assertEqual(subscripted_Ts.__parameters__, (Ts, ))
+        still_generic = ListOrSetT[Iterable[T]]
+        self.assertIs(get_origin(still_generic), ListOrSetT)
+        fully_subscripted = still_generic[float]
+        self.assertIs(get_origin(fully_subscripted), ListOrSetT)
+        # __name__ needs Python 3.10+
+        # __value__ and __type_params__ need Python 3.12+
+        # Further tests are below
 
-        # Use with Callable
-        # Use with Callable+Concatenate
-        subscripted_callable_concat = Variadic[Callable[Concatenate[Literal["s"],  P], T]]
-        self.assertEqual(subscripted_callable_concat.__parameters__, (P, T))
+    @skipUnless(TYPING_3_10_0, "__name__ not added to GenericAlias")
+    def test_attributes_from_origin_3_10_plus(self):
+        T = TypeVar('T')
+        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
+        fully_subscripted = ListOrSetT[Iterable[T]][float]
+        self.assertEqual(fully_subscripted.__name__, "ListOrSetT")
+        # __value__ and __type_params__ need Python 3.12+
 
-        subcriped_callable_tvt = Variadic[Callable[[Unpack[Ts]], T]]
-        self.assertEqual(subcriped_callable_tvt.__parameters__, (Ts, T))
+    @skipUnless(TYPING_3_12_0, "attributes not added to GenericAlias")
+    def test_attributes_from_origin_3_12_plus(self):
+        T = TypeVar('T')
+        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
+        fully_subscripted = ListOrSetT[Iterable[T]][float]
+        self.assertEqual(fully_subscripted.__name__, "ListOrSetT")
+        self.assertEqual(fully_subscripted.__value__, Union[List[T], Set[T]],)
+        self.assertEqual(fully_subscripted.__type_params__, (T, ))
 
-        # Use with Callable+Unpack
-        CallableTs = TypeAliasType("CallableTs", Callable[[Unpack[Ts]], Any], type_params=(Ts, ))
-        self.assertEqual(CallableTs.__type_params__, (Ts,))
-        self.assertEqual(CallableTs.__parameters__, (*Ts,))
-
-        unpack_callable = CallableTs[Unpack[Tuple[int, T]]]
-        self.assertEqual(unpack_callable.__parameters__, (T,))
 
     def test_cannot_set_attributes(self):
         Simple = TypeAliasType("Simple", int)
@@ -7278,55 +7275,56 @@ class TypeAliasTypeTests(BaseTestCase):
             Alias | "Ref"
 
     def test_getitem(self):
-        T = TypeVar("T")
+        T = TypeVar('T')
+        ValueWithoutT = TypeAliasType("ValueWithoutT", int, type_params=(T,))
+        still_subscripted = ValueWithoutT[str]
+        self.assertEqual(get_args(still_subscripted), (str,))
+
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
         subscripted = ListOrSetT[int]
         self.assertEqual(get_args(subscripted), (int,))
-        self.assertIs(get_origin(subscripted), ListOrSetT)
         with self.assertRaises(TypeError, msg="not a generic class"):
             subscripted[int]
 
         still_generic = ListOrSetT[Iterable[T]]
         self.assertEqual(get_args(still_generic), (Iterable[T],))
-        self.assertIs(get_origin(still_generic), ListOrSetT)
         fully_subscripted = still_generic[float]
         self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
-        self.assertIs(get_origin(fully_subscripted), ListOrSetT)
 
-        # Test ParamSpec and Ellipsis
+    def test_callable_without_concatenate(self):
         P = ParamSpec('P')
         CallableP = TypeAliasType("CallableP", Callable[P, Any], type_params=(P,))
-        # () -> Any
-        callable_no_arg = CallableP[[]]
-        self.assertEqual(get_args(callable_no_arg), ([],))
-        # (int) -> Any
-        callable_arg = CallableP[int]
-        self.assertEqual(get_args(callable_arg), (int,))
+        get_args_test_cases = [
+            # List of (alias, expected_args)
+            # () -> Any
+            (CallableP[()], ()),
+            (CallableP[[]], ([],)),
+            # (int) -> Any
+            (CallableP[int], (int,)),
+            (CallableP[[int]], ([int],)),
+            # (int, int) -> Any
+            (CallableP[int, int],  (int, int)),
+            (CallableP[[int, int]], ([int, int],)),
+            # (...) -> Any
+            (CallableP[...], (...,)),
+            # (int, ...) -> Any
+            (CallableP[[int, ...]], ([int, ...],)),
+        ]
 
-        callable_arg_list = CallableP[[int]]
-        self.assertEqual(get_args(callable_arg_list), ([int],))
+        for index, (expression, expected_args) in enumerate(get_args_test_cases):
+            with self.subTest(index=index, expression=expression):
+                self.assertEqual(get_args(expression), expected_args)
 
-        # (int, int) -> Any
-        callable_arg2 = CallableP[int, int]
-        self.assertEqual(get_args(callable_arg2), (int, int,))
-
-        callable_arg2_list = CallableP[[int, int]]
-        self.assertEqual(get_args(callable_arg2_list), ([int, int],))
-        # (...) -> Any
-        callable_ellipsis = CallableP[...]
-        self.assertEqual(get_args(callable_ellipsis), (...,))
-
-        callable_ellipsis2 = CallableP[(...,)]
-        self.assertEqual(callable_ellipsis, callable_ellipsis2)
-        # (int, ...) -> Any
-        callable_arg_more = CallableP[[int, ...]]
-        self.assertEqual(get_args(callable_arg_more), ([int, ...],))
+        self.assertEqual(CallableP[...], CallableP[(...,)])
         # (T) -> Any
-        callable_generic_raw = CallableP[T]
-        self.assertEqual(get_args(callable_generic_raw), (T,))
-        self.assertEqual(callable_generic_raw.__parameters__, (T,))
+        CallableT = CallableP[T]
+        self.assertEqual(get_args(CallableT), (T,))
+        self.assertEqual(CallableT.__parameters__, (T,))
 
-        # Usage with Concatenate
+    def test_callable_with_concatenate(self):
+        P = ParamSpec('P')
+        CallableP = TypeAliasType("CallableP", Callable[P, Any], type_params=(P,))
+
         callable_concat = CallableP[Concatenate[int, P]]
         self.assertEqual(callable_concat.__parameters__, (P,))
         if TYPING_3_11_0:
@@ -7344,18 +7342,11 @@ class TypeAliasTypeTests(BaseTestCase):
             concat_usage = callable_concat[str]
             self.assertEqual(get_args(concat_usage), (int, str))
 
-        # More complex cases
-        Ts = TypeVarTuple("Ts")
-        Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
-        mixed_subscripedPT = Variadic[Callable[Concatenate[int,  P], T]]
-        self.assertEqual(get_args(mixed_subscripedPT), (Callable[Concatenate[int,  P], T],))
-
-
     @skipUnless(TYPING_3_11_0, "__args__ behaves differently")
-    def test_311_substitution(self):
+    def test_substitution_311_plus(self):
         # To pass these tests alias.__args__ in TypeAliasType.__getitem__ needs adjustment
         # Unpack and Concatenate are unpacked in versions before
-        T = TypeVar("T")
+        T = TypeVar('T')
         Ts = TypeVarTuple("Ts")
 
         CallableTs = TypeAliasType("CallableTs", Callable[[Unpack[Ts]], Any], type_params=(Ts, ))
@@ -7368,10 +7359,10 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(get_args(callable_concat), (Concatenate[int, P], Any))
 
     @skipUnless(TYPING_3_12_0, "__args__ behaves differently")
-    def test_312_substitution(self):
-        # To pass these tests alias.__args__ in TypeAliasType.__getitem__ needs to be adjustment
+    def test_substitution_312_plus(self):
+        # To pass these tests alias.__args__ in TypeAliasType.__getitem__ needs adjustment
         # Would raise: TypeError: Substitution of bare TypeVarTuple is not supported
-        T = TypeVar("T")
+        T = TypeVar('T')
         Ts = TypeVarTuple("Ts")
         Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
 
@@ -7386,48 +7377,62 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertNotEqual(variadic_tvt_callableB, variadic_tvt_callableB2)
         self.assertEqual(variadic_tvt_callableB2, variadic_tvt_callableB3)
 
-    def test_invalid_cases(self):
-        # NOTE: If these cases fail the specificiation might have changed
-        # some of the cases could be seen as valid but are currently not
-
-        # More parameters
-        T = TypeVar("T")
+    def test_wrong_amount_of_parameters(self):
+        T = TypeVar('T')
         T2 = TypeVar("T2")
+        P = ParamSpec('P')
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
+        TwoT = TypeAliasType("TwoT", Union[List[T], Set[T2]], type_params=(T, T2))
+        CallablePT = TypeAliasType("CallablePT", Callable[P, T], type_params=(P, T))
 
+        # Not enough parameters
+        not_enough = TwoT[int]
+        self.assertEqual(get_args(not_enough), (int,))
+        self.assertEqual(not_enough.__parameters__, ())
+
+        not_enough2 = TwoT[T]
+        self.assertEqual(get_args(not_enough2), (T,))
+        self.assertEqual(not_enough2.__parameters__, (T,))
+
+        callable_not_enough = CallablePT[int]
+        self.assertEqual(get_args(callable_not_enough), (int, ))
+        self.assertEqual(callable_not_enough.__parameters__, ())
+
+        # Too many
         too_many = ListOrSetT[int, bool]
         self.assertEqual(get_args(too_many), (int, bool))
         self.assertEqual(too_many.__parameters__, ())
 
-        # Not enough parameters
-        ListOrSet2T = TypeAliasType("ListOrSet2T", Union[List[T], Set[T2]], type_params=(T, T2))
-        not_enough = ListOrSet2T[int]
-        self.assertEqual(get_args(not_enough), (int,))
-        self.assertEqual(not_enough.__parameters__, ())
+        callable_too_many = CallablePT[str, float, int]
+        self.assertEqual(get_args(callable_too_many), (str, float, int))
+        self.assertEqual(callable_too_many.__parameters__, ())
 
-        not_enough2 = ListOrSet2T[T]
-        self.assertEqual(get_args(not_enough2), (T,))
-        self.assertEqual(not_enough2.__parameters__, (T,))
-        # ParamSpec
-        P = ParamSpec('P')
-        CallableP = TypeAliasType("CallableP", Callable[P, T], type_params=(P,))
+        # Check if TypeVar is still present even if over substituted
+        too_manyT = ListOrSetT[int, T]
+        self.assertEqual(get_args(too_manyT), (int, T))
+        self.assertEqual(too_manyT.__parameters__, (T, ))
 
-        callable_not_enough = CallableP[int]
-        self.assertEqual(callable_not_enough.__parameters__, ())
-        self.assertEqual(get_args(callable_not_enough), (int, ))
+        # With and without list for ParamSpec
+        callable_too_manyT = CallablePT[str, float, T]
+        self.assertEqual(get_args(callable_too_manyT), (str, float, T))
+        self.assertEqual(callable_too_manyT.__parameters__, (T, ))
 
-        callable_too_many = CallableP[str, float, T2, int]
-        self.assertEqual(callable_too_many.__parameters__, (T2, ))
-        self.assertEqual(get_args(callable_too_many), (str, float, T2, int, ))
+        callable_too_manyT2 = CallablePT[[str], float, int, T2]
+        self.assertEqual(get_args(callable_too_manyT2), ([str], float, int, T2))
+        self.assertEqual(callable_too_manyT2.__parameters__, (T2, ))
 
-        # Cases that result in parameterless variable
+    def test_list_argument(self):
+        # NOTE: These cases could be seen as valid but result in a parameterless
+        # variable. If these tests fail the specificiation might have changed
 
         # Callable
-        CallableT = CallableP[[T]]
-        self.assertEqual(get_args(CallableT), ([T],))
-        self.assertEqual(CallableT.__parameters__, ())
+        P = ParamSpec('P')
+        CallableP = TypeAliasType("CallableP", Callable[P, Any], type_params=(P,))
+        CallableT_list = CallableP[[T]]
+        self.assertEqual(get_args(CallableT_list), ([T],))
+        self.assertEqual(CallableT_list.__parameters__, ())
         with self.assertRaises(TypeError, msg="is not a generic class"):
-            CallableT[str]
+            CallableT_list[str]
 
         ImplicitConcatP = CallableP[[int, P]]
         self.assertEqual(get_args(ImplicitConcatP), ([int, P],))
@@ -7438,19 +7443,15 @@ class TypeAliasTypeTests(BaseTestCase):
         # TypeVarTuple
         Ts = TypeVarTuple("Ts")
         Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
-
-        # No Tuple, but list
         invalid_tupleT = Variadic[[int, T]]
-        self.assertEqual(invalid_tupleT.__parameters__, ())
         self.assertEqual(get_args(invalid_tupleT), ([int, T],))
-
+        self.assertEqual(invalid_tupleT.__parameters__, ())
         with self.assertRaises(TypeError, msg="is not a generic class"):
             invalid_tupleT[str]
 
-
     @skipIf(TYPING_3_11_0, "Most cases are allowed in 3.11+")
     def test_invalid_cases_before_3_11(self):
-        T = TypeVar("T")
+        T = TypeVar('T')
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
         with self.assertRaises(TypeError):
             ListOrSetT[Generic[T]]
@@ -7467,7 +7468,7 @@ class TypeAliasTypeTests(BaseTestCase):
             Simple[()]
 
         # no TypeVar in type_params, however in value still allows subscription
-        T = TypeVar("T")
+        T = TypeVar('T')
         MissingTypeParams = TypeAliasType("MissingTypeParams", List[T], type_params=())
         self.assertEqual(MissingTypeParams.__type_params__, ())
         self.assertEqual(MissingTypeParams.__parameters__, ())
