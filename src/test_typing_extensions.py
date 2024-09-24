@@ -7456,40 +7456,27 @@ class TypeAliasTypeTests(BaseTestCase):
         CallablePT = TypeAliasType("CallablePT", Callable[P, T], type_params=(P, T))
 
         # Not enough parameters
-        not_enough = TwoT[int]
-        self.assertEqual(get_args(not_enough), (int,))
-        self.assertEqual(not_enough.__parameters__, ())
+        test_cases = [
+            # not_enough
+            (TwoT[int],                              [(int,), ()]),
+            (TwoT[T],                                [(T,), (T,)]),
+            # callable and not enough
+            (CallablePT[int],                        [(int,), ()]),
+            # too many
+            (ListOrSetT[int, bool],                  [(int, bool), ()]),
+            # callable and too many
+            (CallablePT[str, float, int],            [(str, float, int), ()]),
+            # Check if TypeVar is still present even if over substituted
+            (ListOrSetT[int, T],                     [(int, T), (T,)]),
+            # With and without list for ParamSpec
+            (CallablePT[str, float, T],              [(str, float, T), (T,)]),
+            (CallablePT[[str], float, int, T2],      [([str], float, int, T2), (T2,)]),
+        ]
 
-        not_enough2 = TwoT[T]
-        self.assertEqual(get_args(not_enough2), (T,))
-        self.assertEqual(not_enough2.__parameters__, (T,))
-
-        callable_not_enough = CallablePT[int]
-        self.assertEqual(get_args(callable_not_enough), (int, ))
-        self.assertEqual(callable_not_enough.__parameters__, ())
-
-        # Too many
-        too_many = ListOrSetT[int, bool]
-        self.assertEqual(get_args(too_many), (int, bool))
-        self.assertEqual(too_many.__parameters__, ())
-
-        callable_too_many = CallablePT[str, float, int]
-        self.assertEqual(get_args(callable_too_many), (str, float, int))
-        self.assertEqual(callable_too_many.__parameters__, ())
-
-        # Check if TypeVar is still present even if over substituted
-        too_manyT = ListOrSetT[int, T]
-        self.assertEqual(get_args(too_manyT), (int, T))
-        self.assertEqual(too_manyT.__parameters__, (T, ))
-
-        # With and without list for ParamSpec
-        callable_too_manyT = CallablePT[str, float, T]
-        self.assertEqual(get_args(callable_too_manyT), (str, float, T))
-        self.assertEqual(callable_too_manyT.__parameters__, (T, ))
-
-        callable_too_manyT2 = CallablePT[[str], float, int, T2]
-        self.assertEqual(get_args(callable_too_manyT2), ([str], float, int, T2))
-        self.assertEqual(callable_too_manyT2.__parameters__, (T2, ))
+        for index, (alias, [expected_args, expected_params]) in enumerate(test_cases):
+            with self.subTest(index=index, alias=alias):
+                self.assertEqual(get_args(alias), expected_args)
+                self.assertEqual(alias.__parameters__, expected_params)
 
     def test_list_argument(self):
         # NOTE: These cases could be seen as valid but result in a parameterless
