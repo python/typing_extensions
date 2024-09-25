@@ -7264,7 +7264,7 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(still_generic.__value__, Union[List[T], Set[T]])
         self.assertEqual(still_generic.__type_params__, (T,))
         with self.subTest(variable=fully_subscripted):
-            if sys.version_info[:2] < (3, 12):
+            if not TYPING_3_10_0:  # needs to align with GenericAlias usage in __getitem__ else 3.12+
                 self.skipTest("Cannot further proxy attributes with _GenericAlias")
             self.assertEqual(fully_subscripted.__module__, ListOrSetT.__module__)
             self.assertEqual(fully_subscripted.__name__, "ListOrSetT")
