@@ -3534,7 +3534,7 @@ else:
                 for item in parameters
             ]
             if sys.version_info >= (3, 10):
-                return typing.GenericAlias(self, tuple(parameters))
+                return _types.GenericAlias(self, tuple(parameters))
             alias = typing._GenericAlias(self, tuple(parameters))
             alias.__value__ = self.__value__
             alias.__type_params__ = self.__type_params__
