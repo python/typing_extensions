@@ -5384,17 +5384,18 @@ class ConcatenateTests(BaseTestCase):
         self.assertEqual(C1.__origin__, C2.__origin__)
         self.assertNotEqual(C1, C2)
 
-        # Test collections.abc.Callable too.
-        if sys.version_info[:2] >= (3, 9):
-            C3 = collections.abc.Callable[Concatenate[int, P], int]
-            C4 = collections.abc.Callable[Concatenate[int, T, P], T]
-            self.assertEqual(C3.__origin__, C4.__origin__)
-            self.assertNotEqual(C3, C4)
+    @skipUnless(TYPING_3_9_0, "Needs PEP 585")
+    def test_collections_abc_callable(self):
+        P = ParamSpec('P')
+        T = TypeVar('T')
+        C3 = collections.abc.Callable[Concatenate[int, P], int]
+        C4 = collections.abc.Callable[Concatenate[int, T, P], T]
+        self.assertEqual(C3.__origin__, C4.__origin__)
+        self.assertNotEqual(C3, C4)
 
-        # Callable with Ellipsis cannot be constructed in 3.8 and below 3.9.2
-        if sys.version_info[:2] <= (3, 9, 2):
-            return
-
+    @skipUnless(sys.version_info >= (3, 9, 3), "Callable with Ellipsis cannot be constructed below 3.9.2")
+    def test_valid_uses_py39_plus(self):
+        T = TypeVar('T')
         C5 = Callable[Concatenate[int, ...], int]
         C6 = Callable[Concatenate[int, T, ...], T]
         self.assertEqual(C5.__origin__, C6.__origin__)
