@@ -1726,8 +1726,9 @@ class GetUtilitiesTestCase(TestCase):
         self.assertEqual(get_args(Unpack), ())
         self.assertEqual(get_args(Callable[Concatenate[int, P], int]),
                          (Concatenate[int, P], int))
-        if sys.version_info >= (3, 9, 2):
-            # Cannot construct Callable[Concatenate[int, ...] with non-types
+        with self.subTest("Concatenate[int, ...]"):
+            if sys.version_info < (3, 9, 2):
+                self.skipTest("arguments must be types before 3.9.2, i.e. no ...")
             self.assertEqual(get_args(Callable[Concatenate[int, ...], int]),
                         (Concatenate[int, ...], int))
 
@@ -5384,24 +5385,25 @@ class ConcatenateTests(BaseTestCase):
         self.assertEqual(C1.__origin__, C2.__origin__)
         self.assertNotEqual(C1, C2)
 
-    @skipUnless(TYPING_3_9_0, "Needs PEP 585")
-    def test_collections_abc_callable(self):
+    @skipUnless(TYPING_3_9_0, "Needs PEP 585; no backport for 3.8 typing")
+    def test_valid_uses_py39_plus(self):
         P = ParamSpec('P')
         T = TypeVar('T')
-        C3 = collections.abc.Callable[Concatenate[int, P], int]
-        C4 = collections.abc.Callable[Concatenate[int, T, P], T]
-        self.assertEqual(C3.__origin__, C4.__origin__)
-        self.assertNotEqual(C3, C4)
 
-    @skipUnless(sys.version_info >= (3, 9, 3), "Callable with Ellipsis cannot be constructed below 3.9.2")
-    def test_valid_uses_py39_plus(self):
-        T = TypeVar('T')
-        C5 = Callable[Concatenate[int, ...], int]
-        C6 = Callable[Concatenate[int, T, ...], T]
+        with self.subTest("typing.Callable with Ellipsis"):
+            if sys.version_info < (3, 9, 2):
+                self.skipTest("Must use types before 3.9.2")
+            C3 = Callable[Concatenate[int, ...], int]
+            C4 = Callable[Concatenate[int, T, ...], T]
+            self.assertEqual(C3.__origin__, C4.__origin__)
+            self.assertNotEqual(C3, C4)
+
+        # Test collections.abc.Callable too.
+        C5 = collections.abc.Callable[Concatenate[int, P], int]
+        C6 = collections.abc.Callable[Concatenate[int, T, P], T]
         self.assertEqual(C5.__origin__, C6.__origin__)
         self.assertNotEqual(C5, C6)
 
-        # Test collections.abc.Callable too.
         C7 = collections.abc.Callable[Concatenate[int, ...], int]
         C8 = collections.abc.Callable[Concatenate[int, T, ...], T]
         self.assertEqual(C7.__origin__, C8.__origin__)
@@ -5423,26 +5425,29 @@ class ConcatenateTests(BaseTestCase):
         ):
             Concatenate[P, T]
 
-        # Cannot construct a Callable with Ellipsis in 3.8 as args must be types
-        if sys.version_info >= (3, 9, 2):
-            with self.assertRaisesRegex(
-                TypeError,
-                'is not a generic class',
-            ):
-                Callable[Concatenate[int, ...], Any][T]
+    @skipIf(sys.version_info < (3, 9, 2), "Args must be types below 3.9.2")
+    def test_invalid_uses_py39_2_plus(self):
+        T = TypeVar('T')
+        with self.assertRaisesRegex(
+            TypeError,
+            'is not a generic class',
+        ):
+            Callable[Concatenate[int, ...], Any][T]
 
-        if not TYPING_3_11_0:
-            with self.assertRaisesRegex(
-                TypeError,
-                'each arg must be a type',
-            ):
-                Concatenate[1, P]
+    @skipIf(TYPING_3_11_0, "Args can be non-types in 3.11+")
+    def test_invalid_uses_before_3_11(self):
+        P = ParamSpec('P')
+        with self.assertRaisesRegex(
+            TypeError,
+            'each arg must be a type',
+        ):
+            Concatenate[1, P]
 
-            with self.assertRaisesRegex(
-                TypeError,
-                'each arg must be a type.',
-            ):
-                Concatenate[1, ..., P]
+        with self.assertRaisesRegex(
+            TypeError,
+            'each arg must be a type.',
+        ):
+            Concatenate[1, ..., P]
 
     @skipUnless(TYPING_3_11_0 or (3, 10, 0) <= sys.version_info < (3, 10, 2),
                 "Cannot be backported to <=3.9"
