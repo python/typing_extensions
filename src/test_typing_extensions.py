@@ -7227,7 +7227,6 @@ class TypeAliasTypeTests(BaseTestCase):
             ... : (),
             T2 : (T2,),
             Union[int, List[T2]] : (T2,),
-            Ts : (Ts,),
             Tuple[int, str] : (),
             Tuple[T, T_default, T2] : (T, T_default, T2),
             Tuple[Unpack[Ts]] : (Ts,),
@@ -7237,11 +7236,16 @@ class TypeAliasTypeTests(BaseTestCase):
             TypeAliasType("NestedAlias", List[T], type_params=(T,))[T2] : (T2,),
         }
         # currently a limitation, these args are no longer unpacked in 3.11
-        test_argument_cases_311_plus = {
-            Unpack[Ts] : (Ts,),
+        # also valid on 310 if GenericAlias is used
+        test_argument_cases_310_plus = {
             Unpack[Tuple[int, T2]] : (T2,),
             Concatenate[int,  P] : (P,),
+            Unpack[Ts] : (Ts,),
         }
+        test_argument_cases_311_plus = {
+            Ts : (Ts,),
+        }
+        test_argument_cases.update(test_argument_cases_310_plus)
         test_argument_cases.update(test_argument_cases_311_plus)
 
         test_alias_cases = [
@@ -7280,8 +7284,10 @@ class TypeAliasTypeTests(BaseTestCase):
                 self.assertEqual(subscripted.__parameters__, ())
             for expected_args, expected_parameters in test_argument_cases.items():
                 with self.subTest(alias=alias, args=expected_args):
+                    if expected_args in test_argument_cases_310_plus and sys.version_info < (3, 10):
+                        self.skipTest("args are unpacked before 3.11 or need GenericAlias")
                     if expected_args in test_argument_cases_311_plus and sys.version_info < (3, 11):
-                        self.skipTest("args are unpacked before 3.11")
+                        self.skipTest("Case is not valid before 3.11")
                     self.assertEqual(get_args(alias[expected_args]), (expected_args,))
                     self.assertEqual(alias[expected_args].__parameters__, expected_parameters)
 
@@ -7397,20 +7403,15 @@ class TypeAliasTypeTests(BaseTestCase):
 
         callable_concat = CallableP[Concatenate[int, P]]
         self.assertEqual(callable_concat.__parameters__, (P,))
-        if TYPING_3_11_0:
-            concat_usage = callable_concat[str]
+        concat_usage = callable_concat[str]
+        with self.subTest("get_args of Concatenate in TypeAliasType"):
+            if sys.version_info < (3, 10, 2):
+                self.skipTest("GenericAlias keeps Concatenate in __args__ prior to 3.10.2")
             self.assertEqual(get_args(concat_usage), ((int, str),))
+        with self.subTest("Equality of parameter_expression without []"):
+            if not TYPING_3_10_0:
+                self.skipTest("Nested list is invalid type form")
             self.assertEqual(concat_usage, callable_concat[[str]])
-        elif TYPING_3_10_0:
-            with self.assertRaises(TypeError, msg="Parameters to generic types must be types"):
-                callable_concat[str]
-            concat_usage = callable_concat[[str]]
-            self.assertEqual(get_args(concat_usage), (int, [str]))
-        else:
-            with self.assertRaises(TypeError, msg="Parameters to generic types must be types"):
-                callable_concat[[str]]
-            concat_usage = callable_concat[str]
-            self.assertEqual(get_args(concat_usage), (int, str))
 
     @skipUnless(TYPING_3_11_0, "__args__ behaves differently")
     def test_substitution_311_plus(self):
@@ -7506,7 +7507,8 @@ class TypeAliasTypeTests(BaseTestCase):
         with self.assertRaises(TypeError, msg="is not a generic class"):
             invalid_tupleT[str]
 
-    @skipIf(TYPING_3_11_0, "Most cases are allowed in 3.11+")
+    # The condition should align with the version of GeneriAlias usage in __getitem__
+    @skipIf(TYPING_3_9_0, "Most cases are allowed in 3.11+ or with GenericAlias")
     def test_invalid_cases_before_3_11(self):
         T = TypeVar('T')
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))

@@ -3561,17 +3561,13 @@ else:
         def __getitem__(self, parameters):
             if not isinstance(parameters, tuple):
                 parameters = (parameters,)
+            if sys.version_info >= (3, 10):
+                return _types.GenericAlias(self, tuple(parameters))
             parameters = self._check_parameters(parameters)
-            if sys.version_info[:2] == (3, 10):
-                alias = typing._GenericAlias(self, tuple(parameters),
-                                                _typevar_types=(TypeVar, ParamSpec)
-                                                )
-            else:
-                alias = typing._GenericAlias(self, tuple(parameters))
+            alias = typing._GenericAlias(self, tuple(parameters))
             alias.__value__ = self.__value__
             alias.__type_params__ = self.__type_params__
-            if not hasattr(alias, '__name__'):  # < 3.11
-                alias.__name__ = self.__name__
+            alias.__name__ = self.__name__
             return alias
 
         def __reduce__(self):
