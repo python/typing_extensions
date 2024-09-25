@@ -3527,6 +3527,7 @@ else:
         def __getitem__(self, parameters):
             if not isinstance(parameters, tuple):
                 parameters = (parameters,)
+            # Using 3.9 here will create problems with Concatenate
             parameters = [
                 typing._type_check(
                     item, f'Subscripting {self.__name__} requires a type.'
@@ -3538,8 +3539,7 @@ else:
             alias = typing._GenericAlias(self, tuple(parameters))
             alias.__value__ = self.__value__
             alias.__type_params__ = self.__type_params__
-            if sys.version_info <= (3, 11):
-                alias.__name__ = self.__name__
+            alias.__name__ = self.__name__
             return alias
 
         def __reduce__(self):
