@@ -7236,14 +7236,14 @@ class TypeAliasTypeTests(BaseTestCase):
             TypeAliasType("NestedAlias", List[T], type_params=(T,))[T2] : (T2,),
         }
         # currently a limitation, these args are no longer unpacked in 3.11
-        # also valid on 310 if GenericAlias is used
+        # OK if GenericAlias in __getitem__ is used
         test_argument_cases_310_plus = {
+            Unpack[Ts] : (Ts,),
             Unpack[Tuple[int, T2]] : (T2,),
             Concatenate[int,  P] : (P,),
-            Unpack[Ts] : (Ts,),
         }
         test_argument_cases_311_plus = {
-            Ts : (Ts,),
+            Ts : (Ts,),  # invalid case
         }
         test_argument_cases.update(test_argument_cases_310_plus)
         test_argument_cases.update(test_argument_cases_311_plus)
@@ -7413,8 +7413,7 @@ class TypeAliasTypeTests(BaseTestCase):
                 self.skipTest("Nested list is invalid type form")
             self.assertEqual(concat_usage, callable_concat[[str]])
 
-    @skipUnless(TYPING_3_11_0, "__args__ behaves differently")
-    def test_substitution_311_plus(self):
+    def test_substitution(self):
         # To pass these tests alias.__args__ in TypeAliasType.__getitem__ needs adjustment
         # Unpack and Concatenate are unpacked in versions before
         T = TypeVar('T')
@@ -7428,6 +7427,7 @@ class TypeAliasTypeTests(BaseTestCase):
         CallableP = TypeAliasType("CallableP", Callable[P, T], type_params=(P, T))
         callable_concat = CallableP[Concatenate[int, P], Any]
         self.assertEqual(get_args(callable_concat), (Concatenate[int, P], Any))
+        self.assertEqual(callable_concat.__parameters__, (P,))
 
     @skipUnless(TYPING_3_12_0, "__args__ behaves differently")
     def test_substitution_312_plus(self):
@@ -7508,7 +7508,7 @@ class TypeAliasTypeTests(BaseTestCase):
             invalid_tupleT[str]
 
     # The condition should align with the version of GeneriAlias usage in __getitem__
-    @skipIf(TYPING_3_9_0, "Most cases are allowed in 3.11+ or with GenericAlias")
+    @skipIf(TYPING_3_10_0, "Most cases are allowed in 3.11+ or with GenericAlias")
     def test_invalid_cases_before_3_11(self):
         T = TypeVar('T')
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))

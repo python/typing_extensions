@@ -3529,13 +3529,9 @@ else:
         if sys.version_info < (3, 11):
             def _check_single_param(self, param, recursion=0):
                 # Allow [], [int], [int, str], [int, ...], [int, T]
-                if isinstance(param, (_UnpackAlias, _ConcatenateGenericAlias)):
-                    # Unpack
-                    yield from [checked
-                                for arg in param.__args__
-                                for checked in self._check_single_param(arg, recursion+1)]
-                elif param is ...:
+                if param is ...:
                     yield ...
+                # Note in < 3.9 _ConcatenateGenericAlias inherits from list
                 elif isinstance(param, list) and recursion == 0:
                     yield [checked
                            for arg in param
@@ -3563,8 +3559,11 @@ else:
                 parameters = (parameters,)
             if sys.version_info >= (3, 10):
                 return _types.GenericAlias(self, tuple(parameters))
+            type_vars = _collect_type_vars(parameters)
             parameters = self._check_parameters(parameters)
             alias = typing._GenericAlias(self, tuple(parameters))
+            if len(alias.__parameters__) < len(type_vars):
+                alias.__parameters__ = tuple(type_vars)
             alias.__value__ = self.__value__
             alias.__type_params__ = self.__type_params__
             alias.__name__ = self.__name__
