@@ -3528,14 +3528,14 @@ else:
             if not isinstance(parameters, tuple):
                 parameters = (parameters,)
             # Using 3.9 here will create problems with Concatenate
+            if sys.version_info >= (3, 10):
+                return _types.GenericAlias(self, tuple(parameters))
             parameters = [
                 typing._type_check(
                     item, f'Subscripting {self.__name__} requires a type.'
                 )
                 for item in parameters
             ]
-            if sys.version_info >= (3, 10):
-                return _types.GenericAlias(self, tuple(parameters))
             alias = typing._GenericAlias(self, tuple(parameters))
             alias.__value__ = self.__value__
             alias.__type_params__ = self.__type_params__
