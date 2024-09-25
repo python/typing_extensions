@@ -5446,8 +5446,8 @@ class ConcatenateTests(BaseTestCase):
 
     @skipUnless(TYPING_3_11_0 or (3, 10, 0) <= sys.version_info < (3, 10, 2),
                 "Cannot be backported to <=3.9"
-                "Cannot use ... with 3.10.2+ typing._ConcatenateGenericAlias")
-    def test_alias(self):
+                "Cannot use ... with typing._ConcatenateGenericAlias after 3.10.2")
+    def test_alias_subscription_with_ellipsis(self):
         P = ParamSpec('P')
         X = Callable[Concatenate[int, P], Any]
 
