@@ -7247,6 +7247,32 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
         self.assertIs(get_origin(fully_subscripted), ListOrSetT)
 
+    def test_alias_attributes(self):
+        T = TypeVar('T')
+        T2 = TypeVar('T2')
+        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
+        subscripted = ListOrSetT[int]
+        still_generic = ListOrSetT[Iterable[T2]]
+        fully_subscripted = still_generic[float]
+
+        with self.subTest(variable=subscripted):
+            self.assertEqual(subscripted.__module__, ListOrSetT.__module__)
+            self.assertEqual(subscripted.__name__, "ListOrSetT")
+            self.assertEqual(subscripted.__value__, Union[List[T], Set[T]])
+            self.assertEqual(subscripted.__type_params__, (T,))
+        with self.subTest(variable=still_generic):
+            self.assertEqual(still_generic.__module__, ListOrSetT.__module__)
+            self.assertEqual(still_generic.__name__, "ListOrSetT")
+            self.assertEqual(still_generic.__value__, Union[List[T], Set[T]])
+            self.assertEqual(still_generic.__type_params__, (T,))
+        with self.subTest(variable=fully_subscripted):
+            if sys.version_info[:2] == (3, 8):
+                self.skipTest("Cannot further proxy attributes with _GenericAlias")
+            self.assertEqual(fully_subscripted.__module__, ListOrSetT.__module__)
+            self.assertEqual(fully_subscripted.__name__, "ListOrSetT")
+            self.assertEqual(fully_subscripted.__value__, Union[List[T], Set[T]])
+            self.assertEqual(fully_subscripted.__type_params__, (T,))
+
     def test_pickle(self):
         global Alias
         Alias = TypeAliasType("Alias", int)

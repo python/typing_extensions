@@ -3533,7 +3533,15 @@ else:
                 )
                 for item in parameters
             ]
-            return typing._GenericAlias(self, tuple(parameters))
+            if sys.version_info >= (3, 9):
+                # Using GenericAlias solves the attribute presence issue
+                # however creates a chain of other issues.
+                return typing.GenericAlias(self, parameters)
+            alias = typing._GenericAlias(self, tuple(parameters))
+            alias.__value__ = self.__value__
+            alias.__type_params__ = self.__type_params__
+            alias.__name__ = self.__name__  # this is present on 3.11
+            return alias
 
         def __reduce__(self):
             return self.__name__
