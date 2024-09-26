@@ -3593,9 +3593,10 @@ else:
             # Using 3.9 here will create problems with Concatenate
             if sys.version_info >= (3, 10):
                 return _types.GenericAlias(self, parameters)
-            parameters = tuple(self._check_parameters(parameters))
-            return typing._GenericAlias(self, tuple(parameters))
             type_vars = _collect_type_vars(parameters)
+            parameters = self._check_parameters(parameters)
+            alias = _TypeAliasGenericAlias(self, parameters)
+            # If Concatenate is present its parameters were not collected
             if len(alias.__parameters__) < len(type_vars):
                 alias.__parameters__ = tuple(type_vars)
             return alias
