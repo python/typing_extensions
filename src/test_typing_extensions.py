@@ -7180,40 +7180,6 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(CallableP.__type_params__, (P,))
         self.assertEqual(CallableP.__parameters__, (P,))
 
-    def test_attributes_from_origin(self):
-        T = TypeVar('T')
-        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
-        subscripted = ListOrSetT[int]
-        self.assertIs(get_origin(subscripted), ListOrSetT)
-        self.assertEqual(subscripted.__name__, "ListOrSetT")
-        self.assertEqual(subscripted.__value__, Union[List[T], Set[T]],)
-        self.assertEqual(subscripted.__type_params__, (T, ))
-
-        still_generic = ListOrSetT[Iterable[T]]
-        self.assertIs(get_origin(still_generic), ListOrSetT)
-        fully_subscripted = still_generic[float]
-        self.assertIs(get_origin(fully_subscripted), ListOrSetT)
-        # __name__ needs Python 3.10+
-        # __value__ and __type_params__ need Python 3.12+
-        # Further tests are below
-
-    @skipUnless(TYPING_3_10_0, "__name__ not added to GenericAlias")
-    def test_attributes_from_origin_3_10_plus(self):
-        T = TypeVar('T')
-        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
-        fully_subscripted = ListOrSetT[Iterable[T]][float]
-        self.assertEqual(fully_subscripted.__name__, "ListOrSetT")
-        # __value__ and __type_params__ need Python 3.12+
-
-    @skipUnless(TYPING_3_12_0, "attributes not added to GenericAlias")
-    def test_attributes_from_origin_3_12_plus(self):
-        T = TypeVar('T')
-        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
-        fully_subscripted = ListOrSetT[Iterable[T]][float]
-        self.assertEqual(fully_subscripted.__name__, "ListOrSetT")
-        self.assertEqual(fully_subscripted.__value__, Union[List[T], Set[T]],)
-        self.assertEqual(fully_subscripted.__type_params__, (T, ))
-
     def test_alias_types_and_substitutions(self):
         T = TypeVar('T')
         T2 = TypeVar('T2')
@@ -7359,13 +7325,16 @@ class TypeAliasTypeTests(BaseTestCase):
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
         subscripted = ListOrSetT[int]
         self.assertEqual(get_args(subscripted), (int,))
+        self.assertIs(get_origin(subscripted), ListOrSetT)
         with self.assertRaises(TypeError, msg="not a generic class"):
             subscripted[int]
 
         still_generic = ListOrSetT[Iterable[T]]
         self.assertEqual(get_args(still_generic), (Iterable[T],))
+        self.assertIs(get_origin(still_generic), ListOrSetT)
         fully_subscripted = still_generic[float]
         self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
+        self.assertIs(get_origin(fully_subscripted), ListOrSetT)
 
     def test_callable_without_concatenate(self):
         P = ParamSpec('P')

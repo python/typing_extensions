@@ -3564,9 +3564,6 @@ else:
             alias = typing._GenericAlias(self, tuple(parameters))
             if len(alias.__parameters__) < len(type_vars):
                 alias.__parameters__ = tuple(type_vars)
-            alias.__value__ = self.__value__
-            alias.__type_params__ = self.__type_params__
-            alias.__name__ = self.__name__
             return alias
 
         def __reduce__(self):
