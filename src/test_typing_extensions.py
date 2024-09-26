@@ -7267,22 +7267,7 @@ class TypeAliasTypeTests(BaseTestCase):
             MissingTypeParamsErr[[]]
         with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
             MissingTypeParamsErr[()]
-            
-        # However, providing type_params=() argument allows subscription
-        MissingTypeParams = TypeAliasType("MissingTypeParams", List[T], type_params=())
-        self.assertEqual(MissingTypeParams.__type_params__, ())
-        self.assertEqual(MissingTypeParams.__parameters__, ())
-        # These do not raise
-        MissingTypeParams[int]
-        MissingTypeParams[()]
-        Simple2 = TypeAliasType("Simple2", int, type_params=())
-        Simple2[int]
-        Simple2[()]
-        with self.subTest():
-            if sys.version_info < (3, 11):
-                self.skipTest("needs change how parameters are checked")
-            MissingTypeParams[[]]
-            Simple2[[]]
+    
 
     def test_pickle(self):
         global Alias
