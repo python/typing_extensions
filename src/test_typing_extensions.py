@@ -5780,7 +5780,7 @@ class UnpackTests(BaseTestCase):
                         klass[int]
 
     def test_with_non_typevartuple(self):
-        # This is more a test for the two subfunctions used by GenericAlias
+        # The two functions below are used by typing._GenericAlias and typing.Generic via monkey patching.
         T = TypeVar('T')
         class MyTypedDict(TypedDict):
             foo: int
