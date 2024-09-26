@@ -3453,7 +3453,7 @@ else:
         ))
 
     if sys.version_info < (3, 10):
-        class _TypeAliasGenericAlias(_typing_GenericAlias):
+        class _TypeAliasGenericAlias(typing._GenericAlias, _root=True):
             def __getattr__(self, attr):
                 if attr in {"__value__", "__type_params__", "__name__"}:
                     return getattr(self.__origin__, attr)
