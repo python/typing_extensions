@@ -3525,7 +3525,7 @@ else:
             return self.__name__
 
         def __getitem__(self, parameters):
-            if len(self.__parameters__) == 0:
+            if len(self.__type_params__) == 0:
                 raise TypeError("Only generic type aliases are subscriptable")
             if not isinstance(parameters, tuple):
                 parameters = (parameters,)
