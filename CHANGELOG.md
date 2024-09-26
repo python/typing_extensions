@@ -12,10 +12,10 @@
 - Fix bug where a subscripted `TypeAliasType` instance did not have all
   attributes of the original `TypeAliasType` instance on older Python versions.
   Patch by [Daraan](https://github.com/Daraan) and Alex Waygood.
-- Fix bug where among others `TypeAliasType` instances did have wrong parameters
-  if they were directly subscripted with an Unpack object.
+- Fix bug where subscripted `TypeAliasType` instances (and some other
+  subscripted objects) had wrong parameters if they were directly
+  subscripted with an `Unpack` object.
   Patch by [Daraan](https://github.com/Daraan).
-
 
 # Release 4.12.2 (June 7, 2024)
 
