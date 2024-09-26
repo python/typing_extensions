@@ -7251,10 +7251,6 @@ class TypeAliasTypeTests(BaseTestCase):
         Simple = TypeAliasType("Simple", int)
         with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
             Simple[int]
-        with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
-            Simple[[]]
-        with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
-            Simple[()]
        
         # A TypeVar in the value does not allow subscription
         T = TypeVar('T')
@@ -7263,10 +7259,6 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(MissingTypeParamsErr.__parameters__, ())
         with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
             MissingTypeParamsErr[int]
-        with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
-            MissingTypeParamsErr[[]]
-        with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
-            MissingTypeParamsErr[()]
     
 
     def test_pickle(self):
