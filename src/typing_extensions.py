@@ -3068,7 +3068,10 @@ if hasattr(typing, '_collect_type_vars'):
         for t in types:
             if _is_unpacked_typevartuple(t):
                 type_var_tuple_encountered = True
-            elif isinstance(t, typevar_types) and t not in tvars:
+            elif (
+                isinstance(t, typevar_types) and not isinstance(t, _UnpackAlias)
+                and t not in tvars
+            ):
                 if enforce_default_ordering:
                     has_default = getattr(t, '__default__', NoDefault) is not NoDefault
                     if has_default:
