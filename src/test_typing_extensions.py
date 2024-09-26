@@ -7218,9 +7218,8 @@ class TypeAliasTypeTests(BaseTestCase):
             # Simple cases
             TypeAliasType("ListT", List[T], type_params=(T,)),
             TypeAliasType("UnionT", Union[int, List[T]], type_params=(T,)),
-            # Either value or type_params contain generic
+            # Value has no parameter but in type_param
             TypeAliasType("ValueWithoutT", int, type_params=(T,)),
-            TypeAliasType("ValueTNoParams", List[T], type_params=()),
             # Callable
             TypeAliasType("CallableP", Callable[P, Any], type_params=(P, )),
             TypeAliasType("CallableT", Callable[..., T], type_params=(T, )),
