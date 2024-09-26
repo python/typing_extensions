@@ -3452,6 +3452,13 @@ else:
             TypeAliasType,
         ))
 
+    if sys.version_info < (3, 10):
+        class _TypeAliasGenericAlias(_typing_GenericAlias):
+            def __getattr__(self, attr):
+                if attr in {"__value__", "__type_params__", "__name__"}:
+                    return getattr(self.__origin__, attr)
+                return super().__getattr__(attr)
+
     class TypeAliasType:
         """Create named, parameterized type aliases.
 
@@ -3532,17 +3539,13 @@ else:
             # Using 3.9 here will create problems with Concatenate
             if sys.version_info >= (3, 10):
                 return _types.GenericAlias(self, tuple(parameters))
-            parameters = [
+            parameters = tuple(
                 typing._type_check(
                     item, f'Subscripting {self.__name__} requires a type.'
                 )
                 for item in parameters
-            ]
-            alias = typing._GenericAlias(self, tuple(parameters))
-            alias.__value__ = self.__value__
-            alias.__type_params__ = self.__type_params__
-            alias.__name__ = self.__name__
-            return alias
+            )
+            return _TypeAliasGenericAlias(self, parameters)
 
         def __reduce__(self):
             return self.__name__
