@@ -5780,7 +5780,8 @@ class UnpackTests(BaseTestCase):
                         klass[int]
 
     def test_with_non_typevartuple(self):
-        # The two functions below are used by typing._GenericAlias and typing.Generic via monkey patching.
+        # These functions are, among others, used to determine typing._GenericAlias.__parameters__
+        # and are monkey patched.
         T = TypeVar('T')
         class MyTypedDict(TypedDict):
             foo: int
@@ -5805,6 +5806,11 @@ class UnpackTests(BaseTestCase):
             self.assertEqual(typing_extensions._collect_parameters((Unpack[MyTypedDictT[T]], )), (T,))
             self.assertEqual(typing_extensions._collect_parameters((Unpack[Tuple[int]], )), ())
             self.assertEqual(typing_extensions._collect_parameters((Unpack[Tuple[int, T]], )), (T,))
+        self.assertEqual(typing._GenericAlias(Any, Unpack[MyTypedDict]).__parameters__, ())
+        self.assertEqual(typing._GenericAlias(Any, Unpack[MyTypedDictT]).__parameters__, ())
+        self.assertEqual(typing._GenericAlias(Any, Unpack[MyTypedDictT[T]]).__parameters__, (T,))
+        self.assertEqual(typing._GenericAlias(Any, Unpack[Tuple[int]]).__parameters__, ())
+        self.assertEqual(typing._GenericAlias(Any, Unpack[Tuple[int, T]]).__parameters__, (T,))
 
 
 class TypeVarTupleTests(BaseTestCase):
@@ -7273,6 +7279,20 @@ class TypeAliasTypeTests(BaseTestCase):
         fully_subscripted = still_generic[float]
         self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
         self.assertIs(get_origin(fully_subscripted), ListOrSetT)
+
+    def tset_unpack_parameter_collection(self):
+        class Foo(Generic[T], TypedDict):
+            bar: Tuple[T]
+
+        FooAlias = TypeAliasType("FooAlias", Foo[T], type_params=(T,))
+        self.assertEqual(FooAlias[Unpack[Tuple[str]]].__parameters__, ())
+        self.assertEqual(FooAlias[Unpack[Tuple[T]]].__parameters__, (T,))
+        self.assertEqual(FooAlias[Unpack[Foo[T]]].__parameters__, (T,))
+
+        P = ParamSpec("P")
+        CallableP = TypeAliasType("CallableP", Callable[P, Any], type_params=(P,))
+        call_int_T = CallableP[Unpack[Tuple[int, T]]]
+        self.assertEqual(call_int_T.__parameters__, (T,))
 
     def test_pickle(self):
         global Alias
