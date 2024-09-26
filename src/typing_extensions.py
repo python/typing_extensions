@@ -3454,7 +3454,8 @@ else:
 
     if sys.version_info < (3, 10):
         # Copied and pasted from https://github.com/python/cpython/blob/986a4e1b6fcae7fe7a1d0a26aea446107dd58dd2/Objects/genericaliasobject.c#L568-L582,
-        # so that we emulate the behaviour of `types.GenericAlias` on the latest versions of CPython
+        # so that we emulate the behaviour of `types.GenericAlias`
+        # on the latest versions of CPython
         _ATTRIBUTE_DELEGATION_EXCLUSIONS = frozenset({
             "__class__",
             "__bases__",
