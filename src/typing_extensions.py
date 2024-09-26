@@ -3453,11 +3453,28 @@ else:
         ))
 
     if sys.version_info < (3, 10):
+        # Copied and pasted from https://github.com/python/cpython/blob/986a4e1b6fcae7fe7a1d0a26aea446107dd58dd2/Objects/genericaliasobject.c#L568-L582,
+        # so that we emulate the behaviour of `types.GenericAlias` on the latest versions of CPython
+        _ATTRIBUTE_DELEGATION_EXCLUSIONS = frozenset({
+            "__class__",
+            "__bases__",
+            "__origin__",
+            "__args__",
+            "__unpacked__",
+            "__parameters__",
+            "__typing_unpacked_tuple_args__",
+            "__mro_entries__",
+            "__reduce_ex__",
+            "__reduce__",
+            "__copy__",
+            "__deepcopy__",
+        })
+
         class _TypeAliasGenericAlias(typing._GenericAlias, _root=True):
             def __getattr__(self, attr):
-                if attr in {"__value__", "__type_params__", "__name__"}:
-                    return getattr(self.__origin__, attr)
-                return super().__getattr__(attr)
+                if attr in _ATTRIBUTE_DELEGATION_EXCLUSIONS:
+                    return object.__getattr__(self, attr)
+                return getattr(self.__origin__, attr)
 
             if sys.version_info < (3, 9):
                 def __getitem__(self, item):
