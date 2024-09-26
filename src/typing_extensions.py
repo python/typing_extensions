@@ -3455,6 +3455,37 @@ else:
             TypeAliasType,
         ))
 
+    if sys.version_info < (3, 10):
+        # Copied and pasted from https://github.com/python/cpython/blob/986a4e1b6fcae7fe7a1d0a26aea446107dd58dd2/Objects/genericaliasobject.c#L568-L582,
+        # so that we emulate the behaviour of `types.GenericAlias`
+        # on the latest versions of CPython
+        _ATTRIBUTE_DELEGATION_EXCLUSIONS = frozenset({
+            "__class__",
+            "__bases__",
+            "__origin__",
+            "__args__",
+            "__unpacked__",
+            "__parameters__",
+            "__typing_unpacked_tuple_args__",
+            "__mro_entries__",
+            "__reduce_ex__",
+            "__reduce__",
+            "__copy__",
+            "__deepcopy__",
+        })
+
+        class _TypeAliasGenericAlias(typing._GenericAlias, _root=True):
+            def __getattr__(self, attr):
+                if attr in _ATTRIBUTE_DELEGATION_EXCLUSIONS:
+                    return object.__getattr__(self, attr)
+                return getattr(self.__origin__, attr)
+
+            if sys.version_info < (3, 9):
+                def __getitem__(self, item):
+                    result = super().__getitem__(item)
+                    result.__class__ = type(self)
+                    return result
+
     class TypeAliasType:
         """Create named, parameterized type aliases.
 
@@ -3532,13 +3563,16 @@ else:
                 raise TypeError("Only generic type aliases are subscriptable")
             if not isinstance(parameters, tuple):
                 parameters = (parameters,)
-            parameters = [
+            # Using 3.9 here will create problems with Concatenate
+            if sys.version_info >= (3, 10):
+                return _types.GenericAlias(self, parameters)
+            parameters = tuple(
                 typing._type_check(
                     item, f'Subscripting {self.__name__} requires a type.'
                 )
                 for item in parameters
-            ]
-            return typing._GenericAlias(self, tuple(parameters))
+            )
+            return _TypeAliasGenericAlias(self, parameters)
 
         def __reduce__(self):
             return self.__name__
