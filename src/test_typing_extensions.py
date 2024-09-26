@@ -5779,6 +5779,33 @@ class UnpackTests(BaseTestCase):
                     with self.assertRaises(TypeError):
                         klass[int]
 
+    def test_with_non_typevartuple(self):
+        # This is more a test for the two subfunctions used by GenericAlias
+        T = TypeVar('T')
+        class MyTypedDict(TypedDict):
+            foo: int
+            bar: str
+        class MyTypedDictT(Generic[T], TypedDict):
+            foo: T
+            bar: str
+
+        with self.subTest("_collect_type_vars"):
+            if not hasattr(typing_extensions, "_collect_type_vars"):
+                self.skipTest("No _collect_type_vars")
+            self.assertEqual(typing_extensions._collect_type_vars((Unpack[MyTypedDict], )), ())
+            self.assertEqual(typing_extensions._collect_type_vars((Unpack[MyTypedDictT], )), ())
+            self.assertEqual(typing_extensions._collect_type_vars((Unpack[MyTypedDictT[T]], )), (T,))
+            self.assertEqual(typing_extensions._collect_type_vars((Unpack[Tuple[int]], )), ())
+            self.assertEqual(typing_extensions._collect_type_vars((Unpack[Tuple[int, T]], )), (T,))
+        with self.subTest("_collect_parameters"):
+            if not hasattr(typing_extensions, "_collect_parameters"):
+                self.skipTest("No _collect_parameters")
+            self.assertEqual(typing_extensions._collect_parameters((Unpack[MyTypedDict], )), ())
+            self.assertEqual(typing_extensions._collect_parameters((Unpack[MyTypedDictT], )), ())
+            self.assertEqual(typing_extensions._collect_parameters((Unpack[MyTypedDictT[T]], )), (T,))
+            self.assertEqual(typing_extensions._collect_parameters((Unpack[Tuple[int]], )), ())
+            self.assertEqual(typing_extensions._collect_parameters((Unpack[Tuple[int, T]], )), (T,))
+
 
 class TypeVarTupleTests(BaseTestCase):
 
