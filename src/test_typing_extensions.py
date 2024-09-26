@@ -7294,6 +7294,19 @@ class TypeAliasTypeTests(BaseTestCase):
         call_int_T = CallableP[Unpack[Tuple[int, T]]]
         self.assertEqual(call_int_T.__parameters__, (T,))
 
+    def test_subscription_without_type_params(self):
+        Simple = TypeAliasType("Simple", int)
+        with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
+            Simple[int]
+
+        # A TypeVar in the value does not allow subscription
+        T = TypeVar('T')
+        MissingTypeParamsErr = TypeAliasType("MissingTypeParamsErr", List[T])
+        self.assertEqual(MissingTypeParamsErr.__type_params__, ())
+        self.assertEqual(MissingTypeParamsErr.__parameters__, ())
+        with self.assertRaises(TypeError, msg="Only generic type aliases are subscriptable"):
+            MissingTypeParamsErr[int]
+
     def test_pickle(self):
         global Alias
         Alias = TypeAliasType("Alias", int)
