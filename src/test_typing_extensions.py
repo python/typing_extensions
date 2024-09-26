@@ -7247,6 +7247,21 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
         self.assertIs(get_origin(fully_subscripted), ListOrSetT)
 
+    def test_unpack_parameter_collection(self):
+        Ts = TypeVarTuple("Ts")
+
+        class Foo(Generic[Unpack[Ts]]):
+            bar: Tuple[Unpack[Ts]]
+
+        FooAlias = TypeAliasType("FooAlias", Foo[Unpack[Ts]], type_params=(Ts,))
+        self.assertEqual(FooAlias[Unpack[Tuple[str]]].__parameters__, ())
+        self.assertEqual(FooAlias[Unpack[Tuple[T]]].__parameters__, (T,))
+
+        P = ParamSpec("P")
+        CallableP = TypeAliasType("CallableP", Callable[P, Any], type_params=(P,))
+        call_int_T = CallableP[Unpack[Tuple[int, T]]]
+        self.assertEqual(call_int_T.__parameters__, (T,))
+
     def test_alias_attributes(self):
         T = TypeVar('T')
         T2 = TypeVar('T2')
