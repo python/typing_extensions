@@ -7492,7 +7492,6 @@ class TypeAliasTypeTests(BaseTestCase):
         call_int_T = CallableP[Unpack[Tuple[int, T]]]
         self.assertEqual(call_int_T.__parameters__, (T,))
 
-
     def test_alias_attributes(self):
         T = TypeVar('T')
         T2 = TypeVar('T2')
