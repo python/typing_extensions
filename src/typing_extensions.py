@@ -3544,7 +3544,7 @@ else:
                 parameters = (parameters,)
             # Using 3.9 here will create problems with Concatenate
             if sys.version_info >= (3, 10):
-                return _types.GenericAlias(self, tuple(parameters))
+                return _types.GenericAlias(self, parameters)
             parameters = tuple(
                 typing._type_check(
                     item, f'Subscripting {self.__name__} requires a type.'
