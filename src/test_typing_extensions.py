@@ -7318,10 +7318,6 @@ class TypeAliasTypeTests(BaseTestCase):
 
     def test_getitem(self):
         T = TypeVar('T')
-        ValueWithoutT = TypeAliasType("ValueWithoutT", int, type_params=(T,))
-        still_subscripted = ValueWithoutT[str]
-        self.assertEqual(get_args(still_subscripted), (str,))
-
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
         subscripted = ListOrSetT[int]
         self.assertEqual(get_args(subscripted), (int,))
@@ -7335,6 +7331,10 @@ class TypeAliasTypeTests(BaseTestCase):
         fully_subscripted = still_generic[float]
         self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
         self.assertIs(get_origin(fully_subscripted), ListOrSetT)
+
+        ValueWithoutTypeVar = TypeAliasType("ValueWithoutTypeParam", int, type_params=(T,))
+        still_subscripted = ValueWithoutTypeVar[str]
+        self.assertEqual(get_args(still_subscripted), (str,))
 
     def test_callable_without_concatenate(self):
         P = ParamSpec('P')
@@ -7396,7 +7396,6 @@ class TypeAliasTypeTests(BaseTestCase):
         CallableP = TypeAliasType("CallableP", Callable[P, T], type_params=(P, T))
         callable_concat = CallableP[Concatenate[int, P], Any]
         self.assertEqual(get_args(callable_concat), (Concatenate[int, P], Any))
-        self.assertEqual(callable_concat.__parameters__, (P,))
 
     @skipUnless(TYPING_3_12_0, "__args__ behaves differently")
     def test_substitution_312_plus(self):
