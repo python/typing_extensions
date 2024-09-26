@@ -3459,6 +3459,12 @@ else:
                     return getattr(self.__origin__, attr)
                 return super().__getattr__(attr)
 
+            if sys.version_info < (3, 9):
+                def __getitem__(self, item):
+                    result = super().__getitem__(item)
+                    result.__class__ = type(self)
+                    return result
+
     class TypeAliasType:
         """Create named, parameterized type aliases.
 
