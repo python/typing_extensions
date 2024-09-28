@@ -2059,12 +2059,14 @@ elif sys.version_info[:2] >= (3, 9):
 
     @_TypeFormForm
     def TypeForm(self, parameters):
-        """A special typing construct to represent valid type expressions.
+        """A special form representing the value that results from the evaluation
+        of a type expression. This value encodes the information supplied in the
+        type expression, and it represents the type described by that type expression.
 
-        Expressions are assignable to TypeForm if they represent valid type
-        expressions. For example, ``int`` is assignable to ``TypeForm`` (because
-        ``int``, as a type, is a valid type expression), but ``1`` is not (because
-        integers are not valid type expressions).
+        When used in a type expression, TypeForm describes a set of type form objects.
+        It accepts a single type argument, which must be a valid type expression.
+        ``TypeForm[T]`` describes the set of all type form objects that represent
+        the type T or types that are assignable to T.
 
         Usage:
 
@@ -2089,12 +2091,14 @@ else:
 
     TypeForm = _TypeFormForm(
         'TypeForm',
-        doc="""A special typing construct to represent valid type expressions.
+        doc="""A special form representing the value that results from the evaluation
+        of a type expression. This value encodes the information supplied in the
+        type expression, and it represents the type described by that type expression.
 
-        Expressions are assignable to TypeForm if they represent valid type
-        expressions. For example, ``int`` is assignable to ``TypeForm`` (because
-        ``int``, as a type, is a valid type expression), but ``1`` is not (because
-        integers are not valid type expressions).
+        When used in a type expression, TypeForm describes a set of type form objects.
+        It accepts a single type argument, which must be a valid type expression.
+        ``TypeForm[T]`` describes the set of all type form objects that represent
+        the type T or types that are assignable to T.
 
         Usage:
 
