@@ -81,9 +81,19 @@ select = [
     "W",
 ]
 
-# Ignore various "modernization" rules that tell you off for importing/using
-# deprecated things from the typing module, etc.
-ignore = ["UP006", "UP007", "UP013", "UP014", "UP019", "UP035", "UP038"]
+ignore = [
+    # Ignore various "modernization" rules that tell you off for importing/using
+    # deprecated things from the typing module, etc.
+    "UP006",
+    "UP007",
+    "UP013",
+    "UP014",
+    "UP019",
+    "UP035",
+    "UP038",
+    # Not relevant here
+    "RUF012",
+]
 
 [tool.ruff.lint.per-file-ignores]
 "!src/typing_extensions.py" = [
