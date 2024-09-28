@@ -86,7 +86,7 @@ __all__ = [
     'Text',
     'TypeAlias',
     'TypeAliasType',
-    'TypeExpr',
+    'TypeForm',
     'TypeGuard',
     'TypeIs',
     'TYPE_CHECKING',
@@ -2047,23 +2047,28 @@ else:
         """)
 
 # 3.14+?
-if hasattr(typing, 'TypeExpr'):
-    TypeExpr = typing.TypeExpr
+if hasattr(typing, 'TypeForm'):
+    TypeForm = typing.TypeForm
 # 3.9
 elif sys.version_info[:2] >= (3, 9):
-    class _TypeExprForm(_ExtensionsSpecialForm, _root=True):
-        # TypeExpr(X) is equivalent to X but indicates to the type checker
-        # that the object is a TypeExpr.
+    class _TypeFormForm(_ExtensionsSpecialForm, _root=True):
+        # TypeForm(X) is equivalent to X but indicates to the type checker
+        # that the object is a TypeForm.
         def __call__(self, obj, /):
             return obj
 
-    @_TypeExprForm
-    def TypeExpr(self, parameters):
-        """Special typing form used to represent a type expression.
+    @_TypeFormForm
+    def TypeForm(self, parameters):
+        """A special typing construct to represent forms that are valid as type expressions.
+
+        Expressions are assignable to TypeForm if they represent valid type
+        expressions. For example, ``int`` is assignable to ``TypeForm`` (because
+        ``int``, as a type, is a valid type expression), but ``1`` is not (because
+        integers are not valid type expressions).
 
         Usage:
 
-            def cast[T](typ: TypeExpr[T], value: Any) -> T: ...
+            def cast[T](typ: TypeForm[T], value: Any) -> T: ...
 
             reveal_type(cast(int, "x"))  # int
 
@@ -2073,7 +2078,7 @@ elif sys.version_info[:2] >= (3, 9):
         return typing._GenericAlias(self, (item,))
 # 3.8
 else:
-    class _TypeExprForm(_ExtensionsSpecialForm, _root=True):
+    class _TypeFormForm(_ExtensionsSpecialForm, _root=True):
         def __getitem__(self, parameters):
             item = typing._type_check(parameters,
                                       f'{self._name} accepts only a single type')
@@ -2082,13 +2087,18 @@ else:
         def __call__(self, obj, /):
             return obj
 
-    TypeExpr = _TypeExprForm(
-        'TypeExpr',
-        doc="""Special typing form used to represent a type expression.
+    TypeForm = _TypeFormForm(
+        'TypeForm',
+        doc="""A special typing construct to represent forms that are valid as type expressions.
+
+        Expressions are assignable to TypeForm if they represent valid type
+        expressions. For example, ``int`` is assignable to ``TypeForm`` (because
+        ``int``, as a type, is a valid type expression), but ``1`` is not (because
+        integers are not valid type expressions).
 
         Usage:
 
-            def cast[T](typ: TypeExpr[T], value: Any) -> T: ...
+            def cast[T](typ: TypeForm[T], value: Any) -> T: ...
 
             reveal_type(cast(int, "x"))  # int
 
