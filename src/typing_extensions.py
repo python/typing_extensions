@@ -2059,7 +2059,7 @@ elif sys.version_info[:2] >= (3, 9):
 
     @_TypeFormForm
     def TypeForm(self, parameters):
-        """A special typing construct to represent forms that are valid as type expressions.
+        """A special typing construct to represent valid type expressions.
 
         Expressions are assignable to TypeForm if they represent valid type
         expressions. For example, ``int`` is assignable to ``TypeForm`` (because
@@ -2089,7 +2089,7 @@ else:
 
     TypeForm = _TypeFormForm(
         'TypeForm',
-        doc="""A special typing construct to represent forms that are valid as type expressions.
+        doc="""A special typing construct to represent valid type expressions.
 
         Expressions are assignable to TypeForm if they represent valid type
         expressions. For example, ``int`` is assignable to ``TypeForm`` (because
