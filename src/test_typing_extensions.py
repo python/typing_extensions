@@ -7372,8 +7372,6 @@ class TypeAliasTypeTests(BaseTestCase):
             self.assertEqual(concat_usage, callable_concat[[str]])
 
     def test_substitution(self):
-        # To pass these tests alias.__args__ in TypeAliasType.__getitem__ needs adjustment
-        # Unpack and Concatenate are unpacked in versions before
         T = TypeVar('T')
         Ts = TypeVarTuple("Ts")
 
@@ -7418,7 +7416,7 @@ class TypeAliasTypeTests(BaseTestCase):
                 self.assertEqual(alias.__parameters__, expected_params)
 
     # The condition should align with the version of GeneriAlias usage in __getitem__
-    @skipIf(TYPING_3_10_0, "Most cases are allowed in 3.11+ or with GenericAlias")
+    @skipIf(TYPING_3_10_0, "Most arguments are allowed in 3.11+ or with GenericAlias")
     def test_invalid_cases_before_3_11(self):
         T = TypeVar('T')
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
