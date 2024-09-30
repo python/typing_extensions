@@ -3536,8 +3536,15 @@ else:
             self.__value__ = value
             self.__type_params__ = type_params
 
+            default_value_encountered = False
             parameters = []
             for type_param in type_params:
+                has_default = getattr(type_param, '__default__', NoDefault) is not NoDefault
+                if default_value_encountered and not has_default:
+                    raise TypeError(f'Type parameter {type_param!r} without a default'
+                                    ' follows type parameter with a default')
+                if has_default:
+                    default_value_encountered = True
                 if isinstance(type_param, TypeVarTuple):
                     parameters.extend(type_param)
                 else:
