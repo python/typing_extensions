@@ -367,9 +367,9 @@ Special typing primitives
 
    .. versionadded:: 4.6.0
 
-.. data:: TypeExpr
+.. data:: TypeForm
 
-   See :pep:`747`. A type hint representing a type expression.
+   See :pep:`747`. A special form representing the value of a type expression.
 
    .. versionadded:: 4.13.0
 
