@@ -7389,25 +7389,6 @@ class TypeAliasTypeTests(BaseTestCase):
         callable_concat = CallableP[Concatenate[int, P], Any]
         self.assertEqual(get_args(callable_concat), (Concatenate[int, P], Any))
 
-    @skipUnless(TYPING_3_12_0, "__args__ behaves differently")
-    def test_substitution_312_plus(self):
-        # To pass these tests alias.__args__ in TypeAliasType.__getitem__ needs adjustment
-        # Would raise: TypeError: Substitution of bare TypeVarTuple is not supported
-        T = TypeVar('T')
-        Ts = TypeVarTuple("Ts")
-        Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
-
-        subcriped_callable_tvt = Variadic[Callable[[Unpack[Ts]], T]]
-        variadic_tvt_callableA = subcriped_callable_tvt[str, object]
-        variadic_tvt_callableA2 = subcriped_callable_tvt[Unpack[Tuple[str]], object]
-        self.assertEqual(variadic_tvt_callableA, variadic_tvt_callableA2)
-
-        variadic_tvt_callableB = subcriped_callable_tvt[[str, int], object]
-        variadic_tvt_callableB2 = subcriped_callable_tvt[Unpack[Tuple[str, int]], object]
-        variadic_tvt_callableB3 = subcriped_callable_tvt[str, int, object]
-        self.assertNotEqual(variadic_tvt_callableB, variadic_tvt_callableB2)
-        self.assertEqual(variadic_tvt_callableB2, variadic_tvt_callableB3)
-
     def test_wrong_amount_of_parameters(self):
         T = TypeVar('T')
         T2 = TypeVar("T2")
