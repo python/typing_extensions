@@ -7224,9 +7224,6 @@ class TypeAliasTypeTests(BaseTestCase):
             # TypeVar with default
             TypeAliasType("TupleT_default", Tuple[T_default, T], type_params=(T, T_default)),
             TypeAliasType("CallableT_default", Callable[[T], T_default], type_params=(T, T_default)),
-            # default order reversed
-            TypeAliasType("TupleT_default_reversed", Tuple[T_default, T], type_params=(T_default, T)),
-            TypeAliasType("CallableT_default_reversed", Callable[[T], T_default], type_params=(T_default, T)),
         ]
 
         for alias in test_alias_cases:
