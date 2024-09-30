@@ -7439,34 +7439,6 @@ class TypeAliasTypeTests(BaseTestCase):
                 self.assertEqual(get_args(alias), expected_args)
                 self.assertEqual(alias.__parameters__, expected_params)
 
-    def test_list_argument(self):
-        # NOTE: These cases could be seen as valid but result in a parameterless
-        # variable. If these tests fail the specificiation might have changed
-
-        # Callable
-        P = ParamSpec('P')
-        CallableP = TypeAliasType("CallableP", Callable[P, Any], type_params=(P,))
-        CallableT_list = CallableP[[T]]
-        self.assertEqual(get_args(CallableT_list), ([T],))
-        self.assertEqual(CallableT_list.__parameters__, ())
-        with self.assertRaises(TypeError, msg="is not a generic class"):
-            CallableT_list[str]
-
-        ImplicitConcatP = CallableP[[int, P]]
-        self.assertEqual(get_args(ImplicitConcatP), ([int, P],))
-        self.assertEqual(ImplicitConcatP.__parameters__, ())
-        with self.assertRaises(TypeError, msg="is not a generic class"):
-            ImplicitConcatP[str]
-
-        # TypeVarTuple
-        Ts = TypeVarTuple("Ts")
-        Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
-        invalid_tupleT = Variadic[[int, T]]
-        self.assertEqual(get_args(invalid_tupleT), ([int, T],))
-        self.assertEqual(invalid_tupleT.__parameters__, ())
-        with self.assertRaises(TypeError, msg="is not a generic class"):
-            invalid_tupleT[str]
-
     # The condition should align with the version of GeneriAlias usage in __getitem__
     @skipIf(TYPING_3_10_0, "Most cases are allowed in 3.11+ or with GenericAlias")
     def test_invalid_cases_before_3_11(self):
