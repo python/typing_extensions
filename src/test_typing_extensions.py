@@ -7312,6 +7312,11 @@ class TypeAliasTypeTests(BaseTestCase):
             class MyAlias(TypeAliasType):
                 pass
 
+    def test_type_params_possibilities(self):
+        T = TypeVar('T')
+        # Test not a tuple
+        with self.assertRaisesRegex(TypeError, "type_params must be a tuple"):
+            TypeAliasType("InvalidTypeParams", List[T], type_params=[T])
 
 class DocTests(BaseTestCase):
     def test_annotation(self):

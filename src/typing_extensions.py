@@ -3531,6 +3531,8 @@ else:
         def __init__(self, name: str, value, *, type_params=()):
             if not isinstance(name, str):
                 raise TypeError("TypeAliasType name must be a string")
+            if not isinstance(type_params, tuple):
+                raise TypeError("type_params must be a tuple")
             self.__value__ = value
             self.__type_params__ = type_params
 
