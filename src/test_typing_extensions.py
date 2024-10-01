@@ -7312,16 +7312,24 @@ class TypeAliasTypeTests(BaseTestCase):
             class MyAlias(TypeAliasType):
                 pass
 
+    def test_type_params_compatibility(self):
+        # Regression test to assure compatibility with typing variants
+        with self.subTest(type_params="typing.TypeVar"):
+            TypeAliasType("TypingTypeParams", ..., type_params=(typing.TypeVar('T'),))
+        with self.subTest(type_params="typing.TypeAliasType"):
+            if not hasattr(typing, "TypeAliasType"):
+                self.skipTest("typing.TypeAliasType is not available before 3.12")
+            TypeAliasType("TypingTypeParams", ..., type_params=(typing.TypeVarTuple("Ts"),))
+        with self.subTest(type_params="typing.TypeAliasType"):
+            if not hasattr(typing, "ParamSpec"):
+                self.skipTest("typing.ParamSpec is not available before 3.10")
+            TypeAliasType("TypingTypeParams", ..., type_params=(typing.ParamSpec("P"),))
+
     def test_type_params_possibilities(self):
         T = TypeVar('T')
         # Test not a tuple
         with self.assertRaisesRegex(TypeError, "type_params must be a tuple"):
             TypeAliasType("InvalidTypeParams", List[T], type_params=[T])
-
-        # Regression test to assure compatibility with typing.TypeVar
-        typing_T = typing.TypeVar('T')
-        with self.subTest(type_params="typing.TypeVar"):
-            TypeAliasType("TypingTypeParams", List[typing_T], type_params=(typing_T,))
 
         # Test default order and other invalid inputs
         T_default = TypeVar('T_default', default=int)
@@ -7336,14 +7344,14 @@ class TypeAliasTypeTests(BaseTestCase):
         valid_cases = [
             (T, P, Ts),
             (T, Ts_default),
-            (P_default, T_default)
+            (P_default, T_default),
             (P, T_default, Ts_default),
             (T_default, P_default, Ts_default),
         ]
         invalid_cases = [
             ((T_default, T),    f"non-default type parameter {T!r} follows default"),
             ((P_default, P),   f"non-default type parameter {P!r} follows default"),
-            ((Ts_default, Ts),   f"non-default type parameter {Ts!r} follows default"),
+            ((Ts_default, T),   f"non-default type parameter {T!r} follows default"),
 
             # Potentially add invalid inputs, e.g. literals or classes
             # depends on upstream
@@ -7356,6 +7364,8 @@ class TypeAliasTypeTests(BaseTestCase):
                 TypeAliasType("OkCase", List[T], type_params=case)
         for case, msg in invalid_cases:
             with self.subTest(type_params=case):
+                if TYPING_3_12_0 and sys.version_info < (3, 12, 7) or sys.version_info[:3] < (3, 13, 1):
+                    self.skipTest("No backport for <3.12.7 and 3.13.0, requires PR #124795")
                 with self.assertRaisesRegex(TypeError, msg):
                     TypeAliasType("InvalidCase", List[T], type_params=case)
 
