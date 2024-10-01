@@ -3535,8 +3535,6 @@ else:
             self.__type_params__ = type_params
 
             parameters = []
-            if not isinstance(type_params, tuple):
-                raise TypeError("type_params must be a tuple")
             for type_param in type_params:
                 if isinstance(type_param, TypeVarTuple):
                     parameters.extend(type_param)
