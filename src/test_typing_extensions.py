@@ -7203,11 +7203,9 @@ class TypeAliasTypeTests(BaseTestCase):
             Unpack[Ts] : (Ts,),
             Unpack[Tuple[int, T2]] : (T2,),
             Concatenate[int,  P] : (P,),
+            # Not tested usage of bare TypeVarTuple, would need 3.11+
+            # Ts : (Ts,),  # invalid case
         }
-        test_argument_cases_311_plus = {
-            Ts : (Ts,),  # invalid case
-        }
-        test_argument_cases.update(test_argument_cases_311_plus)
 
         test_alias_cases = [
             # Simple cases
@@ -7241,8 +7239,6 @@ class TypeAliasTypeTests(BaseTestCase):
                 self.assertEqual(subscripted.__parameters__, ())
             for expected_args, expected_parameters in test_argument_cases.items():
                 with self.subTest(alias=alias, args=expected_args):
-                    if expected_args in test_argument_cases_311_plus and sys.version_info < (3, 11):
-                        self.skipTest("Case is not valid before 3.11")
                     self.assertEqual(get_args(alias[expected_args]), (expected_args,))
                     self.assertEqual(alias[expected_args].__parameters__, expected_parameters)
 
@@ -7419,9 +7415,9 @@ class TypeAliasTypeTests(BaseTestCase):
                 self.assertEqual(get_args(alias), expected_args)
                 self.assertEqual(alias.__parameters__, expected_params)
 
-    # The condition should align with the version of GeneriAlias usage in __getitem__
+    # The condition should align with the version of GeneriAlias usage in __getitem__ or be 3.11+
     @skipIf(TYPING_3_10_0, "Most arguments are allowed in 3.11+ or with GenericAlias")
-    def test_invalid_cases_before_3_11(self):
+    def test_invalid_cases_before_3_10(self):
         T = TypeVar('T')
         ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
         with self.assertRaises(TypeError):

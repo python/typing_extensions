@@ -3577,7 +3577,7 @@ else:
                 # Allow [], [int], [int, str], [int, ...], [int, T]
                 if param is ...:
                     yield ...
-                # Note in < 3.9 _ConcatenateGenericAlias inherits from list
+                # Note in <= 3.9 _ConcatenateGenericAlias inherits from list
                 elif isinstance(param, list) and recursion == 0:
                     yield [checked
                            for arg in param
@@ -3611,9 +3611,10 @@ else:
             type_vars = _collect_type_vars(parameters)
             parameters = self._check_parameters(parameters)
             alias = _TypeAliasGenericAlias(self, parameters)
-            # If Concatenate is present its parameters were not collected
-            if len(alias.__parameters__) < len(type_vars):
-                alias.__parameters__ = tuple(type_vars)
+            # alias.__parameters__ is not complete if Concatenate is present
+            # as it is converted to a list from which no parameters are extracted.
+            if alias.__parameters__ != type_vars:
+                alias.__parameters__ = type_vars
             return alias
 
         def __reduce__(self):
