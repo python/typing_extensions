@@ -16,7 +16,7 @@
   subscripted objects) had wrong parameters if they were directly
   subscripted with an `Unpack` object.
   Patch by [Daraan](https://github.com/Daraan).
-  - Backport of CPython PR [#124795](https://github.com/python/cpython/pull/124795)
+- Backport of CPython PR [#124795](https://github.com/python/cpython/pull/124795)
   and fix that `TypeAliasType` not raising an error on non-tupple inputs for `type_params`.
   Patch by [Daraan](https://github.com/Daraan).
 
