@@ -7318,25 +7318,25 @@ class TypeAliasTypeTests(BaseTestCase):
         with self.assertRaisesRegex(TypeError, "type_params must be a tuple"):
             TypeAliasType("InvalidTypeParams", List[T], type_params=[T])
 
-        # Regression test assure compatibility with typing.TypeVar
+        # Regression test to assure compatibility with typing.TypeVar
         typing_T = typing.TypeVar('T')
         with self.subTest(type_params="typing.TypeVar"):
             TypeAliasType("TypingTypeParams", List[typing_T], type_params=(typing_T,))
 
-        # Test default order
+        # Test default order and other invalid inputs
         T_default = TypeVar('T_default', default=int)
         Ts = TypeVarTuple('Ts')
         Ts_default = TypeVarTuple('Ts_default', default=Unpack[Tuple[str, int]])
         P = ParamSpec('P')
         P_default = ParamSpec('P_default', default=[str, int])
-        P_default2 = ParamSpec('P_default2', default=...)
+        P_default2 = ParamSpec('P_default2', default=P_default)
 
         ok_cases = [
             (T, T_default),
             (T, Ts_default),
-            (T, T_default, Ts_default),
             (T, P, Ts),
-            (T, P, Ts_default),
+            (P, T_default, Ts_default),
+            (Ts, P, Ts_default),
             (T, P_default),
             (T, P_default, T_default),
             (T, P_default, Ts_default),
@@ -7344,37 +7344,32 @@ class TypeAliasTypeTests(BaseTestCase):
             (T, P_default, P_default2),
         ]
         invalid_cases = [
-            (T_default, T),
-            (Ts_default, T),
-           
-            # TypeVar after TypeVarTuple
+            ((T_default, T),    f"non-default type parameter {T!r} follows default"),
+            ((P_default, P),   f"non-default type parameter {P!r} follows default"),
+            ((Ts_default, Ts),   f"non-default type parameter {Ts!r} follows default"),
+
+            # Potentially add invalid inputs, e.g. literals or classes
+            # depends on upstream
+            ((1,),  "Expected a type param, got 1"),
+            ((str,), f"Expected a type param, got {str!r}"),
+
             # "TypeVars with defaults cannot immediately follow TypeVarTuples"
+            # is currently not enfored for the type statement, only for Generics
             # (T, Ts, T_default),
             # (T, Ts_default, T_default),
-            
-            # Two TypeVarTuples in a row, should the reverse be also invalid?
-            (T, Ts_default, Ts),
 
-            (P_default, T),
-            (P_default, Ts),
-            
-            # Double defintion
+            # Double use; however T2 = T; (T, T2) would likely be fine for a type checker
             # (T, T)
             # (Ts, *Ts)
             # (P, **P)
-            
-            # Potentially add invalid inputs, e.g. literals or classes
-            # depends on upstream
-            # (1,)
-            # (str,)
         ]
 
         for case in ok_cases:
             with self.subTest(type_params=case):
                 TypeAliasType("OkCase", List[T], type_params=case)
-        for case in invalid_cases:
+        for case, msg in invalid_cases:
             with self.subTest(type_params=case):
-                with self.assertRaises(TypeError):
+                with self.assertRaisesRegex(TypeError, msg):
                     TypeAliasType("InvalidCase", List[T], type_params=case)
 
 class DocTests(BaseTestCase):

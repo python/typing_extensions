@@ -3541,10 +3541,12 @@ else:
             for type_param in type_params:
                 if not isinstance(type_param, (TypeVar, TypeVarTuple, ParamSpec)):
                     raise TypeError(f"Expected a type param, got {type_param!r}")
-                has_default = getattr(type_param, '__default__', NoDefault) is not NoDefault
+                has_default = (
+                    getattr(type_param, '__default__', NoDefault) is not NoDefault
+                )
                 if default_value_encountered and not has_default:
-                    raise TypeError(f'Type parameter {type_param!r} without a default'
-                                    ' follows type parameter with a default')
+                    raise TypeError(f'non-default type parameter {type_param!r}'
+                                    ' follows default type parameter')
                 if has_default:
                     default_value_encountered = True
                 if isinstance(type_param, TypeVarTuple):
