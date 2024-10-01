@@ -7364,8 +7364,8 @@ class TypeAliasTypeTests(BaseTestCase):
                 TypeAliasType("OkCase", List[T], type_params=case)
         for case, msg in invalid_cases:
             with self.subTest(type_params=case):
-                if TYPING_3_12_0 and sys.version_info < (3, 12, 7) or sys.version_info[:3] < (3, 13, 1):
-                    self.skipTest("No backport for <3.12.7 and 3.13.0, requires PR #124795")
+                if TYPING_3_12_0 and sys.version_info < (3, 12, 8) or sys.version_info[:3] < (3, 13, 1):
+                    self.skipTest("No backport for <3.12.8 and 3.13.0, requires PR #124795")
                 with self.assertRaisesRegex(TypeError, msg):
                     TypeAliasType("InvalidCase", List[T], type_params=case)
 
