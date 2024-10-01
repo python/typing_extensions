@@ -7329,19 +7329,16 @@ class TypeAliasTypeTests(BaseTestCase):
         Ts_default = TypeVarTuple('Ts_default', default=Unpack[Tuple[str, int]])
         P = ParamSpec('P')
         P_default = ParamSpec('P_default', default=[str, int])
-        P_default2 = ParamSpec('P_default2', default=P_default)
 
-        ok_cases = [
-            (T, T_default),
-            (T, Ts_default),
+        # NOTE: "TypeVars with defaults cannot immediately follow TypeVarTuples"
+        # from PEP 696 is currently not enfored for the type statement and are not tested.
+        # PEP 695: Double usage of the same name is also not enforced and not tested.
+        valid_cases = [
             (T, P, Ts),
+            (T, Ts_default),
+            (P_default, T_default)
             (P, T_default, Ts_default),
-            (Ts, P, Ts_default),
-            (T, P_default),
-            (T, P_default, T_default),
-            (T, P_default, Ts_default),
-            (T, Ts_default, P_default),
-            (T, P_default, P_default2),
+            (T_default, P_default, Ts_default),
         ]
         invalid_cases = [
             ((T_default, T),    f"non-default type parameter {T!r} follows default"),
@@ -7352,19 +7349,9 @@ class TypeAliasTypeTests(BaseTestCase):
             # depends on upstream
             ((1,),  "Expected a type param, got 1"),
             ((str,), f"Expected a type param, got {str!r}"),
-
-            # "TypeVars with defaults cannot immediately follow TypeVarTuples"
-            # is currently not enfored for the type statement, only for Generics
-            # (T, Ts, T_default),
-            # (T, Ts_default, T_default),
-
-            # Double use; however T2 = T; (T, T2) would likely be fine for a type checker
-            # (T, T)
-            # (Ts, *Ts)
-            # (P, **P)
         ]
 
-        for case in ok_cases:
+        for case in valid_cases:
             with self.subTest(type_params=case):
                 TypeAliasType("OkCase", List[T], type_params=case)
         for case, msg in invalid_cases:
