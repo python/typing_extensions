@@ -7307,8 +7307,14 @@ class TypeAliasTypeTests(BaseTestCase):
         subscripted = ListOrSetT[int]
         self.assertEqual(get_args(subscripted), (int,))
         self.assertIs(get_origin(subscripted), ListOrSetT)
-        with self.assertRaises(TypeError, msg="not a generic class"):
+        with self.assertRaisesRegex(TypeError,
+                                    "not a generic class"
+                                    # types.GenericAlias raises a different error in 3.10
+                                    if sys.version_info[:2] != (3, 10)
+                                    else "There are no type variables left in ListOrSetT"
+        ):
             subscripted[int]
+
 
         still_generic = ListOrSetT[Iterable[T]]
         self.assertEqual(get_args(still_generic), (Iterable[T],))
