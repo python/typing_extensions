@@ -12,6 +12,8 @@
 - Fix bug where a subscripted `TypeAliasType` instance did not have all
   attributes of the original `TypeAliasType` instance on older Python versions.
   Patch by [Daraan](https://github.com/Daraan) and Alex Waygood.
+- Extended the Concatenate backport for Python 3.9 and 3.10 to now accept
+  ellipsis as an argument. Patch by [Daraan](https://github.com/Daraan).
 
 # Release 4.12.2 (June 7, 2024)
 
