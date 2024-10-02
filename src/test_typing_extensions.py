@@ -1727,8 +1727,6 @@ class GetUtilitiesTestCase(TestCase):
         self.assertEqual(get_args(Callable[Concatenate[int, P], int]),
                          (Concatenate[int, P], int))
         with self.subTest("Concatenate[int, ...]"):
-            if sys.version_info < (3, 9, 2):
-                self.skipTest("arguments must be types before 3.9.2, i.e. no ...")
             self.assertEqual(get_args(Callable[Concatenate[int, ...], int]),
                         (Concatenate[int, ...], int))
 
@@ -5385,19 +5383,16 @@ class ConcatenateTests(BaseTestCase):
         self.assertEqual(C1.__origin__, C2.__origin__)
         self.assertNotEqual(C1, C2)
 
-    @skipUnless(TYPING_3_9_0, "Needs PEP 585; no backport for 3.8 typing")
-    def test_valid_uses_py39_plus(self):
-        P = ParamSpec('P')
-        T = TypeVar('T')
-
         with self.subTest("typing.Callable with Ellipsis"):
-            if sys.version_info < (3, 9, 2):
-                self.skipTest("Must use types before 3.9.2")
             C3 = Callable[Concatenate[int, ...], int]
             C4 = Callable[Concatenate[int, T, ...], T]
             self.assertEqual(C3.__origin__, C4.__origin__)
             self.assertNotEqual(C3, C4)
 
+    @skipUnless(TYPING_3_9_0, "Needs PEP 585")
+    def test_pep585_collections_callable(self):
+        P = ParamSpec('P')
+        T = TypeVar('T')
         # Test collections.abc.Callable too.
         C5 = collections.abc.Callable[Concatenate[int, P], int]
         C6 = collections.abc.Callable[Concatenate[int, T, P], T]
@@ -5425,14 +5420,11 @@ class ConcatenateTests(BaseTestCase):
         ):
             Concatenate[P, T]
 
-    @skipIf(sys.version_info < (3, 9, 2), "Args must be types below 3.9.2")
-    def test_invalid_uses_py39_2_plus(self):
-        T = TypeVar('T')
         with self.assertRaisesRegex(
             TypeError,
             'is not a generic class',
         ):
-            Callable[Concatenate[int, ...], Any][T]
+            Callable[Concatenate[int, ...], Any][Any]
 
     @skipIf(TYPING_3_11_0, "Args can be non-types in 3.11+")
     def test_invalid_uses_before_3_11(self):
@@ -5450,7 +5442,7 @@ class ConcatenateTests(BaseTestCase):
             Concatenate[1, ..., P]
 
     @skipUnless(TYPING_3_11_0 or (3, 10, 0) <= sys.version_info < (3, 10, 2),
-                "Cannot be backported to <=3.9"
+                "Cannot be backported to <=3.9. See issue #48"
                 "Cannot use ... with typing._ConcatenateGenericAlias after 3.10.2")
     def test_alias_subscription_with_ellipsis(self):
         P = ParamSpec('P')
@@ -5458,7 +5450,7 @@ class ConcatenateTests(BaseTestCase):
 
         C1 = X[...]
         self.assertEqual(C1.__parameters__, ())
-        self.assertEqual(C1.__args__, (Concatenate[int, ...], Any))
+        self.assertEqual(get_args(C1), (Concatenate[int, ...], Any))
 
     def test_basic_introspection(self):
         P = ParamSpec('P')
