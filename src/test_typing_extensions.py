@@ -70,7 +70,7 @@ from typing_extensions import (
     TypeAlias,
     TypeAliasType,
     TypedDict,
-    TypeExpr,
+    TypeForm,
     TypeGuard,
     TypeIs,
     TypeVar,
@@ -5572,33 +5572,33 @@ class TypeIsTests(BaseTestCase):
             issubclass(int, TypeIs)
 
 
-class TypeExprTests(BaseTestCase):
+class TypeFormTests(BaseTestCase):
     def test_basics(self):
-        TypeExpr[int]  # OK
-        self.assertEqual(TypeExpr[int], TypeExpr[int])
+        TypeForm[int]  # OK
+        self.assertEqual(TypeForm[int], TypeForm[int])
 
-        def foo(arg) -> TypeExpr[int]: ...
-        self.assertEqual(gth(foo), {'return': TypeExpr[int]})
+        def foo(arg) -> TypeForm[int]: ...
+        self.assertEqual(gth(foo), {'return': TypeForm[int]})
 
     def test_repr(self):
-        if hasattr(typing, 'TypeExpr'):
+        if hasattr(typing, 'TypeForm'):
             mod_name = 'typing'
         else:
             mod_name = 'typing_extensions'
-        self.assertEqual(repr(TypeExpr), f'{mod_name}.TypeExpr')
-        cv = TypeExpr[int]
-        self.assertEqual(repr(cv), f'{mod_name}.TypeExpr[int]')
-        cv = TypeExpr[Employee]
-        self.assertEqual(repr(cv), f'{mod_name}.TypeExpr[{__name__}.Employee]')
-        cv = TypeExpr[Tuple[int]]
-        self.assertEqual(repr(cv), f'{mod_name}.TypeExpr[typing.Tuple[int]]')
+        self.assertEqual(repr(TypeForm), f'{mod_name}.TypeForm')
+        cv = TypeForm[int]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeForm[int]')
+        cv = TypeForm[Employee]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeForm[{__name__}.Employee]')
+        cv = TypeForm[Tuple[int]]
+        self.assertEqual(repr(cv), f'{mod_name}.TypeForm[typing.Tuple[int]]')
 
     def test_cannot_subclass(self):
         with self.assertRaises(TypeError):
-            class C(type(TypeExpr)):
+            class C(type(TypeForm)):
                 pass
         with self.assertRaises(TypeError):
-            class D(type(TypeExpr[int])):
+            class D(type(TypeForm[int])):
                 pass
 
     def test_call(self):
@@ -5610,24 +5610,24 @@ class TypeExprTests(BaseTestCase):
         ]
         for obj in objs:
             with self.subTest(obj=obj):
-                self.assertIs(TypeExpr(obj), obj)
+                self.assertIs(TypeForm(obj), obj)
 
         with self.assertRaises(TypeError):
-            TypeExpr()
+            TypeForm()
         with self.assertRaises(TypeError):
-            TypeExpr("too", "many")
+            TypeForm("too", "many")
 
     def test_cannot_init_type(self):
         with self.assertRaises(TypeError):
-            type(TypeExpr)()
+            type(TypeForm)()
         with self.assertRaises(TypeError):
-            type(TypeExpr[Optional[int]])()
+            type(TypeForm[Optional[int]])()
 
     def test_no_isinstance(self):
         with self.assertRaises(TypeError):
-            isinstance(1, TypeExpr[int])
+            isinstance(1, TypeForm[int])
         with self.assertRaises(TypeError):
-            issubclass(int, TypeExpr)
+            issubclass(int, TypeForm)
 
 
 class LiteralStringTests(BaseTestCase):
@@ -7310,6 +7310,21 @@ class TypeAliasTypeTests(BaseTestCase):
         fully_subscripted = still_generic[float]
         self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
         self.assertIs(get_origin(fully_subscripted), ListOrSetT)
+
+    def test_unpack_parameter_collection(self):
+        Ts = TypeVarTuple("Ts")
+
+        class Foo(Generic[Unpack[Ts]]):
+            bar: Tuple[Unpack[Ts]]
+
+        FooAlias = TypeAliasType("FooAlias", Foo[Unpack[Ts]], type_params=(Ts,))
+        self.assertEqual(FooAlias[Unpack[Tuple[str]]].__parameters__, ())
+        self.assertEqual(FooAlias[Unpack[Tuple[T]]].__parameters__, (T,))
+
+        P = ParamSpec("P")
+        CallableP = TypeAliasType("CallableP", Callable[P, Any], type_params=(P,))
+        call_int_T = CallableP[Unpack[Tuple[int, T]]]
+        self.assertEqual(call_int_T.__parameters__, (T,))
 
     def test_alias_attributes(self):
         T = TypeVar('T')

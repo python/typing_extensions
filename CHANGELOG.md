@@ -1,6 +1,6 @@
 # Unreleased
 
-- Add `typing_extensions.TypeExpr` from PEP 747. Patch by
+- Add `typing_extensions.TypeForm` from PEP 747. Patch by
   Jelle Zijlstra.
 - Add `typing_extensions.get_annotations`, a backport of
   `inspect.get_annotations` that adds features specified
@@ -12,6 +12,10 @@
 - Fix bug where a subscripted `TypeAliasType` instance did not have all
   attributes of the original `TypeAliasType` instance on older Python versions.
   Patch by [Daraan](https://github.com/Daraan) and Alex Waygood.
+- Fix bug where subscripted `TypeAliasType` instances (and some other
+  subscripted objects) had wrong parameters if they were directly
+  subscripted with an `Unpack` object.
+  Patch by [Daraan](https://github.com/Daraan).
 - Extended the Concatenate backport for Python 3.8-3.10 to now accept
   ellipsis as an argument. Patch by [Daraan](https://github.com/Daraan).
 
