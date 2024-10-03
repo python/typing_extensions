@@ -1795,7 +1795,24 @@ if not hasattr(typing, 'Concatenate'):
             return tuple(
                 tp for tp in self.__args__ if isinstance(tp, (typing.TypeVar, ParamSpec))
             )
+# 3.10+
+else:
+    _ConcatenateGenericAlias = typing._ConcatenateGenericAlias
+    
+    # 3.10
+    # Monkey patch to not raise TypeError on python3.10 for ellipsis parameter
+    if sys.version_info < (3, 11):
+        def _copy_with_support_ellipsis(self, params):
+            if isinstance(params[-1], (list, tuple)):
+                return (*params[:-1], *params[-1])
+            if isinstance(params[-1], _ConcatenateGenericAlias):
+                params = (*params[:-1], *params[-1].__args__)
+            elif not (params[-1] is ... or isinstance(params[-1], ParamSpec)):
+                raise TypeError("The last parameter to Concatenate should be a "
+                        "ParamSpec variable or ellipsis.")
+            return super(_ConcatenateGenericAlias, self).copy_with(params)
 
+        _ConcatenateGenericAlias.copy_with = _copy_with_support_ellipsis
 
 # 3.8-3.9
 @typing._tp_cache
