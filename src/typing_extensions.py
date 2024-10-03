@@ -1798,7 +1798,7 @@ if not hasattr(typing, 'Concatenate'):
 # 3.10+
 else:
     _ConcatenateGenericAlias = typing._ConcatenateGenericAlias
-    
+
     # 3.10
     # Monkey patch to not raise TypeError on python3.10 for ellipsis parameter
     if sys.version_info < (3, 11):
