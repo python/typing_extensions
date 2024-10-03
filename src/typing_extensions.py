@@ -1818,7 +1818,7 @@ else:
                 return super(_typing_ConcatenateGenericAlias, self).copy_with(params)
 
 
-# 3.8-3.9
+# 3.8-3.10
 @typing._tp_cache
 def _concatenate_getitem(self, parameters):
     if parameters == ():
@@ -1838,7 +1838,7 @@ def _concatenate_getitem(self, parameters):
 
 
 # 3.11+
-if hasattr(typing, 'Concatenate') and sys.version_info[:2] != (3, 10):
+if sys.version_info >= (3, 11):
     Concatenate = typing.Concatenate
 # 3.9-3.10
 elif sys.version_info[:2] >= (3, 9):
