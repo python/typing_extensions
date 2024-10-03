@@ -1795,6 +1795,27 @@ if not hasattr(typing, 'Concatenate'):
             return tuple(
                 tp for tp in self.__args__ if isinstance(tp, (typing.TypeVar, ParamSpec))
             )
+# 3.10+
+else:
+    _ConcatenateGenericAlias = typing._ConcatenateGenericAlias
+
+    # 3.10
+    if sys.version_info < (3, 11):
+        _typing_ConcatenateGenericAlias = _ConcatenateGenericAlias
+
+        class _ConcatenateGenericAlias(_typing_ConcatenateGenericAlias, _root=True):
+            # needed for checks in collections.abc.Callable to accept this class
+            __module__ = "typing"
+
+            def copy_with(self, params):
+                if isinstance(params[-1], (list, tuple)):
+                    return (*params[:-1], *params[-1])
+                if isinstance(params[-1], _ConcatenateGenericAlias):
+                    params = (*params[:-1], *params[-1].__args__)
+                elif not (params[-1] is ... or isinstance(params[-1], ParamSpec)):
+                    raise TypeError("The last parameter to Concatenate should be a "
+                            "ParamSpec variable or ellipsis.")
+                return super(_typing_ConcatenateGenericAlias, self).copy_with(params)
 
 
 # 3.8-3.9
@@ -1804,19 +1825,22 @@ def _concatenate_getitem(self, parameters):
         raise TypeError("Cannot take a Concatenate of no types.")
     if not isinstance(parameters, tuple):
         parameters = (parameters,)
-    if not isinstance(parameters[-1], ParamSpec):
+    elif not (parameters[-1] is ... or isinstance(parameters[-1], ParamSpec)):
         raise TypeError("The last parameter to Concatenate should be a "
-                        "ParamSpec variable.")
+                        "ParamSpec variable or ellipsis.")
     msg = "Concatenate[arg, ...]: each arg must be a type."
     parameters = tuple(typing._type_check(p, msg) for p in parameters)
+    if (3, 10, 2) < sys.version_info < (3,11):
+        return _ConcatenateGenericAlias(self, parameters,
+                                 _typevar_types=(TypeVar, ParamSpec),
+                                 _paramspec_tvars=True)
     return _ConcatenateGenericAlias(self, parameters)
 
 
-# 3.10+
-if hasattr(typing, 'Concatenate'):
+# 3.11+
+if hasattr(typing, 'Concatenate') and sys.version_info[:2] != (3, 10):
     Concatenate = typing.Concatenate
-    _ConcatenateGenericAlias = typing._ConcatenateGenericAlias
-# 3.9
+# 3.9-3.10
 elif sys.version_info[:2] >= (3, 9):
     @_ExtensionsSpecialForm
     def Concatenate(self, parameters):
