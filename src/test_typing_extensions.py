@@ -5782,7 +5782,7 @@ class UnpackTests(BaseTestCase):
     def test_substitution(self):
         Ts = TypeVarTuple("Ts")
         unpacked_str = Unpack[Ts][str]
-        with self.subTest("Check full unpack"):
+        with self.subTest("Check substitution result"):
             self.assertIs(unpacked_str, str)
 
     @skipUnless(TYPING_3_11_0, "Needs Issue #103 first")
@@ -5805,10 +5805,11 @@ class UnpackTests(BaseTestCase):
             nested_tuple_A_unpack = TupleAliasTsT[Unpack[Tuple[str]], object]
             self.assertEqual(nested_tuple_A, nested_tuple_A_unpack)
 
-        with self.subTest("With Callable Ts"):
+        with self.subTest("With Callable and Unpack"):
             # Tuple[int, (str, int) -> object]
             CallableAliasTsT = Variadic[Callable[[Unpack[Ts]], T]]
-            CallableAliasTsT[[str, int], object]  # valid nested tuple
+            callable_fully_subscripted = CallableAliasTsT[Unpack[Tuple[str, int]], object]
+            self.assertEqual(get_args(callable_fully_subscripted), (Callable[[str, int], object],))
 
         # Equivalent Forms
         with self.subTest("Equivalence of variadic arguments"):
@@ -5817,7 +5818,7 @@ class UnpackTests(BaseTestCase):
             nested_tuple_B_2xUnpack = TupleAliasTsT[Unpack[Tuple[str]], Unpack[Tuple[int]], object]
             self.assertEqual(nested_tuple_B_1xUnpack, nested_tuple_bare)
             self.assertEqual(nested_tuple_B_1xUnpack, nested_tuple_B_2xUnpack)
-            self.assertNotEqual(invalid_nested_tuple, nested_tuple_B_1xUnpack)
+            self.assertEqual(get_args(nested_tuple_B_2xUnpack), (Tuple[str, int, object], ))
 
 
 class TypeVarTupleTests(BaseTestCase):
