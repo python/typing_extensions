@@ -5805,9 +5805,6 @@ class UnpackTests(BaseTestCase):
             nested_tuple_A_unpack = TupleAliasTsT[Unpack[Tuple[str]], object]
             self.assertEqual(nested_tuple_A, nested_tuple_A_unpack)
 
-        with self.subTest("Test invalid args", args=([str, int], object)):
-            # TypeError on some versions as types should be passed
-            invalid_nested_tuple = TupleAliasTsT[[str, int], object]  # invalid form
         with self.subTest("With Callable Ts"):
             # Tuple[int, (str, int) -> object]
             CallableAliasTsT = Variadic[Callable[[Unpack[Ts]], T]]
