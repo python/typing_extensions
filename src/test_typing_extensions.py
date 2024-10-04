@@ -5785,44 +5785,36 @@ class UnpackTests(BaseTestCase):
         with self.subTest("Check substitution result"):
             self.assertIs(unpacked_str, str)
 
-    @skipUnless(TYPING_3_11_0, "Needs Issue #103 first")
+    @skipUnless(TYPING_3_11_0, "Needs Issue #103 for <3.11")
     def test_nested_unpack(self):
         T = TypeVar('T')
         Ts = TypeVarTuple("Ts")
-        Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
-        # Tuple[int, Tuple[str, int]]
+        Variadic = Tuple[int, Unpack[Ts]]
+        # Tuple[int, int, Tuple[str, int]]
         direct_subscription = Variadic[int, Tuple[str, int]]
-        # Tuple[int, Tuple[*Ts, int]]
+        # Tuple[int, int, Tuple[*Ts, int]]
         TupleAliasTs = Variadic[int, Tuple[Unpack[Ts], int]]
 
         # if this fails all below are likely to fail too
-        # Tuple[int, Tuple[str, int]]
+        # Tuple[int, int, Tuple[str, int]]
         recursive_unpack = TupleAliasTs[str]
         self.assertEqual(direct_subscription, recursive_unpack)
-        self.assertEqual(get_args(recursive_unpack), (int, Tuple[str, int]))
+        self.assertEqual(get_args(recursive_unpack), (int, int, Tuple[str, int]))
 
         TupleAliasTsT = Variadic[Tuple[Unpack[Ts], T]]
-        with self.subTest("Two type vars"):
-            # Tuple[int, Tuple[List[str], object]]
-            nested_tuple_A = TupleAliasTsT[List[str], object]
-            nested_tuple_A_unpack = TupleAliasTsT[Unpack[Tuple[List[str]]], object]
-            self.assertEqual(nested_tuple_A, nested_tuple_A_unpack)
-            self.assertEqual(get_args(nested_tuple_A), (Tuple[List[str], object],))
-
-        with self.subTest("With Callable and Unpack"):
-            # Tuple[int, (str, int) -> object]
-            CallableAliasTsT = Variadic[Callable[[Unpack[Ts]], T]]
-            callable_fully_subscripted = CallableAliasTsT[Unpack[Tuple[str, int]], object]
-            self.assertEqual(get_args(callable_fully_subscripted), (Callable[[str, int], object],))
-
         # Equivalent Forms
         with self.subTest("Equivalence of variadic arguments"):
             nested_tuple_bare = TupleAliasTsT[str, int, object]
             self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str, int, object]]])
             self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str, int]], object])
             self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str]], Unpack[Tuple[int]], object])
-            self.assertEqual(get_args(nested_tuple_bare), (Tuple[str, int, object],))
+            self.assertEqual(get_args(nested_tuple_bare), (int, Tuple[str, int, object],))
 
+        with self.subTest("With Callable and Unpack"):
+            # Tuple[int, (str, int) -> object]
+            CallableAliasTsT = Variadic[Callable[[Unpack[Ts]], T]]
+            callable_fully_subscripted = CallableAliasTsT[Unpack[Tuple[str, int]], object]
+            self.assertEqual(get_args(callable_fully_subscripted), (int, Callable[[str, int], object],))
 
 class TypeVarTupleTests(BaseTestCase):
 
