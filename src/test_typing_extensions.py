@@ -5790,20 +5790,24 @@ class UnpackTests(BaseTestCase):
         T = TypeVar('T')
         Ts = TypeVarTuple("Ts")
         Variadic = TypeAliasType("Variadic", Tuple[int, Unpack[Ts]], type_params=(Ts,))
-        Variadic[int, Tuple[str, int]]
-
-        TupleAliasTs = Variadic[Tuple[Unpack[Ts], int]]
+        # Tuple[int, Tuple[str, int]]
+        direct_subscription = Variadic[int, Tuple[str, int]]
+        # Tuple[int, Tuple[*Ts, int]]
+        TupleAliasTs = Variadic[int, Tuple[Unpack[Ts], int]]
 
         # if this fails all below are likely to fail too
         # Tuple[int, Tuple[str, int]]
-        TupleAliasTs[str]
+        recursive_unpack = TupleAliasTs[str]
+        self.assertEqual(direct_subscription, recursive_unpack)
+        self.assertEqual(get_args(recursive_unpack), (int, Tuple[str, int]))
 
         TupleAliasTsT = Variadic[Tuple[Unpack[Ts], T]]
-        with self.subTest("Single parameter for tuple alias"):
-            # Tuple[int, Tuple[str, object]]
-            nested_tuple_A = TupleAliasTsT[str, object]
-            nested_tuple_A_unpack = TupleAliasTsT[Unpack[Tuple[str]], object]
+        with self.subTest("Two type vars"):
+            # Tuple[int, Tuple[List[str], object]]
+            nested_tuple_A = TupleAliasTsT[List[str], object]
+            nested_tuple_A_unpack = TupleAliasTsT[Unpack[Tuple[List[str]]], object]
             self.assertEqual(nested_tuple_A, nested_tuple_A_unpack)
+            self.assertEqual(get_args(nested_tuple_A), (Tuple[List[str], object],))
 
         with self.subTest("With Callable and Unpack"):
             # Tuple[int, (str, int) -> object]
@@ -5814,11 +5818,10 @@ class UnpackTests(BaseTestCase):
         # Equivalent Forms
         with self.subTest("Equivalence of variadic arguments"):
             nested_tuple_bare = TupleAliasTsT[str, int, object]
-            nested_tuple_B_1xUnpack = TupleAliasTsT[Unpack[Tuple[str, int]], object]
-            nested_tuple_B_2xUnpack = TupleAliasTsT[Unpack[Tuple[str]], Unpack[Tuple[int]], object]
-            self.assertEqual(nested_tuple_B_1xUnpack, nested_tuple_bare)
-            self.assertEqual(nested_tuple_B_1xUnpack, nested_tuple_B_2xUnpack)
-            self.assertEqual(get_args(nested_tuple_B_2xUnpack), (Tuple[str, int, object], ))
+            self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str, int, object]]])
+            self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str, int]], object])
+            self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str]], Unpack[Tuple[int]], object])
+            self.assertEqual(get_args(nested_tuple_bare), (Tuple[str, int, object],))
 
 
 class TypeVarTupleTests(BaseTestCase):
