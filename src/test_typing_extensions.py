@@ -5426,20 +5426,14 @@ class ConcatenateTests(BaseTestCase):
         ):
             Callable[Concatenate[int, ...], Any][Any]
 
-    @skipIf(TYPING_3_11_0, "Args can be non-types in 3.11+")
-    def test_invalid_uses_before_3_11(self):
+    def test_invalid_use(self):
+        # Assure that `_type_check` is called.
         P = ParamSpec('P')
         with self.assertRaisesRegex(
             TypeError,
-            'each arg must be a type',
+            "each arg must be a type",
         ):
-            Concatenate[1, P]
-
-        with self.assertRaisesRegex(
-            TypeError,
-            'each arg must be a type.',
-        ):
-            Concatenate[1, ..., P]
+            Concatenate[(str,), P]
 
     @skipUnless(TYPING_3_11_0 or (3, 10, 0) <= sys.version_info < (3, 10, 2),
                 "Cannot be backported to <=3.9. See issue #48"
