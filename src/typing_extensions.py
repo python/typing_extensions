@@ -1236,8 +1236,8 @@ else:  # <=3.13
             )
         else:  # 3.8
             hint = typing.get_type_hints(obj, globalns=globalns, localns=localns)
-        if sys.version_info < (3, 11) and hint:
-            hint = _clean_optional(obj, hint, globalns, localns)
+        if sys.version_info < (3, 11):
+            _clean_optional(obj, hint, globalns, localns)
         if include_extras:
             return hint
         return {k: _strip_extras(t) for k, t in hint.items()}
@@ -1247,7 +1247,7 @@ else:  # <=3.13
     def _could_be_inserted_optional(t):
         """detects Union[..., None] pattern"""
         # 3.8+ compatible checking before _UnionGenericAlias
-        if not hasattr(t, "__origin__") or t.__origin__ is not Union:
+        if get_origin(t) is not Union:
             return False
         # Assume if last argument is not None they are user defined
         if t.__args__[-1] is not _NoneType:
@@ -1259,8 +1259,12 @@ else:  # <=3.13
         # reverts injected Union[..., None] cases from typing.get_type_hints
         # when a None default value is used.
         # see https://github.com/python/typing_extensions/issues/310
-        original_hints = getattr(obj, '__annotations__', None)
+        if not hints or isinstance(obj, type):
+            return
         defaults = typing._get_defaults(obj)
+        if not defaults:
+            return
+        original_hints = obj.__annotations__
         for name, value in hints.items():
             # Not a Union[..., None] or replacement conditions not fullfilled
             if (not _could_be_inserted_optional(value)
@@ -1269,7 +1273,7 @@ else:  # <=3.13
             ):
                 continue
             original_value = original_hints[name]
-            if original_value is None:
+            if original_value is None:  # should not happen
                 original_value = _NoneType
             # Forward reference
             if isinstance(original_value, str):
@@ -1287,24 +1291,19 @@ else:  # <=3.13
                 elif localns is None:
                     localns = globalns
                 if sys.version_info < (3, 9):
-                    ref = ForwardRef(original_value)
+                    original_value = ForwardRef(original_value)
                 else:
-                    ref = ForwardRef(
+                    original_value = ForwardRef(
                         original_value,
                         is_argument=not isinstance(obj, _types.ModuleType)
                     )
-                original_value = typing._eval_type(ref, globalns, localns)
-            # Values was not modified or original is already Optional
-            if original_value == value or _could_be_inserted_optional(original_value):
-                continue
-            # NoneType was added to value
-            if len(value.__args__) == 2:
-                hints[name] = value.__args__[0]  # not a Union
-            else:
-                hints[name] = Union[value.__args__[:-1]]  # still a Union
-
-        return hints
-
+            original_evaluated = typing._eval_type(original_value, globalns, localns)
+            if sys.version_info < (3, 9) and get_origin(original_evaluated) is Union:
+                # Union[str, None, "str"] is not reduced to Union[str, None]
+                original_evaluated = Union[original_evaluated.__args__]
+            # Compare if values differ
+            if original_evaluated != value:
+                hints[name] = original_evaluated
 
 # Python 3.9+ has PEP 593 (Annotated)
 if hasattr(typing, 'Annotated'):
