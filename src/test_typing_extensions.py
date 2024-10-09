@@ -5025,7 +5025,6 @@ class AnnotatedTests(BaseTestCase):
         self.assertEqual(X.__metadata__, ("metadata",))
 
 
-
 class GetTypeHintsTests(BaseTestCase):
     def test_get_type_hints(self):
         def foobar(x: List['X']): ...
