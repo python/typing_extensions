@@ -1236,9 +1236,74 @@ else:  # <=3.13
             )
         else:  # 3.8
             hint = typing.get_type_hints(obj, globalns=globalns, localns=localns)
+        if sys.version_info < (3, 11) and hint:
+            hint = _clean_optional(obj, hint, globalns, localns)
         if include_extras:
             return hint
         return {k: _strip_extras(t) for k, t in hint.items()}
+
+    _NoneType = type(None)
+
+    def _could_be_inserted_optional(t):
+        """detects Union[..., None] pattern"""
+        # 3.8+ compatible checking before _UnionGenericAlias
+        if not hasattr(t, "__origin__") or t.__origin__ is not Union:
+            return False
+        # Assume if last argument is not None they are user defined
+        if t.__args__[-1] is not _NoneType:
+            return False
+        return True
+
+    # < 3.11
+    def _clean_optional(obj, hints, globalns=None, localns=None):
+        # reverts injected Union[..., None] cases from typing.get_type_hints
+        # when a None default value is used.
+        # see https://github.com/python/typing_extensions/issues/310
+        original_hints = getattr(obj, '__annotations__', None)
+        defaults = typing._get_defaults(obj)
+        for name, value in hints.items():
+            # Not a Union[..., None] or replacement conditions not fullfilled
+            if (not _could_be_inserted_optional(value)
+                or name not in defaults
+                or defaults[name] is not None
+            ):
+                continue
+            original_value = original_hints[name]
+            if original_value is None:
+                original_value = _NoneType
+            # Forward reference
+            if isinstance(original_value, str):
+                if globalns is None:
+                    if isinstance(obj, _types.ModuleType):
+                        globalns = obj.__dict__
+                    else:
+                        nsobj = obj
+                        # Find globalns for the unwrapped object.
+                        while hasattr(nsobj, '__wrapped__'):
+                            nsobj = nsobj.__wrapped__
+                        globalns = getattr(nsobj, '__globals__', {})
+                    if localns is None:
+                        localns = globalns
+                elif localns is None:
+                    localns = globalns
+                if sys.version_info < (3, 9):
+                    ref = ForwardRef(original_value)
+                else:
+                    ref = ForwardRef(
+                        original_value,
+                        is_argument=not isinstance(obj, _types.ModuleType)
+                    )
+                original_value = typing._eval_type(ref, globalns, localns)
+            # Values was not modified or original is already Optional
+            if original_value == value or _could_be_inserted_optional(original_value):
+                continue
+            # NoneType was added to value
+            if len(value.__args__) == 2:
+                hints[name] = value.__args__[0]  # not a Union
+            else:
+                hints[name] = Union[value.__args__[:-1]]  # still a Union
+
+        return hints
 
 
 # Python 3.9+ has PEP 593 (Annotated)
