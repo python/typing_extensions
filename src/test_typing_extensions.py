@@ -1650,39 +1650,43 @@ class GetTypeHintTests(BaseTestCase):
         optional_annotation = Optional[annotation]
 
         cases = {
+            # (annotation, none_default) : expected_type_hints
             ((), False): {},
             ((), True): {},
-            (int, False): {"x": int},
-            (int, True): {"x": int},
-            (Optional[int], False): {"x": Optional[int]},
-            (Optional[int], True): {"x": Optional[int]},
-            (optional_annotation, False): {"x": optional_annotation},
-            (optional_annotation, True): {"x": optional_annotation},
-            (str(optional_annotation), True): {"x": optional_annotation},
-            (annotation, False): {"x": annotation},
-            (annotation, True): {"x": annotation},
-            (Union[annotation, T], False): {"x": Union[annotation, T]},
-            (Union[annotation, T], True): {"x": Union[annotation, T]},
-            (Union[str, None, "str"], False): {"x": Optional[str]},
-            (Union[str, None, "str"], True): {"x": Optional[str]},
+            (int, False): {'x': int},
+            (int, True): {'x': int},
+            (Optional[int], False): {'x': Optional[int]},
+            (Optional[int], True): {'x': Optional[int]},
+            (optional_annotation, False): {'x': optional_annotation},
+            (optional_annotation, True): {'x': optional_annotation},
+            (str(optional_annotation), True): {'x': optional_annotation},
+            (annotation, False): {'x': annotation},
+            (annotation, True): {'x': annotation},
+            (Union[annotation, T], False): {'x': Union[annotation, T]},
+            (Union[annotation, T], True): {'x': Union[annotation, T]},
+            ("Union[Annotated[Union[int, None], 'data'], T]", True): {
+                'x': Union[annotation, T]
+            },
+            (Union[str, None, "str"], False): {'x': Optional[str]},
+            (Union[str, None, "str"], True): {'x': Optional[str]},
             (Union[str, "str"], False): {
-                "x": str
+                'x': str
                 if sys.version_info >= (3, 9)
                 # _eval_type does not resolve correctly to str in 3.8
                 else typing._eval_type(Union[str, "str"], None, None),
             },
-            (Union[str, "str"], True): {"x": str},
-            (List["str"], False): {"x": List[str]},
-            (List["str"], True): {"x": List[str]},
-            (Optional[List[str]], False): {"x": Optional[List[str]]},
-            (Optional[List[str]], True): {"x": Optional[List[str]]},
+            (Union[str, "str"], True): {'x': str},
+            (List["str"], False): {'x': List[str]},
+            (List["str"], True): {'x': List[str]},
+            (Optional[List[str]], False): {'x': Optional[List[str]]},
+            (Optional[List[str]], True): {'x': Optional[List[str]]},
         }
 
         for (annot, none_default), expected in cases.items():
             with self.subTest(annotation=annot, none_default=none_default, expected_type_hints=expected):
                 if annot == ():
                     if none_default:
-                        def func(x = None): pass
+                        def func(x=None): pass
                     else:
                         def func(x): pass
                 elif none_default:
