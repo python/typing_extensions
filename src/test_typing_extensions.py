@@ -1645,6 +1645,37 @@ class GetTypeHintTests(BaseTestCase):
         self.assertNotEqual(gth(Loop, globals())['attr'], Final[int])
         self.assertNotEqual(gth(Loop, globals())['attr'], Final)
 
+    def test_annotation_and_optional_default(self):
+        annotation = Annotated[Union[int, None], "data"]
+        optional_annotation = Optional[annotation]
+
+        def wanted_optional(bar: optional_annotation): ...
+        def wanted_optional_default(bar: optional_annotation = None): ...
+        def wanted_optional_ref(bar: 'Optional[Annotated[Union[int, None], "data"]]'): ...
+
+        def no_optional(bar: annotation): ...
+        def no_optional_default(bar: annotation = None): ...
+        def no_optional_defaultT(bar: Union[annotation, T] = None): ...
+        def no_optional_defaultT_ref(bar: "Union[annotation, T]" = None): ...
+
+        for func in(wanted_optional, wanted_optional_default, wanted_optional_ref):
+            self.assertEqual(
+                get_type_hints(func, include_extras=True),
+                {"bar": optional_annotation}
+            )
+
+        for func in (no_optional, no_optional_default):
+            self.assertEqual(
+                get_type_hints(func, include_extras=True),
+                {"bar": annotation}
+            )
+
+        for func in (no_optional_defaultT, no_optional_defaultT_ref):
+            self.assertEqual(
+                get_type_hints(func, globals(), locals(), include_extras=True),
+                {"bar": Union[annotation, T]}
+        )
+
 
 class GetUtilitiesTestCase(TestCase):
     def test_get_origin(self):
@@ -4993,36 +5024,6 @@ class AnnotatedTests(BaseTestCase):
         self.assertEqual(X.__origin__, List[Annotated[str, {"unhashable_metadata"}]])
         self.assertEqual(X.__metadata__, ("metadata",))
 
-    def test_get_type_hints(self):
-        annotation = Annotated[Union[int, None], "data"]
-        optional_annotation = Optional[annotation]
-
-        def wanted_optional(bar: optional_annotation): ...
-        def wanted_optional_default(bar: optional_annotation = None): ...
-        def wanted_optional_ref(bar: 'Optional[Annotated[Union[int, None], "data"]]'): ...
-
-        def no_optional(bar: annotation): ...
-        def no_optional_default(bar: annotation = None): ...
-        def no_optional_defaultT(bar: Union[annotation, T] = None): ...
-        def no_optional_defaultT_ref(bar: "Union[annotation, T]" = None): ...
-
-        for func in(wanted_optional, wanted_optional_default, wanted_optional_ref):
-            self.assertEqual(
-                get_type_hints(func, include_extras=True),
-                {"bar": optional_annotation}
-            )
-
-        for func in (no_optional, no_optional_default):
-            self.assertEqual(
-                get_type_hints(func, include_extras=True),
-                {"bar": annotation}
-            )
-
-        for func in (no_optional_defaultT, no_optional_defaultT_ref):
-            self.assertEqual(
-                get_type_hints(func, globals(), locals(), include_extras=True),
-                {"bar": Union[annotation, T]}
-        )
 
 
 class GetTypeHintsTests(BaseTestCase):
