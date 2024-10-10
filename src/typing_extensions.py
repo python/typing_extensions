@@ -1239,8 +1239,8 @@ else:  # <=3.13
         if sys.version_info < (3, 11):
             _clean_optional(obj, hint, globalns, localns)
         if sys.version_info < (3, 9):
-            # In 3.8 eval_type does not handle all Optional[ForwardRef] correctly
-            # this also returns cached versions of Union
+            # In 3.8 eval_type does not flatten Optional[ForwardRef] correctly
+            # This will recreate and and cache Unions.
             hint = {
                 k: (t
                     if get_origin(t) != Union
