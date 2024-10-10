@@ -1707,11 +1707,7 @@ class GetTypeHintTests(BaseTestCase):
                 self.assertEqual(type_hints, expected)
                 for k in type_hints.keys():
                     self.assertEqual(hash(type_hints[k]), hash(expected[k]))
-                with self.subTest("Test str and repr"):
-                    if sys.version_info[:2] == (3, 8) and annot == Union[str, None, "str"]:
-                        # This also skips Union[str, "str"] wrap_optional=True which has the same problem
-                        self.skipTest("In 3.8 repr is Union[str, None, str]")
-                    self.assertEqual(str(type_hints)+repr(type_hints), str(expected)+repr(type_hints))
+                self.assertEqual(str(type_hints)+repr(type_hints), str(expected)+repr(type_hints))
 
 
 class GetUtilitiesTestCase(TestCase):
