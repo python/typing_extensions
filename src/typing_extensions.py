@@ -1238,6 +1238,22 @@ else:  # <=3.13
             hint = typing.get_type_hints(obj, globalns=globalns, localns=localns)
         if sys.version_info < (3, 11):
             _clean_optional(obj, hint, globalns, localns)
+        # types from get_type_hints might not be from a cached version
+        # In 3.8 eval_type does not handle all Optional[ForwardRef] correctly
+        # this also returns cached versions of Union and Optional
+        if sys.version_info < (3, 9):
+            hint = {
+                k: (
+                    t
+                    if get_origin(t) not in (Union, Optional)
+                    else (
+                        Optional[t.__args__[0]]
+                        if get_origin(t) == Optional
+                        else Union[t.__args__]
+                    )
+                )
+                for k, t in hint.items()
+            }
         if include_extras:
             return hint
         return {k: _strip_extras(t) for k, t in hint.items()}
@@ -1261,7 +1277,7 @@ else:  # <=3.13
         # see https://github.com/python/typing_extensions/issues/310
         if not hints or isinstance(obj, type):
             return
-        defaults = typing._get_defaults(obj)
+        defaults = typing._get_defaults(obj)  # avoid accessing __annotations___
         if not defaults:
             return
         original_hints = obj.__annotations__
@@ -1300,7 +1316,8 @@ else:  # <=3.13
             original_evaluated = typing._eval_type(original_value, globalns, localns)
             if sys.version_info < (3, 9) and get_origin(original_evaluated) is Union:
                 # Union[str, None, "str"] is not reduced to Union[str, None]
-                original_evaluated = Union[original_evaluated.__args__]
+                container = Optional if original_evaluated._name == "Optional" else Union
+                original_evaluated = container[original_evaluated.__args__]
             # Compare if values differ
             if original_evaluated != value:
                 hints[name] = original_evaluated

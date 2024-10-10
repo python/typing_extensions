@@ -1650,40 +1650,50 @@ class GetTypeHintTests(BaseTestCase):
         optional_annotation = Optional[annotation]
 
         cases = {
-            # (annotation, none_default) : expected_type_hints
-            ((), False): {},
+            # (annotation, skip_as_str): expected_type_hints
+            # Should skip_as_str if contains a ForwardRef.
             ((), True): {},
-            (int, False): {'x': int},
-            (int, True): {'x': int},
-            (Optional[int], False): {'x': Optional[int]},
-            (Optional[int], True): {'x': Optional[int]},
-            (optional_annotation, False): {'x': optional_annotation},
-            (optional_annotation, True): {'x': optional_annotation},
-            (str(optional_annotation), True): {'x': optional_annotation},
-            (annotation, False): {'x': annotation},
-            (annotation, True): {'x': annotation},
-            (Union[annotation, T], False): {'x': Union[annotation, T]},
-            (Union[annotation, T], True): {'x': Union[annotation, T]},
+            (int, True): {"x": int},
+            ("int", True): {"x": int},
+            (Optional[int], False): {"x": Optional[int]},
+            (optional_annotation, False): {"x": optional_annotation},
+            (annotation, False): {"x": annotation},
+            (Union[annotation, T], True): {"x": Union[annotation, T]},
             ("Union[Annotated[Union[int, None], 'data'], T]", True): {
-                'x': Union[annotation, T]
+                "x": Union[annotation, T]
             },
-            (Union[str, None, "str"], False): {'x': Optional[str]},
-            (Union[str, None, "str"], True): {'x': Optional[str]},
-            (Union[str, "str"], False): {
-                'x': str
-                if sys.version_info >= (3, 9)
-                # _eval_type does not resolve correctly to str in 3.8
-                else typing._eval_type(Union[str, "str"], None, None),
+            (Union[str, None, str], False): {"x": Optional[str]},
+            (Union[str, None, "str"], True): {"x": Optional[str]},
+            (Union[str, "str"], True): {"x": str},
+            (List["str"], True): {"x": List[str]},
+            (Optional[List[str]], False): {"x": Optional[List[str]]},
+            (Tuple[Unpack[Tuple[int, str]]], False): {
+                "x": Tuple[Unpack[Tuple[int, str]]]
             },
-            (Union[str, "str"], True): {'x': str},
-            (List["str"], False): {'x': List[str]},
-            (List["str"], True): {'x': List[str]},
-            (Optional[List[str]], False): {'x': Optional[List[str]]},
-            (Optional[List[str]], True): {'x': Optional[List[str]]},
         }
-
-        for (annot, none_default), expected in cases.items():
-            with self.subTest(annotation=annot, none_default=none_default, expected_type_hints=expected):
+        for ((annot, skip_as_str), expected), none_default, as_str, wrap_optional in itertools.product(
+            cases.items(), (False, True), (False, True), (False, True)
+        ):
+            if wrap_optional:
+                if annot == ():
+                    continue
+                if (get_origin(annot) is not Optional
+                    or (sys.version_info[:2] == (3, 8) and annot._name != "Optional")
+                ):
+                    annot = Optional[annot]
+                    expected = {"x": Optional[expected['x']]}
+            if as_str:
+                if skip_as_str or annot == ():
+                    continue
+                annot = str(annot)
+            with self.subTest(
+                annotation=annot,
+                as_str=as_str,
+                none_default=none_default,
+                expected_type_hints=expected,
+                wrap_optional=wrap_optional,
+            ):
+                # Create function to check
                 if annot == ():
                     if none_default:
                         def func(x=None): pass
@@ -1693,7 +1703,14 @@ class GetTypeHintTests(BaseTestCase):
                     def func(x: annot = None): pass
                 else:
                     def func(x: annot): pass
-                self.assertEqual(get_type_hints(func, include_extras=True), expected)
+                type_hints = get_type_hints(func, include_extras=True)
+                self.assertEqual(type_hints, expected)
+                self.assertEqual(hash(type_hints.values()), hash(expected.values()))
+                with self.subTest("Test str and repr"):
+                    if sys.version_info[:2] == (3, 8) and annot == Union[str, None, "str"]:
+                        # This also skips Union[str, "str"] wrap_optional=True which has the same problem
+                        self.skipTest("In 3.8 repr is Union[str, None, str]")
+                    self.assertEqual(str(type_hints)+repr(type_hints), str(expected)+repr(type_hints))
 
 
 class GetUtilitiesTestCase(TestCase):
