@@ -1238,20 +1238,13 @@ else:  # <=3.13
             hint = typing.get_type_hints(obj, globalns=globalns, localns=localns)
         if sys.version_info < (3, 11):
             _clean_optional(obj, hint, globalns, localns)
-        # types from get_type_hints might not be from a cached version
-        # In 3.8 eval_type does not handle all Optional[ForwardRef] correctly
-        # this also returns cached versions of Union and Optional
         if sys.version_info < (3, 9):
+            # In 3.8 eval_type does not handle all Optional[ForwardRef] correctly
+            # this also returns cached versions of Union
             hint = {
-                k: (
-                    t
-                    if get_origin(t) not in (Union, Optional)
-                    else (
-                        Optional[t.__args__[0]]
-                        if get_origin(t) == Optional
-                        else Union[t.__args__]
-                    )
-                )
+                k: (t
+                    if get_origin(t) != Union
+                    else Union[t.__args__])
                 for k, t in hint.items()
             }
         if include_extras:
@@ -1316,8 +1309,7 @@ else:  # <=3.13
             original_evaluated = typing._eval_type(original_value, globalns, localns)
             if sys.version_info < (3, 9) and get_origin(original_evaluated) is Union:
                 # Union[str, None, "str"] is not reduced to Union[str, None]
-                container = Optional if original_evaluated._name == "Optional" else Union
-                original_evaluated = container[original_evaluated.__args__]
+                original_evaluated = Union[original_evaluated.__args__]
             # Compare if values differ
             if original_evaluated != value:
                 hints[name] = original_evaluated
