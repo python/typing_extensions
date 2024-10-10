@@ -1705,7 +1705,8 @@ class GetTypeHintTests(BaseTestCase):
                     def func(x: annot): pass
                 type_hints = get_type_hints(func, include_extras=True)
                 self.assertEqual(type_hints, expected)
-                self.assertEqual(hash(type_hints.values()), hash(expected.values()))
+                for k in type_hints.keys():
+                    self.assertEqual(hash(type_hints[k]), hash(expected[k]))
                 with self.subTest("Test str and repr"):
                     if sys.version_info[:2] == (3, 8) and annot == Union[str, None, "str"]:
                         # This also skips Union[str, "str"] wrap_optional=True which has the same problem
