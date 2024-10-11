@@ -1647,65 +1647,71 @@ class GetTypeHintTests(BaseTestCase):
 
     def test_annotation_and_optional_default(self):
         annotation = Annotated[Union[int, None], "data"]
-        optional_annotation = Optional[annotation]
         NoneAlias = None
+        StrAlias = str
+        T_default = TypeVar("T_default", default=None)
+        Ts = TypeVarTuple("Ts")
 
         cases = {
-            # (annotation, skip_as_str): expected_type_hints
-            # Should skip_as_str if contains a ForwardRef.
-            ((), True): {},
-            (int, True): {"x": int},
-            ("int", True): {"x": int},
-            (Optional[int], False): {"x": Optional[int]},
-            (optional_annotation, False): {"x": optional_annotation},
-            (annotation, False): {"x": annotation},
-            (Union[annotation, T], True): {"x": Union[annotation, T]},
-            ("Union[Annotated[Union[int, None], 'data'], T]", True): {
-                "x": Union[annotation, T]
-            },
-            (Union[str, None, str], False): {"x": Optional[str]},
-            (Union[str, None, "str"], True): {"x": Optional[str]},
-            (Union[str, "str"], True): {"x": str},
-            (List["str"], True): {"x": List[str]},
-            (Optional[List[str]], False): {"x": Optional[List[str]]},
-            (Unpack[Tuple[int, None]], False): {"x": Unpack[Tuple[int, None]]},
-            (Union[str, "Union[int, None]"], True): {"x": Union[str, int, None]},
-            (NoneAlias, True): {"x": type(None)},
-            ("NoneAlias", True): {"x": type(None)},
-            (Union[str, "NoneAlias"], True): {"x": Optional[str]},
+            # annotation: expected_type_hints
+            Annotated[None, "none"] : Annotated[None, "none"],
+            annotation              : annotation,
+            Optional[int]           : Optional[int],
+            Optional[List[str]]     : Optional[List[str]],
+            Optional[annotation]     : Optional[annotation],
+            Union[str, None, str]   : Optional[str],
+            Unpack[Tuple[int, None]]: Unpack[Tuple[int, None]],
+            # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
+            Unpack[Ts]              : Unpack[Ts],
         }
-        if sys.version_info >= (3, 10):  # cannot construct UnionTypes
-            cases_3_10 = {
-                ("str | NoneAlias", True) : {"x": str | None},
-                (str | None, False) : {"x": Optional[str]},
-            }
-            cases.update(cases_3_10)
-        for ((annot, skip_as_str), expected), none_default, as_str, wrap_optional in itertools.product(
+        # contains a ForwardRef, TypeVar(~prefix) or no expression
+        do_not_stringify_cases = {
+            ()          : {},
+            int         : int,
+            "int"       : int,
+            None        : type(None),
+            "NoneAlias" : type(None),
+            List["str"] : List[str],
+            Union[str, "str"]                  : str,
+            Union[str, None, "str"]            : Optional[str],
+            Union[str, "NoneAlias", "StrAlias"]: Optional[str],
+            Union[str, "Union[None, StrAlias]"]: Optional[str],
+            Union["annotation", T_default]     : Union[annotation, T_default],
+            Annotated["annotation", "nested"]  : Annotated[Union[int, None], "data", "nested"],
+        }
+        if TYPING_3_10_0:  # cannot construct UnionTypes
+            do_not_stringify_cases["str | NoneAlias | StrAlias"] = str | None
+            cases[str | None] = Optional[str]
+        cases.update(do_not_stringify_cases)
+        for (annot, expected), none_default, as_str, wrap_optional in itertools.product(
             cases.items(), (False, True), (False, True), (False, True)
         ):
             # Special case:
             skip_reason = None
-            if sys.version_info[:2] == (3, 10) and annot == "str | NoneAlias" and none_default:
-                # Optional[str | None] -> Optional[str] not UnionType
+            annot_unchanged = annot
+            if sys.version_info[:2] == (3, 10) and annot == "str | NoneAlias | StrAlias" and none_default:
+                # different repr here as Optional[str | None] -> Optional[str] not a UnionType
                 skip_reason = "UnionType not preserved in 3.10"
             if wrap_optional:
-                if annot == ():
+                if annot_unchanged == ():
                     continue
                 annot = Optional[annot]
-                expected = {"x": Optional[expected['x']]}
+                expected = {"x": Optional[expected]}
+            else:
+                expected = {"x": expected} if annot_unchanged != () else {}
             if as_str:
-                if skip_as_str or annot == ():
+                if annot_unchanged in do_not_stringify_cases or annot_unchanged == ():
                     continue
                 annot = str(annot)
             with self.subTest(
                 annotation=annot,
                 as_str=as_str,
+                wrap_optional=wrap_optional,
                 none_default=none_default,
                 expected_type_hints=expected,
-                wrap_optional=wrap_optional,
             ):
                 # Create function to check
-                if annot == ():
+                if annot_unchanged == ():
                     if none_default:
                         def func(x=None): pass
                     else:
@@ -1715,9 +1721,12 @@ class GetTypeHintTests(BaseTestCase):
                 else:
                     def func(x: annot): pass
                 type_hints = get_type_hints(func, globals(), locals(), include_extras=True)
+                # Equality
                 self.assertEqual(type_hints, expected)
+                # Hash
                 for k in type_hints.keys():
                     self.assertEqual(hash(type_hints[k]), hash(expected[k]))
+                # Repr
                 with self.subTest("Check str and repr"):
                     if skip_reason == "UnionType not preserved in 3.10":
                         self.skipTest(skip_reason)
