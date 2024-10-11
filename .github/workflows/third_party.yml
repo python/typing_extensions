@@ -137,7 +137,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # 3.13 support is pending
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -218,6 +219,7 @@ jobs:
       - name: Run typeguard tests
         run: |
           cd typeguard
+          export PYTHON_COLORS=0  # A test fails if tracebacks are colorized
           pytest
 
   typed-argument-parser:
@@ -235,7 +237,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # 3.13 support: https://github.com/swansonk14/typed-argument-parser/issues/150
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -340,7 +343,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # skip 3.13 because msgspec doesn't support 3.13 yet
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
