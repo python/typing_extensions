@@ -1795,28 +1795,56 @@ if not hasattr(typing, 'Concatenate'):
             return tuple(
                 tp for tp in self.__args__ if isinstance(tp, (typing.TypeVar, ParamSpec))
             )
+# 3.10+
+else:
+    _ConcatenateGenericAlias = typing._ConcatenateGenericAlias
+
+# 3.8-3.9.2
+class _EllipsisDummy: ...
+
+# 3.8-3.10
+def _create_concatenate_alias(origin, parameters):
+    if parameters[-1] is ... and sys.version_info < (3, 9, 2):
+        # Hack: Arguments must be types, replace it with one.
+        parameters = parameters[:-1] + (_EllipsisDummy,)
+    if sys.version_info >= (3, 10, 2):
+        concatenate = _ConcatenateGenericAlias(origin, parameters,
+                                        _typevar_types=(TypeVar, ParamSpec),
+                                        _paramspec_tvars=True)
+    else:
+        concatenate = _ConcatenateGenericAlias(origin, parameters)
+    if parameters[-1] is not _EllipsisDummy:
+        return concatenate
+    # Remove dummy again
+    concatenate.__args__ = tuple(p if p is not _EllipsisDummy else ...
+                                    for p in concatenate.__args__)
+    if sys.version_info < (3, 10):
+        # backport needs __args__ adjustment only
+        return concatenate
+    concatenate.__parameters__ = tuple(p for p in concatenate.__parameters__
+                                        if p is not _EllipsisDummy)
+    return concatenate
 
 
-# 3.8-3.9
+# 3.8-3.10
 @typing._tp_cache
 def _concatenate_getitem(self, parameters):
     if parameters == ():
         raise TypeError("Cannot take a Concatenate of no types.")
     if not isinstance(parameters, tuple):
         parameters = (parameters,)
-    if not isinstance(parameters[-1], ParamSpec):
+    if not (parameters[-1] is ... or isinstance(parameters[-1], ParamSpec)):
         raise TypeError("The last parameter to Concatenate should be a "
-                        "ParamSpec variable.")
+                        "ParamSpec variable or ellipsis.")
     msg = "Concatenate[arg, ...]: each arg must be a type."
-    parameters = tuple(typing._type_check(p, msg) for p in parameters)
-    return _ConcatenateGenericAlias(self, parameters)
+    parameters = (*(typing._type_check(p, msg) for p in parameters[:-1]),
+                    parameters[-1])
+    return _create_concatenate_alias(self, parameters)
 
-
-# 3.10+
-if hasattr(typing, 'Concatenate'):
+# 3.11+; Concatenate does not accept ellipsis in 3.10
+if hasattr(typing, 'Concatenate') and sys.version_info >= (3, 11):
     Concatenate = typing.Concatenate
-    _ConcatenateGenericAlias = typing._ConcatenateGenericAlias
-# 3.9
+# 3.9-3.10
 elif sys.version_info[:2] >= (3, 9):
     @_ExtensionsSpecialForm
     def Concatenate(self, parameters):

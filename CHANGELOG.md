@@ -16,6 +16,8 @@
   subscripted objects) had wrong parameters if they were directly
   subscripted with an `Unpack` object.
   Patch by [Daraan](https://github.com/Daraan).
+- Extended the Concatenate backport for Python 3.8-3.10 to now accept
+  ellipsis as an argument. Patch by [Daraan](https://github.com/Daraan).
 
 # Release 4.12.2 (June 7, 2024)
 
