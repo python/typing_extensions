@@ -5401,6 +5401,18 @@ class ConcatenateTests(BaseTestCase):
             ):
                 Concatenate[1, P]
 
+    @skipUnless(TYPING_3_10_0, "Missing backported to <=3.9. See issue #48")
+    def test_alias_subscription_with_ellipsis(self):
+        P = ParamSpec('P')
+        X = Callable[Concatenate[int, P], Any]
+
+        C1 = X[...]
+        self.assertEqual(C1.__parameters__, ())
+        with self.subTest("Compare Concatenate[int, ...]"):
+            if sys.version_info[:2] == (3, 10):
+                self.skipTest("Needs Issue #110 | PR # 442: construct Concatenate with ...")
+            self.assertEqual(get_args(C1), (Concatenate[int, ...], Any))
+
     def test_basic_introspection(self):
         P = ParamSpec('P')
         C1 = Concatenate[int, P]
@@ -6089,7 +6101,7 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 10, 1):
             exclude |= {"Literal"}
         if sys.version_info < (3, 11):
-            exclude |= {'final', 'Any', 'NewType', 'overload'}
+            exclude |= {'final', 'Any', 'NewType', 'overload', 'Concatenate'}
         if sys.version_info < (3, 12):
             exclude |= {
                 'SupportsAbs', 'SupportsBytes',
