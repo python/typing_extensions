@@ -3572,6 +3572,34 @@ else:
         def __repr__(self) -> str:
             return self.__name__
 
+        if sys.version_info < (3, 11):
+            def _check_single_param(self, param, recursion=0):
+                # Allow [], [int], [int, str], [int, ...], [int, T]
+                if param is ...:
+                    yield ...
+                # Note in <= 3.9 _ConcatenateGenericAlias inherits from list
+                elif isinstance(param, list) and recursion == 0:
+                    yield [checked
+                           for arg in param
+                           for checked in self._check_single_param(arg, recursion+1)]
+                else:
+                    yield typing._type_check(
+                        param, f'Subscripting {self.__name__} requires a type.'
+                    )
+
+        def _check_parameters(self, parameters):
+            if sys.version_info < (3, 11):
+                return tuple(
+                    checked
+                    for item in parameters
+                    for checked in self._check_single_param(item)
+                )
+            return tuple(typing._type_check(
+                        item, f'Subscripting {self.__name__} requires a type.'
+                    )
+                    for item in parameters
+            )
+
         def __getitem__(self, parameters):
             if not self.__type_params__:
                 raise TypeError("Only generic type aliases are subscriptable")
@@ -3580,13 +3608,14 @@ else:
             # Using 3.9 here will create problems with Concatenate
             if sys.version_info >= (3, 10):
                 return _types.GenericAlias(self, parameters)
-            parameters = tuple(
-                typing._type_check(
-                    item, f'Subscripting {self.__name__} requires a type.'
-                )
-                for item in parameters
-            )
-            return _TypeAliasGenericAlias(self, parameters)
+            type_vars = _collect_type_vars(parameters)
+            parameters = self._check_parameters(parameters)
+            alias = _TypeAliasGenericAlias(self, parameters)
+            # alias.__parameters__ is not complete if Concatenate is present
+            # as it is converted to a list from which no parameters are extracted.
+            if alias.__parameters__ != type_vars:
+                alias.__parameters__ = type_vars
+            return alias
 
         def __reduce__(self):
             return self.__name__
