@@ -5410,7 +5410,7 @@ class ConcatenateTests(BaseTestCase):
         self.assertEqual(C1.__parameters__, ())
         with self.subTest("Compare Concatenate[int, ...]"):
             if sys.version_info[:2] == (3, 10):
-                self.skipTest("Needs Issue #110 | PR # 442: construct Concatenate with ...")
+                self.skipTest("Needs Issue #110 | PR #481: construct Concatenate with ...")
             self.assertEqual(get_args(C1), (Concatenate[int, ...], Any))
 
     def test_basic_introspection(self):

@@ -16,8 +16,9 @@
   subscripted objects) had wrong parameters if they were directly
   subscripted with an `Unpack` object.
   Patch by [Daraan](https://github.com/Daraan).
-- Backport to Python 3.10 to support substitution with `...` on `Callable`
-  aliases that have a `Concatenate` argument. Patch by [Daraan](https://github.com/Daraan).
+- Backport to Python 3.10 the ability to substitute `...` in generic `Callable`
+aliases that have a `Concatenate` special form as their argument.
+  Patch by [Daraan](https://github.com/Daraan).
 - Fix error in subscription of `Unpack` aliases causing nested Unpacks 
   to not be resolved correctly. Patch by [Daraan](https://github.com/Daraan).
 
