@@ -1830,7 +1830,7 @@ def _concatenate_getitem(self, parameters):
                         "ParamSpec variable or ellipsis.")
     msg = "Concatenate[arg, ...]: each arg must be a type."
     parameters = tuple(typing._type_check(p, msg) for p in parameters)
-    if (3, 10, 2) < sys.version_info < (3,11):
+    if (3, 10, 2) < sys.version_info < (3, 11):
         return _ConcatenateGenericAlias(self, parameters,
                                  _typevar_types=(TypeVar, ParamSpec),
                                  _paramspec_tvars=True)

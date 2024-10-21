@@ -5401,7 +5401,7 @@ class ConcatenateTests(BaseTestCase):
             ):
                 Concatenate[1, P]
 
-    @skipUnless(TYPING_3_10_0, "Missing backported to <=3.9. See issue #48")
+    @skipUnless(TYPING_3_10_0, "Missing backport to <=3.9. See issue #48")
     def test_alias_subscription_with_ellipsis(self):
         P = ParamSpec('P')
         X = Callable[Concatenate[int, P], Any]
