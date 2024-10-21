@@ -1679,7 +1679,7 @@ class GetTypeHintTests(BaseTestCase):
             Union["annotation", T_default]     : Union[annotation, T_default],
             Annotated["annotation", "nested"]  : Annotated[Union[int, None], "data", "nested"],
         }
-        if TYPING_3_10_0:  # cannot construct UnionTypes
+        if TYPING_3_10_0:  # cannot construct UnionTypes before 3.10
             do_not_stringify_cases["str | NoneAlias | StrAlias"] = str | None
             cases[str | None] = Optional[str]
         cases.update(do_not_stringify_cases)
@@ -1690,7 +1690,7 @@ class GetTypeHintTests(BaseTestCase):
             skip_reason = None
             annot_unchanged = annot
             if sys.version_info[:2] == (3, 10) and annot == "str | NoneAlias | StrAlias" and none_default:
-                # different repr here as Optional[str | None] -> Optional[str] not a UnionType
+                # In 3.10 converts Optional[str | None] to Optional[str] which has a different repr
                 skip_reason = "UnionType not preserved in 3.10"
             if wrap_optional:
                 if annot_unchanged == ():
@@ -1726,11 +1726,13 @@ class GetTypeHintTests(BaseTestCase):
                 # Hash
                 for k in type_hints.keys():
                     self.assertEqual(hash(type_hints[k]), hash(expected[k]))
+                    # Test if UnionTypes are preserved
+                    self.assertEqual(isinstance(type_hints[k], type(expected[k])), True)
                 # Repr
                 with self.subTest("Check str and repr"):
                     if skip_reason == "UnionType not preserved in 3.10":
                         self.skipTest(skip_reason)
-                    self.assertEqual(str(type_hints) + repr(type_hints), str(expected) + repr(expected))
+                    self.assertEqual(repr(type_hints), repr(expected))
 
 
 class GetUtilitiesTestCase(TestCase):

@@ -1282,7 +1282,7 @@ else:  # <=3.13
             ):
                 continue
             original_value = original_hints[name]
-            if original_value is None:  # should not happen
+            if original_value is None:  # should be NoneType already; check just in case
                 original_value = _NoneType
             # Forward reference
             if isinstance(original_value, str):
@@ -1310,8 +1310,14 @@ else:  # <=3.13
             if sys.version_info < (3, 9) and get_origin(original_evaluated) is Union:
                 # Union[str, None, "str"] is not reduced to Union[str, None]
                 original_evaluated = Union[original_evaluated.__args__]
-            # Compare if values differ
-            if original_evaluated != value:
+            # Compare if values differ. Note that even if equal
+            # value might be cached by typing._tp_cache contrary to original_evaluated
+            if original_evaluated != value or (
+                # 3.10: ForwardRefs of UnionType might be turned into _UnionGenericAlias
+                hasattr(_types, "UnionType")
+                and isinstance(original_evaluated, _types.UnionType)
+                and not isinstance(value, _types.UnionType)
+            ):
                 hints[name] = original_evaluated
 
 # Python 3.9+ has PEP 593 (Annotated)
