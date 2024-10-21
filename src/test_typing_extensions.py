@@ -1666,7 +1666,7 @@ class GetTypeHintTests(BaseTestCase):
         }
         # contains a ForwardRef, TypeVar(~prefix) or no expression
         do_not_stringify_cases = {
-            ()          : {},
+            ()          : {},  # Special-cased below to create an unannotated parameter
             int         : int,
             "int"       : int,
             None        : type(None),
