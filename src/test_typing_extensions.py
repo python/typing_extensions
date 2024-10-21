@@ -1727,7 +1727,7 @@ class GetTypeHintTests(BaseTestCase):
                 for k in type_hints.keys():
                     self.assertEqual(hash(type_hints[k]), hash(expected[k]))
                     # Test if UnionTypes are preserved
-                    self.assertEqual(isinstance(type_hints[k], type(expected[k])), True)
+                    self.assertIs(type(type_hints[k]), type(expected[k]))
                 # Repr
                 with self.subTest("Check str and repr"):
                     if skip_reason == "UnionType not preserved in 3.10":
