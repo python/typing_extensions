@@ -1726,8 +1726,7 @@ class GetUtilitiesTestCase(TestCase):
         self.assertEqual(get_args(Unpack), ())
         self.assertEqual(get_args(Callable[Concatenate[int, P], int]),
                          (Concatenate[int, P], int))
-        with self.subTest("Concatenate[int, ...]"):
-            self.assertEqual(get_args(Callable[Concatenate[int, ...], int]),
+        self.assertEqual(get_args(Callable[Concatenate[int, ...], int]),
                         (Concatenate[int, ...], int))
 
 
@@ -5377,32 +5376,20 @@ class ConcatenateTests(BaseTestCase):
     def test_valid_uses(self):
         P = ParamSpec('P')
         T = TypeVar('T')
+        for callable_variant in (Callable, collections.abc.Callable):
+            with self.subTest(callable_variant=callable_variant):
+                if not TYPING_3_9_0 and callable_variant is collections.abc.Callable:
+                    self.skipTest("Needs PEP 585")
+                
+                C1 = callable_variant[Concatenate[int, P], int]
+                C2 = callable_variant[Concatenate[int, T, P], T]
+                self.assertEqual(C1.__origin__, C2.__origin__)
+                self.assertNotEqual(C1, C2)
 
-        C1 = Callable[Concatenate[int, P], int]
-        C2 = Callable[Concatenate[int, T, P], T]
-        self.assertEqual(C1.__origin__, C2.__origin__)
-        self.assertNotEqual(C1, C2)
-
-        with self.subTest("typing.Callable with Ellipsis"):
-            C3 = Callable[Concatenate[int, ...], int]
-            C4 = Callable[Concatenate[int, T, ...], T]
-            self.assertEqual(C3.__origin__, C4.__origin__)
-            self.assertNotEqual(C3, C4)
-
-    @skipUnless(TYPING_3_9_0, "Needs PEP 585")
-    def test_pep585_collections_callable(self):
-        P = ParamSpec('P')
-        T = TypeVar('T')
-        # Test collections.abc.Callable too.
-        C5 = collections.abc.Callable[Concatenate[int, P], int]
-        C6 = collections.abc.Callable[Concatenate[int, T, P], T]
-        self.assertEqual(C5.__origin__, C6.__origin__)
-        self.assertNotEqual(C5, C6)
-
-        C7 = collections.abc.Callable[Concatenate[int, ...], int]
-        C8 = collections.abc.Callable[Concatenate[int, T, ...], T]
-        self.assertEqual(C7.__origin__, C8.__origin__)
-        self.assertNotEqual(C7, C8)
+                C3 = callable_variant[Concatenate[int, ...], int]
+                C4 = callable_variant[Concatenate[int, T, ...], T]
+                self.assertEqual(C3.__origin__, C4.__origin__)
+                self.assertNotEqual(C3, C4)
 
     def test_invalid_uses(self):
         P = ParamSpec('P')
@@ -5435,7 +5422,7 @@ class ConcatenateTests(BaseTestCase):
         ):
             Concatenate[(str,), P]
 
-    @skipUnless(TYPING_3_11_0 or (3, 10, 0) <= sys.version_info < (3, 10, 2),
+    @skipUnless(TYPING_3_11_0,
                 "Cannot be backported to <=3.9. See issue #48"
                 "Cannot use ... with typing._ConcatenateGenericAlias after 3.10.2")
     def test_alias_subscription_with_ellipsis(self):
