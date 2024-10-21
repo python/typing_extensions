@@ -7312,18 +7312,38 @@ class TypeAliasTypeTests(BaseTestCase):
             class MyAlias(TypeAliasType):
                 pass
 
-    def test_type_params_compatibility(self):
+    def test_type_var_compatibility(self):
         # Regression test to assure compatibility with typing variants
-        with self.subTest(type_params="typing.TypeVar"):
-            TypeAliasType("TypingTypeParams", ..., type_params=(typing.TypeVar('T'),))
-        with self.subTest(type_params="typing.TypeAliasType"):
-            if not hasattr(typing, "TypeAliasType"):
-                self.skipTest("typing.TypeAliasType is not available before 3.12")
-            TypeAliasType("TypingTypeParams", ..., type_params=(typing.TypeVarTuple("Ts"),))
-        with self.subTest(type_params="typing.TypeAliasType"):
-            if not hasattr(typing, "ParamSpec"):
-                self.skipTest("typing.ParamSpec is not available before 3.10")
-            TypeAliasType("TypingTypeParams", ..., type_params=(typing.ParamSpec("P"),))
+        typingT = typing.TypeVar('typingT')
+        T1 = TypeAliasType("TypingTypeVar", ..., type_params=(typingT,))
+        self.assertEqual(T1.__type_params__, (typingT,))
+
+        # Test typing_extensions backports
+        textT = TypeVar('textT')
+        T2 = TypeAliasType("TypingExtTypeVar", ..., type_params=(textT,))
+        self.assertEqual(T2.__type_params__, (textT,))
+
+        textP = ParamSpec("textP")
+        T3 = TypeAliasType("TypingExtParamSpec", ..., type_params=(textP,))
+        self.assertEqual(T3.__type_params__, (textP,))
+
+        textTs = TypeVarTuple("textTs")
+        T4 = TypeAliasType("TypingExtTypeVarTuple", ..., type_params=(textTs,))
+        self.assertEqual(T4.__type_params__, (textTs,))
+
+    @skipUnless(TYPING_3_10_0, "typing.ParamSpec is not available before 3.10")
+    def test_param_spec_compatibility(self):
+        # Regression test to assure compatibility with typing variant
+        typingP = typing.ParamSpec("typingP")
+        T5 = TypeAliasType("TypingParamSpec", ..., type_params=(typingP,))
+        self.assertEqual(T5.__type_params__, (typingP,))
+
+    @skipUnless(TYPING_3_12_0, "typing.TypeVarTuple is not available before 3.12")
+    def test_type_var_tuple_compatibility(self):
+        # Regression test to assure compatibility with typing variant
+        typingTs = typing.TypeVarTuple("typingTs")
+        T6 = TypeAliasType("TypingTypeVarTuple", ..., type_params=(typingTs,))
+        self.assertEqual(T6.__type_params__, (typingTs,))
 
     def test_type_params_possibilities(self):
         T = TypeVar('T')
