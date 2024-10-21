@@ -5380,7 +5380,7 @@ class ConcatenateTests(BaseTestCase):
             with self.subTest(callable_variant=callable_variant):
                 if not TYPING_3_9_0 and callable_variant is collections.abc.Callable:
                     self.skipTest("Needs PEP 585")
-                
+
                 C1 = callable_variant[Concatenate[int, P], int]
                 C2 = callable_variant[Concatenate[int, T, P], T]
                 self.assertEqual(C1.__origin__, C2.__origin__)
