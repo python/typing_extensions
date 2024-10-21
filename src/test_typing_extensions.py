@@ -5779,6 +5779,47 @@ class UnpackTests(BaseTestCase):
                     with self.assertRaises(TypeError):
                         klass[int]
 
+    def test_substitution(self):
+        Ts = TypeVarTuple("Ts")
+        unpacked_str = Unpack[Ts][str]  # This should not raise an error
+        self.assertIs(unpacked_str, str)
+
+    @skipUnless(TYPING_3_11_0, "Needs Issue #103 for <3.11")
+    def test_nested_unpack(self):
+        Ts = TypeVarTuple("Ts")
+        Variadic = Tuple[int, Unpack[Ts]]
+        # Tuple[int, int, Tuple[str, int]]
+        direct_subscription = Variadic[int, Tuple[str, int]]
+        # Tuple[int, int, Tuple[*Ts, int]]
+        TupleAliasTs = Variadic[int, Tuple[Unpack[Ts], int]]
+
+        # Tuple[int, int, Tuple[str, int]]
+        recursive_unpack = TupleAliasTs[str]
+        self.assertEqual(direct_subscription, recursive_unpack)
+        self.assertEqual(get_args(recursive_unpack), (int, int, Tuple[str, int]))
+
+        # Test with Callable
+        T = TypeVar("T")
+        # Tuple[int, (*Ts) -> T]
+        CallableAliasTsT = Variadic[Callable[[Unpack[Ts]], T]]
+        # Tuple[int, (str, int) -> object]
+        callable_fully_subscripted = CallableAliasTsT[Unpack[Tuple[str, int]], object]
+        self.assertEqual(get_args(callable_fully_subscripted), (int, Callable[[str, int], object]))
+
+    @skipUnless(TYPING_3_11_0, "Needs Issue #103 for <3.11")
+    def test_equivalent_nested_variadics(self):
+        T = TypeVar("T")
+        Ts = TypeVarTuple("Ts")
+        Variadic = Tuple[int, Unpack[Ts]]
+        TupleAliasTsT = Variadic[Tuple[Unpack[Ts], T]]
+        nested_tuple_bare = TupleAliasTsT[str, int, object]
+
+        self.assertEqual(get_args(nested_tuple_bare), (int, Tuple[str, int, object]))
+        # Variants
+        self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str, int, object]]])
+        self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str, int]], object])
+        self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str]], Unpack[Tuple[int]], object])
+
 
 class TypeVarTupleTests(BaseTestCase):
 

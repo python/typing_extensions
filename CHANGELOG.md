@@ -16,6 +16,8 @@
   subscripted objects) had wrong parameters if they were directly
   subscripted with an `Unpack` object.
   Patch by [Daraan](https://github.com/Daraan).
+- Fix error in subscription of `Unpack` aliases causing nested Unpacks 
+  to not be resolved correctly. Patch by [Daraan](https://github.com/Daraan).
 - Fix that lists and ... could not be used for parameter expressions for `TypeAliasType`
   instances before Python 3.11.
   Patch by [Daraan](https://github.com/Daraan).
