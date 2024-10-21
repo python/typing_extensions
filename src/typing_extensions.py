@@ -2452,6 +2452,17 @@ elif sys.version_info[:2] >= (3, 9):  # 3.9+
                 return arg.__args__
             return None
 
+        @property
+        def __typing_is_unpacked_typevartuple__(self):
+            assert self.__origin__ is Unpack
+            assert len(self.__args__) == 1
+            return isinstance(self.__args__[0], TypeVarTuple)
+
+        def __getitem__(self, args):
+            if self.__typing_is_unpacked_typevartuple__:
+                return args
+            return super().__getitem__(args)
+
     @_UnpackSpecialForm
     def Unpack(self, parameters):
         item = typing._type_check(parameters, f'{self._name} accepts only a single type.')
@@ -2463,6 +2474,17 @@ elif sys.version_info[:2] >= (3, 9):  # 3.9+
 else:  # 3.8
     class _UnpackAlias(typing._GenericAlias, _root=True):
         __class__ = typing.TypeVar
+
+        @property
+        def __typing_is_unpacked_typevartuple__(self):
+            assert self.__origin__ is Unpack
+            assert len(self.__args__) == 1
+            return isinstance(self.__args__[0], TypeVarTuple)
+
+        def __getitem__(self, args):
+            if self.__typing_is_unpacked_typevartuple__:
+                return args
+            return super().__getitem__(args)
 
     class _UnpackForm(_ExtensionsSpecialForm, _root=True):
         def __getitem__(self, parameters):
