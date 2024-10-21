@@ -1282,7 +1282,8 @@ else:  # <=3.13
             ):
                 continue
             original_value = original_hints[name]
-            if original_value is None:  # should be NoneType already; check just in case
+            # value=NoneType should have caused a skip above but check for safety
+            if original_value is None:
                 original_value = _NoneType
             # Forward reference
             if isinstance(original_value, str):
