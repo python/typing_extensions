@@ -18,6 +18,8 @@
   Patch by [Daraan](https://github.com/Daraan).
 - Backport to Python 3.10 to support substitution with `...` on `Callable`
   aliases that have a `Concatenate` argument. Patch by [Daraan](https://github.com/Daraan).
+- Fix error in subscription of `Unpack` aliases causing nested Unpacks 
+  to not be resolved correctly. Patch by [Daraan](https://github.com/Daraan).
 
 # Release 4.12.2 (June 7, 2024)
 
