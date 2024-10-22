@@ -16,6 +16,11 @@
   subscripted objects) had wrong parameters if they were directly
   subscripted with an `Unpack` object.
   Patch by [Daraan](https://github.com/Daraan).
+- Backport to Python 3.10 the ability to substitute `...` in generic `Callable`
+aliases that have a `Concatenate` special form as their argument.
+  Patch by [Daraan](https://github.com/Daraan).
+- Extended the `Concatenate` backport for Python 3.8-3.10 to now accept
+  `Ellipsis` as an argument. Patch by [Daraan](https://github.com/Daraan).
 - Fix backport of `get_type_hints` to reflect Python 3.11+ behavior which does not add
   `Union[..., NoneType]` to annotations that have a `None` default value anymore.
   This fixes wrapping of `Annotated` in an unwanted `Optional` in such cases.

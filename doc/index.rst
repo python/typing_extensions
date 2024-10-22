@@ -178,7 +178,7 @@ Special typing primitives
    See :py:data:`typing.Concatenate` and :pep:`612`. In ``typing`` since 3.10.
 
    The backport does not support certain operations involving ``...`` as
-   a parameter; see :issue:`48` and :issue:`110` for details.
+   a parameter; see :issue:`48` and :pr:`481` for details.
 
 .. data:: Final
 
