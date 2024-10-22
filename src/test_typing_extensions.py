@@ -3705,6 +3705,10 @@ class ProtocolTests(BaseTestCase):
             self.assertEqual(Y.__parameters__, ())
             self.assertEqual(Y.__args__, ((int, str, str), bytes, memoryview))
 
+            # Regression test; fixing #126 might cause an error here
+            with self.assertRaisesRegex(TypeError, "not a generic class"):
+                Y[int]
+
     def test_protocol_generic_over_typevartuple(self):
         Ts = TypeVarTuple("Ts")
         T = TypeVar("T")
@@ -5259,6 +5263,7 @@ class ParamSpecTests(BaseTestCase):
         class Y(Protocol[T, P]):
             pass
 
+        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
         for klass in X, Y:
             with self.subTest(klass=klass.__name__):
                 G1 = klass[int, P_2]
@@ -5273,19 +5278,75 @@ class ParamSpecTests(BaseTestCase):
                 self.assertEqual(G3.__args__, (int, Concatenate[int, ...]))
                 self.assertEqual(G3.__parameters__, ())
 
+                with self.assertRaisesRegex(
+                    TypeError,
+                    f"Too few {things} for {klass}"
+                ):
+                    klass[int]
+
         # The following are some valid uses cases in PEP 612 that don't work:
         # These do not work in 3.9, _type_check blocks the list and ellipsis.
         # G3 = X[int, [int, bool]]
         # G4 = X[int, ...]
         # G5 = Z[[int, str, bool]]
-        # Not working because this is special-cased in 3.10.
-        # G6 = Z[int, str, bool]
+
+    def test_single_argument_generic(self):
+        P = ParamSpec("P")
+        T = TypeVar("T")
+        P_2 = ParamSpec("P_2")
 
         class Z(Generic[P]):
             pass
 
         class ProtoZ(Protocol[P]):
             pass
+
+        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
+        for klass in Z, ProtoZ:
+            with self.subTest(klass=klass.__name__):
+                # Note: For 3.10+ __args__ are nested tuples here ((int, ),) instead of (int, )
+                G6 = klass[int, str, bool]
+                G6args = G6.__args__[0] if sys.version_info >= (3, 10) else G6.__args__
+                self.assertEqual(G6args, (int, str, bool))
+                self.assertEqual(G6.__parameters__, ())
+
+                # P = [int]
+                G7 = klass[int]
+                G7args = G7.__args__[0] if sys.version_info >= (3, 10) else G7.__args__
+                self.assertEqual(G7args, (int,))
+                self.assertEqual(G7.__parameters__, ())
+
+                # P = [int, int, ...]
+                G8 = klass[T, Concatenate[int, ...]]
+                G8args = G8.__args__[0] if sys.version_info >= (3, 10) else G8.__args__
+                self.assertEqual(G8args, (T, Concatenate[int, ...]))
+
+                # P = [int, int, P_2]
+                G9 = klass[int, Concatenate[T, P_2]]
+                G9args = G9.__args__[0] if sys.version_info >= (3, 10) else G9.__args__
+                self.assertEqual(G9args, (int, Concatenate[T, P_2]))
+
+                with self.subTest("Recursive ParamSpec Test A"):
+                    if sys.version_info[:2] == (3, 10):
+                        self.skipTest("Parameter detection fails in 3.10")
+                    with self.assertRaisesRegex(TypeError, f"Too few {things}"):
+                        G9[int]  # for python 3.10 this has no parameters
+                    self.assertEqual(G8.__parameters__, (T,))
+                    self.assertEqual(G9.__parameters__, (T, P_2))
+
+                with self.subTest("Recursive ParamSpec Test B"):
+                    if sys.version_info[:2] == (3, 10):
+                        self.skipTest("Parameter detection fails in 3.10")
+                    if (3, 11, 0) <= sys.version_info[:3] < (3, 11, 3):
+                        self.skipTest("Wrong recursive substitution")
+                    H1 = G8[int]
+                    H2 = G8[T][int]
+                    self.assertEqual(H2.__parameters__, ())
+                    self.assertEqual(H1.__parameters__, ())
+                    with self.assertRaisesRegex(TypeError, "not a generic class"):
+                        H1[str]  # for python 3.11.0-3 this still has a parameter
+                    with self.assertRaisesRegex(TypeError, "not a generic class"):
+                        H2[str]  # for python 3.11.0-3 this still has a parameter
 
     def test_pickle(self):
         global P, P_co, P_contra, P_default
