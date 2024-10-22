@@ -7452,8 +7452,8 @@ class TypeAliasTypeTests(BaseTestCase):
         P = ParamSpec('P')
         P_default = ParamSpec('P_default', default=[str, int])
 
-        # NOTE: "TypeVars with defaults cannot immediately follow TypeVarTuples"
-        # from PEP 696 is currently not enfored for the type statement and are not tested.
+        # NOTE: PEP 696 states: "TypeVars with defaults cannot immediately follow TypeVarTuples"
+        # this is currently not enforced for the type statement and is not tested.
         # PEP 695: Double usage of the same name is also not enforced and not tested.
         valid_cases = [
             (T, P, Ts),
@@ -7463,13 +7463,13 @@ class TypeAliasTypeTests(BaseTestCase):
             (T_default, P_default, Ts_default),
         ]
         invalid_cases = [
-            ((T_default, T),    f"non-default type parameter {T!r} follows default"),
-            ((P_default, P),    f"non-default type parameter {P!r} follows default"),
-            ((Ts_default, T),   f"non-default type parameter {T!r} follows default"),
+            ((T_default, T), f"non-default type parameter {T!r} follows default"),
+            ((P_default, P), f"non-default type parameter {P!r} follows default"),
+            ((Ts_default, T), f"non-default type parameter {T!r} follows default"),
 
             # Potentially add invalid inputs, e.g. literals or classes
             # depends on upstream
-            ((1,),  "Expected a type param, got 1"),
+            ((1,), "Expected a type param, got 1"),
             ((str,), f"Expected a type param, got {str!r}"),
         ]
 
