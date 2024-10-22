@@ -7466,11 +7466,11 @@ class TypeAliasTypeTests(BaseTestCase):
             ((T_default, T), f"non-default type parameter {T!r} follows default"),
             ((P_default, P), f"non-default type parameter {P!r} follows default"),
             ((Ts_default, T), f"non-default type parameter {T!r} follows default"),
-
-            # Potentially add invalid inputs, e.g. literals or classes
-            # depends on upstream
+            # Only type params are accepted
             ((1,), "Expected a type param, got 1"),
             ((str,), f"Expected a type param, got {str!r}"),
+            # Unpack backport behaves like TypeVar in some cases
+            ((Unpack[Ts],), f"Expected a type param, got {re.escape(repr(Unpack[Ts]))}"),
         ]
 
         for case in valid_cases:

@@ -3611,7 +3611,10 @@ else:
             default_value_encountered = False
             parameters = []
             for type_param in type_params:
-                if not isinstance(type_param, (TypeVar, TypeVarTuple, ParamSpec)):
+                if (not isinstance(type_param, (TypeVar, TypeVarTuple, ParamSpec))
+                    # The Unpack backport passes aboves check
+                    or _is_unpack(type_param)
+                ):
                     raise TypeError(f"Expected a type param, got {type_param!r}")
                 has_default = (
                     getattr(type_param, '__default__', NoDefault) is not NoDefault
