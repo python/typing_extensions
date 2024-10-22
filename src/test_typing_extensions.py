@@ -5407,13 +5407,19 @@ class ConcatenateTests(BaseTestCase):
         ):
             Concatenate[P, T]
 
+        # Test with tuple argument
+        with self.assertRaisesRegex(
+            TypeError,
+            "The last parameter to Concatenate should be a ParamSpec variable or ellipsis.",
+        ):
+            Concatenate[(P, T)]
+
         with self.assertRaisesRegex(
             TypeError,
             'is not a generic class',
         ):
             Callable[Concatenate[int, ...], Any][Any]
 
-    def test_invalid_use(self):
         # Assure that `_type_check` is called.
         P = ParamSpec('P')
         with self.assertRaisesRegex(
