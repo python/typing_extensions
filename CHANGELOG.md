@@ -23,6 +23,9 @@ aliases that have a `Concatenate` special form as their argument.
   `Ellipsis` as an argument. Patch by [Daraan](https://github.com/Daraan).
 - Fix error in subscription of `Unpack` aliases causing nested Unpacks 
   to not be resolved correctly. Patch by [Daraan](https://github.com/Daraan).
+- Fix that lists and ... could not be used for parameter expressions for `TypeAliasType`
+  instances before Python 3.11.
+  Patch by [Daraan](https://github.com/Daraan).
 
 # Release 4.12.2 (June 7, 2024)
 
