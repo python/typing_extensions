@@ -3647,23 +3647,20 @@ else:
             def _check_single_param(self, param, recursion=0):
                 # Allow [], [int], [int, str], [int, ...], [int, T]
                 if param is ...:
-                    yield ...
+                    return ...
                 # Note in <= 3.9 _ConcatenateGenericAlias inherits from list
-                elif isinstance(param, list) and recursion == 0:
-                    yield [checked
-                           for arg in param
-                           for checked in self._check_single_param(arg, recursion+1)]
-                else:
-                    yield typing._type_check(
+                if isinstance(param, list) and recursion == 0:
+                    return [self._check_single_param(arg, recursion+1)
+                            for arg in param]
+                return typing._type_check(
                         param, f'Subscripting {self.__name__} requires a type.'
                     )
 
         def _check_parameters(self, parameters):
             if sys.version_info < (3, 11):
                 return tuple(
-                    checked
+                    self._check_single_param(item)
                     for item in parameters
-                    for checked in self._check_single_param(item)
                 )
             return tuple(typing._type_check(
                         item, f'Subscripting {self.__name__} requires a type.'
