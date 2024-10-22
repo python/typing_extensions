@@ -5263,7 +5263,6 @@ class ParamSpecTests(BaseTestCase):
         class Y(Protocol[T, P]):
             pass
 
-        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
         for klass in X, Y:
             with self.subTest(klass=klass.__name__):
                 G1 = klass[int, P_2]
