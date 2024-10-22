@@ -5422,9 +5422,7 @@ class ConcatenateTests(BaseTestCase):
         ):
             Concatenate[(str,), P]
 
-    @skipUnless(TYPING_3_11_0,
-                "Cannot be backported to <=3.9. See issue #48"
-                "Cannot use ... with typing._ConcatenateGenericAlias after 3.10.2")
+    @skipUnless(TYPING_3_10_0, "Missing backport to <=3.9. See issue #48")
     def test_alias_subscription_with_ellipsis(self):
         P = ParamSpec('P')
         X = Callable[Concatenate[int, P], Any]

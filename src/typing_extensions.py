@@ -1799,6 +1799,26 @@ if not hasattr(typing, 'Concatenate'):
 else:
     _ConcatenateGenericAlias = typing._ConcatenateGenericAlias
 
+    # 3.10
+    if sys.version_info < (3, 11):
+        _typing_ConcatenateGenericAlias = _ConcatenateGenericAlias
+
+
+        class _ConcatenateGenericAlias(_typing_ConcatenateGenericAlias, _root=True):
+            # needed for checks in collections.abc.Callable to accept this class
+            __module__ = "typing"
+
+            def copy_with(self, params):
+                if isinstance(params[-1], (list, tuple)):
+                    return (*params[:-1], *params[-1])
+                if isinstance(params[-1], _ConcatenateGenericAlias):
+                    params = (*params[:-1], *params[-1].__args__)
+                elif not (params[-1] is ... or isinstance(params[-1], ParamSpec)):
+                    raise TypeError("The last parameter to Concatenate should be a "
+                            "ParamSpec variable or ellipsis.")
+                return super(_typing_ConcatenateGenericAlias, self).copy_with(params)
+
+
 # 3.8-3.9.2
 class _EllipsisDummy: ...
 
@@ -1842,7 +1862,7 @@ def _concatenate_getitem(self, parameters):
     return _create_concatenate_alias(self, parameters)
 
 # 3.11+; Concatenate does not accept ellipsis in 3.10
-if hasattr(typing, 'Concatenate') and sys.version_info >= (3, 11):
+if sys.version_info >= (3, 11):
     Concatenate = typing.Concatenate
 # 3.9-3.10
 elif sys.version_info[:2] >= (3, 9):
