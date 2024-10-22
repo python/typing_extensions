@@ -1803,7 +1803,6 @@ else:
     if sys.version_info < (3, 11):
         _typing_ConcatenateGenericAlias = _ConcatenateGenericAlias
 
-
         class _ConcatenateGenericAlias(_typing_ConcatenateGenericAlias, _root=True):
             # needed for checks in collections.abc.Callable to accept this class
             __module__ = "typing"
@@ -1822,11 +1821,12 @@ else:
 # 3.8-3.9.2
 class _EllipsisDummy: ...
 
+
 # 3.8-3.10
 def _create_concatenate_alias(origin, parameters):
     if parameters[-1] is ... and sys.version_info < (3, 9, 2):
         # Hack: Arguments must be types, replace it with one.
-        parameters = parameters[:-1] + (_EllipsisDummy,)
+        parameters = (*parameters[:-1], _EllipsisDummy)
     if sys.version_info >= (3, 10, 2):
         concatenate = _ConcatenateGenericAlias(origin, parameters,
                                         _typevar_types=(TypeVar, ParamSpec),
@@ -1860,6 +1860,7 @@ def _concatenate_getitem(self, parameters):
     parameters = (*(typing._type_check(p, msg) for p in parameters[:-1]),
                     parameters[-1])
     return _create_concatenate_alias(self, parameters)
+
 
 # 3.11+; Concatenate does not accept ellipsis in 3.10
 if sys.version_info >= (3, 11):
