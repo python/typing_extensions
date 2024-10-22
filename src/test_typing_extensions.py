@@ -6192,6 +6192,10 @@ class AllTests(BaseTestCase):
                 'AsyncGenerator', 'ContextManager', 'AsyncContextManager',
                 'ParamSpec', 'TypeVar', 'TypeVarTuple', 'get_type_hints',
             }
+        if sys.version_info < (3, 14):
+            exclude |= {
+                'TypeAliasType'
+            }
         if not typing_extensions._PEP_728_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
@@ -7460,7 +7464,7 @@ class TypeAliasTypeTests(BaseTestCase):
         ]
         invalid_cases = [
             ((T_default, T),    f"non-default type parameter {T!r} follows default"),
-            ((P_default, P),   f"non-default type parameter {P!r} follows default"),
+            ((P_default, P),    f"non-default type parameter {P!r} follows default"),
             ((Ts_default, T),   f"non-default type parameter {T!r} follows default"),
 
             # Potentially add invalid inputs, e.g. literals or classes
@@ -7474,8 +7478,6 @@ class TypeAliasTypeTests(BaseTestCase):
                 TypeAliasType("OkCase", List[T], type_params=case)
         for case, msg in invalid_cases:
             with self.subTest(type_params=case):
-                if TYPING_3_12_0 and sys.version_info < (3, 14):
-                    self.skipTest("No backport for 3.12 and 3.13 requires cpython PR #124795")
                 with self.assertRaisesRegex(TypeError, msg):
                     TypeAliasType("InvalidCase", List[T], type_params=case)
 

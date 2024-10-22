@@ -3528,8 +3528,36 @@ else:
                 return typing.Union[other, self]
 
 
-if hasattr(typing, "TypeAliasType"):
+if hasattr(typing, "TypeAliasType") and sys.version_info >= (3, 14):
     TypeAliasType = typing.TypeAliasType
+# 3.12-3.13
+elif hasattr(typing, "TypeAliasType"):
+
+    class TypeAliasType:
+
+        def __new__(self, name: str, value, *, type_params=()):
+            default_value_encountered = False
+            for type_param in type_params:
+                if not isinstance(type_param,
+                                  (typing.TypeVar, typing.TypeVarTuple, typing.ParamSpec)
+                ):
+                    raise TypeError(f"Expected a type param, got {type_param!r}")
+                has_default = (
+                        getattr(type_param, '__default__', NoDefault) is not NoDefault
+                    )
+                if default_value_encountered and not has_default:
+                    raise TypeError(f'non-default type parameter {type_param!r}'
+                                    ' follows default type parameter')
+                if has_default:
+                    default_value_encountered = True
+
+            return typing.TypeAliasType(name, value, type_params=type_params)
+
+        def __init_subclass__(cls, *args, **kwargs):
+            raise TypeError(
+                "type 'typing_extensions.TypeAliasType' is not an acceptable base type"
+            )
+
 else:
     def _is_unionable(obj):
         """Corresponds to is_unionable() in unionobject.c in CPython."""
