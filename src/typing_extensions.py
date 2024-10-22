@@ -3928,6 +3928,95 @@ else:
             value if not isinstance(value, str) else eval(value, globals, locals)
             for key, value in ann.items() }
         return return_value
+    
+
+
+if hasattr(typing, "evaluate_forward_ref"):
+    evaluate_forward_ref = typing.evaluate_forward_ref
+else:
+    if hasattr(typing, "_deprecation_warning_for_no_type_params_passed"):
+        _deprecation_warning_for_no_type_params_passed = (
+            typing._deprecation_warning_for_no_type_params_passed
+        )
+    else:
+        def _deprecation_warning_for_no_type_params_passed(funcname: str) -> None:
+            import warnings
+
+            depr_message = (
+                f"Failing to pass a value to the 'type_params' parameter "
+                f"of {funcname!r} is deprecated, as it leads to incorrect behaviour "
+                f"when calling {funcname} on a stringified annotation "
+                f"that references a PEP 695 type parameter. "
+                f"It will be disallowed in Python 3.15."
+            )
+            warnings.warn(depr_message, category=DeprecationWarning, stacklevel=3)
+    
+    def evaluate_forward_ref(
+        forward_ref,
+        *,
+        owner=None,
+        globals=None,
+        locals=None,
+        type_params=_marker,
+        format=Format.VALUE,
+        _recursive_guard=frozenset(),
+    ):
+        """Evaluate a forward reference as a type hint.
+
+        This is similar to calling the ForwardRef.evaluate() method,
+        but unlike that method, evaluate_forward_ref() also:
+
+        * Recursively evaluates forward references nested within the type hint.
+        * Rejects certain objects that are not valid type hints.
+        * Replaces type hints that evaluate to None with types.NoneType.
+        * Supports the *FORWARDREF* and *STRING* formats.
+
+        *forward_ref* must be an instance of ForwardRef. *owner*, if given,
+        should be the object that holds the annotations that the forward reference
+        derived from, such as a module, class object, or function. It is used to
+        infer the namespaces to use for looking up names. *globals* and *locals*
+        can also be explicitly given to provide the global and local namespaces.
+        *type_params* is a tuple of type parameters that are in scope when
+        evaluating the forward reference. This parameter must be provided (though
+        it may be an empty tuple) if *owner* is not given and the forward reference
+        does not already have an owner set. *format* specifies the format of the
+        annotation and is a member of the annotationlib.Format enum.
+
+        """
+        if type_params is _sentinel:
+            _deprecation_warning_for_no_type_params_passed("typing.evaluate_forward_ref")
+            type_params = ()
+        if format == Format.STRING:
+            return forward_ref.__forward_arg__
+        if forward_ref.__forward_arg__ in _recursive_guard:
+            return forward_ref
+
+        try:
+            value = forward_ref.evaluate(
+                globals=globals, locals=locals, type_params=type_params, owner=owner
+            )
+        except NameError:
+            if format == Format.FORWARDREF:
+                return forward_ref
+            else:
+                raise
+
+        type_ = typing._type_check(
+            value,
+            "Forward references must evaluate to types.",
+            is_argument=forward_ref.__forward_is_argument__,
+            allow_special_forms=forward_ref.__forward_is_class__,
+        )
+        return typing._eval_type(
+            type_,
+            globals,
+            locals,
+            type_params,
+            recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
+            format=format,
+            owner=owner,
+        )
+
 
 # Aliases for items that have always been in typing.
 # Explicitly assign these (rather than using `from typing import *` at the top),
