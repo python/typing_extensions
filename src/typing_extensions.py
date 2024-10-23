@@ -1766,13 +1766,17 @@ else:
 if not hasattr(typing, 'Concatenate'):
     # Inherits from list as a workaround for Callable checks in Python < 3.9.2.
 
-    #3.9.0-1
+    # 3.9.0-1
     if not hasattr(typing, '_type_convert'):
         def _type_convert(arg, module=None, *, allow_special_forms=False):
             """For converting None to type(None), and strings to ForwardRef."""
             if arg is None:
                 return type(None)
             if isinstance(arg, str):
+                if sys.version_info <= (3, 9, 6):
+                    return ForwardRef(arg)
+                if sys.version_info <= (3, 9, 7):
+                    return ForwardRef(arg, module=module)
                 return ForwardRef(arg, module=module, is_class=allow_special_forms)
             return arg
     else:
@@ -1812,10 +1816,10 @@ if not hasattr(typing, 'Concatenate'):
         # 3.8; needed for typing._subs_tvars
         # 3.9 used by __getitem__ below
         def copy_with(self, params):
-            if isinstance(params[-1], (list, tuple)):
-                return (*params[:-1], *params[-1])
             if isinstance(params[-1], _ConcatenateGenericAlias):
                 params = (*params[:-1], *params[-1].__args__)
+            elif isinstance(params[-1], (list, tuple)):
+                return (*params[:-1], *params[-1])
             elif (not(params[-1] is ... or isinstance(params[-1], ParamSpec))):
                 raise TypeError("The last parameter to Concatenate should be a "
                         "ParamSpec variable or ellipsis.")
@@ -1847,9 +1851,20 @@ if not hasattr(typing, 'Concatenate'):
                     if len(params) == 1 and not _is_param_expr(args[0]):
                         assert i == 0
                         args = (args,)
-                    # Convert lists to tuples to help other libraries cache the results.
-                    elif isinstance(args[i], list):
+                    # This class inherits from list do not convert
+                    elif (
+                        isinstance(args[i], list)
+                        and not isinstance(args[i], _ConcatenateGenericAlias)
+                    ):
                         args = (*args[:i], tuple(args[i]), *args[i+1:])
+
+            alen = len(args)
+            plen = len(params)
+            if alen != plen:
+                raise TypeError(
+                    f"Too {'many' if alen > plen else 'few'} arguments for {self};"
+                    f" actual {alen}, expected {plen}"
+                )
 
             subst = dict(zip(self.__parameters__, args))
             # determine new args
@@ -1860,6 +1875,16 @@ if not hasattr(typing, 'Concatenate'):
                     continue
                 if isinstance(arg, TypeVar):
                     arg = subst[arg]
+                    if (
+                        (isinstance(arg, typing._GenericAlias) and _is_unpack(arg))
+                        or (
+                            hasattr(_types, "GenericAlias")
+                            and isinstance(arg, _types.GenericAlias)
+                            and getattr(arg, "__unpacked__", False)
+                        )
+                    ):
+                        raise TypeError(f"{arg} is not valid as type argument")
+
                 elif isinstance(arg,
                                 typing._GenericAlias
                                 if not hasattr(_types, "GenericAlias") else

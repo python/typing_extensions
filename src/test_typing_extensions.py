@@ -5576,6 +5576,32 @@ class ConcatenateTests(BaseTestCase):
         self.assertEqual(hash(C4), hash(C5))
         self.assertNotEqual(C4, C6)
 
+    def test_substitution(self):
+        T = TypeVar('T')
+        P = ParamSpec('P')
+        Ts = TypeVarTuple("Ts")
+
+        C1 = Concatenate[str, T, ...]
+        self.assertEqual(C1[int], Concatenate[str, int, ...])
+
+        C2 = Concatenate[str, P]
+        self.assertEqual(C2[...], Concatenate[str, ...])
+        self.assertEqual(C2[int], (str, int))
+        U1 = Unpack[Tuple[int, str]]
+        U2 = Unpack[Ts]
+        self.assertEqual(C2[U1], (str, int, str))
+        self.assertEqual(C2[U2], (str, Unpack[Ts]))
+
+        if (3, 12, 0) <= sys.version_info < (3, 12, 4):
+            with self.assertRaises(AssertionError):
+                C2[Unpack[U2]]
+        else:
+            with self.assertRaisesRegex(TypeError, "must be used with a tuple type"):
+                C2[Unpack[U2]]
+
+        C3 = Concatenate[str, T, P]
+        self.assertEqual(C3[int, [bool]], (str, int, bool))
+
 
 class TypeGuardTests(BaseTestCase):
     def test_basics(self):
