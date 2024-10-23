@@ -5263,6 +5263,7 @@ class ParamSpecTests(BaseTestCase):
         class Y(Protocol[T, P]):
             pass
 
+        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
         for klass in X, Y:
             with self.subTest(klass=klass.__name__):
                 G1 = klass[int, P_2]
@@ -5300,6 +5301,7 @@ class ParamSpecTests(BaseTestCase):
         class ProtoZ(Protocol[P]):
             pass
 
+        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
         for klass in Z, ProtoZ:
             with self.subTest(klass=klass.__name__):
                 # Note: For 3.10+ __args__ are nested tuples here ((int, ),) instead of (int, )
@@ -5358,15 +5360,20 @@ class ParamSpecTests(BaseTestCase):
                     H9 = G9[int, [T]]
 
                 self.assertEqual(G9.__parameters__, (T, P_2))
+                with self.assertRaisesRegex(TypeError, f"Too few {things}"):
+                    G9[int]
+
                 with self.subTest("Check parametrization", klass=klass.__name__):
                     if sys.version_info[:2] == (3, 10):
                         self.skipTest("Parameter detection fails in 3.10")
                     with self.assertRaisesRegex(TypeError, f"Too few {things}"):
                         G9[int]  # for python 3.10 this has no parameters
-                    self.assertEqual(G6.__parameters__, (T,))
                     if sys.version_info >= (3, 10):  # skipped above
                         self.assertEqual(G5.__parameters__, (T,))
                         self.assertEqual(H9.__parameters__, (T,))
+                    self.assertEqual(G6.__parameters__, (T,))
+                    self.assertEqual(G8.__parameters__, (T,))
+                    self.assertEqual(G9.__parameters__, (T, P_2))
 
                 with self.subTest("Check further substitution", klass=klass.__name__):
                     if sys.version_info < (3, 10):
