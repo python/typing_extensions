@@ -1825,7 +1825,7 @@ if not hasattr(typing, 'Concatenate'):
                         "ParamSpec variable or ellipsis.")
             return self.__class__(self.__origin__, params)
 
-        # 3.9; accessed during GenericAlias.__getitem__when substituting
+        # 3.9; accessed during GenericAlias.__getitem__ when substituting
         def __getitem__(self, args):
             if self.__origin__ in (Generic, Protocol):
                 # Can't subscript Generic[...] or Protocol[...].
@@ -1838,7 +1838,11 @@ if not hasattr(typing, 'Concatenate'):
             args = _unpack_args(*(_type_convert(p) for p in args))
             params = self.__parameters__
             for param in params:
-                if isinstance(param, ParamSpec):
+                prepare = getattr(param, "__typing_prepare_subst__", None)
+                if prepare is not None:
+                    args = prepare(self, args)
+                # 3.8 - 3.9 & typing.ParamSpec
+                elif isinstance(param, ParamSpec):
                     i = params.index(param)
                     if (
                         i == len(args)
@@ -1851,9 +1855,10 @@ if not hasattr(typing, 'Concatenate'):
                     if len(params) == 1 and not _is_param_expr(args[0]):
                         assert i == 0
                         args = (args,)
-                    # This class inherits from list do not convert
                     elif (
                         isinstance(args[i], list)
+                        # 3.8 - 3.9
+                        # This class inherits from list do not convert
                         and not isinstance(args[i], _ConcatenateGenericAlias)
                     ):
                         args = (*args[:i], tuple(args[i]), *args[i+1:])
@@ -1886,9 +1891,10 @@ if not hasattr(typing, 'Concatenate'):
                         raise TypeError(f"{arg} is not valid as type argument")
 
                 elif isinstance(arg,
-                                typing._GenericAlias
-                                if not hasattr(_types, "GenericAlias") else
-                                (typing._GenericAlias, _types.GenericAlias)):
+                    typing._GenericAlias
+                    if not hasattr(_types, "GenericAlias") else
+                    (typing._GenericAlias, _types.GenericAlias)
+                ):
                     subparams = arg.__parameters__
                     if subparams:
                         subargs = tuple(subst[x] for x in subparams)
