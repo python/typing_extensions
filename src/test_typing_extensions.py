@@ -5301,7 +5301,6 @@ class ParamSpecTests(BaseTestCase):
         class ProtoZ(Protocol[P]):
             pass
 
-        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
         for klass in Z, ProtoZ:
             with self.subTest(klass=klass.__name__):
                 # Note: For 3.10+ __args__ are nested tuples here ((int, ),) instead of (int, )
@@ -5344,13 +5343,20 @@ class ParamSpecTests(BaseTestCase):
                 G6 = klass[int, str, T]
                 G8 = klass[Concatenate[T, ...]]
                 G9 = klass[Concatenate[T, P_2]]
-                G10 = klass[int, Concatenate[str, P]]
 
-                with self.subTest("Check generic substitution", klass=klass.__name__):
-                    if sys.version_info < (3, 10):
-                        self.skipTest("_ConcatenateGenericAlias not subscriptable")
-                    with self.assertRaisesRegex(TypeError, "Expected a list of types, an ellipsis, ParamSpec, or Concatenate"):
-                        G9[int, int]
+                with self.assertRaisesRegex(TypeError,
+                        (
+                            "The last parameter to Concatenate should be a ParamSpec variable or ellipsis."
+                            if sys.version_info < (3, 10) else
+                            # from __typing_subst__
+                        "Expected a list of types, an ellipsis, ParamSpec, or Concatenate"
+                        )
+                ):
+                    G9[int, int]
+
+                self.assertEqual(G9.__parameters__, (T, P_2))
+                with self.assertRaisesRegex(TypeError, f"Too few {things}"):
+                    G9[int]
 
                 with self.subTest("Check list as parameter expression", klass=klass.__name__):
                     if sys.version_info < (3, 10):
@@ -5359,41 +5365,36 @@ class ParamSpecTests(BaseTestCase):
                     self.assertEqual(G5.__args__, ((int, str, T),))
                     H9 = G9[int, [T]]
 
-                self.assertEqual(G9.__parameters__, (T, P_2))
-                with self.assertRaisesRegex(TypeError, f"Too few {things}"):
-                    G9[int]
 
                 with self.subTest("Check parametrization", klass=klass.__name__):
-                    if sys.version_info[:2] == (3, 10):
-                        self.skipTest("Parameter detection fails in 3.10")
-                    with self.assertRaisesRegex(TypeError, f"Too few {things}"):
-                        G9[int]  # for python 3.10 this has no parameters
-                    if sys.version_info >= (3, 10):  # skipped above
-                        self.assertEqual(G5.__parameters__, (T,))
+                    if sys.version_info >= (3, 10):  # only availiable for 3.10+
                         self.assertEqual(H9.__parameters__, (T,))
+                        self.assertEqual(G5.__parameters__, (T,))
                     self.assertEqual(G6.__parameters__, (T,))
-                    self.assertEqual(G8.__parameters__, (T,))
-                    self.assertEqual(G9.__parameters__, (T, P_2))
 
                 with self.subTest("Check further substitution", klass=klass.__name__):
-                    if sys.version_info < (3, 10):
-                        self.skipTest("_ConcatenateGenericAlias not subscriptable")
-                    if sys.version_info[:2] == (3, 10):
-                        self.skipTest("Parameter detection fails in 3.10")
-                    if (3, 11, 0) <= sys.version_info[:3] < (3, 11, 3):
-                        self.skipTest("Wrong recursive substitution")
                     H1 = G8[int]
                     self.assertEqual(H1.__parameters__, ())
                     with self.assertRaisesRegex(TypeError, "not a generic class"):
-                        H1[str]  # for python 3.11.0-3 this still has a parameter
+                        H1[str]
 
                     H2 = G8[T][int]
                     self.assertEqual(H2.__parameters__, ())
                     with self.assertRaisesRegex(TypeError, "not a generic class"):
-                        H2[str]  # for python 3.11.0-3 this still has a parameter
+                        H2[str]
 
+                # This is an invalid parameter expression but useful for testing correct subsitution
+                G10 = klass[int, Concatenate[str, P]]
+                with self.subTest("Check invalid form substitution"):
+                    self.assertEqual(G10.__parameters__, (P, ))
+                    if sys.version_info < (3, 9):
+                        self.skipTest("3.8 typing._type_subst does not support this substitution process")
                     H3 = G10[int]
-                    self.assertEqual(H3.__args__, ((int, (str, int)),))
+                    if (3, 10) <= sys.version_info < (3, 11, 3):
+                        self.skipTest("3.10-3.11.2 does not substitute Concatenate here")
+                    self.assertEqual(H3.__parameters__, ())
+                    H3args = H3.__args__[0] if sys.version_info >= (3, 10) else H3.__args__
+                    self.assertEqual(H3args, (int, (str, int)))
 
     def test_pickle(self):
         global P, P_co, P_contra, P_default
@@ -5591,6 +5592,7 @@ class ConcatenateTests(BaseTestCase):
         U2 = Unpack[Ts]
         self.assertEqual(C2[U1], (str, int, str))
         self.assertEqual(C2[U2], (str, Unpack[Ts]))
+        self.assertEqual(C2["U2"], (str, typing.ForwardRef("U2")))
 
         if (3, 12, 0) <= sys.version_info < (3, 12, 4):
             with self.assertRaises(AssertionError):
@@ -5601,7 +5603,6 @@ class ConcatenateTests(BaseTestCase):
 
         C3 = Concatenate[str, T, P]
         self.assertEqual(C3[int, [bool]], (str, int, bool))
-
 
 class TypeGuardTests(BaseTestCase):
     def test_basics(self):

@@ -3309,6 +3309,13 @@ if hasattr(typing, '_collect_type_vars'):
                 tvars.append(t)
             if _should_collect_from_parameters(t):
                 tvars.extend([t for t in t.__parameters__ if t not in tvars])
+            elif isinstance(t, tuple):
+                # Collect nested type_vars
+                # tuple wrapped by  _prepare_paramspec_params(cls, params)
+                for x in t:
+                    for collected in _collect_type_vars([x]):
+                        if collected not in tvars:
+                            tvars.append(collected)
         return tuple(tvars)
 
     typing._collect_type_vars = _collect_type_vars
