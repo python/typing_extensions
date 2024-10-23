@@ -5301,7 +5301,6 @@ class ParamSpecTests(BaseTestCase):
         class ProtoZ(Protocol[P]):
             pass
 
-        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
         for klass in Z, ProtoZ:
             with self.subTest(klass=klass.__name__):
                 # Note: For 3.10+ __args__ are nested tuples here ((int, ),) instead of (int, )
@@ -5317,6 +5316,7 @@ class ParamSpecTests(BaseTestCase):
 
                 G8 = klass[Concatenate[T, ...]]
                 self.assertEqual(G8.__args__, (Concatenate[T, ...], ))
+                self.assertEqual(G8.__parameters__, (T,))
 
                 G9 = klass[Concatenate[T, P_2]]
                 self.assertEqual(G9.__args__, (Concatenate[T, P_2], ))
@@ -5325,6 +5325,25 @@ class ParamSpecTests(BaseTestCase):
                 G10 = klass[int, Concatenate[str, P]]
                 G10args = G10.__args__[0] if sys.version_info >= (3, 10) else G10.__args__
                 self.assertEqual(G10args, (int, Concatenate[str, P], ))
+
+    def test_single_argument_generic_with_parameter_expressions(self):
+        P = ParamSpec("P")
+        T = TypeVar("T")
+        P_2 = ParamSpec("P_2")
+
+        class Z(Generic[P]):
+            pass
+
+        class ProtoZ(Protocol[P]):
+            pass
+
+        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
+        for klass in Z, ProtoZ:
+            with self.subTest(klass=klass.__name__):
+                G6 = klass[int, str, T]
+                G8 = klass[Concatenate[T, ...]]
+                G9 = klass[Concatenate[T, P_2]]
+                G10 = klass[int, Concatenate[str, P]]
 
                 with self.subTest("Check generic substitution", klass=klass.__name__):
                     if sys.version_info < (3, 10):
@@ -5339,14 +5358,13 @@ class ParamSpecTests(BaseTestCase):
                     self.assertEqual(G5.__args__, ((int, str, T),))
                     H9 = G9[int, [T]]
 
+                self.assertEqual(G9.__parameters__, (T, P_2))
                 with self.subTest("Check parametrization", klass=klass.__name__):
                     if sys.version_info[:2] == (3, 10):
                         self.skipTest("Parameter detection fails in 3.10")
                     with self.assertRaisesRegex(TypeError, f"Too few {things}"):
                         G9[int]  # for python 3.10 this has no parameters
                     self.assertEqual(G6.__parameters__, (T,))
-                    self.assertEqual(G8.__parameters__, (T,))
-                    self.assertEqual(G9.__parameters__, (T, P_2))
                     if sys.version_info >= (3, 10):  # skipped above
                         self.assertEqual(G5.__parameters__, (T,))
                         self.assertEqual(H9.__parameters__, (T,))
