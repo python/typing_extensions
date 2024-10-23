@@ -1765,6 +1765,19 @@ else:
 # 3.8-3.9
 if not hasattr(typing, 'Concatenate'):
     # Inherits from list as a workaround for Callable checks in Python < 3.9.2.
+
+    #3.9.0-1
+    if not hasattr(typing, '_type_convert'):
+        def _type_convert(arg, module=None, *, allow_special_forms=False):
+            """For converting None to type(None), and strings to ForwardRef."""
+            if arg is None:
+                return type(None)
+            if isinstance(arg, str):
+                return ForwardRef(arg, module=module, is_class=allow_special_forms)
+            return arg
+    else:
+        _type_convert = typing._type_convert
+
     class _ConcatenateGenericAlias(list):
 
         # Trick Generic into looking into this for __parameters__.
@@ -1797,16 +1810,66 @@ if not hasattr(typing, 'Concatenate'):
             )
 
         # 3.8; needed for typing._subs_tvars
-        if sys.version_info < (3, 9):
-            def copy_with(self, params):
-                if isinstance(params[-1], (list, tuple)):
-                    return (*params[:-1], *params[-1])
-                if isinstance(params[-1], _ConcatenateGenericAlias):
-                    params = (*params[:-1], *params[-1].__args__)
-                elif not (params[-1] is ... or isinstance(params[-1], ParamSpec)):
-                    raise TypeError("The last parameter to Concatenate should be a "
-                            "ParamSpec variable or ellipsis.")
-                return self.__class__(self.__origin__, params)
+        # 3.9 used by __getitem__ below
+        def copy_with(self, params):
+            if isinstance(params[-1], (list, tuple)):
+                return (*params[:-1], *params[-1])
+            if isinstance(params[-1], _ConcatenateGenericAlias):
+                params = (*params[:-1], *params[-1].__args__)
+            elif (not(params[-1] is ... or isinstance(params[-1], ParamSpec))):
+                raise TypeError("The last parameter to Concatenate should be a "
+                        "ParamSpec variable or ellipsis.")
+            return self.__class__(self.__origin__, params)
+
+        # 3.9; accessed during GenericAlias.__getitem__when substituting
+        def __getitem__(self, args):
+            if self.__origin__ in (Generic, Protocol):
+                # Can't subscript Generic[...] or Protocol[...].
+                raise TypeError(f"Cannot subscript already-subscripted {self}")
+            if not self.__parameters__:
+                raise TypeError(f"{self} is not a generic class")
+
+            if not isinstance(args, tuple):
+                args = (args,)
+            args = _unpack_args(*(_type_convert(p) for p in args))
+            params = self.__parameters__
+            for param in params:
+                if isinstance(param, ParamSpec):
+                    i = params.index(param)
+                    if (
+                        i == len(args)
+                        and getattr(param, '__default__', NoDefault) is not NoDefault
+                    ):
+                        args = [*args, param.__default__]
+                    if i >= len(args):
+                        raise TypeError(f"Too few arguments for {self}")
+                    # Special case for Z[[int, str, bool]] == Z[int, str, bool]
+                    if len(params) == 1 and not _is_param_expr(args[0]):
+                        assert i == 0
+                        args = (args,)
+                    # Convert lists to tuples to help other libraries cache the results.
+                    elif isinstance(args[i], list):
+                        args = (*args[:i], tuple(args[i]), *args[i+1:])
+
+            subst = dict(zip(self.__parameters__, args))
+            # determine new args
+            new_args = []
+            for arg in self.__args__:
+                if isinstance(arg, type):
+                    new_args.append(arg)
+                    continue
+                if isinstance(arg, TypeVar):
+                    arg = subst[arg]
+                elif isinstance(arg,
+                                typing._GenericAlias
+                                if not hasattr(_types, "GenericAlias") else
+                                (typing._GenericAlias, _types.GenericAlias)):
+                    subparams = arg.__parameters__
+                    if subparams:
+                        subargs = tuple(subst[x] for x in subparams)
+                        arg = arg[subargs]
+                new_args.append(arg)
+            return self.copy_with(tuple(new_args))
 
 # 3.10+
 else:
@@ -1829,6 +1892,12 @@ else:
                     raise TypeError("The last parameter to Concatenate should be a "
                             "ParamSpec variable or ellipsis.")
                 return super(_typing_ConcatenateGenericAlias, self).copy_with(params)
+
+            def __getitem__(self, args):
+                value = super().__getitem__(args)
+                if isinstance(value, tuple) and any(_is_unpack(t) for t in value):
+                    return tuple(_unpack_args(*(n for n in value)))
+                return value
 
 
 # 3.8-3.9.2
@@ -2509,6 +2578,21 @@ else:  # 3.8
     class _UnpackAlias(typing._GenericAlias, _root=True):
         __class__ = typing.TypeVar
 
+        def _typing_unpacked_tuple_args(self):
+            assert self.__origin__ is Unpack
+            assert len(self.__args__) == 1
+            arg, = self.__args__
+            if isinstance(arg, typing._GenericAlias):
+                if arg.__origin__ is not tuple:
+                    raise TypeError("Unpack[...] must be used with a tuple type")
+                return arg.__args__
+            return None
+
+        def __getattr__(self, attr):
+            if attr == '__typing_unpacked_tuple_args__':
+                return self._typing_unpacked_tuple_args()
+            return super().__getattr__(attr)
+
         @property
         def __typing_is_unpacked_typevartuple__(self):
             assert self.__origin__ is Unpack
@@ -2532,20 +2616,20 @@ else:  # 3.8
         return isinstance(obj, _UnpackAlias)
 
 
+def _unpack_args(*args):
+    newargs = []
+    for arg in args:
+        subargs = getattr(arg, '__typing_unpacked_tuple_args__', None)
+        if subargs is not None and (not (subargs and subargs[-1] is ...)):
+            newargs.extend(subargs)
+        else:
+            newargs.append(arg)
+    return newargs
+
 if _PEP_696_IMPLEMENTED:
     from typing import TypeVarTuple
 
 elif hasattr(typing, "TypeVarTuple"):  # 3.11+
-
-    def _unpack_args(*args):
-        newargs = []
-        for arg in args:
-            subargs = getattr(arg, '__typing_unpacked_tuple_args__', None)
-            if subargs is not None and not (subargs and subargs[-1] is ...):
-                newargs.extend(subargs)
-            else:
-                newargs.append(arg)
-        return newargs
 
     # Add default parameter - PEP 696
     class TypeVarTuple(metaclass=_TypeVarLikeMeta):
