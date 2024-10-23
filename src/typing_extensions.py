@@ -1820,7 +1820,7 @@ if not hasattr(typing, 'Concatenate'):
                 params = (*params[:-1], *params[-1].__args__)
             elif isinstance(params[-1], (list, tuple)):
                 return (*params[:-1], *params[-1])
-            elif (not(params[-1] is ... or isinstance(params[-1], ParamSpec))):
+            elif (not (params[-1] is ... or isinstance(params[-1], ParamSpec))):
                 raise TypeError("The last parameter to Concatenate should be a "
                         "ParamSpec variable or ellipsis.")
             return self.__class__(self.__origin__, params)
@@ -1861,7 +1861,7 @@ if not hasattr(typing, 'Concatenate'):
                         # This class inherits from list do not convert
                         and not isinstance(args[i], _ConcatenateGenericAlias)
                     ):
-                        args = (*args[:i], tuple(args[i]), *args[i+1:])
+                        args = (*args[:i], tuple(args[i]), *args[i + 1:])
 
             alen = len(args)
             plen = len(params)
@@ -2657,6 +2657,7 @@ def _unpack_args(*args):
             newargs.append(arg)
     return newargs
 
+
 if _PEP_696_IMPLEMENTED:
     from typing import TypeVarTuple
 
@@ -3134,10 +3135,12 @@ else:
                     f"a class or callable, not {arg!r}"
                 )
 
+
 def _is_param_expr(arg):
     return arg is ... or isinstance(
         arg, (tuple, list, ParamSpec, _ConcatenateGenericAlias)
     )
+
 
 # We have to do some monkey patching to deal with the dual nature of
 # Unpack/TypeVarTuple:
