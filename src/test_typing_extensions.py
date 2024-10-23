@@ -7469,7 +7469,7 @@ class TypeAliasTypeTests(BaseTestCase):
             # Only type params are accepted
             ((1,), "Expected a type param, got 1"),
             ((str,), f"Expected a type param, got {str!r}"),
-            # Unpack backport behaves like TypeVar in some cases
+            # Unpack is not a TypeVar but isinstance(Unpack[Ts], TypeVar) is True in Python < 3.12
             ((Unpack[Ts],), f"Expected a type param, got {re.escape(repr(Unpack[Ts]))}"),
         ]
 
