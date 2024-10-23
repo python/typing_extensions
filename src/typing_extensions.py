@@ -3611,8 +3611,10 @@ else:
             default_value_encountered = False
             parameters = []
             for type_param in type_params:
-                if (not isinstance(type_param, (TypeVar, TypeVarTuple, ParamSpec))
-                    # The Unpack backport passes aboves check
+                if (
+                    not isinstance(type_param, (TypeVar, TypeVarTuple, ParamSpec))
+                    # 3.8-3.11
+                    # Unpack Backport passes isinstance(type_param, TypeVar)
                     or _is_unpack(type_param)
                 ):
                     raise TypeError(f"Expected a type param, got {type_param!r}")
