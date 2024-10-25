@@ -7463,9 +7463,9 @@ class TypeAliasTypeTests(BaseTestCase):
             (T_default, P_default, Ts_default),
         ]
         invalid_cases = [
-            ((T_default, T), f"non-default type parameter {T!r} follows default"),
-            ((P_default, P), f"non-default type parameter {P!r} follows default"),
-            ((Ts_default, T), f"non-default type parameter {T!r} follows default"),
+            ((T_default, T), f"non-default type parameter '{T!r}' follows default"),
+            ((P_default, P), f"non-default type parameter '{P!r}' follows default"),
+            ((Ts_default, T), f"non-default type parameter '{T!r}' follows default"),
             # Only type params are accepted
             ((1,), "Expected a type param, got 1"),
             ((str,), f"Expected a type param, got {str!r}"),
