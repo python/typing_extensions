@@ -7285,6 +7285,7 @@ class TypeAliasTypeTests(BaseTestCase):
             # arguments : expected parameters
             int : (),
             ... : (),
+            None : (),
             T2 : (T2,),
             Union[int, List[T2]] : (T2,),
             Tuple[int, str] : (),
