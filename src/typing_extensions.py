@@ -3528,8 +3528,9 @@ else:
                 return typing.Union[other, self]
 
 
-if hasattr(typing, "TypeAliasType"):
+if sys.version_info >= (3, 14):
     TypeAliasType = typing.TypeAliasType
+# 3.8-3.13
 else:
     def _is_unionable(obj):
         """Corresponds to is_unionable() in unionobject.c in CPython."""
@@ -3602,11 +3603,29 @@ else:
         def __init__(self, name: str, value, *, type_params=()):
             if not isinstance(name, str):
                 raise TypeError("TypeAliasType name must be a string")
+            if not isinstance(type_params, tuple):
+                raise TypeError("type_params must be a tuple")
             self.__value__ = value
             self.__type_params__ = type_params
 
+            default_value_encountered = False
             parameters = []
             for type_param in type_params:
+                if (
+                    not isinstance(type_param, (TypeVar, TypeVarTuple, ParamSpec))
+                    # 3.8-3.11
+                    # Unpack Backport passes isinstance(type_param, TypeVar)
+                    or _is_unpack(type_param)
+                ):
+                    raise TypeError(f"Expected a type param, got {type_param!r}")
+                has_default = (
+                    getattr(type_param, '__default__', NoDefault) is not NoDefault
+                )
+                if default_value_encountered and not has_default:
+                    raise TypeError(f'non-default type parameter {type_param!r}'
+                                    ' follows default type parameter')
+                if has_default:
+                    default_value_encountered = True
                 if isinstance(type_param, TypeVarTuple):
                     parameters.extend(type_param)
                 else:
