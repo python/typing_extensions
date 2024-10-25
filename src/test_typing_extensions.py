@@ -7417,7 +7417,7 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(get_args(fully_subscripted), (Iterable[float],))
         self.assertIs(get_origin(fully_subscripted), ListOrSetT)
 
-        ValueWithoutTypeVar = TypeAliasType("ValueWithoutTypeParam", int, type_params=(T,))
+        ValueWithoutTypeVar = TypeAliasType("ValueWithoutTypeVar", int, type_params=(T,))
         still_subscripted = ValueWithoutTypeVar[str]
         self.assertEqual(get_args(still_subscripted), (str,))
 
