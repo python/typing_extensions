@@ -3622,8 +3622,8 @@ else:
                     getattr(type_param, '__default__', NoDefault) is not NoDefault
                 )
                 if default_value_encountered and not has_default:
-                    raise TypeError(f'non-default type parameter {type_param!r}'
-                                    ' follows default type parameter')
+                    raise TypeError(f"non-default type parameter '{type_param!r}'"
+                                    " follows default type parameter")
                 if has_default:
                     default_value_encountered = True
                 if isinstance(type_param, TypeVarTuple):
