@@ -3667,6 +3667,8 @@ else:
                 # Allow [], [int], [int, str], [int, ...], [int, T]
                 if param is ...:
                     return ...
+                if param is None:
+                    return None
                 # Note in <= 3.9 _ConcatenateGenericAlias inherits from list
                 if isinstance(param, list) and recursion == 0:
                     return [self._check_single_param(arg, recursion+1)

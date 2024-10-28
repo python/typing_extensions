@@ -7332,6 +7332,10 @@ class TypeAliasTypeTests(BaseTestCase):
                 subscripted = alias[int, float]
                 self.assertEqual(get_args(subscripted), (int, float))
                 self.assertEqual(subscripted.__parameters__, ())
+            with self.subTest(alias=alias, args=[int, float]):
+                subscripted = alias[[int, float]]
+                self.assertEqual(get_args(subscripted), ([int, float],))
+                self.assertEqual(subscripted.__parameters__, ())
             for expected_args, expected_parameters in test_argument_cases.items():
                 with self.subTest(alias=alias, args=expected_args):
                     self.assertEqual(get_args(alias[expected_args]), (expected_args,))
