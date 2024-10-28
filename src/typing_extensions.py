@@ -3155,17 +3155,16 @@ if not hasattr(typing, "TypeVarTuple"):
 
         This gives a nice error message in case of count mismatch.
         """
+        # If substituting a single ParamSpec with multiple arguments
+        # we do not check the count
         if (inspect.isclass(cls) and issubclass(cls, typing.Generic)
-            and any(isinstance(t, ParamSpec) for t in cls.__parameters__)
+            and len(cls.__parameters__) == 1
+            and isinstance(cls.__parameters__[0], ParamSpec)
+            and parameters
+            and not _is_param_expr(parameters[0])
         ):
-            # should actually modify parameters but is immutable
-            if (
-                len(cls.__parameters__) == 1
-                and parameters
-                and not _is_param_expr(parameters[0])
-            ):
-                assert isinstance(cls.__parameters__[0], ParamSpec)
-                return
+            # Generic modifies parameters variable, but here we cannot do this
+            return
 
         if not elen:
             raise TypeError(f"{cls} is not a generic class")
@@ -3682,8 +3681,9 @@ else:
                 return typing.Union[other, self]
 
 
-if hasattr(typing, "TypeAliasType"):
+if sys.version_info >= (3, 14):
     TypeAliasType = typing.TypeAliasType
+# 3.8-3.13
 else:
     def _is_unionable(obj):
         """Corresponds to is_unionable() in unionobject.c in CPython."""
@@ -3756,11 +3756,29 @@ else:
         def __init__(self, name: str, value, *, type_params=()):
             if not isinstance(name, str):
                 raise TypeError("TypeAliasType name must be a string")
+            if not isinstance(type_params, tuple):
+                raise TypeError("type_params must be a tuple")
             self.__value__ = value
             self.__type_params__ = type_params
 
+            default_value_encountered = False
             parameters = []
             for type_param in type_params:
+                if (
+                    not isinstance(type_param, (TypeVar, TypeVarTuple, ParamSpec))
+                    # 3.8-3.11
+                    # Unpack Backport passes isinstance(type_param, TypeVar)
+                    or _is_unpack(type_param)
+                ):
+                    raise TypeError(f"Expected a type param, got {type_param!r}")
+                has_default = (
+                    getattr(type_param, '__default__', NoDefault) is not NoDefault
+                )
+                if default_value_encountered and not has_default:
+                    raise TypeError(f"non-default type parameter '{type_param!r}'"
+                                    " follows default type parameter")
+                if has_default:
+                    default_value_encountered = True
                 if isinstance(type_param, TypeVarTuple):
                     parameters.extend(type_param)
                 else:
