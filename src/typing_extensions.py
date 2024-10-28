@@ -3024,17 +3024,16 @@ if not hasattr(typing, "TypeVarTuple"):
 
         This gives a nice error message in case of count mismatch.
         """
+        # If substituting a single ParamSpec with multiple arguments
+        # we do not check the count
         if (inspect.isclass(cls) and issubclass(cls, typing.Generic)
-            and any(isinstance(t, ParamSpec) for t in cls.__parameters__)
+            and len(cls.__parameters__) == 1
+            and isinstance(cls.__parameters__[0], ParamSpec)
+            and parameters
+            and not _is_param_expr(parameters[0])
         ):
-            # should actually modify parameters but is immutable
-            if (
-                len(cls.__parameters__) == 1
-                and parameters
-                and not _is_param_expr(parameters[0])
-            ):
-                assert isinstance(cls.__parameters__[0], ParamSpec)
-                return
+            # Generic modifies parameters variable, but here we cannot do this
+            return
 
         if not elen:
             raise TypeError(f"{cls} is not a generic class")
