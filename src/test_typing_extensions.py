@@ -82,6 +82,7 @@ from typing_extensions import (
     clear_overloads,
     dataclass_transform,
     deprecated,
+    evaluate_forward_ref,
     final,
     get_annotations,
     get_args,
@@ -8019,6 +8020,127 @@ class TestGetAnnotationsWithPEP695(BaseTestCase):
             set(results.generic_func_annotations.values()),
             set(results.generic_func.__type_params__)
         )
+
+class TestEvaluateForwardRefs(BaseTestCase):
+    def test_evaluate_forward_refs(self):
+        from typing import ForwardRef  # noqa: F401 # needed for globals/locals
+
+        error_res = None
+        annotation = Annotated[Union[int, None], "data"]
+        NoneAlias = None
+        StrAlias = str
+        T_default = TypeVar("T_default", default=None)
+        Ts = TypeVarTuple("Ts")
+        NoneType = type(None)
+
+        class _EasyStr:
+            def __str__(self):
+                return self.__class__.__name__
+
+        class A(_EasyStr): pass
+
+        class B(Generic[T], _EasyStr):
+            a = "A"
+            bT = "B[T]"
+
+        cases = {
+            None: {
+                Format.VALUE: NoneType,
+                Format.FORWARDREF: NoneType,
+                Format.STRING: "None",
+            },
+            "NoneAlias": {
+                Format.VALUE: NoneType,
+                Format.FORWARDREF: NoneType,
+                Format.STRING: "NoneAlias",
+            },
+            str: str,
+            "StrAlias": {
+                Format.VALUE: str,
+                Format.FORWARDREF: str,
+                Format.STRING: "StrAlias",
+            },
+            "A": A,
+            "B[A]": {
+                Format.VALUE: B[A],
+                Format.FORWARDREF: B[A],
+                Format.STRING: "B[A]",
+            },
+            "B[NotAvailiable]": {
+                Format.VALUE: NameError,
+                Format.FORWARDREF: typing.ForwardRef("B[NotAvailiable]"),
+                Format.STRING: "B[NotAvailiable]",
+            },
+            "B[B[T]]": {
+                Format.VALUE: B[B[T]],
+                Format.FORWARDREF: B[B[T]],
+                Format.STRING: "B[B[T]]",
+            },
+            "NotAvailiable": {
+                Format.VALUE: NameError,
+                Format.FORWARDREF: typing.ForwardRef("NotAvailiable"),
+                Format.STRING: "NotAvailiable",
+            },
+            "B.a": {
+                Format.VALUE: A,
+                Format.FORWARDREF: A,
+                Format.STRING: "B.a",
+            },
+            "B.bT": {
+                Format.VALUE: B[T],
+                Format.FORWARDREF: B[T],
+                Format.STRING: "B.bT",
+            },
+            Annotated[None, "none"]: Annotated[None, "none"],
+            annotation: annotation,
+            # Optional["annotation"]: Optional[annotation],
+            Optional[int]: Optional[int],
+            Optional[List[str]]: Optional[List[str]],
+            "Union[str, None, str]": {
+                Format.VALUE: Optional[str],
+                Format.FORWARDREF: Optional[str],
+                Format.STRING: "Union[str, None, str]",
+            },
+            Union[str, None, "str"]: {
+                Format.VALUE: Optional[str],
+                Format.FORWARDREF: Optional[str],
+                Format.STRING: Union[str, None, "str"],
+            },
+            Unpack[Tuple[int, None]]: Unpack[Tuple[int, None]],
+            Unpack[Ts]: Unpack[Ts],
+        }
+
+        for annot, expected in cases.items():
+            #ref = typing._type_convert(annot)
+            ref = typing.ForwardRef(
+                str(annot)
+                if not isinstance(annot, type)
+                else annot.__name__
+            )
+            for format in Format.VALUE, Format.FORWARDREF, Format.STRING:
+                with self.subTest(format=format, ref=ref):
+                    if isinstance(expected, dict):
+                        check_expected = expected[format]
+                    else:
+                        check_expected = expected
+                    if check_expected is NameError:
+                        with self.assertRaises(NameError):
+                            evaluate_forward_ref(
+                                ref, locals=locals(), globals=globals(), format=format
+                            )
+                        del check_expected
+                        continue
+                    if format == Format.STRING:
+                        check_expected = (
+                            str(check_expected)
+                            if not isinstance(check_expected, type)
+                            else check_expected.__name__
+                        )
+                    result = evaluate_forward_ref(
+                        ref, locals=locals(), globals=globals(), format=format
+                    )
+                    self.assertEqual(result, check_expected)
+                    del check_expected
 
 
 if __name__ == '__main__':

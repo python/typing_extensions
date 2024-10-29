@@ -63,6 +63,7 @@ __all__ = [
     'dataclass_transform',
     'deprecated',
     'Doc',
+    'evaluate_forward_ref',
     'get_overloads',
     'final',
     'Format',
@@ -3799,6 +3800,7 @@ class Format(enum.IntEnum):
     VALUE = 1
     FORWARDREF = 2
     SOURCE = 3
+    STRING = 3
 
 
 if _PEP_649_OR_749_IMPLEMENTED:
@@ -3928,7 +3930,7 @@ else:
             value if not isinstance(value, str) else eval(value, globals, locals)
             for key, value in ann.items() }
         return return_value
-    
+
 
 
 if hasattr(typing, "evaluate_forward_ref"):
@@ -3950,14 +3952,14 @@ else:
                 f"It will be disallowed in Python 3.15."
             )
             warnings.warn(depr_message, category=DeprecationWarning, stacklevel=3)
-    
+
     def evaluate_forward_ref(
         forward_ref,
         *,
         owner=None,
         globals=None,
         locals=None,
-        type_params=_marker,
+        type_params=None,
         format=Format.VALUE,
         _recursive_guard=frozenset(),
     ):
@@ -3983,7 +3985,7 @@ else:
         annotation and is a member of the annotationlib.Format enum.
 
         """
-        if type_params is _sentinel:
+        if hasattr(typing, "_sentinel") and type_params is typing._sentinel:
             _deprecation_warning_for_no_type_params_passed("typing.evaluate_forward_ref")
             type_params = ()
         if format == Format.STRING:
@@ -3992,30 +3994,75 @@ else:
             return forward_ref
 
         try:
-            value = forward_ref.evaluate(
-                globals=globals, locals=locals, type_params=type_params, owner=owner
-            )
+            if hasattr(forward_ref, "evaluate"):
+                value = forward_ref.evaluate(
+                    globals=globals, locals=locals, type_params=type_params, owner=owner
+                )
+            elif sys.version_info >= (3, 12, 4):
+                value = forward_ref._evaluate(
+                    globalns=globals,
+                    localns=locals,
+                    type_params=type_params,
+                    recursive_guard=frozenset(),
+                )
+            elif sys.version_info >= (3, 9):
+                value = forward_ref._evaluate(
+                    globalns=globals, localns=locals, recursive_guard=frozenset()
+                )
+            else:
+                value = forward_ref._evaluate(
+                    globalns=globals, localns=locals
+                )
         except NameError:
             if format == Format.FORWARDREF:
                 return forward_ref
             else:
                 raise
 
-        type_ = typing._type_check(
-            value,
-            "Forward references must evaluate to types.",
-            is_argument=forward_ref.__forward_is_argument__,
-            allow_special_forms=forward_ref.__forward_is_class__,
-        )
+        if sys.version_info < (3, 10, 1):
+            type_ = typing._type_check(
+                value,
+                "Forward references must evaluate to types.",
+                is_argument=forward_ref.__forward_is_argument__,
+                #allow_special_forms=forward_ref.__forward_is_class__,
+            )
+        else:
+            type_ = typing._type_check(
+                value,
+                "Forward references must evaluate to types.",
+                is_argument=forward_ref.__forward_is_argument__,
+                allow_special_forms=forward_ref.__forward_is_class__,
+            )
+        if sys.version_info < (3, 9):
+            return typing._eval_type(
+                type_,
+                globals,
+                locals,
+            )
+        if sys.version_info < (3, 12, 5):
+            return typing._eval_type(
+                    type_,
+                    globals,
+                    locals,
+                    recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
+                )
+        if sys.version_info < (3, 14):
+            return typing._eval_type(
+                type_,
+                globals,
+                locals,
+                type_params,
+                recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
+            )
         return typing._eval_type(
-            type_,
-            globals,
-            locals,
-            type_params,
-            recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
-            format=format,
-            owner=owner,
-        )
+                type_,
+                globals,
+                locals,
+                type_params,
+                recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
+                format=format,
+                owner=owner,
+            )
 
 
 # Aliases for items that have always been in typing.
