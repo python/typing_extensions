@@ -6281,6 +6281,10 @@ class AllTests(BaseTestCase):
                 'AsyncGenerator', 'ContextManager', 'AsyncContextManager',
                 'ParamSpec', 'TypeVar', 'TypeVarTuple', 'get_type_hints',
             }
+        if sys.version_info < (3, 14):
+            exclude |= {
+                'TypeAliasType'
+            }
         if not typing_extensions._PEP_728_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
@@ -7491,6 +7495,80 @@ class TypeAliasTypeTests(BaseTestCase):
             class MyAlias(TypeAliasType):
                 pass
 
+    def test_type_var_compatibility(self):
+        # Regression test to assure compatibility with typing variants
+        typingT = typing.TypeVar('typingT')
+        T1 = TypeAliasType("TypingTypeVar", ..., type_params=(typingT,))
+        self.assertEqual(T1.__type_params__, (typingT,))
+
+        # Test typing_extensions backports
+        textT = TypeVar('textT')
+        T2 = TypeAliasType("TypingExtTypeVar", ..., type_params=(textT,))
+        self.assertEqual(T2.__type_params__, (textT,))
+
+        textP = ParamSpec("textP")
+        T3 = TypeAliasType("TypingExtParamSpec", ..., type_params=(textP,))
+        self.assertEqual(T3.__type_params__, (textP,))
+
+        textTs = TypeVarTuple("textTs")
+        T4 = TypeAliasType("TypingExtTypeVarTuple", ..., type_params=(textTs,))
+        self.assertEqual(T4.__type_params__, (textTs,))
+
+    @skipUnless(TYPING_3_10_0, "typing.ParamSpec is not available before 3.10")
+    def test_param_spec_compatibility(self):
+        # Regression test to assure compatibility with typing variant
+        typingP = typing.ParamSpec("typingP")
+        T5 = TypeAliasType("TypingParamSpec", ..., type_params=(typingP,))
+        self.assertEqual(T5.__type_params__, (typingP,))
+
+    @skipUnless(TYPING_3_12_0, "typing.TypeVarTuple is not available before 3.12")
+    def test_type_var_tuple_compatibility(self):
+        # Regression test to assure compatibility with typing variant
+        typingTs = typing.TypeVarTuple("typingTs")
+        T6 = TypeAliasType("TypingTypeVarTuple", ..., type_params=(typingTs,))
+        self.assertEqual(T6.__type_params__, (typingTs,))
+
+    def test_type_params_possibilities(self):
+        T = TypeVar('T')
+        # Test not a tuple
+        with self.assertRaisesRegex(TypeError, "type_params must be a tuple"):
+            TypeAliasType("InvalidTypeParams", List[T], type_params=[T])
+
+        # Test default order and other invalid inputs
+        T_default = TypeVar('T_default', default=int)
+        Ts = TypeVarTuple('Ts')
+        Ts_default = TypeVarTuple('Ts_default', default=Unpack[Tuple[str, int]])
+        P = ParamSpec('P')
+        P_default = ParamSpec('P_default', default=[str, int])
+
+        # NOTE: PEP 696 states: "TypeVars with defaults cannot immediately follow TypeVarTuples"
+        # this is currently not enforced for the type statement and is not tested.
+        # PEP 695: Double usage of the same name is also not enforced and not tested.
+        valid_cases = [
+            (T, P, Ts),
+            (T, Ts_default),
+            (P_default, T_default),
+            (P, T_default, Ts_default),
+            (T_default, P_default, Ts_default),
+        ]
+        invalid_cases = [
+            ((T_default, T), f"non-default type parameter '{T!r}' follows default"),
+            ((P_default, P), f"non-default type parameter '{P!r}' follows default"),
+            ((Ts_default, T), f"non-default type parameter '{T!r}' follows default"),
+            # Only type params are accepted
+            ((1,), "Expected a type param, got 1"),
+            ((str,), f"Expected a type param, got {str!r}"),
+            # Unpack is not a TypeVar but isinstance(Unpack[Ts], TypeVar) is True in Python < 3.12
+            ((Unpack[Ts],), f"Expected a type param, got {re.escape(repr(Unpack[Ts]))}"),
+        ]
+
+        for case in valid_cases:
+            with self.subTest(type_params=case):
+                TypeAliasType("OkCase", List[T], type_params=case)
+        for case, msg in invalid_cases:
+            with self.subTest(type_params=case):
+                with self.assertRaisesRegex(TypeError, msg):
+                    TypeAliasType("InvalidCase", List[T], type_params=case)
 
 class DocTests(BaseTestCase):
     def test_annotation(self):
