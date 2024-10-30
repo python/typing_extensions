@@ -8130,16 +8130,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 return self.__class__.__name__
             def __repr__(self) -> str:
                 return str(self)
-            @classmethod
-            def to_forwardref(cls, arg) -> ForwardRef:
-                if not arg.__args__:
-                    return ForwardRef(cls.__name__)
-                else:
-                    return ForwardRef(
-                        cls.__name__ + "[" + ", ".join(a.__name__ if isinstance(a, type) else str(a) for a in arg.__args__) + "]"
-                    )
 
-        # Assure that these are not in globals
         class X(_EasyStr): pass
 
         T_in_G = TypeVar("T_in_G")
@@ -8148,8 +8139,10 @@ class TestEvaluateForwardRefs(BaseTestCase):
             bT = "Y[T_nonlocal]"
             alias = int
 
+            # workaround for type statement
             __type_params__ = (T_in_G,)
 
+        # Assure that these are not in globals
         assert X.__name__ not in globals()
         assert Y.__name__ not in globals()
         assert Y.__type_params__ == (T_in_G,)
@@ -8194,7 +8187,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
             },
             "Y[T_nonlocal]": [
                 {
-                    "type_params": (T,),  # wrong TypeVar
+                    "type_params": (T,),  # check also with wrong TypeVar
                     Format.VALUE: NameError,
                     Format.FORWARDREF: typing.ForwardRef("Y[T_nonlocal]"),
                     Format.STRING: "Y[T_nonlocal]",
@@ -8297,25 +8290,39 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "Y.bT",
                 },
             ],
+            # Special cases depending
             ClassVar[None]: ClassVar[None],
-            Annotated[None, "none"]: Annotated[None, "none"],
-            annotation: annotation,
+            Final[None]: Final[None],
+            Protocol[T]: Protocol[T],
+            Protocol: {  # plain usage of Protocol
+                Format.VALUE: TypeError,
+                Format.FORWARDREF: TypeError,
+                Format.STRING: "Protocol",
+            },
+            Final: [  # plain usage of Final
+                {
+                    "skip_if": {"is_class": False},
+                    Format.VALUE: Final,
+                    Format.FORWARDREF: Final,
+                    Format.STRING: Final,
+                },
+                {
+                    "skip_if": {"is_class": True},
+                    Format.VALUE: TypeError,
+                    Format.FORWARDREF: TypeError,
+                    Format.STRING: Final,
+                },
+            ],
+            Annotated[None, "data"]: Annotated[None, "data"],
             Optional["annotation"]: {
                 Format.VALUE: Optional[annotation],
                 Format.FORWARDREF: Optional[annotation],
                 Format.STRING: Optional["annotation"],
             },
-            Optional[int]: Optional[int],
-            Optional[List[str]]: Optional[List[str]],
-            "Union[str, None, str]": {
-                Format.VALUE: Optional[str],
-                Format.FORWARDREF: Optional[str],
-                Format.STRING: "Union[str, None, str]",
-            },
             Union[str, None, "str"]: {
                 Format.VALUE: Optional[str],
                 Format.FORWARDREF: Optional[str],
-                Format.STRING: Union[str, None, "str"],
+                Format.STRING: str(Union[str, None, "str"]),
             },
             Unpack[Tuple[int, None]]: Unpack[Tuple[int, None]],
             Unpack[Ts]: Unpack[Ts],
@@ -8333,7 +8340,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "T_in_G",
                 },
             ],
-
         }
         def unroll_cases(cases, outer_locals):
             for (
@@ -8396,16 +8402,18 @@ class TestEvaluateForwardRefs(BaseTestCase):
                             localns,
                         )
                 else:
-                    # Invalid types
-                    if (
-                        get_origin(expected) is ClassVar
-                        and format != Format.STRING
-                        and (
-                            is_class is False
-                            or (not _FORWARD_REF_HAS_CLASS and is_argument)
-                        )
-                    ):
-                        expected = TypeError
+                    # Change expected to TypeError if it will fail typing._type_check
+                    if not inspect.isclass(expected):
+                        invalid_generic_forms = (Generic, Protocol)
+                        if not is_class:
+                            invalid_generic_forms += (ClassVar,)
+                            if is_argument:
+                                invalid_generic_forms += (Final,)
+                        if (
+                            format != Format.STRING
+                            and get_origin(expected) in invalid_generic_forms
+                        ):
+                            expected = TypeError
                     type_params = None
                     yield (
                         format,

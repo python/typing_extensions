@@ -4082,6 +4082,8 @@ else:
             and type_.__origin__ in invalid_generic_forms
         ):
             raise TypeError(f"{type_} is not valid as type argument") from None
+        if isinstance(type_, (_SpecialForm, typing._SpecialForm)) or type_ in (Generic, Protocol):
+            raise TypeError(f"Plain {type_} is not valid as type argument") from None
         return type_
 
     def evaluate_forward_ref(
