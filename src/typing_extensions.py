@@ -4065,24 +4065,28 @@ else:
                 type_ = typing._type_convert(value)
         else:
             if value is None:
-                type_ = type(None)
-            elif isinstance(value, str):
-                type_ = ForwardRef(value)
-            else:
-                type_ = value
+                return type(None)
+            if isinstance(value, str):
+                return ForwardRef(value)
+            type_ = value
+        if type(type_) is tuple:  # early versions raise with callable here
+            raise exec
         invalid_generic_forms = (Generic, Protocol)
         if not allow_special_forms:
             invalid_generic_forms += (ClassVar,)
             if is_argument:
                 invalid_generic_forms += (Final,)
-        if type(type_) is tuple:
-            raise exec
         if (
             isinstance(type_, typing._GenericAlias)
-            and type_.__origin__ in invalid_generic_forms
+            and get_origin(type_) in invalid_generic_forms
         ):
             raise TypeError(f"{type_} is not valid as type argument") from None
-        if isinstance(type_, (_SpecialForm, typing._SpecialForm)) or type_ in (Generic, Protocol):
+        if allow_special_forms is not None and type_ in (ClassVar, Final):
+            return type_
+        if (
+            isinstance(type_, (_SpecialForm, typing._SpecialForm))
+            or type_ in (Generic, Protocol)
+        ):
             raise TypeError(f"Plain {type_} is not valid as type argument") from None
         return type_
 
@@ -4160,9 +4164,21 @@ else:
                 msg,
                 is_argument=forward_ref.__forward_is_argument__,
                 allow_special_forms=(
-                    _FORWARD_REF_HAS_CLASS and forward_ref.__forward_is_class__
-                )
+                    (_FORWARD_REF_HAS_CLASS and forward_ref.__forward_is_class__)
+                    or
+                    ( _FORWARD_REF_HAS_CLASS and None)  # pass None in this case
+                ),
             )
+        else:
+            # ClassVar/Final could pass _type_check but should error
+            if sys.version_info < (3, 11) and (
+                _FORWARD_REF_HAS_CLASS
+                and not forward_ref.__forward_is_class__
+                and value in (ClassVar, Final)
+            ):
+                raise TypeError(f"Plain {type_} is not valid as type argument")
+
+        del value
 
         # Check if evaluation is possible
         if isinstance(type_, ForwardRef):

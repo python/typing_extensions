@@ -8300,20 +8300,29 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 Format.FORWARDREF: TypeError,
                 Format.STRING: "Protocol",
             },
-            Final: [  # plain usage of Final
-                {
-                    "skip_if": {"is_class": False},
-                    Format.VALUE: Final,
-                    Format.FORWARDREF: Final,
-                    Format.STRING: Final,
-                },
-                {
-                    "skip_if": {"is_class": True},
-                    Format.VALUE: TypeError,
-                    Format.FORWARDREF: TypeError,
-                    Format.STRING: Final,
-                },
-            ],
+            Final: (
+                [  # plain usage of Final
+                    {
+                        "skip_if": {"is_class": False},
+                        Format.VALUE: Final,
+                        Format.FORWARDREF: Final,
+                        Format.STRING: str(Final),
+                    },
+                    {
+                        "skip_if": {"is_class": True},
+                        Format.VALUE: TypeError,
+                        Format.FORWARDREF: TypeError,
+                        Format.STRING: str(Final),
+                    },
+                ]
+                if _FORWARD_REF_HAS_CLASS
+                else Final  # no errors here
+            ),
+            Generic: {
+                Format.VALUE: TypeError,
+                Format.FORWARDREF: TypeError,
+                Format.STRING: "Generic",
+            },
             Union[str, None, "str"]: {
                 Format.VALUE: Optional[str],
                 Format.FORWARDREF: Optional[str],
@@ -8340,6 +8349,8 @@ class TestEvaluateForwardRefs(BaseTestCase):
         ):
             type_params = expected.get("type_params", None)
             skip_if = expected.get("skip_if", False)
+            if format not in expected:
+                return
             if skip_if:
                 L = locals()
                 skip = all(
@@ -8411,17 +8422,17 @@ class TestEvaluateForwardRefs(BaseTestCase):
                         ),
                     )
                 else:
+                    # NOTE: only for non-dict inputs
                     # Change expected to TypeError if it will fail typing._type_check
-                    if not inspect.isclass(expected):
+                    if format != Format.STRING and not inspect.isclass(expected):
                         invalid_generic_forms = (Generic, Protocol)
-                        if not is_class:
+                        if is_class is False:
                             invalid_generic_forms += (ClassVar,)
                             if is_argument:
                                 invalid_generic_forms += (Final,)
-                        if (
-                            format != Format.STRING
-                            and get_origin(expected) in invalid_generic_forms
-                        ):
+                        elif not _FORWARD_REF_HAS_CLASS and is_argument:
+                            invalid_generic_forms += (ClassVar, Final,)
+                        if get_origin(expected) in invalid_generic_forms:
                             expected = TypeError
                     type_params = None
                     yield (
@@ -8450,12 +8461,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 ref = typing.ForwardRef(annot, is_argument=is_argument, is_class=is_class)
             else:
                 ref = typing.ForwardRef(annot, is_argument=is_argument)
-            expected_orig = expected
-            orig_globalns = globalns
-            orig_localns = localns
-            expected = expected_orig
-            globalns = orig_globalns
-            localns = orig_localns
             with self.subTest(
                 format=format,
                 ref=ref,
