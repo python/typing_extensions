@@ -8620,7 +8620,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
         # builtins are still searched with explicit globals
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={}), int)
 
-    @skipIf(sys.version_info[:2] < (3, 10), "Forward references must evaluate to types, i.e. not a callable")
     def test_fwdref_with_globals(self):
         # explicit values in globals have precedence
         obj = object()
