@@ -8125,30 +8125,21 @@ class TestEvaluateForwardRefs(BaseTestCase):
         T_local_type_params = (T_nonlocal,)
         del T_nonlocal
 
-        class _EasyStr:
-            def __str__(self):
-                return self.__class__.__name__
-            def __repr__(self) -> str:
-                return str(self)
-
-        class X(_EasyStr):
+        class X:
             T_in_Y = object()
 
         T_in_Y = TypeVar("T_in_Y")
-        class Y(Generic[T_in_Y], _EasyStr):
+        class Y(Generic[T_in_Y]):
             a = "X"
             bT = "Y[T_nonlocal]"
-            alias = int
-
-            # workaround for type statement
-            __type_params__ = (T_in_Y,)
-        Y.T_in_Y = T_in_Y
+        # Construct which has __type_params__
+        Z = TypeAliasType("Z", Y[T_in_Y], type_params=(T_in_Y,))
+        Y_type_params = (T_in_Y,)
+        del T_in_Y
 
         # Assure that these are not in globals
         assert X.__name__ not in globals()
         assert Y.__name__ not in globals()
-        self.assertEqual(Y.__type_params__, (T_in_Y,))
-        del T_in_Y
 
         minimal_locals = {
             #"Y": Y,
@@ -8165,6 +8156,9 @@ class TestEvaluateForwardRefs(BaseTestCase):
 
         cases = {
             # values can be types, dicts or list of dicts.
+            # Combination of all "skip_if" subdicts should provide complete coverage,
+            # i.e. they should come in pairs.
+            # For not complete coverage set the value to "Skip: message".
             None: {
                 Format.VALUE: NoneType,
                 Format.FORWARDREF: NoneType,
@@ -8279,7 +8273,8 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "Y.bT",
                 },
             ],
-            # Special cases for _type_check
+            # Special cases for _type_check. Note depending on is_class and is_argument
+            # Those will raise a TypeError, expected is converted.
             ClassVar[None]: ClassVar[None],
             Final[None]: Final[None],
             Protocol[T]: Protocol[T],
@@ -8311,12 +8306,13 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 Format.FORWARDREF: TypeError,
                 Format.STRING: "Generic",
             },
+            # Class members
             "T_in_Y": [
                 {
                     "owner": None,
-                    "type_params": Y.__type_params__,
-                    Format.VALUE: Y.__type_params__[0],
-                    Format.FORWARDREF: Y.__type_params__[0],
+                    "type_params": Y_type_params,
+                    Format.VALUE: Y_type_params[0],
+                    Format.FORWARDREF: Y_type_params[0],
                     Format.STRING: "T_in_Y",
                 },
                 {
@@ -8329,15 +8325,22 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 {
                     "owner": Y,
                     "type_params": None,
-                    Format.VALUE: Y.__type_params__[0],
-                    Format.FORWARDREF: Y.__type_params__[0],
+                    Format.VALUE: NameError,
+                    Format.FORWARDREF: ForwardRef("T_in_Y"),
+                    Format.STRING: "T_in_Y",
+                },
+                {
+                    "owner": Z,
+                    "type_params": None,
+                    Format.VALUE: Y_type_params[0],
+                    Format.FORWARDREF: Y_type_params[0],
                     Format.STRING: "T_in_Y",
                 },
                 {
                     "owner": Y,
-                    "type_params": Y.__type_params__,
-                    Format.VALUE: Y.__type_params__[0],
-                    Format.FORWARDREF: Y.__type_params__[0],
+                    "type_params": Y_type_params,
+                    Format.VALUE: Y_type_params[0],
+                    Format.FORWARDREF: Y_type_params[0],
                     Format.STRING: "T_in_Y",
                 },
                 {
@@ -8356,9 +8359,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
             owner = expected.get("owner", None)
             type_params = expected.get("type_params", None)
             skip_if = expected.get("skip_if", False)
-            if format not in expected:
-                return
-            if skip_if:
+            if skip_if:  # Should only be used in list of dicts
                 L = locals()
                 skip = all(
                     # Check skip_if; for localns check only truthy value
@@ -8379,6 +8380,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 owner,
             )
         def unroll_cases(cases, outer_locals):
+            """Generator to yield all test cases"""
             for (
                 annot,
                 expected,
@@ -8413,10 +8415,9 @@ class TestEvaluateForwardRefs(BaseTestCase):
                         globalns,
                         localns,
                     )
-                    if case is not None:
-                        yield case
+                    yield case
                 # Multiple cases depending on other parameters
-                elif isinstance(expected, list):
+                elif type(expected) is list:
                     yield from filter(
                         None,
                         (
@@ -8482,6 +8483,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 type_params=type_params,
                 globals=bool(globalns),
                 locals=bool(localns),
+                owner=owner,
             ):
                 if isinstance(expected, str) and expected.lower().startswith("skip"):
                     self.skipTest(expected)
