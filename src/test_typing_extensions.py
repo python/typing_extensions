@@ -8180,6 +8180,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 Format.FORWARDREF: Optional[str],
                 Format.STRING: str(Union[str, None, "str"]),
             },
+            # Classes and members
             "X": X,
             "Y[X]": {
                 Format.VALUE: Y[X],
@@ -8235,6 +8236,22 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "Y[Y[T_nonlocal]]",
                 },
             ],
+            """Y['Z["StrAlias"]']""": [
+                {
+                    # This will be Y[Z["StrAlias"]] in 3.8 and 3.10
+                    Format.VALUE: (
+                        Y[Z[str]]
+                        if sys.version_info[:2] > (3, 10)
+                        else "Skip: nested ForwardRef not fully resolved"
+                    ),
+                    Format.FORWARDREF: (
+                        Y[Z[str]]
+                        if sys.version_info[:2] > (3, 10)
+                        else "Skip: nested ForwardRef not fully resolved"
+                    ),
+                    Format.STRING: """Y['Z["StrAlias"]']""",
+                },
+            ],
             "Y.a": [
                 {
                     "skip_if": {"localns": None, "format": Format.FORWARDREF},
@@ -8273,40 +8290,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "Y.bT",
                 },
             ],
-            # Special cases for _type_check. Note depending on is_class and is_argument
-            # Those will raise a TypeError, expected is converted.
-            ClassVar[None]: ClassVar[None],
-            Final[None]: Final[None],
-            Protocol[T]: Protocol[T],
-            Protocol: {  # plain usage of Protocol
-                Format.VALUE: TypeError,
-                Format.FORWARDREF: TypeError,
-                Format.STRING: "Protocol",
-            },
-            Final: (
-                [  # plain usage of Final
-                    {
-                        "skip_if": {"is_class": False},
-                        Format.VALUE: Final,
-                        Format.FORWARDREF: Final,
-                        Format.STRING: str(Final),
-                    },
-                    {
-                        "skip_if": {"is_class": True},
-                        Format.VALUE: TypeError,
-                        Format.FORWARDREF: TypeError,
-                        Format.STRING: str(Final),
-                    },
-                ]
-                if _FORWARD_REF_HAS_CLASS
-                else Final  # will not raise error in older versions
-            ),
-            Generic: {
-                Format.VALUE: TypeError,
-                Format.FORWARDREF: TypeError,
-                Format.STRING: "Generic",
-            },
-            # Class members
             "T_in_Y": [
                 {
                     "owner": None,
@@ -8351,6 +8334,41 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "T_in_Y",
                 },
             ],
+            # Special cases for _type_check. 
+            # Note: Depending on is_class and is_argument will raise TypeError
+            # therefore `expected`` is converted in the generator.
+            ClassVar[None]: ClassVar[None],
+            Final[None]: Final[None],
+            Protocol[T]: Protocol[T],
+            # Plain usage
+            Protocol: {
+                Format.VALUE: TypeError,
+                Format.FORWARDREF: TypeError,
+                Format.STRING: "Protocol",
+            },
+            Generic: {
+                Format.VALUE: TypeError,
+                Format.FORWARDREF: TypeError,
+                Format.STRING: "Generic",
+            },
+            Final: (
+                [
+                    {
+                        "skip_if": {"is_class": False},
+                        Format.VALUE: Final,
+                        Format.FORWARDREF: Final,
+                        Format.STRING: str(Final),
+                    },
+                    {
+                        "skip_if": {"is_class": True},
+                        Format.VALUE: TypeError,
+                        Format.FORWARDREF: TypeError,
+                        Format.STRING: str(Final),
+                    },
+                ]
+                if _FORWARD_REF_HAS_CLASS
+                else Final  # will not raise error in older versions
+            ),
         }
 
         def _unroll_subcase(
@@ -8524,6 +8542,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                             owner=owner,
                         )
                     continue
+
                 result = evaluate_forward_ref(
                     ref,
                     locals=localns,
@@ -8594,7 +8613,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
 
     def test_fwdref_to_builtin(self):
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), int)
-        if sys.version_info[:2] > (3, 13):
+        if HAS_FORWARD_MODULE:
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("int", module="collections")), int)
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), owner=str), int)
 

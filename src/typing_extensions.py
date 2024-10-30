@@ -4127,7 +4127,7 @@ else:
         if forward_ref.__forward_arg__ in _recursive_guard:
             return forward_ref
 
-        # Evalaute the forward reference
+        # Evaluate the forward reference
         try:
             value = _eval_with_owner(
                 forward_ref,
@@ -4158,6 +4158,7 @@ else:
                     is_argument=forward_ref.__forward_is_argument__,
                 )
         except TypeError as e:
+            # Recheck with more forgiving version
             type_ = _lax_type_check(
                 value,
                 e,
@@ -4171,6 +4172,7 @@ else:
             )
         else:
             # ClassVar/Final could pass _type_check but should error
+            # For 3.11+ should already have thrown the error above
             if sys.version_info < (3, 11) and (
                 _FORWARD_REF_HAS_CLASS
                 and not forward_ref.__forward_is_class__
@@ -4180,7 +4182,7 @@ else:
 
         del value
 
-        # Check if evaluation is possible
+        # Recursively evaluate the type
         if isinstance(type_, ForwardRef):
             if getattr(type_, "__forward_module__", True) is not None:
                 globals = None
