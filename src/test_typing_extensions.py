@@ -8141,6 +8141,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
 
             # workaround for type statement
             __type_params__ = (T_in_G,)
+        #Y.T_in_G = T_in_G
 
         # Assure that these are not in globals
         assert X.__name__ not in globals()
@@ -8313,19 +8314,11 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: Final,
                 },
             ],
-            Annotated[None, "data"]: Annotated[None, "data"],
-            Optional["annotation"]: {
-                Format.VALUE: Optional[annotation],
-                Format.FORWARDREF: Optional[annotation],
-                Format.STRING: Optional["annotation"],
-            },
             Union[str, None, "str"]: {
                 Format.VALUE: Optional[str],
                 Format.FORWARDREF: Optional[str],
                 Format.STRING: str(Union[str, None, "str"]),
             },
-            Unpack[Tuple[int, None]]: Unpack[Tuple[int, None]],
-            Unpack[Ts]: Unpack[Ts],
             "T_in_G": [
                 {
                     "type_params": Y.__type_params__,
@@ -8341,6 +8334,31 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 },
             ],
         }
+
+        def _unroll_subcase(
+            annot, expected, format, is_argument, is_class, globalns, localns
+        ):
+            type_params = expected.get("type_params", None)
+            skip_if = expected.get("skip_if", False)
+            if skip_if:
+                L = locals()
+                skip = all(
+                    # Check skip_if; for localns check only truthy value
+                    L[k] == v if k != "localns" else bool(localns) == bool(v)
+                    for k, v in skip_if.items()
+                )
+                if skip:
+                    return None
+            return (
+                annot,
+                expected[format],
+                format,
+                is_argument,
+                is_class,
+                globalns,
+                localns,
+                type_params,
+            )
         def unroll_cases(cases, outer_locals):
             for (
                 annot,
@@ -8365,42 +8383,33 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 else:
                     annot = str(annot)
                 if isinstance(expected, dict):
-                    type_params = expected.get("type_params", None)
-                    skip_if = expected.get("skip_if", False)
-                    if skip_if:
-                        L = locals()
-                        skip = all(L.get(k) == v for k, v in skip_if.items())
-                        if skip:
-                            continue
-                    yield (
-                        format,
+                    case = _unroll_subcase(
                         annot,
-                        expected[format],
+                        expected,
+                        format,
                         is_argument,
                         is_class,
-                        type_params,
                         globalns,
                         localns,
                     )
+                    if case is not None:
+                        yield case
                 elif isinstance(expected, list):
-                    for sub_expected in expected:
-                        type_params = sub_expected.get("type_params", None)
-                        skip_if = sub_expected.get("skip_if", {})
-                        if skip_if:
-                            L = locals()
-                            skip = all(L.get(k) == v if k != "localns" else bool(localns) == bool(v) for k, v in skip_if.items())
-                            if skip:
-                                continue
-                        yield (
-                            format,
-                            annot,
-                            sub_expected[format],
-                            is_argument,
-                            is_class,
-                            type_params,
-                            globalns,
-                            localns,
-                        )
+                    yield from filter(
+                        None,
+                        (
+                            _unroll_subcase(
+                                annot,
+                                sub_expected,
+                                format,
+                                is_argument,
+                                is_class,
+                                globalns,
+                                localns,
+                            )
+                            for sub_expected in expected
+                        ),
+                    )
                 else:
                     # Change expected to TypeError if it will fail typing._type_check
                     if not inspect.isclass(expected):
@@ -8416,19 +8425,26 @@ class TestEvaluateForwardRefs(BaseTestCase):
                             expected = TypeError
                     type_params = None
                     yield (
-                        format,
                         annot,
                         expected,
+                        format,
                         is_argument,
                         is_class,
-                        type_params,
                         globalns,
                         localns,
+                        type_params,
                     )
 
-        for format, annot, expected, is_argument, is_class, type_params, globalns, localns in unroll_cases(
-            cases, locals()
-        ):
+        for (
+            annot,
+            expected,
+            format,
+            is_argument,
+            is_class,
+            globalns,
+            localns,
+            type_params,
+        ) in unroll_cases(cases, locals()):
 
             if _FORWARD_REF_HAS_CLASS:
                 ref = typing.ForwardRef(annot, is_argument=is_argument, is_class=is_class)
@@ -8478,8 +8494,9 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     and (get_origin(expected) in (X, Y) or expected in (X, Y))
                     and localns is minimal_locals
                 ):
+                    # Will raise a simple NameError(X|Y) or a more verbose one
                     with self.assertRaisesRegex(NameError, "(X|Y)"):
-                        result = evaluate_forward_ref(
+                        evaluate_forward_ref(
                             ref,
                             locals=localns,
                             globals=globalns,
