@@ -753,6 +753,37 @@ Functions
 
    .. versionadded:: 4.2.0
 
+.. function:: evaluate_forward_ref(forward_ref, *, owner=None, globals=None, locals=None, type_params=None, format=Format.VALUE)
+
+   Evaluate an :py:class:`typing.ForwardRef` as a :py:term:`type hint`.
+
+   This is similar to calling :py:meth:`annotationlib.ForwardRef.evaluate`,
+   but unlike that method, :func:`!evaluate_forward_ref` also:
+
+   * Recursively evaluates forward references nested within the type hint.
+     However, the amount of recursion is limited in Python 3.8 and 3.10.
+   * Raises :exc:`TypeError` when it encounters certain objects that are
+     not valid type hints.
+   * Replaces type hints that evaluate to :const:`!None` with
+     :class:`types.NoneType`.
+   * Supports the :attr:`Format.FORWARDREF` and
+     :attr:`Format.STRING` formats.
+
+   *forward_ref* must be an instance of :py:class:`typing.ForwardRef`.
+   *owner*, if given, should be the object that holds the annotations that
+   the forward reference derived from, such as a module, class object, or function.
+   It is used to infer the namespaces to use for looking up names.
+   *globals* and *locals* can also be explicitly given to provide
+   the global and local namespaces.
+   *type_params* is a tuple of :py:ref:`type parameters <type-params>` that
+   are in scope when evaluating the forward reference.
+   This parameter must be provided (though it may be an empty tuple) if *owner*
+   is not given and the forward reference does not already have an owner set.
+   *format* specifies the format of the annotation and is a member of
+   the :class:`Format` enum.
+
+   .. versionadded:: 4.13.0
+
 .. function:: get_annotations(obj, *, globals=None, locals=None, eval_str=False, format=Format.VALUE)
 
    See :py:func:`inspect.get_annotations`. In the standard library since Python 3.10.
