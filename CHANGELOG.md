@@ -26,6 +26,9 @@ aliases that have a `Concatenate` special form as their argument.
 - Backport CPython PR [#124795](https://github.com/python/cpython/pull/124795):
   fix `TypeAliasType` not raising an error on non-tuple inputs for `type_params`.
   Patch by [Daraan](https://github.com/Daraan).
+- Backport `evaluate_forward_ref` from CPython PR
+  [#119891](https://github.com/python/cpython/pull/119891) to evaluate `ForwardRef`s.
+  Patch by [Daraan](https://github.com/Daraan), backporting a CPython PR by Jelle Zijlstra.
 
 # Release 4.12.2 (June 7, 2024)
 
