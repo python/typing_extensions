@@ -1,10 +1,12 @@
 import abc
+import builtins
 import collections
 import collections.abc
 import contextlib
 import enum
 import functools
 import inspect
+import keyword
 import operator
 import sys
 import types as _types
@@ -142,6 +144,9 @@ __all__ = [
 PEP_560 = True
 GenericMeta = type
 _PEP_696_IMPLEMENTED = sys.version_info >= (3, 13, 0, "beta")
+
+# Added with bpo-45166 to 3.10.1+ and some 3.9 versions
+_FORWARD_REF_HAS_CLASS = "__forward_is_class__" in typing.ForwardRef.__slots__
 
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
@@ -3932,26 +3937,133 @@ else:
         return return_value
 
 
-
 if hasattr(typing, "evaluate_forward_ref"):
     evaluate_forward_ref = typing.evaluate_forward_ref
 else:
-    if hasattr(typing, "_deprecation_warning_for_no_type_params_passed"):
-        _deprecation_warning_for_no_type_params_passed = (
-            typing._deprecation_warning_for_no_type_params_passed
-        )
-    else:
-        def _deprecation_warning_for_no_type_params_passed(funcname: str) -> None:
-            import warnings
 
-            depr_message = (
-                f"Failing to pass a value to the 'type_params' parameter "
-                f"of {funcname!r} is deprecated, as it leads to incorrect behaviour "
-                f"when calling {funcname} on a stringified annotation "
-                f"that references a PEP 695 type parameter. "
-                f"It will be disallowed in Python 3.15."
+    def _eval_with_owner(
+        forward_ref, *, owner=None, globals=None, locals=None, type_params=None
+    ):
+        if forward_ref.__forward_evaluated__:
+            return forward_ref.__forward_value__
+        if getattr(forward_ref, "__cell__", None) is not None:
+            try:
+                value = forward_ref.__cell__.cell_contents
+            except ValueError:
+                pass
+            else:
+                forward_ref.__forward_evaluated__ = True
+                forward_ref.__forward_value__ = value
+                return value
+        if owner is None:
+            owner = getattr(forward_ref, "__owner__", None)
+
+        if (
+            globals is None
+            and getattr(forward_ref, "__forward_module__", None) is not None
+        ):
+            globals = getattr(
+                sys.modules.get(forward_ref.__forward_module__, None), "__dict__", None
             )
-            warnings.warn(depr_message, category=DeprecationWarning, stacklevel=3)
+        if globals is None:
+            globals = getattr(forward_ref, "__globals__", None)
+        if globals is None:
+            if isinstance(owner, type):
+                module_name = getattr(owner, "__module__", None)
+                if module_name:
+                    module = sys.modules.get(module_name, None)
+                    if module:
+                        globals = getattr(module, "__dict__", None)
+            elif isinstance(owner, _types.ModuleType):
+                globals = getattr(owner, "__dict__", None)
+            elif callable(owner):
+                globals = getattr(owner, "__globals__", None)
+
+        # If we pass None to eval() below, the globals of this module are used.
+        if globals is None:
+            globals = {}
+
+        if locals is None:
+            locals = {}
+            if isinstance(owner, type):
+                locals.update(vars(owner))
+
+        if type_params is None and owner is not None:
+            # "Inject" type parameters into the local namespace
+            # (unless they are shadowed by assignments *in* the local namespace),
+            # as a way of emulating annotation scopes when calling `eval()`
+            type_params = getattr(owner, "__type_params__", None)
+
+        # type parameters require some special handling,
+        # as they exist in their own scope
+        # but `eval()` does not have a dedicated parameter for that scope.
+        # For classes, names in type parameter scopes should override
+        # names in the global scope (which here are called `localns`!),
+        # but should in turn be overridden by names in the class scope
+        # (which here are called `globalns`!)
+        if type_params is not None:
+            globals = dict(globals)
+            locals = dict(locals)
+            for param in type_params:
+                param_name = param.__name__
+                if (
+                    _FORWARD_REF_HAS_CLASS and not forward_ref.__forward_is_class__
+                ) or param_name not in globals:
+                    globals[param_name] = param
+                    locals.pop(param_name, None)
+
+        arg = forward_ref.__forward_arg__
+        if arg.isidentifier() and not keyword.iskeyword(arg):
+            if arg in locals:
+                value = locals[arg]
+            elif arg in globals:
+                value = globals[arg]
+            elif hasattr(builtins, arg):
+                return getattr(builtins, arg)
+            else:
+                raise NameError(arg)
+        else:
+            code = forward_ref.__forward_code__
+            value = eval(code, globals, locals)
+        forward_ref.__forward_evaluated__ = True
+        forward_ref.__forward_value__ = value
+        return value
+
+    def _lax_type_check(
+        value, exec, msg, is_argument=True, *, module=None, allow_special_forms=False
+    ):
+        """
+        A forgiving version of typing._type_check to be executed if the original fails
+        """
+        # relax type check
+        if hasattr(typing, "_type_convert"):
+            if _FORWARD_REF_HAS_CLASS:
+                type_ = typing._type_convert(
+                    value,
+                    allow_special_forms=allow_special_forms,
+                )
+            else:
+                type_ = typing._type_convert(value)
+        else:
+            if value is None:
+                type_ = type(None)
+            elif isinstance(value, str):
+                type_ = ForwardRef(value)
+            else:
+                type_ = value
+        invalid_generic_forms = (Generic, Protocol)
+        if not allow_special_forms:
+            invalid_generic_forms += (ClassVar,)
+            if is_argument:
+                invalid_generic_forms += (Final,)
+        if type(type_) is tuple:
+            raise exec
+        if (
+            isinstance(type_, typing._GenericAlias)
+            and type_.__origin__ in invalid_generic_forms
+        ):
+            raise TypeError(f"{type_} is not valid as type argument") from None
+        return type_
 
     def evaluate_forward_ref(
         forward_ref,
@@ -3985,54 +4097,59 @@ else:
         annotation and is a member of the annotationlib.Format enum.
 
         """
-        if hasattr(typing, "_sentinel") and type_params is typing._sentinel:
-            _deprecation_warning_for_no_type_params_passed("typing.evaluate_forward_ref")
-            type_params = ()
         if format == Format.STRING:
             return forward_ref.__forward_arg__
         if forward_ref.__forward_arg__ in _recursive_guard:
             return forward_ref
 
+        # Evalaute the forward reference
         try:
-            if hasattr(forward_ref, "evaluate"):
-                value = forward_ref.evaluate(
-                    globals=globals, locals=locals, type_params=type_params, owner=owner
-                )
-            elif sys.version_info >= (3, 12, 4):
-                value = forward_ref._evaluate(
-                    globalns=globals,
-                    localns=locals,
-                    type_params=type_params,
-                    recursive_guard=frozenset(),
-                )
-            elif sys.version_info >= (3, 9):
-                value = forward_ref._evaluate(
-                    globalns=globals, localns=locals, recursive_guard=frozenset()
-                )
-            else:
-                value = forward_ref._evaluate(
-                    globalns=globals, localns=locals
-                )
+            value = _eval_with_owner(
+                forward_ref,
+                owner=owner,
+                globals=globals,
+                locals=locals,
+                type_params=type_params,
+            )
         except NameError:
             if format == Format.FORWARDREF:
                 return forward_ref
             else:
                 raise
 
-        if sys.version_info < (3, 10, 1):
-            type_ = typing._type_check(
+        msg = "Forward references must evaluate to types."
+        try:
+            if _FORWARD_REF_HAS_CLASS:
+                type_ = typing._type_check(
+                    value,
+                    msg,
+                    is_argument=forward_ref.__forward_is_argument__,
+                    allow_special_forms=forward_ref.__forward_is_class__,
+                )
+            else:
+                type_ = typing._type_check(
+                    value,
+                    msg,
+                    is_argument=forward_ref.__forward_is_argument__,
+                )
+        except TypeError as e:
+            type_ = _lax_type_check(
                 value,
-                "Forward references must evaluate to types.",
+                e,
+                msg,
                 is_argument=forward_ref.__forward_is_argument__,
-                #allow_special_forms=forward_ref.__forward_is_class__,
+                allow_special_forms=(
+                    _FORWARD_REF_HAS_CLASS and forward_ref.__forward_is_class__
+                )
             )
-        else:
-            type_ = typing._type_check(
-                value,
-                "Forward references must evaluate to types.",
-                is_argument=forward_ref.__forward_is_argument__,
-                allow_special_forms=forward_ref.__forward_is_class__,
-            )
+
+        # Check if evaluation is possible
+        if isinstance(type_, ForwardRef):
+            if getattr(type_, "__forward_module__", True) is not None:
+                globals = None
+            return evaluate_forward_ref(type_, globals=globals, locals=locals,
+                        type_params=type_params, owner=owner,
+                        _recursive_guard=_recursive_guard, format=format)
         if sys.version_info < (3, 9):
             return typing._eval_type(
                 type_,

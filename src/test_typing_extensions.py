@@ -28,6 +28,7 @@ from unittest.mock import patch
 import typing_extensions
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 from typing_extensions import (
+    _FORWARD_REF_HAS_CLASS,
     _PEP_649_OR_749_IMPLEMENTED,
     Annotated,
     Any,
@@ -8023,27 +8024,74 @@ class TestGetAnnotationsWithPEP695(BaseTestCase):
 
 class TestEvaluateForwardRefs(BaseTestCase):
     def test_evaluate_forward_refs(self):
-        from typing import ForwardRef  # noqa: F401 # needed for globals/locals
+        import typing  # needed for globals/locals
+        from typing import ForwardRef  # needed for globals/locals
+
+        minimal_globals = {
+            "typing": typing,
+            "ForwardRef": ForwardRef,
+            "typing_extensions": typing_extensions,
+            **vars(typing_extensions),
+        }
 
         error_res = None
         annotation = Annotated[Union[int, None], "data"]
         NoneAlias = None
         StrAlias = str
+        T = TypeVar("T")
         T_default = TypeVar("T_default", default=None)
         Ts = TypeVarTuple("Ts")
         NoneType = type(None)
 
+        T_nonlocal = T_local = TypeVar("T_nonlocal")
+        T_local_type_params = (T_nonlocal,)
+        del T_nonlocal
+
         class _EasyStr:
             def __str__(self):
                 return self.__class__.__name__
+            def __repr__(self) -> str:
+                return str(self)
+            @classmethod
+            def to_forwardref(cls, arg) -> ForwardRef:
+                if not arg.__args__:
+                    return ForwardRef(cls.__name__)
+                else:
+                    return ForwardRef(
+                        cls.__name__ + "[" + ", ".join(a.__name__ if isinstance(a, type) else str(a) for a in arg.__args__) + "]"
+                    )
 
-        class A(_EasyStr): pass
+        # Assure that these are not in globals
+        class X(_EasyStr): pass
 
-        class B(Generic[T], _EasyStr):
-            a = "A"
-            bT = "B[T]"
+        T_in_G = TypeVar("T_in_G")
+        class Y(Generic[T_in_G], _EasyStr):
+            a = "X"
+            bT = "Y[T_nonlocal]"
+            alias = int
+
+            __type_params__ = (T_in_G,)
+
+        assert X.__name__ not in globals()
+        assert Y.__name__ not in globals()
+        assert Y.__type_params__ == (T_in_G,)
+        del T_in_G
+
+        minimal_locals = {
+            #"Y": Y,
+            #"X": X,
+            "StrAlias" : str,
+            "NoneAlias" : None,
+            "NoneType" : NoneType,
+            "Ts" : Ts,
+            "annotation" : annotation,
+            "T": T,
+            "T_default": T_default,
+            "ForwardRef": ForwardRef,
+        }
 
         cases = {
+            # values can be types, dicts or list of dicts.
             None: {
                 Format.VALUE: NoneType,
                 Format.FORWARDREF: NoneType,
@@ -8060,40 +8108,125 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 Format.FORWARDREF: str,
                 Format.STRING: "StrAlias",
             },
-            "A": A,
-            "B[A]": {
-                Format.VALUE: B[A],
-                Format.FORWARDREF: B[A],
-                Format.STRING: "B[A]",
+            "X": X,
+            "Y[X]": {
+                Format.VALUE: Y[X],
+                Format.FORWARDREF: Y[X],
+                Format.STRING: "Y[X]",
             },
-            "B[NotAvailiable]": {
-                Format.VALUE: NameError,
-                Format.FORWARDREF: typing.ForwardRef("B[NotAvailiable]"),
-                Format.STRING: "B[NotAvailiable]",
+            "Y[T_nonlocal]": [
+                {
+                    "type_params": (T,),  # wrong TypeVar
+                    Format.VALUE: NameError,
+                    Format.FORWARDREF: typing.ForwardRef("Y[T_nonlocal]"),
+                    Format.STRING: "Y[T_nonlocal]",
+                },
+                {
+                    "type_params": T_local_type_params,
+                    Format.VALUE: Y[T_local],
+                    Format.FORWARDREF: Y[T_local],
+                    Format.STRING: "Y[T_nonlocal]",
+                },
+            ],
+            "Y[Y['T']]": {
+                Format.VALUE: Y[Y[T]],
+                Format.FORWARDREF: Y[Y[T]],
+                Format.STRING: "Y[Y['T']]",
             },
-            "B[B[T]]": {
-                Format.VALUE: B[B[T]],
-                Format.FORWARDREF: B[B[T]],
-                Format.STRING: "B[B[T]]",
-            },
-            "NotAvailiable": {
-                Format.VALUE: NameError,
-                Format.FORWARDREF: typing.ForwardRef("NotAvailiable"),
-                Format.STRING: "NotAvailiable",
-            },
-            "B.a": {
-                Format.VALUE: A,
-                Format.FORWARDREF: A,
-                Format.STRING: "B.a",
-            },
-            "B.bT": {
-                Format.VALUE: B[T],
-                Format.FORWARDREF: B[T],
-                Format.STRING: "B.bT",
-            },
+            """Y["Y['T']"]""": [
+                {
+                    # "skip_if": {"localns": None, "format": Format.FORWARDREF},
+                    Format.VALUE: (
+                        Y[Y[T]]
+                        if sys.version_info[:2] > (3, 8)
+                        else "Skip: nested string not supported"
+                    ),
+                    Format.FORWARDREF: (
+                        Y[Y[T]]
+                        if sys.version_info[:2] > (3, 8)
+                        else "Skip: nested string not supported"
+                    ),
+                    Format.STRING: """Y["Y['T']"]""",
+                },
+                # {
+                #    "skip_if": {"localns": True, "format": Format.FORWARDREF},
+                #    Format.VALUE: (
+                #        Y[Y[T]]
+                #       if sys.version_info[:2] > (3, 8)
+                #        else "Skip: nested string not supported"
+                #   ),
+                #   Format.FORWARDREF: ForwardRef("Y[\"Y['T']\"]"),
+                #   Format.STRING: """Y["Y['T']"]""",
+                # },
+            ],
+            "Y[Y[T_nonlocal]]": [
+                {
+                    "type_params": T_local_type_params,
+                    # "skip_if": {"localns": None, "format": Format.FORWARDREF},
+                    Format.VALUE: Y[Y[T_local]],
+                    Format.FORWARDREF: Y[Y[T_local]],
+                    Format.STRING: "Y[Y[T_nonlocal]]",
+                },
+                # {
+                #    "type_params": T_local_type_params,
+                # "skip_if": {"localns": locals(), "format": Format.FORWARDREF},
+                #    Format.VALUE: Y[Y[T_local]],
+                #    Format.FORWARDREF: ForwardRef("Y[Y[T_nonlocal]]"),
+                #    Format.STRING: "Y[Y[T_nonlocal]]",
+                # },
+                {
+                    "type_params": None,
+                    Format.VALUE: NameError,
+                    Format.FORWARDREF: typing.ForwardRef("Y[Y[T_nonlocal]]"),
+                    Format.STRING: "Y[Y[T_nonlocal]]",
+                },
+            ],
+            "Y.a": [
+                {
+                    "skip_if": {"localns": None, "format": Format.FORWARDREF},
+                    Format.VALUE: X,
+                    Format.FORWARDREF: X,
+                    Format.STRING: "Y.a",
+                },
+                {
+                    "skip_if": {"localns": True, "format": Format.FORWARDREF},
+                    Format.VALUE: X,
+                    Format.FORWARDREF: ForwardRef("Y.a"),
+                    Format.STRING: "Y.a",
+                },
+            ],
+            "Y.bT": [
+                # Note: That the STRING is "Y.bT" and not "Y[T_nonlocal]" is one of the
+                # cases that differ from <3.14 ForwardRef behavior.
+                {
+                    "type_params": T_local_type_params,
+                    Format.VALUE: Y[T_local],
+                    Format.FORWARDREF: Y[T_local],
+                    Format.STRING: "Y.bT",
+                },
+                {
+                    "type_params": None,
+                    "skip_if": {"localns": None, "format": Format.FORWARDREF},
+                    Format.VALUE: NameError,
+                    Format.FORWARDREF: typing.ForwardRef("Y[T_nonlocal]"),
+                    Format.STRING: "Y.bT",
+                },
+                {
+                    "type_params": None,
+                    "skip_if": {"localns": True, "format": Format.FORWARDREF},
+                    Format.VALUE: NameError,
+                    Format.FORWARDREF: typing.ForwardRef("Y.bT"),
+                    Format.STRING: "Y.bT",
+                },
+            ],
+            ClassVar[None]: ClassVar[None],
             Annotated[None, "none"]: Annotated[None, "none"],
             annotation: annotation,
-            # Optional["annotation"]: Optional[annotation],
+            Optional["annotation"]: {
+                Format.VALUE: Optional[annotation],
+                Format.FORWARDREF: Optional[annotation],
+                Format.STRING: Optional["annotation"],
+            },
             Optional[int]: Optional[int],
             Optional[List[str]]: Optional[List[str]],
             "Union[str, None, str]": {
@@ -8108,128 +8241,279 @@ class TestEvaluateForwardRefs(BaseTestCase):
             },
             Unpack[Tuple[int, None]]: Unpack[Tuple[int, None]],
             Unpack[Ts]: Unpack[Ts],
+            "T_in_G": [
+                {
+                    "type_params": Y.__type_params__,
+                    Format.VALUE: Y.__type_params__[0],
+                    Format.FORWARDREF: Y.__type_params__[0],
+                    Format.STRING: "T_in_G",
+                },
+                {
+                    "type_params": None,
+                    Format.VALUE: NameError,
+                    Format.FORWARDREF: ForwardRef("T_in_G"),
+                    Format.STRING: "T_in_G",
+                },
+            ],
+
         }
-
-        for annot, expected in cases.items():
-            #ref = typing._type_convert(annot)
-            ref = typing.ForwardRef(
-                str(annot)
-                if not isinstance(annot, type)
-                else annot.__name__
-            )
-            for format in Format.VALUE, Format.FORWARDREF, Format.STRING:
-                with self.subTest(format=format, ref=ref):
-                    if isinstance(expected, dict):
-                        check_expected = expected[format]
-                    else:
-                        check_expected = expected
-                    if check_expected is NameError:
-                        with self.assertRaises(NameError):
-                            evaluate_forward_ref(
-                                ref, locals=locals(), globals=globals(), format=format
-                            )
-                        del check_expected
-                        continue
-                    if format == Format.STRING:
-                        check_expected = (
-                            str(check_expected)
-                            if not isinstance(check_expected, type)
-                            else check_expected.__name__
-                        )
-                    result = evaluate_forward_ref(
-                        ref, locals=locals(), globals=globals(), format=format
+        def unroll_cases(cases, outer_locals):
+            for (
+                annot,
+                expected,
+            ), format, is_argument, is_class, globalns, localns in itertools.product(
+                # annot, expected
+                cases.items(),
+                # format
+                (Format.VALUE, Format.FORWARDREF, Format.STRING),
+                # is_argument
+                (False, True),
+                # is_class argument availiable for different version ranges
+                (False, True) if _FORWARD_REF_HAS_CLASS else (None,),
+                # globals
+                (globals(), None),
+                # locals
+                (outer_locals, None),
+            ):
+                # Argument for ForwardRef
+                if isinstance(annot, type):
+                    annot = annot.__name__
+                else:
+                    annot = str(annot)
+                if isinstance(expected, dict):
+                    type_params = expected.get("type_params", None)
+                    skip_if = expected.get("skip_if", False)
+                    if skip_if:
+                        L = locals()
+                        skip = all(L.get(k) == v for k, v in skip_if.items())
+                        if skip:
+                            continue
+                    yield (
+                        format,
+                        annot,
+                        expected[format],
+                        is_argument,
+                        is_class,
+                        type_params,
+                        globalns,
+                        localns,
                     )
-                    self.assertEqual(result, check_expected)
-                    del check_expected
+                elif isinstance(expected, list):
+                    for sub_expected in expected:
+                        type_params = sub_expected.get("type_params", None)
+                        skip_if = sub_expected.get("skip_if", {})
+                        if skip_if:
+                            L = locals()
+                            skip = all(L.get(k) == v if k != "localns" else bool(localns) == bool(v) for k, v in skip_if.items())
+                            if skip:
+                                continue
+                        yield (
+                            format,
+                            annot,
+                            sub_expected[format],
+                            is_argument,
+                            is_class,
+                            type_params,
+                            globalns,
+                            localns,
+                        )
+                else:
+                    # Invalid types
+                    if (
+                        get_origin(expected) is ClassVar
+                        and format != Format.STRING
+                        and (
+                            is_class is False
+                            or (not _FORWARD_REF_HAS_CLASS and is_argument)
+                        )
+                    ):
+                        expected = TypeError
+                    type_params = None
+                    yield (
+                        format,
+                        annot,
+                        expected,
+                        is_argument,
+                        is_class,
+                        type_params,
+                        globalns,
+                        localns,
+                    )
 
-    def test_evaluate_with_type_params(self):
-        class Gen[T]:
-            alias = int
+        for format, annot, expected, is_argument, is_class, type_params, globalns, localns in unroll_cases(
+            cases, locals()
+        ):
+
+            if _FORWARD_REF_HAS_CLASS:
+                ref = typing.ForwardRef(annot, is_argument=is_argument, is_class=is_class)
+            else:
+                ref = typing.ForwardRef(annot, is_argument=is_argument)
+            expected_orig = expected
+            orig_globalns = globalns
+            orig_localns = localns
+            expected = expected_orig
+            globalns = orig_globalns
+            localns = orig_localns
+            with self.subTest(
+                format=format,
+                ref=ref,
+                is_argument=is_argument,
+                is_class=is_class,
+                type_params=type_params,
+                expected=expected,
+                globals=bool(globalns),
+                locals=bool(localns),
+            ):
+                if isinstance(expected, str) and expected.lower().startswith("skip"):
+                    self.skipTest(expected)
+                # Adjust namespaces
+                if globalns is None:
+                    globalns = minimal_globals
+                if localns is None:
+                    localns = minimal_locals
+                if inspect.isclass(expected) and issubclass(expected, Exception):
+                    with self.assertRaises(expected):
+                        evaluate_forward_ref(
+                            ref, locals=localns, globals=globalns, format=format,
+                        )
+                    continue
+                if format == Format.STRING:
+                    expected = (
+                        str(expected)
+                        if not isinstance(expected, type)
+                        else expected.__name__
+                    )
+                # If the value is not in locals, we expect the forward ref to be returned
+                elif format == Format.FORWARDREF and (get_origin(expected) in (X, Y) or expected in (X, Y)) and localns is minimal_locals:
+                    expected = ref
+                # If the value are not in locals it will throw an error
+                elif (
+                    format == Format.VALUE
+                    and (get_origin(expected) in (X, Y) or expected in (X, Y))
+                    and localns is minimal_locals
+                ):
+                    with self.assertRaisesRegex(NameError, "(X|Y)"):
+                        result = evaluate_forward_ref(
+                            ref,
+                            locals=localns,
+                            globals=globalns,
+                            format=format,
+                            type_params=type_params,
+                            owner=None,
+                        )
+                    continue
+                result = evaluate_forward_ref(
+                    ref,
+                    locals=localns,
+                    globals=globalns,
+                    format=format,
+                    type_params=type_params,
+                    owner=None,
+                )
+                self.assertEqual(result, expected)
+
+        if not TYPING_3_12_0:
+            T = TypeVar("T")
+            class Gen(Generic[T]):
+                alias = int
+            if not hasattr(Gen, "__type_params__"):
+                Gen.__type_params__ = (T,)
+            assert Gen.__type_params__ == (T,)
+            del T
+        else:
+            ns = {}
+            exec(textwrap.dedent("""
+            class Gen[T]:
+                alias = int
+            """), None, ns)
+            Gen = ns["Gen"]
 
         with self.assertRaises(NameError):
-            ForwardRef("T").evaluate()
+            evaluate_forward_ref(typing.ForwardRef("T"))
         with self.assertRaises(NameError):
-            ForwardRef("T").evaluate(type_params=())
+            evaluate_forward_ref(typing.ForwardRef("T"), type_params=())
         with self.assertRaises(NameError):
-            ForwardRef("T").evaluate(owner=int)
+            evaluate_forward_ref(typing.ForwardRef("T"), owner=int)
 
         (T,) = Gen.__type_params__
-        self.assertIs(ForwardRef("T").evaluate(type_params=Gen.__type_params__), T)
-        self.assertIs(ForwardRef("T").evaluate(owner=Gen), T)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("T"), type_params=Gen.__type_params__), T)
+        if TYPING_3_11_0:
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("T"), owner=Gen), T)
 
         with self.assertRaises(NameError):
-            ForwardRef("alias").evaluate(type_params=Gen.__type_params__)
-        self.assertIs(ForwardRef("alias").evaluate(owner=Gen), int)
+            evaluate_forward_ref(typing.ForwardRef("alias"), type_params=Gen.__type_params__)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("alias"), owner=Gen), int)
         # If you pass custom locals, we don't look at the owner's locals
         with self.assertRaises(NameError):
-            ForwardRef("alias").evaluate(owner=Gen, locals={})
+            evaluate_forward_ref(typing.ForwardRef("alias"), owner=Gen, locals={})
         # But if the name exists in the locals, it works
         self.assertIs(
-            ForwardRef("alias").evaluate(owner=Gen, locals={"alias": str}), str
+            evaluate_forward_ref(typing.ForwardRef("alias"), owner=Gen, locals={"alias": str}), str
         )
 
+    @skipUnless(
+        HAS_FORWARD_MODULE, "Needs module 'forward' to test forward references"
+    )
     def test_fwdref_with_module(self):
-        self.assertIs(ForwardRef("Format", module="annotationlib").evaluate(), Format)
         self.assertIs(
-            ForwardRef("Counter", module="collections").evaluate(), collections.Counter
+            evaluate_forward_ref(typing.ForwardRef("Counter", module="collections")), collections.Counter
         )
         self.assertEqual(
-            ForwardRef("Counter[int]", module="collections").evaluate(),
+            evaluate_forward_ref(typing.ForwardRef("Counter[int]", module="collections")),
             collections.Counter[int],
         )
 
         with self.assertRaises(NameError):
             # If globals are passed explicitly, we don't look at the module dict
-            ForwardRef("Format", module="annotationlib").evaluate(globals={})
+            evaluate_forward_ref(typing.ForwardRef("Format", module="annotationlib"), globals={})
 
     def test_fwdref_to_builtin(self):
-        self.assertIs(ForwardRef("int").evaluate(), int)
-        self.assertIs(ForwardRef("int", module="collections").evaluate(), int)
-        self.assertIs(ForwardRef("int", owner=str).evaluate(), int)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), int)
+        if sys.version_info[:2] > (3, 13):
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("int", module="collections")), int)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), owner=str), int)
 
         # builtins are still searched with explicit globals
-        self.assertIs(ForwardRef("int").evaluate(globals={}), int)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={}), int)
 
+    @skipIf(sys.version_info[:2] < (3, 10), "Forward references must evaluate to types, i.e. not a callable")
+    def test_fwdref_with_globals(self):
         # explicit values in globals have precedence
         obj = object()
-        self.assertIs(ForwardRef("int").evaluate(globals={"int": obj}), obj)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={"int": obj}), obj)
 
     def test_fwdref_value_is_cached(self):
-        fr = ForwardRef("hello")
+        fr = typing.ForwardRef("hello")
         with self.assertRaises(NameError):
-            fr.evaluate()
-        self.assertIs(fr.evaluate(globals={"hello": str}), str)
-        self.assertIs(fr.evaluate(), str)
+            evaluate_forward_ref(fr)
+        self.assertIs(evaluate_forward_ref(fr, globals={"hello": str}), str)
+        self.assertIs(evaluate_forward_ref(fr), str)
 
+    @skipUnless(TYPING_3_9_0, "Needs PEP 585 support")
     def test_fwdref_with_owner(self):
         self.assertEqual(
-            ForwardRef("Counter[int]", owner=collections).evaluate(),
+            evaluate_forward_ref(typing.ForwardRef("Counter[int]"), owner=collections),
             collections.Counter[int],
         )
 
     def test_name_lookup_without_eval(self):
         # test the codepath where we look up simple names directly in the
         # namespaces without going through eval()
-        self.assertIs(ForwardRef("int").evaluate(), int)
-        self.assertIs(ForwardRef("int").evaluate(locals={"int": str}), str)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), int)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), locals={"int": str}), str)
         self.assertIs(
-            ForwardRef("int").evaluate(locals={"int": float}, globals={"int": str}),
+            evaluate_forward_ref(typing.ForwardRef("int"), locals={"int": float}, globals={"int": str}),
             float,
         )
-        self.assertIs(ForwardRef("int").evaluate(globals={"int": str}), str)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={"int": str}), str)
+        import builtins
+
+        from test import support
         with support.swap_attr(builtins, "int", dict):
-            self.assertIs(ForwardRef("int").evaluate(), dict)
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), dict)
 
         with self.assertRaises(NameError):
-            ForwardRef("doesntexist").evaluate()
-
-    def test_fwdref_invalid_syntax(self):
-        fr = ForwardRef("if")
-        with self.assertRaises(SyntaxError):
-            fr.evaluate()
-        fr = ForwardRef("1+")
-        with self.assertRaises(SyntaxError):
-            fr.evaluate()
+            evaluate_forward_ref(typing.ForwardRef("doesntexist"))
 
 
 if __name__ == '__main__':
