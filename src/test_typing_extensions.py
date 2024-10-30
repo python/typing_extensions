@@ -8102,12 +8102,11 @@ class TestGetAnnotationsWithPEP695(BaseTestCase):
 
 class TestEvaluateForwardRefs(BaseTestCase):
     def test_evaluate_forward_refs(self):
-        import typing  # needed for globals/locals
-        from typing import ForwardRef  # needed for globals/locals
+        from typing import ForwardRef  # noqa: F401 # needed for locals
 
         minimal_globals = {
             "typing": typing,
-            "ForwardRef": ForwardRef,
+            "ForwardRef": typing.ForwardRef,
             "typing_extensions": typing_extensions,
             **vars(typing_extensions),
         }
@@ -8151,7 +8150,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
             "annotation" : annotation,
             "T": T,
             "T_default": T_default,
-            "ForwardRef": ForwardRef,
+            "ForwardRef": typing.ForwardRef,
         }
 
         cases = {
@@ -8262,7 +8261,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 {
                     "skip_if": {"localns": True, "format": Format.FORWARDREF},
                     Format.VALUE: X,
-                    Format.FORWARDREF: ForwardRef("Y.a"),
+                    Format.FORWARDREF: typing.ForwardRef("Y.a"),
                     Format.STRING: "Y.a",
                 },
             ],
@@ -8302,14 +8301,14 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     "owner": None,
                     "type_params": None,
                     Format.VALUE: NameError,
-                    Format.FORWARDREF: ForwardRef("T_in_Y"),
+                    Format.FORWARDREF: typing.ForwardRef("T_in_Y"),
                     Format.STRING: "T_in_Y",
                 },
                 {
                     "owner": Y,
                     "type_params": None,
                     Format.VALUE: NameError,
-                    Format.FORWARDREF: ForwardRef("T_in_Y"),
+                    Format.FORWARDREF: typing.ForwardRef("T_in_Y"),
                     Format.STRING: "T_in_Y",
                 },
                 {
@@ -8330,7 +8329,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     "owner": X,
                     "type_params": None,
                     Format.VALUE: NameError,
-                    Format.FORWARDREF: ForwardRef("T_in_Y"),
+                    Format.FORWARDREF: typing.ForwardRef("T_in_Y"),
                     Format.STRING: "T_in_Y",
                 },
             ],
