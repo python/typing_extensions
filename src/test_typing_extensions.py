@@ -8334,7 +8334,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "T_in_Y",
                 },
             ],
-            # Special cases for _type_check. 
+            # Special cases for _type_check.
             # Note: Depending on is_class and is_argument will raise TypeError
             # therefore `expected`` is converted in the generator.
             ClassVar[None]: ClassVar[None],
@@ -8435,7 +8435,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     )
                     yield case
                 # Multiple cases depending on other parameters
-                elif type(expected) is list:
+                elif type(expected) is list:  # noqa: E721 # avoid _ConcatenateGenericAlias
                     yield from filter(
                         None,
                         (
