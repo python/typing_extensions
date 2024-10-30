@@ -8131,23 +8131,24 @@ class TestEvaluateForwardRefs(BaseTestCase):
             def __repr__(self) -> str:
                 return str(self)
 
-        class X(_EasyStr): pass
+        class X(_EasyStr):
+            T_in_Y = object()
 
-        T_in_G = TypeVar("T_in_G")
-        class Y(Generic[T_in_G], _EasyStr):
+        T_in_Y = TypeVar("T_in_Y")
+        class Y(Generic[T_in_Y], _EasyStr):
             a = "X"
             bT = "Y[T_nonlocal]"
             alias = int
 
             # workaround for type statement
-            __type_params__ = (T_in_G,)
-        #Y.T_in_G = T_in_G
+            __type_params__ = (T_in_Y,)
+        Y.T_in_Y = T_in_Y
 
         # Assure that these are not in globals
         assert X.__name__ not in globals()
         assert Y.__name__ not in globals()
-        assert Y.__type_params__ == (T_in_G,)
-        del T_in_G
+        self.assertEqual(Y.__type_params__, (T_in_Y,))
+        del T_in_Y
 
         minimal_locals = {
             #"Y": Y,
@@ -8179,6 +8180,11 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 Format.VALUE: str,
                 Format.FORWARDREF: str,
                 Format.STRING: "StrAlias",
+            },
+            Union[str, None, "str"]: {
+                Format.VALUE: Optional[str],
+                Format.FORWARDREF: Optional[str],
+                Format.STRING: str(Union[str, None, "str"]),
             },
             "X": X,
             "Y[X]": {
@@ -8220,32 +8226,14 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     ),
                     Format.STRING: """Y["Y['T']"]""",
                 },
-                # {
-                #    "skip_if": {"localns": True, "format": Format.FORWARDREF},
-                #    Format.VALUE: (
-                #        Y[Y[T]]
-                #       if sys.version_info[:2] > (3, 8)
-                #        else "Skip: nested string not supported"
-                #   ),
-                #   Format.FORWARDREF: ForwardRef("Y[\"Y['T']\"]"),
-                #   Format.STRING: """Y["Y['T']"]""",
-                # },
             ],
             "Y[Y[T_nonlocal]]": [
                 {
                     "type_params": T_local_type_params,
-                    # "skip_if": {"localns": None, "format": Format.FORWARDREF},
                     Format.VALUE: Y[Y[T_local]],
                     Format.FORWARDREF: Y[Y[T_local]],
                     Format.STRING: "Y[Y[T_nonlocal]]",
                 },
-                # {
-                #    "type_params": T_local_type_params,
-                # "skip_if": {"localns": locals(), "format": Format.FORWARDREF},
-                #    Format.VALUE: Y[Y[T_local]],
-                #    Format.FORWARDREF: ForwardRef("Y[Y[T_nonlocal]]"),
-                #    Format.STRING: "Y[Y[T_nonlocal]]",
-                # },
                 {
                     "type_params": None,
                     Format.VALUE: NameError,
@@ -8291,7 +8279,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "Y.bT",
                 },
             ],
-            # Special cases depending
+            # Special cases for _type_check
             ClassVar[None]: ClassVar[None],
             Final[None]: Final[None],
             Protocol[T]: Protocol[T],
@@ -8316,30 +8304,48 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     },
                 ]
                 if _FORWARD_REF_HAS_CLASS
-                else Final  # no errors here
+                else Final  # will not raise error in older versions
             ),
             Generic: {
                 Format.VALUE: TypeError,
                 Format.FORWARDREF: TypeError,
                 Format.STRING: "Generic",
             },
-            Union[str, None, "str"]: {
-                Format.VALUE: Optional[str],
-                Format.FORWARDREF: Optional[str],
-                Format.STRING: str(Union[str, None, "str"]),
-            },
-            "T_in_G": [
+            "T_in_Y": [
                 {
+                    "owner": None,
                     "type_params": Y.__type_params__,
                     Format.VALUE: Y.__type_params__[0],
                     Format.FORWARDREF: Y.__type_params__[0],
-                    Format.STRING: "T_in_G",
+                    Format.STRING: "T_in_Y",
                 },
                 {
+                    "owner": None,
                     "type_params": None,
                     Format.VALUE: NameError,
-                    Format.FORWARDREF: ForwardRef("T_in_G"),
-                    Format.STRING: "T_in_G",
+                    Format.FORWARDREF: ForwardRef("T_in_Y"),
+                    Format.STRING: "T_in_Y",
+                },
+                {
+                    "owner": Y,
+                    "type_params": None,
+                    Format.VALUE: Y.__type_params__[0],
+                    Format.FORWARDREF: Y.__type_params__[0],
+                    Format.STRING: "T_in_Y",
+                },
+                {
+                    "owner": Y,
+                    "type_params": Y.__type_params__,
+                    Format.VALUE: Y.__type_params__[0],
+                    Format.FORWARDREF: Y.__type_params__[0],
+                    Format.STRING: "T_in_Y",
+                },
+                {
+                    "owner": X,
+                    "type_params": None,
+                    Format.VALUE: NameError,
+                    Format.FORWARDREF: ForwardRef("T_in_Y"),
+                    Format.STRING: "T_in_Y",
                 },
             ],
         }
@@ -8347,6 +8353,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
         def _unroll_subcase(
             annot, expected, format, is_argument, is_class, globalns, localns
         ):
+            owner = expected.get("owner", None)
             type_params = expected.get("type_params", None)
             skip_if = expected.get("skip_if", False)
             if format not in expected:
@@ -8369,6 +8376,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 globalns,
                 localns,
                 type_params,
+                owner,
             )
         def unroll_cases(cases, outer_locals):
             for (
@@ -8388,11 +8396,13 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 # locals
                 (outer_locals, None),
             ):
+                owner = None
                 # Argument for ForwardRef
                 if isinstance(annot, type):
                     annot = annot.__name__
                 else:
                     annot = str(annot)
+                # 3 cases for the different formats
                 if isinstance(expected, dict):
                     case = _unroll_subcase(
                         annot,
@@ -8405,6 +8415,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     )
                     if case is not None:
                         yield case
+                # Multiple cases depending on other parameters
                 elif isinstance(expected, list):
                     yield from filter(
                         None,
@@ -8421,8 +8432,8 @@ class TestEvaluateForwardRefs(BaseTestCase):
                             for sub_expected in expected
                         ),
                     )
+                # Single value
                 else:
-                    # NOTE: only for non-dict inputs
                     # Change expected to TypeError if it will fail typing._type_check
                     if format != Format.STRING and not inspect.isclass(expected):
                         invalid_generic_forms = (Generic, Protocol)
@@ -8444,8 +8455,9 @@ class TestEvaluateForwardRefs(BaseTestCase):
                         globalns,
                         localns,
                         type_params,
+                        owner,
                     )
-
+        # Test cases
         for (
             annot,
             expected,
@@ -8455,19 +8467,19 @@ class TestEvaluateForwardRefs(BaseTestCase):
             globalns,
             localns,
             type_params,
+            owner,
         ) in unroll_cases(cases, locals()):
-
             if _FORWARD_REF_HAS_CLASS:
                 ref = typing.ForwardRef(annot, is_argument=is_argument, is_class=is_class)
             else:
                 ref = typing.ForwardRef(annot, is_argument=is_argument)
             with self.subTest(
+                annot=annot,
+                expected=expected,
                 format=format,
-                ref=ref,
                 is_argument=is_argument,
                 is_class=is_class,
                 type_params=type_params,
-                expected=expected,
                 globals=bool(globalns),
                 locals=bool(localns),
             ):
@@ -8507,7 +8519,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                             globals=globalns,
                             format=format,
                             type_params=type_params,
-                            owner=None,
+                            owner=owner,
                         )
                     continue
                 result = evaluate_forward_ref(
@@ -8516,37 +8528,40 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     globals=globalns,
                     format=format,
                     type_params=type_params,
-                    owner=None,
+                    owner=owner,
                 )
                 self.assertEqual(result, expected)
 
+    def test_evaluate_with_type_params(self):
+        # Use a T name that is not in globals
+        assert "Tx" not in globals()
         if not TYPING_3_12_0:
-            T = TypeVar("T")
-            class Gen(Generic[T]):
+            Tx = TypeVar("Tx")
+            class Gen(Generic[Tx]):
                 alias = int
             if not hasattr(Gen, "__type_params__"):
-                Gen.__type_params__ = (T,)
-            assert Gen.__type_params__ == (T,)
-            del T
+                Gen.__type_params__ = (Tx,)
+            assert Gen.__type_params__ == (Tx,)
+            del Tx
         else:
             ns = {}
             exec(textwrap.dedent("""
-            class Gen[T]:
+            class Gen[Tx]:
                 alias = int
             """), None, ns)
             Gen = ns["Gen"]
 
         with self.assertRaises(NameError):
-            evaluate_forward_ref(typing.ForwardRef("T"))
+            evaluate_forward_ref(typing.ForwardRef("Tx"))
         with self.assertRaises(NameError):
-            evaluate_forward_ref(typing.ForwardRef("T"), type_params=())
+            evaluate_forward_ref(typing.ForwardRef("Tx"), type_params=())
         with self.assertRaises(NameError):
-            evaluate_forward_ref(typing.ForwardRef("T"), owner=int)
+            evaluate_forward_ref(typing.ForwardRef("Tx"), owner=int)
 
-        (T,) = Gen.__type_params__
-        self.assertIs(evaluate_forward_ref(typing.ForwardRef("T"), type_params=Gen.__type_params__), T)
-        if TYPING_3_11_0:
-            self.assertIs(evaluate_forward_ref(typing.ForwardRef("T"), owner=Gen), T)
+        (Tx,) = Gen.__type_params__
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), type_params=Gen.__type_params__), Tx)
+        # For this test its important that Tx is not a global variable, e.g. do not use T
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), owner=Gen), Tx)
 
         with self.assertRaises(NameError):
             evaluate_forward_ref(typing.ForwardRef("alias"), type_params=Gen.__type_params__)
