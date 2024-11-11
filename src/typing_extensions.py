@@ -3404,7 +3404,7 @@ else:
 if hasattr(collections.abc, "Buffer"):
     Buffer = collections.abc.Buffer
 else:
-    class Buffer(abc.ABC):  # noqa: B024
+    class Buffer(metaclass=abc.ABCMeta):  # noqa: B024
         """Base class for classes that implement the buffer protocol.
 
         The buffer protocol allows Python objects to expose a low-level
