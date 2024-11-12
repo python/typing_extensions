@@ -52,10 +52,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: pydantic/pydantic
-      - name: Edit pydantic pyproject.toml
-        # pydantic's python-requires means pdm won't let us add typing-extensions-latest
-        # as a requirement unless we do this
-        run: sed -i 's/^requires-python = .*/requires-python = ">=3.8"/' pyproject.toml
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -67,7 +63,7 @@ jobs:
       - name: Add local version of typing_extensions as a dependency
         run: uv add --editable ./typing-extensions-latest
       - name: Install pydantic test dependencies
-        run: uv sync --group testing --group dev
+        run: uv sync --group dev
       - name: List installed dependencies
         run: uv pip list
       - name: Run pydantic tests
