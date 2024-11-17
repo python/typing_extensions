@@ -49,9 +49,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout pydantic
-        uses: actions/checkout@v4
-        with:
-          repository: pydantic/pydantic
+        run: git clone https://github.com/pydantic/pydantic.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -89,10 +87,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout typing_inspect
-        uses: actions/checkout@v4
-        with:
-          repository: ilevkivskyi/typing_inspect
-          path: typing_inspect
+        run: git clone https://github.com/ilevkivskyi/typing_inspect.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -137,10 +132,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out pyanalyze
-        uses: actions/checkout@v4
-        with:
-          repository: quora/pyanalyze
-          path: pyanalyze
+        run: git clone https://github.com/quora/pyanalyze.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -186,10 +178,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out typeguard
-        uses: actions/checkout@v4
-        with:
-          repository: agronholm/typeguard
-          path: typeguard
+        run: git clone https://github.com/agronholm/typeguard.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -236,10 +225,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out typed-argument-parser
-        uses: actions/checkout@v4
-        with:
-          repository: swansonk14/typed-argument-parser
-          path: typed-argument-parser
+        run: git clone https://github.com/swansonk14/typed-argument-parser.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -291,10 +277,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout mypy for stubtest and mypyc tests
-        uses: actions/checkout@v4
-        with:
-          repository: python/mypy
-          path: mypy
+        run: git clone https://github.com/python/mypy.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -342,9 +325,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout cattrs
-        uses: actions/checkout@v4
-        with:
-          repository: python-attrs/cattrs
+        run: git clone https://github.com/python-attrs/cattrs.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
