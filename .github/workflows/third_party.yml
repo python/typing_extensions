@@ -56,7 +56,7 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Checkout pydantic
-        run: git clone https://github.com/pydantic/pydantic.git
+        run: git clone --depth=1 https://github.com/pydantic/pydantic.git || git clone --depth=1 https://github.com/pydantic/pydantic.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -96,7 +96,7 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Checkout typing_inspect
-        run: git clone https://github.com/ilevkivskyi/typing_inspect.git
+        run: git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git || git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -142,7 +142,7 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Check out pyanalyze
-        run: git clone https://github.com/quora/pyanalyze.git
+        run: git clone --depth=1 https://github.com/quora/pyanalyze.git || git clone --depth=1 https://github.com/quora/pyanalyze.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -188,7 +188,7 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Check out typeguard
-        run: git clone https://github.com/agronholm/typeguard.git
+        run: git clone --depth=1 https://github.com/agronholm/typeguard.git || git clone --depth=1 https://github.com/agronholm/typeguard.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -234,7 +234,7 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Check out typed-argument-parser
-        run: git clone https://github.com/swansonk14/typed-argument-parser.git
+        run: git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git || git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -287,7 +287,7 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Checkout mypy for stubtest and mypyc tests
-        run: git clone https://github.com/python/mypy.git
+        run: git clone --depth=1 https://github.com/python/mypy.git || git clone --depth=1 https://github.com/python/mypy.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
@@ -332,7 +332,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout cattrs
-        run: git clone https://github.com/python-attrs/cattrs.git
+        run: git clone --depth=1 https://github.com/python-attrs/cattrs.git || git clone --depth=1 https://github.com/python-attrs/cattrs.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
