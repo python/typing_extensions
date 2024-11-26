@@ -8102,27 +8102,15 @@ class TestGetAnnotationsWithPEP695(BaseTestCase):
 
 class TestEvaluateForwardRefs(BaseTestCase):
     def test_evaluate_forward_refs(self):
-        from typing import ForwardRef  # noqa: F401 # needed for locals
-
-        minimal_globals = {
-            "typing": typing,
-            "ForwardRef": typing.ForwardRef,
-            "typing_extensions": typing_extensions,
-            **vars(typing_extensions),
-        }
-
-        error_res = None
         annotation = Annotated[Union[int, None], "data"]
-        NoneAlias = None
-        StrAlias = str
+        NoneType = type(None)
         T = TypeVar("T")
         T_default = TypeVar("T_default", default=None)
         Ts = TypeVarTuple("Ts")
-        NoneType = type(None)
 
-        T_nonlocal = T_local = TypeVar("T_nonlocal")
-        T_local_type_params = (T_nonlocal,)
-        del T_nonlocal
+        # This variable must have a different name TypeVar
+        T_local = TypeVar("T_nonlocal")
+        T_local_type_params = (T_local,)
 
         class X:
             T_in_Y = object()
@@ -8140,17 +8128,29 @@ class TestEvaluateForwardRefs(BaseTestCase):
         self.assertNotIn(X.__name__, globals())
         self.assertNotIn(Y.__name__, globals())
 
-        minimal_locals = {
-            #"Y": Y,
-            #"X": X,
-            "StrAlias" : str,
+        minimal_localns = {
+            "annotation" : annotation,
+            "ForwardRef": typing.ForwardRef,
             "NoneAlias" : None,
             "NoneType" : NoneType,
-            "Ts" : Ts,
-            "annotation" : annotation,
             "T": T,
             "T_default": T_default,
+            "Ts" : Ts,
+            "StrAlias" : str,
+        }
+
+        full_localns = {
+            **minimal_localns,
+            "X" : X,
+            "Y" : Y,
+            "Z" : Z,
+        }
+
+        minimal_globalns = {
+            "typing": typing,
             "ForwardRef": typing.ForwardRef,
+            "typing_extensions": typing_extensions,
+            **vars(typing_extensions),
         }
 
         cases = {
@@ -8253,13 +8253,13 @@ class TestEvaluateForwardRefs(BaseTestCase):
             ],
             "Y.a": [
                 {
-                    "skip_if": {"localns": None, "format": Format.FORWARDREF},
+                    "skip_if": {"localns": minimal_localns, "format": Format.FORWARDREF},
                     Format.VALUE: X,
                     Format.FORWARDREF: X,
                     Format.STRING: "Y.a",
                 },
                 {
-                    "skip_if": {"localns": True, "format": Format.FORWARDREF},
+                    "skip_if": {"localns": full_localns, "format": Format.FORWARDREF},
                     Format.VALUE: X,
                     Format.FORWARDREF: typing.ForwardRef("Y.a"),
                     Format.STRING: "Y.a",
@@ -8276,14 +8276,14 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 },
                 {
                     "type_params": None,
-                    "skip_if": {"localns": None, "format": Format.FORWARDREF},
+                    "skip_if": {"localns": minimal_localns, "format": Format.FORWARDREF},
                     Format.VALUE: NameError,
                     Format.FORWARDREF: typing.ForwardRef("Y[T_nonlocal]"),
                     Format.STRING: "Y.bT",
                 },
                 {
                     "type_params": None,
-                    "skip_if": {"localns": True, "format": Format.FORWARDREF},
+                    "skip_if": {"localns": full_localns, "format": Format.FORWARDREF},
                     Format.VALUE: NameError,
                     Format.FORWARDREF: typing.ForwardRef("Y.bT"),
                     Format.STRING: "Y.bT",
@@ -8378,11 +8378,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
             skip_if = expected.get("skip_if", False)
             if skip_if:  # Should only be used in list of dicts
                 L = locals()
-                skip = all(
-                    # Check skip_if; for localns check only truthy value
-                    L[k] == v if k != "localns" else bool(localns) == bool(v)
-                    for k, v in skip_if.items()
-                )
+                skip = all(L[k] == v for k, v in skip_if.items())
                 if skip:
                     return None
             return (
@@ -8396,7 +8392,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 type_params,
                 owner,
             )
-        def unroll_cases(cases, outer_locals):
+        def unroll_cases(cases):
             """Generator to yield all test cases"""
             for (
                 annot,
@@ -8411,9 +8407,9 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 # is_class argument availiable for different version ranges
                 (False, True) if _FORWARD_REF_HAS_CLASS else (None,),
                 # globals
-                (globals(), None),
+                (globals(), minimal_globalns),
                 # locals
-                (outer_locals, None),
+                (full_localns, minimal_localns),
             ):
                 owner = None
                 # Argument for ForwardRef
@@ -8486,7 +8482,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
             localns,
             type_params,
             owner,
-        ) in unroll_cases(cases, locals()):
+        ) in unroll_cases(cases):
             if _FORWARD_REF_HAS_CLASS:
                 ref = typing.ForwardRef(annot, is_argument=is_argument, is_class=is_class)
             else:
@@ -8498,17 +8494,12 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 is_argument=is_argument,
                 is_class=is_class,
                 type_params=type_params,
-                globals=bool(globalns),
-                locals=bool(localns),
+                minimal_globalns=globalns == minimal_globalns,
+                minimal_localns=localns == minimal_localns,
                 owner=owner,
             ):
                 if isinstance(expected, str) and expected.lower().startswith("skip"):
                     self.skipTest(expected)
-                # Adjust namespaces
-                if globalns is None:
-                    globalns = minimal_globals
-                if localns is None:
-                    localns = minimal_locals
                 if inspect.isclass(expected) and issubclass(expected, Exception):
                     with self.assertRaises(expected):
                         evaluate_forward_ref(
@@ -8522,13 +8513,13 @@ class TestEvaluateForwardRefs(BaseTestCase):
                         else expected.__name__
                     )
                 # If the value is not in locals, we expect the forward ref to be returned
-                elif format == Format.FORWARDREF and (get_origin(expected) in (X, Y) or expected in (X, Y)) and localns is minimal_locals:
+                elif format == Format.FORWARDREF and (get_origin(expected) in (X, Y) or expected in (X, Y)) and localns is minimal_localns:
                     expected = ref
                 # If the value are not in locals it will throw an error
                 elif (
                     format == Format.VALUE
                     and (get_origin(expected) in (X, Y) or expected in (X, Y))
-                    and localns is minimal_locals
+                    and localns is minimal_localns
                 ):
                     # Will raise a simple NameError(X|Y) or a more verbose one
                     with self.assertRaisesRegex(NameError, "(X|Y)"):
