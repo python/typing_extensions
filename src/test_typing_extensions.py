@@ -8617,7 +8617,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     )
                     yield case
                 # Multiple cases depending on other parameters
-                elif type(expected) is list:  # Note: Use `is` because of _ConcatenateGenericAlias
+                elif type(expected) is list:  # noqa: E721 # use `is` because of _ConcatenateGenericAlias
                     yield from filter(
                         None,
                         (
