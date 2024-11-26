@@ -4048,16 +4048,16 @@ else:
         return value
 
     def _lax_type_check(
-        value, exec, msg, is_argument=True, *, module=None, allow_special_forms=False
+        value, msg, is_argument=True, *, module=None, allow_special_forms=False
     ):
         """
-        A forgiving version of typing._type_check to be executed if the original fails
+        A lax Python 3.11+ like version of typing._type_check
         """
-        # relax type check
         if hasattr(typing, "_type_convert"):
             if _FORWARD_REF_HAS_CLASS:
                 type_ = typing._type_convert(
                     value,
+                    module=module,
                     allow_special_forms=allow_special_forms,
                 )
             else:
@@ -4068,8 +4068,6 @@ else:
             if isinstance(value, str):
                 return ForwardRef(value)
             type_ = value
-        if type(type_) is tuple:  # early versions raise with callable here
-            raise exec
         invalid_generic_forms = (Generic, Protocol)
         if not allow_special_forms:
             invalid_generic_forms += (ClassVar,)
@@ -4080,13 +4078,17 @@ else:
             and get_origin(type_) in invalid_generic_forms
         ):
             raise TypeError(f"{type_} is not valid as type argument") from None
-        if allow_special_forms is not None and type_ in (ClassVar, Final):
+        if type_ in (Any, LiteralString, NoReturn, Never, Self, TypeAlias):
+            return type_
+        if allow_special_forms and type_ in (ClassVar, Final):
             return type_
         if (
             isinstance(type_, (_SpecialForm, typing._SpecialForm))
             or type_ in (Generic, Protocol)
         ):
             raise TypeError(f"Plain {type_} is not valid as type argument") from None
+        if type(type_) is tuple:  # lax version with tuple instead of callable
+            raise TypeError(f"{msg} Got {type_!r:.100}.")
         return type_
 
     def evaluate_forward_ref(
@@ -4142,43 +4144,16 @@ else:
                 raise
 
         msg = "Forward references must evaluate to types."
-        try:
-            if _FORWARD_REF_HAS_CLASS:
-                type_ = typing._type_check(
-                    value,
-                    msg,
-                    is_argument=forward_ref.__forward_is_argument__,
-                    allow_special_forms=forward_ref.__forward_is_class__,
-                )
-            else:
-                type_ = typing._type_check(
-                    value,
-                    msg,
-                    is_argument=forward_ref.__forward_is_argument__,
-                )
-        except TypeError as e:
-            # Recheck with more forgiving version
-            type_ = _lax_type_check(
-                value,
-                e,
-                msg,
-                is_argument=forward_ref.__forward_is_argument__,
-                allow_special_forms=(
-                    (_FORWARD_REF_HAS_CLASS and forward_ref.__forward_is_class__)
-                    or
-                    ( _FORWARD_REF_HAS_CLASS and None)  # pass None in this case
-                ),
-            )
+        if not _FORWARD_REF_HAS_CLASS:
+            allow_special_forms = not forward_ref.__forward_is_argument__
         else:
-            # ClassVar/Final can pass _type_check before 3.11 but should raise an error
-            if sys.version_info < (3, 11) and (
-                _FORWARD_REF_HAS_CLASS
-                and not forward_ref.__forward_is_class__
-                and value in (ClassVar, Final)
-            ):
-                raise TypeError(f"Plain {type_} is not valid as type argument")
-
-        del value
+            allow_special_forms = forward_ref.__forward_is_class__
+        type_ = _lax_type_check(
+            value,
+            msg,
+            is_argument=forward_ref.__forward_is_argument__,
+            allow_special_forms=allow_special_forms,
+        )
 
         # Recursively evaluate the type
         if isinstance(type_, ForwardRef):

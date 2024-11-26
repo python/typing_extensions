@@ -8353,20 +8353,18 @@ class TestEvaluateForwardRefs(BaseTestCase):
             Final: (
                 [
                     {
-                        "skip_if": {"is_class": False},
+                        "skip_if": {"is_class": False} if _FORWARD_REF_HAS_CLASS else {"is_argument": True},
                         Format.VALUE: Final,
                         Format.FORWARDREF: Final,
                         Format.STRING: str(Final),
                     },
                     {
-                        "skip_if": {"is_class": True},
+                        "skip_if": {"is_class": True} if _FORWARD_REF_HAS_CLASS else {"is_argument": False},
                         Format.VALUE: TypeError,
                         Format.FORWARDREF: TypeError,
                         Format.STRING: str(Final),
                     },
                 ]
-                if _FORWARD_REF_HAS_CLASS
-                else Final  # will not raise error in older versions
             ),
         }
 
