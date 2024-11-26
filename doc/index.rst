@@ -795,7 +795,7 @@ Functions
    of the :pep:`649` behavior on versions of Python that do not support it.
 
    The purpose of this backport is to allow users who would like to use
-   :attr:`Format.FORWARDREF` or :attr:`Format.SOURCE` semantics once
+   :attr:`Format.FORWARDREF` or :attr:`Format.STRING` semantics once
    :pep:`649` is implemented, but who also
    want to support earlier Python versions, to simply write::
 
@@ -942,7 +942,7 @@ Enums
       ``typing_extensions`` emulates this value on versions of Python which do
       not support :pep:`649` by returning the same value as for ``VALUE`` semantics.
 
-   .. attribute:: SOURCE
+   .. attribute:: STRING
 
       Equal to 3. When :pep:`649` is implemented, this format will produce an annotation
       dictionary where the values have been replaced by strings containing

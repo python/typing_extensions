@@ -3823,7 +3823,6 @@ _PEP_649_OR_749_IMPLEMENTED = (
 class Format(enum.IntEnum):
     VALUE = 1
     FORWARDREF = 2
-    SOURCE = 3
     STRING = 3
 
 
@@ -3855,13 +3854,13 @@ else:
           undefined names with ForwardRef objects. The implementation proposed by
           PEP 649 relies on language changes that cannot be backported; the
           typing-extensions implementation simply returns the same result as VALUE.
-        * SOURCE: return annotations as strings, in a format close to the original
+        * STRING: return annotations as strings, in a format close to the original
           source. Again, this behavior cannot be replicated directly in a backport.
           As an approximation, typing-extensions retrieves the annotations under
           VALUE semantics and then stringifies them.
 
         The purpose of this backport is to allow users who would like to use
-        FORWARDREF or SOURCE semantics once PEP 649 is implemented, but who also
+        FORWARDREF or STRING semantics once PEP 649 is implemented, but who also
         want to support earlier Python versions, to simply write:
 
             typing_extensions.get_annotations(obj, format=Format.FORWARDREF)
@@ -3920,7 +3919,7 @@ else:
             return {}
 
         if not eval_str:
-            if format is Format.SOURCE:
+            if format is Format.STRING:
                 return {
                     key: value if isinstance(value, str) else typing._type_repr(value)
                     for key, value in ann.items()

@@ -7582,7 +7582,7 @@ class TestGetAnnotations(BaseTestCase):
         self.assertEqual(get_annotations(f2, format=2), {"a": "undefined"})
 
         self.assertEqual(
-            get_annotations(f1, format=Format.SOURCE),
+            get_annotations(f1, format=Format.STRING),
             {"a": "int"},
         )
         self.assertEqual(get_annotations(f1, format=3), {"a": "int"})
@@ -7609,7 +7609,7 @@ class TestGetAnnotations(BaseTestCase):
                 foo, format=Format.FORWARDREF, eval_str=True
             )
             get_annotations(
-                foo, format=Format.SOURCE, eval_str=True
+                foo, format=Format.STRING, eval_str=True
             )
 
     def test_stock_annotations(self):
@@ -7623,7 +7623,7 @@ class TestGetAnnotations(BaseTestCase):
                     {"a": int, "b": str},
                 )
         self.assertEqual(
-            get_annotations(foo, format=Format.SOURCE),
+            get_annotations(foo, format=Format.STRING),
             {"a": "int", "b": "str"},
         )
 
@@ -7718,43 +7718,43 @@ class TestGetAnnotations(BaseTestCase):
                 )
 
         self.assertEqual(
-            get_annotations(isa, format=Format.SOURCE),
+            get_annotations(isa, format=Format.STRING),
             {"a": "int", "b": "str"},
         )
         self.assertEqual(
-            get_annotations(isa.MyClass, format=Format.SOURCE),
+            get_annotations(isa.MyClass, format=Format.STRING),
             {"a": "int", "b": "str"},
         )
         mycls = "MyClass" if _PEP_649_OR_749_IMPLEMENTED else "inspect_stock_annotations.MyClass"
         self.assertEqual(
-            get_annotations(isa.function, format=Format.SOURCE),
+            get_annotations(isa.function, format=Format.STRING),
             {"a": "int", "b": "str", "return": mycls},
         )
         self.assertEqual(
             get_annotations(
-                isa.function2, format=Format.SOURCE
+                isa.function2, format=Format.STRING
             ),
             {"a": "int", "b": "str", "c": mycls, "return": mycls},
         )
         self.assertEqual(
             get_annotations(
-                isa.function3, format=Format.SOURCE
+                isa.function3, format=Format.STRING
             ),
             {"a": "int", "b": "str", "c": "MyClass"},
         )
         self.assertEqual(
-            get_annotations(inspect, format=Format.SOURCE),
+            get_annotations(inspect, format=Format.STRING),
             {},
         )
         self.assertEqual(
             get_annotations(
-                isa.UnannotatedClass, format=Format.SOURCE
+                isa.UnannotatedClass, format=Format.STRING
             ),
             {},
         )
         self.assertEqual(
             get_annotations(
-                isa.unannotated_function, format=Format.SOURCE
+                isa.unannotated_function, format=Format.STRING
             ),
             {},
         )
@@ -7775,7 +7775,7 @@ class TestGetAnnotations(BaseTestCase):
         )
         mycls = "MyClass" if _PEP_649_OR_749_IMPLEMENTED else "inspect_stock_annotations.MyClass"
         self.assertEqual(
-            get_annotations(wrapped, format=Format.SOURCE),
+            get_annotations(wrapped, format=Format.STRING),
             {"a": "int", "b": "str", "return": mycls},
         )
         self.assertEqual(
@@ -7794,10 +7794,10 @@ class TestGetAnnotations(BaseTestCase):
             {"eval_str": False},
             {"format": Format.VALUE},
             {"format": Format.FORWARDREF},
-            {"format": Format.SOURCE},
+            {"format": Format.STRING},
             {"format": Format.VALUE, "eval_str": False},
             {"format": Format.FORWARDREF, "eval_str": False},
-            {"format": Format.SOURCE, "eval_str": False},
+            {"format": Format.STRING, "eval_str": False},
         ]:
             with self.subTest(**kwargs):
                 self.assertEqual(
