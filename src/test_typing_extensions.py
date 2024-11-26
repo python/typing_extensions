@@ -8333,9 +8333,9 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "T_in_Y",
                 },
             ],
-            # Special cases for _type_check.
-            # Note: Depending on is_class and is_argument will raise TypeError
-            # therefore `expected`` is converted in the generator.
+            # Special cases for typing._type_check.
+            # Note: Depending on `is_class` and `is_argument` will raise TypeError
+            # therefore `expected` is converted in the generator.
             ClassVar[None]: ClassVar[None],
             Final[None]: Final[None],
             Protocol[T]: Protocol[T],
@@ -8430,7 +8430,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     )
                     yield case
                 # Multiple cases depending on other parameters
-                elif type(expected) is list:  # noqa: E721 # avoid _ConcatenateGenericAlias
+                elif type(expected) is list:  # Note: Use `is` because of _ConcatenateGenericAlias
                     yield from filter(
                         None,
                         (
@@ -8521,7 +8521,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     and (get_origin(expected) in (X, Y) or expected in (X, Y))
                     and localns is minimal_localns
                 ):
-                    # Will raise a simple NameError(X|Y) or a more verbose one
+                    # Will raise either NameError(X|Y) or a more verbose NameError
                     with self.assertRaisesRegex(NameError, "(X|Y)"):
                         evaluate_forward_ref(
                             ref,

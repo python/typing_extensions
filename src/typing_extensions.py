@@ -3958,7 +3958,7 @@ else:
 if hasattr(typing, "evaluate_forward_ref"):
     evaluate_forward_ref = typing.evaluate_forward_ref
 else:
-
+    # Implements annotationlib.ForwardRef.evaluate
     def _eval_with_owner(
         forward_ref, *, owner=None, globals=None, locals=None, type_params=None
     ):
@@ -4170,8 +4170,7 @@ else:
                 ),
             )
         else:
-            # ClassVar/Final could pass _type_check but should error
-            # For 3.11+ should already have thrown the error above
+            # ClassVar/Final can pass _type_check before 3.11 but should raise an error
             if sys.version_info < (3, 11) and (
                 _FORWARD_REF_HAS_CLASS
                 and not forward_ref.__forward_is_class__
