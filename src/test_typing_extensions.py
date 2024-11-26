@@ -8136,9 +8136,9 @@ class TestEvaluateForwardRefs(BaseTestCase):
         Y_type_params = (T_in_Y,)
         del T_in_Y
 
-        # Assure that these are not in globals
-        assert X.__name__ not in globals()
-        assert Y.__name__ not in globals()
+        # Assure that class names are not in globals
+        self.assertNotIn(X.__name__, globals())
+        self.assertNotIn(Y.__name__, globals())
 
         minimal_locals = {
             #"Y": Y,
@@ -8554,14 +8554,14 @@ class TestEvaluateForwardRefs(BaseTestCase):
 
     def test_evaluate_with_type_params(self):
         # Use a T name that is not in globals
-        assert "Tx" not in globals()
+        self.assertNotIn("Tx", globals())
         if not TYPING_3_12_0:
             Tx = TypeVar("Tx")
             class Gen(Generic[Tx]):
                 alias = int
             if not hasattr(Gen, "__type_params__"):
                 Gen.__type_params__ = (Tx,)
-            assert Gen.__type_params__ == (Tx,)
+            self.assertEqual(Gen.__type_params__, (Tx,))
             del Tx
         else:
             ns = {}
