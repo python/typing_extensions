@@ -29,6 +29,9 @@ aliases that have a `Concatenate` special form as their argument.
 - Backport `evaluate_forward_ref` from CPython PR
   [#119891](https://github.com/python/cpython/pull/119891) to evaluate `ForwardRef`s.
   Patch by [Daraan](https://github.com/Daraan), backporting a CPython PR by Jelle Zijlstra.
+- Fix that lists and ... could not be used for parameter expressions for `TypeAliasType`
+  instances before Python 3.11.
+  Patch by [Daraan](https://github.com/Daraan).
 
 # Release 4.12.2 (June 7, 2024)
 
