@@ -4088,7 +4088,7 @@ else:
                     module=module,
                     allow_special_forms=allow_special_forms,
                 )
-            # module was added with bpo-41249 before special forms (bpo-46539)
+            # module was added with bpo-41249 before is_class (bpo-46539)
             elif "__forward_module__" in typing.ForwardRef.__slots__:
                 type_ = typing._type_convert(value, module=module)
             else:

@@ -8291,7 +8291,6 @@ class TestGetAnnotationsWithPEP695(BaseTestCase):
 
 class TestEvaluateForwardRefs(BaseTestCase):
     def test_evaluate_forward_refs(self):
-        annotation = Annotated[Union[int, None], "data"]
         NoneType = type(None)
         T = TypeVar("T")
         T_default = TypeVar("T_default", default=None)
@@ -8302,13 +8301,13 @@ class TestEvaluateForwardRefs(BaseTestCase):
         T_local_type_params = (T_local,)
 
         class X:
-            T_in_Y = object()
+            T_in_Y = object()  # Using X as owner should not access this value
 
         T_in_Y = TypeVar("T_in_Y")
         class Y(Generic[T_in_Y]):
             a = "X"
             bT = "Y[T_nonlocal]"
-        # Construct which has __type_params__
+        # Object with __type_params__
         Z = TypeAliasType("Z", Y[T_in_Y], type_params=(T_in_Y,))
         Y_type_params = (T_in_Y,)
         del T_in_Y
@@ -8317,8 +8316,8 @@ class TestEvaluateForwardRefs(BaseTestCase):
         self.assertNotIn(X.__name__, globals())
         self.assertNotIn(Y.__name__, globals())
 
+        # Namespaces for evaluation
         minimal_localns = {
-            "annotation" : annotation,
             "ForwardRef": typing.ForwardRef,
             "NoneAlias" : None,
             "NoneType" : NoneType,
@@ -8327,14 +8326,12 @@ class TestEvaluateForwardRefs(BaseTestCase):
             "Ts" : Ts,
             "StrAlias" : str,
         }
-
         full_localns = {
             **minimal_localns,
             "X" : X,
             "Y" : Y,
             "Z" : Z,
         }
-
         minimal_globalns = {
             "typing": typing,
             "ForwardRef": typing.ForwardRef,
@@ -8342,11 +8339,118 @@ class TestEvaluateForwardRefs(BaseTestCase):
             **vars(typing_extensions),
         }
 
+        # Helper functions to construct test cases
+        def _unroll_subcase(
+            annot, expected, format, is_argument, is_class, globalns, localns
+        ):
+            owner = expected.get("owner", None)
+            type_params = expected.get("type_params", None)
+            skip_if = expected.get("skip_if", False)
+            if skip_if:  # Should only be used in list of dicts
+                ns = locals()
+                skip = all(ns[k] == v for k, v in skip_if.items())
+                if skip:
+                    return None
+            return (
+                annot,
+                expected[format],
+                format,
+                is_argument,
+                is_class,
+                globalns,
+                localns,
+                type_params,
+                owner,
+            )
+
+        def unroll_cases(cases):
+            """Generator to yield all test case combinations"""
+            for (
+                annot,
+                expected,
+            ), format, is_argument, is_class, globalns, localns in itertools.product(
+                # annot, expected
+                cases.items(),
+                # format
+                (Format.VALUE, Format.FORWARDREF, Format.STRING),
+                # is_argument
+                (False, True),
+                # is_class is not availiable for all versions
+                (False, True) if _FORWARD_REF_HAS_CLASS else (None,),
+                # globals
+                (globals(), minimal_globalns),
+                # locals
+                (full_localns, minimal_localns),
+            ):
+                # Argument for ForwardRef
+                if isinstance(annot, type):
+                    annot = annot.__name__
+                else:
+                    annot = str(annot)
+                # Dict with Format.VALUE, Format.FORWARDREF, Format.STRING entries
+                if isinstance(expected, dict):
+                    case = _unroll_subcase(
+                        annot,
+                        expected,
+                        format,
+                        is_argument,
+                        is_class,
+                        globalns,
+                        localns,
+                    )
+                    yield case
+                # List of dicts with multiple cases depending on other parameters
+                elif type(expected) is list:  # noqa: E721 # use `is` because of _ConcatenateGenericAlias
+                    yield from filter(
+                        None,
+                        (
+                            _unroll_subcase(
+                                annot,
+                                sub_expected,
+                                format,
+                                is_argument,
+                                is_class,
+                                globalns,
+                                localns,
+                            )
+                            for sub_expected in expected
+                        ),
+                    )
+                # Single value
+                else:
+                    # Change expected to TypeError if it will fail typing._type_check
+                    if format != Format.STRING and not inspect.isclass(expected):
+                        invalid_generic_forms = (Generic, Protocol)
+                        if is_class is False:
+                            invalid_generic_forms += (ClassVar,)
+                            if is_argument:
+                                invalid_generic_forms += (Final,)
+                        elif not _FORWARD_REF_HAS_CLASS and is_argument:
+                            invalid_generic_forms += (
+                                ClassVar,
+                                Final,
+                            )
+                        if get_origin(expected) in invalid_generic_forms:
+                            expected = TypeError
+                    type_params = None
+                    owner = None
+                    yield (
+                        annot,
+                        expected,
+                        format,
+                        is_argument,
+                        is_class,
+                        globalns,
+                        localns,
+                        type_params,
+                        owner,
+                    )
+
         cases = {
             # values can be types, dicts or list of dicts.
-            # Combination of all "skip_if" subdicts should provide complete coverage,
+            # Combination of all subdicts with "skip_if" should provide complete coverage,
             # i.e. they should come in pairs.
-            # For not complete coverage set the value to "Skip: message".
+            # For non-complete coverage set the value to "Skip: reason".
             None: {
                 Format.VALUE: NoneType,
                 Format.FORWARDREF: NoneType,
@@ -8396,7 +8500,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
             },
             """Y["Y['T']"]""": [
                 {
-                    # "skip_if": {"localns": None, "format": Format.FORWARDREF},
                     Format.VALUE: (
                         Y[Y[T]]
                         if sys.version_info[:2] > (3, 8)
@@ -8455,8 +8558,8 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 },
             ],
             "Y.bT": [
-                # Note: That the STRING is "Y.bT" and not "Y[T_nonlocal]" is one of the
-                # cases that differ from <3.14 ForwardRef behavior.
+                # Note: Different to the <3.14 ForwardRef behavior STRING expects "Y.bT"
+                # and not "Y[T_nonlocal]"
                 {
                     "type_params": T_local_type_params,
                     Format.VALUE: Y[T_local],
@@ -8494,17 +8597,19 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "T_in_Y",
                 },
                 {
-                    "owner": Y,
+                    # Owner with such an attribute name
+                    "owner": X,
                     "type_params": None,
                     Format.VALUE: NameError,
                     Format.FORWARDREF: typing.ForwardRef("T_in_Y"),
                     Format.STRING: "T_in_Y",
                 },
                 {
-                    "owner": Z,
+                    # Owner without __type_params__
+                    "owner": Y,
                     "type_params": None,
-                    Format.VALUE: Y_type_params[0],
-                    Format.FORWARDREF: Y_type_params[0],
+                    Format.VALUE: NameError,
+                    Format.FORWARDREF: typing.ForwardRef("T_in_Y"),
                     Format.STRING: "T_in_Y",
                 },
                 {
@@ -8515,10 +8620,11 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "T_in_Y",
                 },
                 {
-                    "owner": X,
+                    # Owner with __type_params__
+                    "owner": Z,
                     "type_params": None,
-                    Format.VALUE: NameError,
-                    Format.FORWARDREF: typing.ForwardRef("T_in_Y"),
+                    Format.VALUE: Y_type_params[0],
+                    Format.FORWARDREF: Y_type_params[0],
                     Format.STRING: "T_in_Y",
                 },
             ],
@@ -8542,13 +8648,21 @@ class TestEvaluateForwardRefs(BaseTestCase):
             Final: (
                 [
                     {
-                        "skip_if": {"is_class": False} if _FORWARD_REF_HAS_CLASS else {"is_argument": True},
+                        "skip_if": (
+                            {"is_class": False}
+                            if _FORWARD_REF_HAS_CLASS
+                            else {"is_argument": True}
+                        ),
                         Format.VALUE: Final,
                         Format.FORWARDREF: Final,
                         Format.STRING: str(Final),
                     },
                     {
-                        "skip_if": {"is_class": True} if _FORWARD_REF_HAS_CLASS else {"is_argument": False},
+                        "skip_if": (
+                            {"is_class": True}
+                            if _FORWARD_REF_HAS_CLASS
+                            else {"is_argument": False}
+                        ),
                         Format.VALUE: TypeError,
                         Format.FORWARDREF: TypeError,
                         Format.STRING: str(Final),
@@ -8557,107 +8671,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
             ),
         }
 
-        def _unroll_subcase(
-            annot, expected, format, is_argument, is_class, globalns, localns
-        ):
-            owner = expected.get("owner", None)
-            type_params = expected.get("type_params", None)
-            skip_if = expected.get("skip_if", False)
-            if skip_if:  # Should only be used in list of dicts
-                L = locals()
-                skip = all(L[k] == v for k, v in skip_if.items())
-                if skip:
-                    return None
-            return (
-                annot,
-                expected[format],
-                format,
-                is_argument,
-                is_class,
-                globalns,
-                localns,
-                type_params,
-                owner,
-            )
-        def unroll_cases(cases):
-            """Generator to yield all test cases"""
-            for (
-                annot,
-                expected,
-            ), format, is_argument, is_class, globalns, localns in itertools.product(
-                # annot, expected
-                cases.items(),
-                # format
-                (Format.VALUE, Format.FORWARDREF, Format.STRING),
-                # is_argument
-                (False, True),
-                # is_class argument availiable for different version ranges
-                (False, True) if _FORWARD_REF_HAS_CLASS else (None,),
-                # globals
-                (globals(), minimal_globalns),
-                # locals
-                (full_localns, minimal_localns),
-            ):
-                owner = None
-                # Argument for ForwardRef
-                if isinstance(annot, type):
-                    annot = annot.__name__
-                else:
-                    annot = str(annot)
-                # 3 cases for the different formats
-                if isinstance(expected, dict):
-                    case = _unroll_subcase(
-                        annot,
-                        expected,
-                        format,
-                        is_argument,
-                        is_class,
-                        globalns,
-                        localns,
-                    )
-                    yield case
-                # Multiple cases depending on other parameters
-                elif type(expected) is list:  # noqa: E721 # use `is` because of _ConcatenateGenericAlias
-                    yield from filter(
-                        None,
-                        (
-                            _unroll_subcase(
-                                annot,
-                                sub_expected,
-                                format,
-                                is_argument,
-                                is_class,
-                                globalns,
-                                localns,
-                            )
-                            for sub_expected in expected
-                        ),
-                    )
-                # Single value
-                else:
-                    # Change expected to TypeError if it will fail typing._type_check
-                    if format != Format.STRING and not inspect.isclass(expected):
-                        invalid_generic_forms = (Generic, Protocol)
-                        if is_class is False:
-                            invalid_generic_forms += (ClassVar,)
-                            if is_argument:
-                                invalid_generic_forms += (Final,)
-                        elif not _FORWARD_REF_HAS_CLASS and is_argument:
-                            invalid_generic_forms += (ClassVar, Final,)
-                        if get_origin(expected) in invalid_generic_forms:
-                            expected = TypeError
-                    type_params = None
-                    yield (
-                        annot,
-                        expected,
-                        format,
-                        is_argument,
-                        is_class,
-                        globalns,
-                        localns,
-                        type_params,
-                        owner,
-                    )
         # Test cases
         for (
             annot,
@@ -8685,31 +8698,38 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 minimal_localns=localns == minimal_localns,
                 owner=owner,
             ):
+                # Skip test
                 if isinstance(expected, str) and expected.lower().startswith("skip"):
                     self.skipTest(expected)
+                # Expected Exceptions
                 if inspect.isclass(expected) and issubclass(expected, Exception):
                     with self.assertRaises(expected):
                         evaluate_forward_ref(
                             ref, locals=localns, globals=globalns, format=format,
                         )
                     continue
+                # Adjust expected:
+                # STRING
                 if format == Format.STRING:
                     expected = (
                         str(expected)
                         if not isinstance(expected, type)
                         else expected.__name__
                     )
-                # If the value is not in locals, we expect the forward ref to be returned
-                elif format == Format.FORWARDREF and (get_origin(expected) in (X, Y) or expected in (X, Y)) and localns is minimal_localns:
+                # FORWARDREF with X, Y not in locals stays a forward ref
+                elif (
+                    format == Format.FORWARDREF
+                    and (get_origin(expected) in (X, Y) or expected in (X, Y))
+                    and localns is minimal_localns
+                ):
                     expected = ref
-                # If the value are not in locals it will throw an error
+                # VALUE with X, Y not in locals will raise NameError
                 elif (
                     format == Format.VALUE
                     and (get_origin(expected) in (X, Y) or expected in (X, Y))
                     and localns is minimal_localns
                 ):
-                    # Will raise either NameError(X|Y) or a more verbose NameError
-                    with self.assertRaisesRegex(NameError, "(X|Y)"):
+                    with self.assertRaisesRegex(NameError, "X|Y"):
                         evaluate_forward_ref(
                             ref,
                             locals=localns,
@@ -8758,7 +8778,8 @@ class TestEvaluateForwardRefs(BaseTestCase):
 
         (Tx,) = Gen.__type_params__
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), type_params=Gen.__type_params__), Tx)
-        # For this test its important that Tx is not a global variable, e.g. do not use T
+        # For this test its important that Tx is not a global variable, i.e. do not use "T" here
+        self.assertNotIn("Tx", globals())
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), owner=Gen), Tx)
 
         with self.assertRaises(NameError):
