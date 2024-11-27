@@ -1813,7 +1813,7 @@ if not hasattr(typing, 'Concatenate'):
                 tp for tp in self.__args__ if isinstance(tp, (typing.TypeVar, ParamSpec))
             )
 
-        # 3.8; needed for typing._subs_tvars
+        # 3.8; needed for typing._subst_tvars
         # 3.9 used by __getitem__ below
         def copy_with(self, params):
             if isinstance(params[-1], _ConcatenateGenericAlias):
@@ -2609,7 +2609,8 @@ else:  # 3.8
     class _UnpackAlias(typing._GenericAlias, _root=True):
         __class__ = typing.TypeVar
 
-        def _typing_unpacked_tuple_args(self):
+        @property
+        def __typing_unpacked_tuple_args__(self):
             assert self.__origin__ is Unpack
             assert len(self.__args__) == 1
             arg, = self.__args__
@@ -2618,11 +2619,6 @@ else:  # 3.8
                     raise TypeError("Unpack[...] must be used with a tuple type")
                 return arg.__args__
             return None
-
-        def __getattr__(self, attr):
-            if attr == '__typing_unpacked_tuple_args__':
-                return self._typing_unpacked_tuple_args()
-            return super().__getattr__(attr)
 
         @property
         def __typing_is_unpacked_typevartuple__(self):
