@@ -5399,6 +5399,24 @@ class ParamSpecTests(BaseTestCase):
                     H3 = G10[int]
                     self.assertEqual(H3.__args__, ((int, (str, int)),))
 
+    @skipUnless(TYPING_3_10_0, "ParamSpec not present before 3.10")
+    def test_substitution_with_typing_variants(self):
+        # verifies substitution and typing._check_generic working with typing variants
+        P = ParamSpec("P")
+        typing_P = typing.ParamSpec("typing_P")
+        typing_Concatenate = typing.Concatenate[int, P]
+
+        class Z(Generic[typing_P]):
+            pass
+
+        P1 = Z[typing_P]
+        self.assertEqual(P1.__parameters__, (typing_P,))
+        self.assertEqual(P1.__args__, (typing_P,))
+
+        C1 = Z[typing_Concatenate]
+        self.assertEqual(C1.__parameters__, (P,))
+        self.assertEqual(C1.__args__, (typing_Concatenate,))
+
     def test_pickle(self):
         global P, P_co, P_contra, P_default
         P = ParamSpec('P')
