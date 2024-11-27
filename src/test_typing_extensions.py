@@ -8481,7 +8481,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
             },
             "Y[T_nonlocal]": [
                 {
-                    "type_params": (T,),  # check also with wrong TypeVar
+                    "type_params": (T,),  # check with wrong TypeVar
                     Format.VALUE: NameError,
                     Format.FORWARDREF: typing.ForwardRef("Y[T_nonlocal]"),
                     Format.STRING: "Y[T_nonlocal]",
@@ -8558,7 +8558,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 },
             ],
             "Y.bT": [
-                # Note: Different to the <3.14 ForwardRef behavior STRING expects "Y.bT"
+                # Note: Different to the <3.14 ForwardRef behavior STRING yields "Y.bT"
                 # and not "Y[T_nonlocal]"
                 {
                     "type_params": T_local_type_params,
