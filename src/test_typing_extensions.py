@@ -7594,11 +7594,9 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(callable_concat.__parameters__, (P2,))
         concat_usage = callable_concat[str]
         with self.subTest("get_args of Concatenate in TypeAliasType"):
-            if not TYPING_3_9_0:
+            if not TYPING_3_10_0:
                 # args are: ([<class 'int'>, ~P2],)
                 self.skipTest("Nested ParamSpec is not substituted")
-            if sys.version_info < (3, 10, 2):
-                self.skipTest("GenericAlias keeps Concatenate in __args__ prior to 3.10.2")
             self.assertEqual(get_args(concat_usage), ((int, str),))
         with self.subTest("Equality of parameter_expression without []"):
             if not TYPING_3_10_0:
