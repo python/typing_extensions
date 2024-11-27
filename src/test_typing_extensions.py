@@ -5326,6 +5326,16 @@ class ParamSpecTests(BaseTestCase):
                 G10args = G10.__args__[0] if sys.version_info >= (3, 10) else G10.__args__
                 self.assertEqual(G10args, (int, Concatenate[str, P], ))
 
+    @skipUnless(TYPING_3_10_0, "ParamSpec not present before 3.10")
+    def test_is_param_expr(self):
+        P = ParamSpec("P")
+        P_typing = typing.ParamSpec("P_typing")
+        self.assertTrue(typing_extensions._is_param_expr(P))
+        self.assertTrue(typing_extensions._is_param_expr(P_typing))
+        if hasattr(typing, "_is_param_expr"):
+            self.assertTrue(typing._is_param_expr(P))
+            self.assertTrue(typing._is_param_expr(P_typing))
+
     def test_single_argument_generic_with_parameter_expressions(self):
         P = ParamSpec("P")
         T = TypeVar("T")
@@ -5570,6 +5580,17 @@ class ConcatenateTests(BaseTestCase):
         self.assertEqual(hash(C4), hash(C5))
         self.assertNotEqual(C4, C6)
 
+
+    @skipUnless(TYPING_3_10_0, "Concatenate not present before 3.10")
+    def test_is_param_expr(self):
+        P = ParamSpec('P')
+        concat = Concatenate[str, P]
+        typing_concat = typing.Concatenate[str, P]
+        self.assertTrue(typing_extensions._is_param_expr(concat))
+        self.assertTrue(typing_extensions._is_param_expr(typing_concat))
+        if hasattr(typing, "_is_param_expr"):
+            self.assertTrue(typing._is_param_expr(concat))
+            self.assertTrue(typing._is_param_expr(typing_concat))
 
 class TypeGuardTests(BaseTestCase):
     def test_basics(self):

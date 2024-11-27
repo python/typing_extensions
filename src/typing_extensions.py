@@ -3006,10 +3006,23 @@ else:
                     f"a class or callable, not {arg!r}"
                 )
 
-def _is_param_expr(arg):
-    return arg is ... or isinstance(
-        arg, (tuple, list, ParamSpec, _ConcatenateGenericAlias)
-    )
+if sys.version_info < (3, 10):
+    def _is_param_expr(arg):
+        return arg is ... or isinstance(
+            arg, (tuple, list, ParamSpec, _ConcatenateGenericAlias)
+        )
+else:
+    def _is_param_expr(arg):
+        return arg is ... or isinstance(
+            arg,
+            (
+                tuple,
+                list,
+                ParamSpec,
+                _ConcatenateGenericAlias,
+                typing._ConcatenateGenericAlias,
+            ),
+        )
 
 # We have to do some monkey patching to deal with the dual nature of
 # Unpack/TypeVarTuple:
