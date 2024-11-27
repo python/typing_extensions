@@ -26,6 +26,9 @@ aliases that have a `Concatenate` special form as their argument.
 - Backport CPython PR [#124795](https://github.com/python/cpython/pull/124795):
   fix `TypeAliasType` not raising an error on non-tuple inputs for `type_params`.
   Patch by [Daraan](https://github.com/Daraan).
+- Fix that lists and ... could not be used for parameter expressions for `TypeAliasType`
+  instances before Python 3.11.
+  Patch by [Daraan](https://github.com/Daraan).
 
 # Release 4.12.2 (June 7, 2024)
 
