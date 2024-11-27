@@ -3527,8 +3527,9 @@ else:
                 return typing.Union[other, self]
 
 
-if hasattr(typing, "TypeAliasType"):
+if sys.version_info >= (3, 14):
     TypeAliasType = typing.TypeAliasType
+# 3.8-3.13
 else:
     def _is_unionable(obj):
         """Corresponds to is_unionable() in unionobject.c in CPython."""
@@ -3601,11 +3602,29 @@ else:
         def __init__(self, name: str, value, *, type_params=()):
             if not isinstance(name, str):
                 raise TypeError("TypeAliasType name must be a string")
+            if not isinstance(type_params, tuple):
+                raise TypeError("type_params must be a tuple")
             self.__value__ = value
             self.__type_params__ = type_params
 
+            default_value_encountered = False
             parameters = []
             for type_param in type_params:
+                if (
+                    not isinstance(type_param, (TypeVar, TypeVarTuple, ParamSpec))
+                    # 3.8-3.11
+                    # Unpack Backport passes isinstance(type_param, TypeVar)
+                    or _is_unpack(type_param)
+                ):
+                    raise TypeError(f"Expected a type param, got {type_param!r}")
+                has_default = (
+                    getattr(type_param, '__default__', NoDefault) is not NoDefault
+                )
+                if default_value_encountered and not has_default:
+                    raise TypeError(f"non-default type parameter '{type_param!r}'"
+                                    " follows default type parameter")
+                if has_default:
+                    default_value_encountered = True
                 if isinstance(type_param, TypeVarTuple):
                     parameters.extend(type_param)
                 else:
@@ -3642,6 +3661,33 @@ else:
         def __repr__(self) -> str:
             return self.__name__
 
+        if sys.version_info < (3, 11):
+            def _check_single_param(self, param, recursion=0):
+                # Allow [], [int], [int, str], [int, ...], [int, T]
+                if param is ...:
+                    return ...
+                if param is None:
+                    return None
+                # Note in <= 3.9 _ConcatenateGenericAlias inherits from list
+                if isinstance(param, list) and recursion == 0:
+                    return [self._check_single_param(arg, recursion+1)
+                            for arg in param]
+                return typing._type_check(
+                        param, f'Subscripting {self.__name__} requires a type.'
+                    )
+
+        def _check_parameters(self, parameters):
+            if sys.version_info < (3, 11):
+                return tuple(
+                    self._check_single_param(item)
+                    for item in parameters
+                )
+            return tuple(typing._type_check(
+                        item, f'Subscripting {self.__name__} requires a type.'
+                    )
+                    for item in parameters
+            )
+
         def __getitem__(self, parameters):
             if not self.__type_params__:
                 raise TypeError("Only generic type aliases are subscriptable")
@@ -3650,13 +3696,14 @@ else:
             # Using 3.9 here will create problems with Concatenate
             if sys.version_info >= (3, 10):
                 return _types.GenericAlias(self, parameters)
-            parameters = tuple(
-                typing._type_check(
-                    item, f'Subscripting {self.__name__} requires a type.'
-                )
-                for item in parameters
-            )
-            return _TypeAliasGenericAlias(self, parameters)
+            type_vars = _collect_type_vars(parameters)
+            parameters = self._check_parameters(parameters)
+            alias = _TypeAliasGenericAlias(self, parameters)
+            # alias.__parameters__ is not complete if Concatenate is present
+            # as it is converted to a list from which no parameters are extracted.
+            if alias.__parameters__ != type_vars:
+                alias.__parameters__ = type_vars
+            return alias
 
         def __reduce__(self):
             return self.__name__
