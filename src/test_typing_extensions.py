@@ -5376,9 +5376,15 @@ class ConcatenateTests(BaseTestCase):
     @skipUnless(TYPING_3_10_0, "Concatenate not available in <3.10")
     def test_typing_compatibility(self):
         P = ParamSpec('P')
-        C = Concatenate[int, P][typing.Concatenate[int, P]]
-        self.assertEqual(C, Concatenate[int, int, P])
-        self.assertEqual(get_args(C), (int, int, P))
+        C1 = Concatenate[int, P][typing.Concatenate[int, P]]
+        self.assertEqual(C1, Concatenate[int, int, P])
+        self.assertEqual(get_args(C1), (int, int, P))
+
+        C2 = typing.Concatenate[int, P][Concatenate[int, P]]
+        with self.subTest("typing compatibility with typing_extensions"):
+            if sys.version_info < (3, 10, 3):
+                self.skipTest("Unpacking not introduced until 3.10.3")
+            self.assertEqual(get_args(C2), (int, int, P))
 
     def test_valid_uses(self):
         P = ParamSpec('P')
