@@ -394,5 +394,5 @@ jobs:
               owner: "python",
               repo: "typing_extensions",
               title: `Third-party tests failed on ${new Date().toDateString()}`,
-              body: "Full history of runs listed here: https://github.com/python/typing_extensions/actions/workflows/third_party.yml",
+              body: "Run listed here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
             })
