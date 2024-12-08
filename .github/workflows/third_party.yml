@@ -223,9 +223,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # TODO: reenable 3.12 and 3.13 after they are fixed:
-        # https://github.com/swansonk14/typed-argument-parser/issues/156
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
