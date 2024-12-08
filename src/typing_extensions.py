@@ -1801,21 +1801,20 @@ else:
 
     # 3.10
     if sys.version_info < (3, 11):
-        _typing_ConcatenateGenericAlias = _ConcatenateGenericAlias
 
-        class _ConcatenateGenericAlias(_typing_ConcatenateGenericAlias, _root=True):
+        class _ConcatenateGenericAlias(typing._ConcatenateGenericAlias, _root=True):
             # needed for checks in collections.abc.Callable to accept this class
             __module__ = "typing"
 
             def copy_with(self, params):
                 if isinstance(params[-1], (list, tuple)):
                     return (*params[:-1], *params[-1])
-                if isinstance(params[-1], _ConcatenateGenericAlias):
+                if isinstance(params[-1], typing._ConcatenateGenericAlias):
                     params = (*params[:-1], *params[-1].__args__)
                 elif not (params[-1] is ... or isinstance(params[-1], ParamSpec)):
                     raise TypeError("The last parameter to Concatenate should be a "
                             "ParamSpec variable or ellipsis.")
-                return super(_typing_ConcatenateGenericAlias, self).copy_with(params)
+                return super(typing._ConcatenateGenericAlias, self).copy_with(params)
 
 
 # 3.8-3.9.2
