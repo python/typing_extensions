@@ -3006,6 +3006,23 @@ else:
                     f"a class or callable, not {arg!r}"
                 )
 
+if sys.version_info < (3, 10):
+    def _is_param_expr(arg):
+        return arg is ... or isinstance(
+            arg, (tuple, list, ParamSpec, _ConcatenateGenericAlias)
+        )
+else:
+    def _is_param_expr(arg):
+        return arg is ... or isinstance(
+            arg,
+            (
+                tuple,
+                list,
+                ParamSpec,
+                _ConcatenateGenericAlias,
+                typing._ConcatenateGenericAlias,
+            ),
+        )
 
 # We have to do some monkey patching to deal with the dual nature of
 # Unpack/TypeVarTuple:
@@ -3020,6 +3037,17 @@ if not hasattr(typing, "TypeVarTuple"):
 
         This gives a nice error message in case of count mismatch.
         """
+        # If substituting a single ParamSpec with multiple arguments
+        # we do not check the count
+        if (inspect.isclass(cls) and issubclass(cls, typing.Generic)
+            and len(cls.__parameters__) == 1
+            and isinstance(cls.__parameters__[0], ParamSpec)
+            and parameters
+            and not _is_param_expr(parameters[0])
+        ):
+            # Generic modifies parameters variable, but here we cannot do this
+            return
+
         if not elen:
             raise TypeError(f"{cls} is not a generic class")
         if elen is _marker:
