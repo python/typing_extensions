@@ -126,6 +126,8 @@ TYPING_3_13_0 = sys.version_info[:3] >= (3, 13, 0)
 # 3.13.0.rc1 fixes a problem with @deprecated
 TYPING_3_13_0_RC = sys.version_info[:4] >= (3, 13, 0, "candidate")
 
+TYPING_3_14_0 = sys.version_info[:3] >= (3, 14, 0)
+
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
 HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
@@ -4288,6 +4290,24 @@ class TypedDictTests(BaseTestCase):
             {'inline': bool, 'untotal': str, 'child': bool},
         )
 
+        wrong_bases = [
+            (One, Regular),
+            (Regular, One),
+            (One, Two, Regular),
+            (Inline, Regular),
+            (Untotal, Regular),
+        ]
+        for bases in wrong_bases:
+            with self.subTest(bases=bases):
+                with self.assertRaisesRegex(
+                    TypeError,
+                    'cannot inherit from both a TypedDict type and a non-TypedDict',
+                ):
+                    class Wrong(*bases):
+                        pass
+
+    @skipIf(TYPING_3_14_0, "only supported on older versions")
+    def test_closed_typeddict_compat(self):
         class Closed(TypedDict, closed=True):
             __extra_items__: None
 
@@ -4305,22 +4325,6 @@ class TypedDictTests(BaseTestCase):
 
         self.assertFalse(ChildClosed.__closed__)
         self.assertEqual(ChildClosed.__extra_items__, type(None))
-
-        wrong_bases = [
-            (One, Regular),
-            (Regular, One),
-            (One, Two, Regular),
-            (Inline, Regular),
-            (Untotal, Regular),
-        ]
-        for bases in wrong_bases:
-            with self.subTest(bases=bases):
-                with self.assertRaisesRegex(
-                    TypeError,
-                    'cannot inherit from both a TypedDict type and a non-TypedDict',
-                ):
-                    class Wrong(*bases):
-                        pass
 
     def test_is_typeddict(self):
         self.assertIs(is_typeddict(Point2D), True)
@@ -4677,7 +4681,8 @@ class TypedDictTests(BaseTestCase):
             },
         )
 
-    def test_extra_keys_non_readonly(self):
+    @skipIf(TYPING_3_14_0, "Old syntax only supported on <3.14")
+    def test_extra_keys_non_readonly_compat(self):
         class Base(TypedDict, closed=True):
             __extra_items__: str
 

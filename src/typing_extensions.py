@@ -917,7 +917,7 @@ else:
                 break
 
     class _TypedDictMeta(type):
-        def __new__(cls, name, bases, ns, *, total=True, closed=False):
+        def __new__(cls, name, bases, ns, *, total=True, closed=None, extra_items=None):
             """Create new typed dict class object.
 
             This method is called when TypedDict is subclassed,
@@ -929,6 +929,10 @@ else:
                 if type(base) is not _TypedDictMeta and base is not typing.Generic:
                     raise TypeError('cannot inherit from both a TypedDict type '
                                     'and a non-TypedDict base class')
+            if closed is not None and extra_items is not None:
+                raise TypeError("Cannot combine closed=True and extra_items")
+            elif closed is None:
+                closed = False
 
             if any(issubclass(b, typing.Generic) for b in bases):
                 generic_base = (typing.Generic,)
@@ -968,7 +972,7 @@ else:
             optional_keys = set()
             readonly_keys = set()
             mutable_keys = set()
-            extra_items_type = None
+            extra_items_type = extra_items
 
             for base in bases:
                 base_dict = base.__dict__
@@ -978,13 +982,19 @@ else:
                 optional_keys.update(base_dict.get('__optional_keys__', ()))
                 readonly_keys.update(base_dict.get('__readonly_keys__', ()))
                 mutable_keys.update(base_dict.get('__mutable_keys__', ()))
-                base_extra_items_type = base_dict.get('__extra_items__', None)
+                base_extra_items_type = getattr(base, '__extra_items__', None)
                 if base_extra_items_type is not None:
                     extra_items_type = base_extra_items_type
+                if getattr(base, "__closed__", False) and not closed:
+                    raise TypeError("Child of a closed TypedDict must also be closed")
 
             if closed and extra_items_type is None:
                 extra_items_type = Never
-            if closed and "__extra_items__" in own_annotations:
+
+            # This was specified in an earlier version of PEP 728. Support
+            # is retained for backwards compatibility, but only for Python 3.13
+            # and lower.
+            if closed and sys.version_info < (3, 14) and "__extra_items__" in own_annotations:
                 annotation_type = own_annotations.pop("__extra_items__")
                 qualifiers = set(_get_typeddict_qualifiers(annotation_type))
                 if Required in qualifiers:
