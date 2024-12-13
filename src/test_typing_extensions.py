@@ -4031,7 +4031,7 @@ class TypedDictTests(BaseTestCase):
         with self.assertRaises(TypeError), self.assertWarns(DeprecationWarning):
             TypedDict('Emp', name=str, id=int)
 
-    @skipIf(sys.version_info >= (3, 15), "3.15 removes support for kwargs")
+    @skipIf(sys.version_info >= (3, 13), "3.13 removes support for kwargs")
     def test_basics_keywords_syntax(self):
         with self.assertWarns(DeprecationWarning):
             Emp = TypedDict('Emp', name=str, id=int)
@@ -4048,7 +4048,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Emp.__annotations__, {'name': str, 'id': int})
         self.assertEqual(Emp.__total__, True)
 
-    @skipIf(sys.version_info >= (3, 15), "3.15 removes support for kwargs")
+    @skipIf(sys.version_info >= (3, 13), "3.13 removes support for kwargs")
     def test_typeddict_special_keyword_names(self):
         with self.assertWarns(DeprecationWarning):
             TD = TypedDict("TD", cls=type, self=object, typename=str, _typename=int,
