@@ -986,7 +986,16 @@ else:
                 if base_extra_items_type is not None:
                     extra_items_type = base_extra_items_type
                 if getattr(base, "__closed__", False) and not closed:
-                    raise TypeError("Child of a closed TypedDict must also be closed")
+                    if sys.version_info < (3, 14):
+                        # PEP 728 wants this to be an error, but that is not
+                        # compatible with previous versions of typing-extensions.
+                        warnings.warn(
+                            "Child of a closed TypedDict must also be closed. This will "
+                            "be an error in Python 3.14.",
+                            DeprecationWarning,
+                        )
+                    else:
+                        raise TypeError("Child of a closed TypedDict must also be closed")
 
             if closed and extra_items_type is None:
                 extra_items_type = Never

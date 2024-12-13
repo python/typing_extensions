@@ -4318,14 +4318,16 @@ class TypedDictTests(BaseTestCase):
         class Unclosed(TypedDict, closed=False):
             ...
 
-        class ChildUnclosed(Closed, Unclosed):
-            ...
+        with self.assertWarns(DeprecationWarning):
+            class ChildUnclosed(Closed, Unclosed):
+                ...
 
         self.assertFalse(ChildUnclosed.__closed__)
         self.assertEqual(ChildUnclosed.__extra_items__, type(None))
 
-        class ChildClosed(Unclosed, Closed):
-            ...
+        with self.assertWarns(DeprecationWarning):
+            class ChildClosed(Unclosed, Closed):
+                ...
 
         self.assertFalse(ChildClosed.__closed__)
         self.assertEqual(ChildClosed.__extra_items__, type(None))
@@ -4690,19 +4692,34 @@ class TypedDictTests(BaseTestCase):
         class Base(TypedDict, closed=True):
             __extra_items__: str
 
-        class Child(Base):
-            a: NotRequired[int]
+        with self.assertWarns(DeprecationWarning):
+            class Child(Base):
+                a: NotRequired[int]
 
         self.assertEqual(Child.__required_keys__, frozenset({}))
         self.assertEqual(Child.__optional_keys__, frozenset({'a'}))
         self.assertEqual(Child.__readonly_keys__, frozenset({}))
         self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
 
+    @skipIf(TYPING_3_14_0, "Only supported on <3.14")
     def test_extra_keys_readonly(self):
         class Base(TypedDict, closed=True):
             __extra_items__: ReadOnly[str]
 
-        class Child(Base):
+        with self.assertWarns(DeprecationWarning):
+            class Child(Base):
+                a: NotRequired[str]
+
+        self.assertEqual(Child.__required_keys__, frozenset({}))
+        self.assertEqual(Child.__optional_keys__, frozenset({'a'}))
+        self.assertEqual(Child.__readonly_keys__, frozenset({}))
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
+
+    def test_extra_keys_readonly_explicit_closed(self):
+        class Base(TypedDict, closed=True):
+            __extra_items__: ReadOnly[str]
+
+        class Child(Base, closed=True):
             a: NotRequired[str]
 
         self.assertEqual(Child.__required_keys__, frozenset({}))
@@ -4766,26 +4783,26 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Base.__extra_items__, ReadOnly[Union[str, None]])
         self.assertTrue(Base.__closed__)
 
-        class Child(Base):
+        class Child(Base, closed=True):
             a: int
             __extra_items__: int
 
-        self.assertEqual(Child.__required_keys__, frozenset({'a', "__extra_items__"}))
+        self.assertEqual(Child.__required_keys__, frozenset({'a'}))
         self.assertEqual(Child.__optional_keys__, frozenset({}))
         self.assertEqual(Child.__readonly_keys__, frozenset({}))
-        self.assertEqual(Child.__mutable_keys__, frozenset({'a', "__extra_items__"}))
-        self.assertEqual(Child.__annotations__, {"__extra_items__": int, "a": int})
-        self.assertEqual(Child.__extra_items__, ReadOnly[Union[str, None]])
-        self.assertFalse(Child.__closed__)
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
+        self.assertEqual(Child.__annotations__, {"a": int})
+        self.assertEqual(Child.__extra_items__, int)
+        self.assertTrue(Child.__closed__)
 
         class GrandChild(Child, closed=True):
             __extra_items__: str
 
-        self.assertEqual(GrandChild.__required_keys__, frozenset({'a', "__extra_items__"}))
+        self.assertEqual(GrandChild.__required_keys__, frozenset({'a'}))
         self.assertEqual(GrandChild.__optional_keys__, frozenset({}))
         self.assertEqual(GrandChild.__readonly_keys__, frozenset({}))
-        self.assertEqual(GrandChild.__mutable_keys__, frozenset({'a', "__extra_items__"}))
-        self.assertEqual(GrandChild.__annotations__, {"__extra_items__": int, "a": int})
+        self.assertEqual(GrandChild.__mutable_keys__, frozenset({'a'}))
+        self.assertEqual(GrandChild.__annotations__, {"a": int})
         self.assertEqual(GrandChild.__extra_items__, str)
         self.assertTrue(GrandChild.__closed__)
 
