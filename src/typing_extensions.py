@@ -95,6 +95,8 @@ __all__ = [
     'ReadOnly',
     'Required',
     'NotRequired',
+    'NoDefault',
+    'NoExtraItems',
 
     # Pure aliases, have always been in typing
     'AbstractSet',
@@ -121,7 +123,6 @@ __all__ = [
     'MutableMapping',
     'MutableSequence',
     'MutableSet',
-    'NoDefault',
     'Optional',
     'Pattern',
     'Reversible',
@@ -871,6 +872,59 @@ def _ensure_subclassable(mro_entries):
     return inner
 
 
+if not hasattr(typing, "NoDefault") or not hasattr(typing, "NoExtraItems"):
+    class SingletonMeta(type):
+        def __setattr__(cls, attr, value):
+            # TypeError is consistent with the behavior of NoneType
+            raise TypeError(
+                f"cannot set {attr!r} attribute of immutable type {cls.__name__!r}"
+            )
+
+
+if hasattr(typing, "NoDefault"):
+    NoDefault = typing.NoDefault
+else:
+    class NoDefaultType(metaclass=SingletonMeta):
+        """The type of the NoDefault singleton."""
+
+        __slots__ = ()
+
+        def __new__(cls):
+            return globals().get("NoDefault") or object.__new__(cls)
+
+        def __repr__(self):
+            return "typing_extensions.NoDefault"
+
+        def __reduce__(self):
+            return "NoDefault"
+
+    NoDefault = NoDefaultType()
+    del NoDefaultType
+
+if hasattr(typing, "NoExtraItems"):
+    NoExtraItems = typing.NoExtraItems
+else:
+    class NoExtraItemsType(metaclass=SingletonMeta):
+        """The type of the NoExtraItems singleton."""
+
+        __slots__ = ()
+
+        def __new__(cls):
+            return globals().get("NoExtraItems") or object.__new__(cls)
+
+        def __repr__(self):
+            return "typing_extensions.NoExtraItems"
+
+        def __reduce__(self):
+            return "NoExtraItems"
+
+    NoExtraItems = NoExtraItemsType()
+    del NoExtraItemsType
+
+if not hasattr(typing, "NoDefault") or not hasattr(typing, "NoExtraItems"):
+    del SingletonMeta
+
+
 # Update this to something like >=3.13.0b1 if and when
 # PEP 728 is implemented in CPython
 _PEP_728_IMPLEMENTED = False
@@ -917,7 +971,7 @@ else:
                 break
 
     class _TypedDictMeta(type):
-        def __new__(cls, name, bases, ns, *, total=True, closed=None, extra_items=None):
+        def __new__(cls, name, bases, ns, *, total=True, closed=None, extra_items=NoExtraItems):
             """Create new typed dict class object.
 
             This method is called when TypedDict is subclassed,
@@ -929,8 +983,8 @@ else:
                 if type(base) is not _TypedDictMeta and base is not typing.Generic:
                     raise TypeError('cannot inherit from both a TypedDict type '
                                     'and a non-TypedDict base class')
-            if closed is not None and extra_items is not None:
-                raise TypeError("Cannot combine closed=True and extra_items")
+            if closed is not None and extra_items is not NoExtraItems:
+                raise TypeError(f"Cannot combine closed={closed!r} and extra_items")
             elif closed is None:
                 closed = False
 
@@ -982,9 +1036,6 @@ else:
                 optional_keys.update(base_dict.get('__optional_keys__', ()))
                 readonly_keys.update(base_dict.get('__readonly_keys__', ()))
                 mutable_keys.update(base_dict.get('__mutable_keys__', ()))
-                base_extra_items_type = getattr(base, '__extra_items__', None)
-                if base_extra_items_type is not None:
-                    extra_items_type = base_extra_items_type
                 if getattr(base, "__closed__", False) and not closed:
                     if sys.version_info < (3, 14):
                         # PEP 728 wants this to be an error, but that is not
@@ -997,7 +1048,7 @@ else:
                     else:
                         raise TypeError("Child of a closed TypedDict must also be closed")
 
-            if closed and extra_items_type is None:
+            if closed and extra_items_type is NoExtraItems:
                 extra_items_type = Never
 
             # This was specified in an earlier version of PEP 728. Support
@@ -1059,7 +1110,16 @@ else:
     _TypedDict = type.__new__(_TypedDictMeta, 'TypedDict', (), {})
 
     @_ensure_subclassable(lambda bases: (_TypedDict,))
-    def TypedDict(typename, fields=_marker, /, *, total=True, closed=False, **kwargs):
+    def TypedDict(
+        typename,
+        fields=_marker,
+        /,
+        *,
+        total=True,
+        closed=False,
+        extra_items=NoExtraItems,
+        **kwargs
+    ):
         """A simple typed namespace. At runtime it is equivalent to a plain dict.
 
         TypedDict creates a dictionary type such that a type checker will expect all
@@ -1119,9 +1179,14 @@ else:
                 "using the functional syntax, pass an empty dictionary, e.g. "
             ) + example + "."
             warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
+            # Support a field called "closed"
             if closed is not False and closed is not True:
                 kwargs["closed"] = closed
-                closed = False
+                closed = None
+            # Or "extra_items"
+            if extra_items is not NoExtraItems:
+                kwargs["extra_items"] = extra_items
+                extra_items = NoExtraItems
             fields = kwargs
         elif kwargs:
             raise TypeError("TypedDict takes either a dict or keyword arguments,"
@@ -1143,7 +1208,7 @@ else:
             # Setting correct module is necessary to make typed dict classes pickleable.
             ns['__module__'] = module
 
-        td = _TypedDictMeta(typename, (), ns, total=total, closed=closed)
+        td = _TypedDictMeta(typename, (), ns, total=total, closed=closed, extra_items=extra_items)
         td.__orig_bases__ = (TypedDict,)
         return td
 
@@ -1464,34 +1529,6 @@ else:
         It's invalid when used anywhere except as in the example
         above."""
     )
-
-
-if hasattr(typing, "NoDefault"):
-    NoDefault = typing.NoDefault
-else:
-    class NoDefaultTypeMeta(type):
-        def __setattr__(cls, attr, value):
-            # TypeError is consistent with the behavior of NoneType
-            raise TypeError(
-                f"cannot set {attr!r} attribute of immutable type {cls.__name__!r}"
-            )
-
-    class NoDefaultType(metaclass=NoDefaultTypeMeta):
-        """The type of the NoDefault singleton."""
-
-        __slots__ = ()
-
-        def __new__(cls):
-            return globals().get("NoDefault") or object.__new__(cls)
-
-        def __repr__(self):
-            return "typing_extensions.NoDefault"
-
-        def __reduce__(self):
-            return "NoDefault"
-
-    NoDefault = NoDefaultType()
-    del NoDefaultType, NoDefaultTypeMeta
 
 
 def _set_default(type_param, default):
