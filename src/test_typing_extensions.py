@@ -8758,53 +8758,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "Y.bT",
                 },
             ],
-            "T_in_Y": [
-                {
-                    "owner": None,
-                    "type_params": Y_type_params,
-                    Format.VALUE: Y_type_params[0],
-                    Format.FORWARDREF: Y_type_params[0],
-                    Format.STRING: "T_in_Y",
-                },
-                {
-                    "owner": None,
-                    "type_params": None,
-                    Format.VALUE: NameError,
-                    Format.FORWARDREF: typing.ForwardRef("T_in_Y"),
-                    Format.STRING: "T_in_Y",
-                },
-                {
-                    # Owner with such an attribute name
-                    "owner": X,
-                    "type_params": None,
-                    Format.VALUE: NameError,
-                    Format.FORWARDREF: typing.ForwardRef("T_in_Y"),
-                    Format.STRING: "T_in_Y",
-                },
-                {
-                    # Owner without __type_params__
-                    "owner": Y,
-                    "type_params": None,
-                    Format.VALUE: NameError,
-                    Format.FORWARDREF: typing.ForwardRef("T_in_Y"),
-                    Format.STRING: "T_in_Y",
-                },
-                {
-                    "owner": Y,
-                    "type_params": Y_type_params,
-                    Format.VALUE: Y_type_params[0],
-                    Format.FORWARDREF: Y_type_params[0],
-                    Format.STRING: "T_in_Y",
-                },
-                {
-                    # Owner with __type_params__
-                    "owner": Z,
-                    "type_params": None,
-                    Format.VALUE: Y_type_params[0],
-                    Format.FORWARDREF: Y_type_params[0],
-                    Format.STRING: "T_in_Y",
-                },
-            ],
             # Special cases for typing._type_check.
             # Note: Depending on `is_class` and `is_argument` will raise TypeError
             # therefore `expected` is converted in the generator.
@@ -8927,6 +8880,12 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 )
                 self.assertEqual(result, expected)
 
+    def test_forward_ref_fallback(self):
+        with self.assertRaises(NameError):
+            evaluate_forward_ref(typing.ForwardRef("unbound"), format=Format.VALUE)
+        ref = typing.ForwardRef("unbound")
+        self.assertIs(evaluate_forward_ref(ref, format=Format.FORWARDREF), ref)
+
     def test_evaluate_with_type_params(self):
         # Use a T name that is not in globals
         self.assertNotIn("Tx", globals())
@@ -8946,6 +8905,8 @@ class TestEvaluateForwardRefs(BaseTestCase):
             """), None, ns)
             Gen = ns["Gen"]
 
+        # owner=None, type_params=None
+        # NOTE: The behavior of owner=None might change in the future when ForwardRef.__owner__ is available
         with self.assertRaises(NameError):
             evaluate_forward_ref(typing.ForwardRef("Tx"))
         with self.assertRaises(NameError):
@@ -8955,9 +8916,20 @@ class TestEvaluateForwardRefs(BaseTestCase):
 
         (Tx,) = Gen.__type_params__
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), type_params=Gen.__type_params__), Tx)
+
         # For this test its important that Tx is not a global variable, i.e. do not use "T" here
         self.assertNotIn("Tx", globals())
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), owner=Gen), Tx)
+
+        # Different type_params take precedence
+        not_Tx = TypeVar("Tx")  # different TypeVar with same name
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), type_params=(not_Tx,), owner=Gen), not_Tx)
+
+        # globals can take higher precedence
+        if _FORWARD_REF_HAS_CLASS:
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx", is_class=True), owner=Gen, globals={"Tx": str}), str)
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx", is_class=True), owner=Gen, type_params=(not_Tx,), globals={"Tx": str}), str)
+
 
         with self.assertRaises(NameError):
             evaluate_forward_ref(typing.ForwardRef("alias"), type_params=Gen.__type_params__)
