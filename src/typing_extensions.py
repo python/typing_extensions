@@ -4350,9 +4350,13 @@ else:
         if isinstance(type_, ForwardRef):
             if getattr(type_, "__forward_module__", True) is not None:
                 globals = None
-            return evaluate_forward_ref(type_, globals=globals, locals=locals,
-                        type_params=type_params, owner=owner,
-                        _recursive_guard=_recursive_guard, format=format)
+            return evaluate_forward_ref(
+                type_,
+                globals=globals,
+                locals=locals,
+                 type_params=type_params, owner=owner,
+                _recursive_guard=_recursive_guard, format=format
+            )
         if sys.version_info < (3, 9):
             return typing._eval_type(
                 type_,
@@ -4361,11 +4365,11 @@ else:
             )
         if sys.version_info < (3, 12, 5):
             return typing._eval_type(
-                    type_,
-                    globals,
-                    locals,
-                    recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
-                )
+                type_,
+                globals,
+                locals,
+                recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
+            )
         if sys.version_info < (3, 14):
             return typing._eval_type(
                 type_,
@@ -4375,14 +4379,14 @@ else:
                 recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
             )
         return typing._eval_type(
-                type_,
-                globals,
-                locals,
-                type_params,
-                recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
-                format=format,
-                owner=owner,
-            )
+            type_,
+            globals,
+            locals,
+            type_params,
+            recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
+            format=format,
+            owner=owner,
+        )
 
 
 # Aliases for items that have always been in typing.
