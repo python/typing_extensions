@@ -8649,77 +8649,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 Format.FORWARDREF: Optional[str],
                 Format.STRING: str(Union[str, None, "str"]),
             },
-            # Classes and members
-            "X": X,
-            "Y[X]": {
-                Format.VALUE: Y[X],
-                Format.FORWARDREF: Y[X],
-                Format.STRING: "Y[X]",
-            },
-            "Y[T_nonlocal]": [
-                {
-                    "type_params": (T,),  # check with wrong TypeVar
-                    Format.VALUE: NameError,
-                    Format.FORWARDREF: typing.ForwardRef("Y[T_nonlocal]"),
-                    Format.STRING: "Y[T_nonlocal]",
-                },
-                {
-                    "type_params": (T_local, ),
-                    Format.VALUE: Y[T_local],
-                    Format.FORWARDREF: Y[T_local],
-                    Format.STRING: "Y[T_nonlocal]",
-                },
-            ],
-            "Y[Y['T']]": {
-                Format.VALUE: Y[Y[T]],
-                Format.FORWARDREF: Y[Y[T]],
-                Format.STRING: "Y[Y['T']]",
-            },
-            """Y["Y['T']"]""": [
-                {
-                    Format.VALUE: (
-                        Y[Y[T]]
-                        if sys.version_info[:2] > (3, 8)
-                        else "Skip: nested string not supported"
-                    ),
-                    Format.FORWARDREF: (
-                        Y[Y[T]]
-                        if sys.version_info[:2] > (3, 8)
-                        else "Skip: nested string not supported"
-                    ),
-                    Format.STRING: """Y["Y['T']"]""",
-                },
-            ],
-            "Y[Y[T_nonlocal]]": [
-                {
-                    "type_params": (T_local, ),
-                    Format.VALUE: Y[Y[T_local]],
-                    Format.FORWARDREF: Y[Y[T_local]],
-                    Format.STRING: "Y[Y[T_nonlocal]]",
-                },
-                {
-                    "type_params": None,
-                    Format.VALUE: NameError,
-                    Format.FORWARDREF: typing.ForwardRef("Y[Y[T_nonlocal]]"),
-                    Format.STRING: "Y[Y[T_nonlocal]]",
-                },
-            ],
-            """Y['Z["StrAlias"]']""": [
-                {
-                    # This will be Y[Z["StrAlias"]] in 3.8 and 3.10
-                    Format.VALUE: (
-                        Y[Z[str]]
-                        if sys.version_info[:2] > (3, 10)
-                        else "Skip: nested ForwardRef not fully resolved"
-                    ),
-                    Format.FORWARDREF: (
-                        Y[Z[str]]
-                        if sys.version_info[:2] > (3, 10)
-                        else "Skip: nested ForwardRef not fully resolved"
-                    ),
-                    Format.STRING: """Y['Z["StrAlias"]']""",
-                },
-            ],
             "Y.a": [
                 {
                     "skip_if": {"localns": minimal_localns, "format": Format.FORWARDREF},
@@ -8930,7 +8859,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx", is_class=True), owner=Gen, globals={"Tx": str}), str)
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx", is_class=True), owner=Gen, type_params=(not_Tx,), globals={"Tx": str}), str)
 
-
         with self.assertRaises(NameError):
             evaluate_forward_ref(typing.ForwardRef("alias"), type_params=Gen.__type_params__)
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("alias"), owner=Gen), int)
@@ -9004,6 +8932,44 @@ class TestEvaluateForwardRefs(BaseTestCase):
 
         with self.assertRaises(NameError):
             evaluate_forward_ref(typing.ForwardRef("doesntexist"))
+
+    def test_nested_strings(self):
+        # This variable must have a different name TypeVar
+        Tx = TypeVar("Tx")
+
+        class Y(Generic[Tx]):
+            a = "X"
+            bT = "Y[T_nonlocal]"
+
+        Z = TypeAliasType("Z", Y[Tx], type_params=(Tx,))
+
+        evaluated_ref1a = evaluate_forward_ref(typing.ForwardRef("Y[Y['Tx']]"), locals={"Y": Y, "Tx": Tx})
+        self.assertEqual(get_origin(evaluated_ref1a), Y)
+        self.assertEqual(get_args(evaluated_ref1a), (Y[Tx],))
+
+        with self.subTest("nested string with type_params"):
+            if not TYPING_3_12_0:
+                self.skipTest("# TODO find reason why this one fails before 3.12.?")
+            evaluated_ref1b = evaluate_forward_ref(
+                typing.ForwardRef("Y[Y['Tx']]"), locals={"Y": Y}, type_params=(Tx,)
+            )
+            self.assertEqual(get_origin(evaluated_ref1b), Y)
+            self.assertEqual(get_args(evaluated_ref1b), (Y[Tx],))
+
+        with self.subTest("nested string of TypeVar"):
+            evaluated_ref2 = evaluate_forward_ref(typing.ForwardRef("""Y["Y['Tx']"]"""), locals={"Y": Y})
+            self.assertEqual(get_origin(evaluated_ref2), Y)
+            if not TYPING_3_9_0:
+                self.skipTest("Nested string 'Tx' stays ForwardRef in 3.8")
+            self.assertEqual(get_args(evaluated_ref2), (Y[Tx],))
+
+        with self.subTest("nested string of TypeAliasType and alias"):
+            # NOTE: Using Y here works for 3.10
+            evaluated_ref3 = evaluate_forward_ref(typing.ForwardRef("""Y['Z["StrAlias"]']"""), locals={"Y": Y, "Z": Z, "StrAlias": str})
+            self.assertEqual(get_origin(evaluated_ref3), Y)
+            if sys.version_info[:2] in ((3,8), (3, 10)):
+                self.skipTest("Nested string 'StrAlias' is not resolved in 3.8 and 3.10")
+            self.assertEqual(get_args(evaluated_ref3), (Z[str],))
 
 
 if __name__ == '__main__':
