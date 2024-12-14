@@ -8947,14 +8947,11 @@ class TestEvaluateForwardRefs(BaseTestCase):
         self.assertEqual(get_origin(evaluated_ref1a), Y)
         self.assertEqual(get_args(evaluated_ref1a), (Y[Tx],))
 
-        with self.subTest("nested string with type_params"):
-            if not TYPING_3_12_0:
-                self.skipTest("# TODO find reason why this one fails before 3.12.?")
-            evaluated_ref1b = evaluate_forward_ref(
-                typing.ForwardRef("Y[Y['Tx']]"), locals={"Y": Y}, type_params=(Tx,)
-            )
-            self.assertEqual(get_origin(evaluated_ref1b), Y)
-            self.assertEqual(get_args(evaluated_ref1b), (Y[Tx],))
+        evaluated_ref1b = evaluate_forward_ref(
+            typing.ForwardRef("Y[Y['Tx']]"), locals={"Y": Y}, type_params=(Tx,)
+        )
+        self.assertEqual(get_origin(evaluated_ref1b), Y)
+        self.assertEqual(get_args(evaluated_ref1b), (Y[Tx],))
 
         with self.subTest("nested string of TypeVar"):
             evaluated_ref2 = evaluate_forward_ref(typing.ForwardRef("""Y["Y['Tx']"]"""), locals={"Y": Y})

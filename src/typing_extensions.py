@@ -4357,6 +4357,12 @@ else:
                  type_params=type_params, owner=owner,
                 _recursive_guard=_recursive_guard, format=format
             )
+        if sys.version_info < (3, 12, 5) and type_params:
+            # Make use of type_params
+            locals = dict(locals) if locals else {}
+            for tvar in type_params:
+                if tvar.__name__ not in locals:  # lets not overwrite something present
+                    locals[tvar.__name__] = tvar
         if sys.version_info < (3, 9):
             return typing._eval_type(
                 type_,
