@@ -8477,7 +8477,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
 
         # This variable must have a different name TypeVar
         T_local = TypeVar("T_nonlocal")
-        T_local_type_params = (T_local,)
 
         class X:
             T_in_Y = object()  # Using X as owner should not access this value
@@ -8488,7 +8487,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
             bT = "Y[T_nonlocal]"
         # Object with __type_params__
         Z = TypeAliasType("Z", Y[T_in_Y], type_params=(T_in_Y,))
-        Y_type_params = (T_in_Y,)
         del T_in_Y
 
         # Assure that class names are not in globals
@@ -8666,7 +8664,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                     Format.STRING: "Y[T_nonlocal]",
                 },
                 {
-                    "type_params": T_local_type_params,
+                    "type_params": (T_local, ),
                     Format.VALUE: Y[T_local],
                     Format.FORWARDREF: Y[T_local],
                     Format.STRING: "Y[T_nonlocal]",
@@ -8694,7 +8692,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
             ],
             "Y[Y[T_nonlocal]]": [
                 {
-                    "type_params": T_local_type_params,
+                    "type_params": (T_local, ),
                     Format.VALUE: Y[Y[T_local]],
                     Format.FORWARDREF: Y[Y[T_local]],
                     Format.STRING: "Y[Y[T_nonlocal]]",
@@ -8740,7 +8738,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
                 # Note: Different to the <3.14 ForwardRef behavior STRING yields "Y.bT"
                 # and not "Y[T_nonlocal]"
                 {
-                    "type_params": T_local_type_params,
+                    "type_params": (T_local, ),
                     Format.VALUE: Y[T_local],
                     Format.FORWARDREF: Y[T_local],
                     Format.STRING: "Y.bT",
