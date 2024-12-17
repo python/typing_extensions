@@ -8642,24 +8642,25 @@ class TestEvaluateForwardRefs(BaseTestCase):
 
     def test_invalid_special_forms(self):
         # tests _lax_type_check to raise errors the same way as the typing module.
+        # Regex capture "< class 'module.name'> and "module.name"
         with self.assertRaisesRegex(
-            TypeError, "Plain .*Protocol('>)? is not valid as type argument"
+            TypeError, r"Plain .*Protocol('>)? is not valid as type argument"
         ):
             evaluate_forward_ref(typing.ForwardRef("Protocol"), globals=vars(typing))
         with self.assertRaisesRegex(
-            TypeError, "Plain .*Generic('>)? is not valid as type argument"
+            TypeError, r"Plain .*Generic('>)? is not valid as type argument"
         ):
             evaluate_forward_ref(typing.ForwardRef("Generic"), globals=vars(typing))
-        with self.assertRaisesRegex(TypeError, "Plain typing(_extensions)?.Final is not valid as type argument"):
+        with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.Final is not valid as type argument"):
             evaluate_forward_ref(typing.ForwardRef("Final"), globals=vars(typing))
-        with self.assertRaisesRegex(TypeError, "Plain typing(_extensions)?.ClassVar is not valid as type argument"):
+        with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.ClassVar is not valid as type argument"):
             evaluate_forward_ref(typing.ForwardRef("ClassVar"), globals=vars(typing))
         if _FORWARD_REF_HAS_CLASS:
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("Final", is_class=True), globals=vars(typing)), Final)
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("ClassVar", is_class=True), globals=vars(typing)), ClassVar)
-            with self.assertRaisesRegex(TypeError, "Plain .*Final('>)? is not valid as type argument"):
+            with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.Final is not valid as type argument"):
                 evaluate_forward_ref(typing.ForwardRef("Final", is_argument=False), globals=vars(typing))
-            with self.assertRaisesRegex(TypeError, "Plain .*ClassVar('>)? is not valid as type argument"):
+            with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.ClassVar is not valid as type argument"):
                 evaluate_forward_ref(typing.ForwardRef("ClassVar", is_argument=False), globals=vars(typing))
         else:
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("Final", is_argument=False), globals=vars(typing)), Final)
