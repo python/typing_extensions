@@ -26,13 +26,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pydantic:
-    name: pydantic tests
+  skip-schedule-on-fork:
+    name: Check for schedule trigger on fork
+    runs-on: ubuntu-latest
     # if 'schedule' was the trigger,
     # don't run it on contributors' forks
     if: >-
       github.repository == 'python/typing_extensions'
       || github.event_name != 'schedule'
+    steps:
+      - run: true
+
+  pydantic:
+    name: pydantic tests
+    needs: skip-schedule-on-fork
     strategy:
       fail-fast: false
       matrix:
@@ -67,11 +74,7 @@ jobs:
 
   typing_inspect:
     name: typing_inspect tests
-    # if 'schedule' was the trigger,
-    # don't run it on contributors' forks
-    if: >-
-      github.repository == 'python/typing_extensions'
-      || github.event_name != 'schedule'
+    needs: skip-schedule-on-fork
     strategy:
       fail-fast: false
       matrix:
@@ -107,11 +110,7 @@ jobs:
 
   pyanalyze:
     name: pyanalyze tests
-    # if 'schedule' was the trigger,
-    # don't run it on contributors' forks
-    if: >-
-      github.repository == 'python/typing_extensions'
-      || github.event_name != 'schedule'
+    needs: skip-schedule-on-fork
     strategy:
       fail-fast: false
       matrix:
@@ -148,11 +147,7 @@ jobs:
 
   typeguard:
     name: typeguard tests
-    # if 'schedule' was the trigger,
-    # don't run it on contributors' forks
-    if: >-
-      github.repository == 'python/typing_extensions'
-      || github.event_name != 'schedule'
+    needs: skip-schedule-on-fork
     strategy:
       fail-fast: false
       matrix:
@@ -190,11 +185,7 @@ jobs:
 
   typed-argument-parser:
     name: typed-argument-parser tests
-    # if 'schedule' was the trigger,
-    # don't run it on contributors' forks
-    if: >-
-      github.repository == 'python/typing_extensions'
-      || github.event_name != 'schedule'
+    needs: skip-schedule-on-fork
     strategy:
       fail-fast: false
       matrix:
@@ -237,11 +228,7 @@ jobs:
 
   mypy:
     name: stubtest & mypyc tests
-    # if 'schedule' was the trigger,
-    # don't run it on contributors' forks
-    if: >-
-      github.repository == 'python/typing_extensions'
-      || github.event_name != 'schedule'
+    needs: skip-schedule-on-fork
     strategy:
       fail-fast: false
       matrix:
@@ -279,11 +266,7 @@ jobs:
 
   cattrs:
     name: cattrs tests
-    # if 'schedule' was the trigger,
-    # don't run it on contributors' forks
-    if: >-
-      github.repository == 'python/typing_extensions'
-      || github.event_name != 'schedule'
+    needs: skip-schedule-on-fork
     strategy:
       fail-fast: false
       matrix:
