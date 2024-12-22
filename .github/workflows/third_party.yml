@@ -28,16 +28,11 @@ concurrency:
 jobs:
   pydantic:
     name: pydantic tests
+    # if 'schedule' was the trigger,
+    # don't run it on contributors' forks
     if: >-
-      # if 'schedule' was the trigger,
-      # don't run it on contributors' forks
-      ${{
-        github.event_name != 'schedule'
-        || (
-          github.repository == 'python/typing_extensions'
-          && github.event_name == 'schedule'
-        )
-      }}
+      github.repository == 'python/typing_extensions'
+      || github.event_name != 'schedule'
     strategy:
       fail-fast: false
       matrix:
@@ -72,16 +67,11 @@ jobs:
 
   typing_inspect:
     name: typing_inspect tests
+    # if 'schedule' was the trigger,
+    # don't run it on contributors' forks
     if: >-
-      # if 'schedule' was the trigger,
-      # don't run it on contributors' forks
-      ${{
-        github.event_name != 'schedule'
-        || (
-          github.repository == 'python/typing_extensions'
-          && github.event_name == 'schedule'
-        )
-      }}
+      github.repository == 'python/typing_extensions'
+      || github.event_name != 'schedule'
     strategy:
       fail-fast: false
       matrix:
@@ -117,16 +107,11 @@ jobs:
 
   pyanalyze:
     name: pyanalyze tests
+    # if 'schedule' was the trigger,
+    # don't run it on contributors' forks
     if: >-
-      # if 'schedule' was the trigger,
-      # don't run it on contributors' forks
-      ${{
-        github.event_name != 'schedule'
-        || (
-          github.repository == 'python/typing_extensions'
-          && github.event_name == 'schedule'
-        )
-      }}
+      github.repository == 'python/typing_extensions'
+      || github.event_name != 'schedule'
     strategy:
       fail-fast: false
       matrix:
@@ -163,16 +148,11 @@ jobs:
 
   typeguard:
     name: typeguard tests
+    # if 'schedule' was the trigger,
+    # don't run it on contributors' forks
     if: >-
-      # if 'schedule' was the trigger,
-      # don't run it on contributors' forks
-      ${{
-        github.event_name != 'schedule'
-        || (
-          github.repository == 'python/typing_extensions'
-          && github.event_name == 'schedule'
-        )
-      }}
+      github.repository == 'python/typing_extensions'
+      || github.event_name != 'schedule'
     strategy:
       fail-fast: false
       matrix:
@@ -210,16 +190,11 @@ jobs:
 
   typed-argument-parser:
     name: typed-argument-parser tests
+    # if 'schedule' was the trigger,
+    # don't run it on contributors' forks
     if: >-
-      # if 'schedule' was the trigger,
-      # don't run it on contributors' forks
-      ${{
-        github.event_name != 'schedule'
-        || (
-          github.repository == 'python/typing_extensions'
-          && github.event_name == 'schedule'
-        )
-      }}
+      github.repository == 'python/typing_extensions'
+      || github.event_name != 'schedule'
     strategy:
       fail-fast: false
       matrix:
@@ -262,16 +237,11 @@ jobs:
 
   mypy:
     name: stubtest & mypyc tests
+    # if 'schedule' was the trigger,
+    # don't run it on contributors' forks
     if: >-
-      # if 'schedule' was the trigger,
-      # don't run it on contributors' forks
-      ${{
-        github.event_name != 'schedule'
-        || (
-          github.repository == 'python/typing_extensions'
-          && github.event_name == 'schedule'
-        )
-      }}
+      github.repository == 'python/typing_extensions'
+      || github.event_name != 'schedule'
     strategy:
       fail-fast: false
       matrix:
@@ -309,16 +279,11 @@ jobs:
 
   cattrs:
     name: cattrs tests
+    # if 'schedule' was the trigger,
+    # don't run it on contributors' forks
     if: >-
-      # if 'schedule' was the trigger,
-      # don't run it on contributors' forks
-      ${{
-        github.event_name != 'schedule'
-        || (
-          github.repository == 'python/typing_extensions'
-          && github.event_name == 'schedule'
-        )
-      }}
+      github.repository == 'python/typing_extensions'
+      || github.event_name != 'schedule'
     strategy:
       fail-fast: false
       matrix:
