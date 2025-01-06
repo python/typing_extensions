@@ -2147,7 +2147,7 @@ elif sys.version_info[:2] >= (3, 9):
 
         1. The return value is a boolean.
         2. If the return value is ``True``, the type of its argument
-        is the intersection of the type inside ``TypeGuard`` and the argument's
+        is the intersection of the type inside ``TypeIs`` and the argument's
         previously known type.
 
         For example::
@@ -2195,7 +2195,7 @@ else:
 
         1. The return value is a boolean.
         2. If the return value is ``True``, the type of its argument
-        is the intersection of the type inside ``TypeGuard`` and the argument's
+        is the intersection of the type inside ``TypeIs`` and the argument's
         previously known type.
 
         For example::
