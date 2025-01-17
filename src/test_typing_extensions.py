@@ -28,6 +28,7 @@ from unittest.mock import patch
 import typing_extensions
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 from typing_extensions import (
+    _FORWARD_REF_HAS_CLASS,
     _PEP_649_OR_749_IMPLEMENTED,
     Annotated,
     Any,
@@ -82,6 +83,7 @@ from typing_extensions import (
     clear_overloads,
     dataclass_transform,
     deprecated,
+    evaluate_forward_ref,
     final,
     get_annotations,
     get_args,
@@ -7948,7 +7950,7 @@ class TestGetAnnotations(BaseTestCase):
         self.assertEqual(get_annotations(f2, format=2), {"a": "undefined"})
 
         self.assertEqual(
-            get_annotations(f1, format=Format.SOURCE),
+            get_annotations(f1, format=Format.STRING),
             {"a": "int"},
         )
         self.assertEqual(get_annotations(f1, format=3), {"a": "int"})
@@ -7975,7 +7977,7 @@ class TestGetAnnotations(BaseTestCase):
                 foo, format=Format.FORWARDREF, eval_str=True
             )
             get_annotations(
-                foo, format=Format.SOURCE, eval_str=True
+                foo, format=Format.STRING, eval_str=True
             )
 
     def test_stock_annotations(self):
@@ -7989,7 +7991,7 @@ class TestGetAnnotations(BaseTestCase):
                     {"a": int, "b": str},
                 )
         self.assertEqual(
-            get_annotations(foo, format=Format.SOURCE),
+            get_annotations(foo, format=Format.STRING),
             {"a": "int", "b": "str"},
         )
 
@@ -8084,43 +8086,43 @@ class TestGetAnnotations(BaseTestCase):
                 )
 
         self.assertEqual(
-            get_annotations(isa, format=Format.SOURCE),
+            get_annotations(isa, format=Format.STRING),
             {"a": "int", "b": "str"},
         )
         self.assertEqual(
-            get_annotations(isa.MyClass, format=Format.SOURCE),
+            get_annotations(isa.MyClass, format=Format.STRING),
             {"a": "int", "b": "str"},
         )
         mycls = "MyClass" if _PEP_649_OR_749_IMPLEMENTED else "inspect_stock_annotations.MyClass"
         self.assertEqual(
-            get_annotations(isa.function, format=Format.SOURCE),
+            get_annotations(isa.function, format=Format.STRING),
             {"a": "int", "b": "str", "return": mycls},
         )
         self.assertEqual(
             get_annotations(
-                isa.function2, format=Format.SOURCE
+                isa.function2, format=Format.STRING
             ),
             {"a": "int", "b": "str", "c": mycls, "return": mycls},
         )
         self.assertEqual(
             get_annotations(
-                isa.function3, format=Format.SOURCE
+                isa.function3, format=Format.STRING
             ),
             {"a": "int", "b": "str", "c": "MyClass"},
         )
         self.assertEqual(
-            get_annotations(inspect, format=Format.SOURCE),
+            get_annotations(inspect, format=Format.STRING),
             {},
         )
         self.assertEqual(
             get_annotations(
-                isa.UnannotatedClass, format=Format.SOURCE
+                isa.UnannotatedClass, format=Format.STRING
             ),
             {},
         )
         self.assertEqual(
             get_annotations(
-                isa.unannotated_function, format=Format.SOURCE
+                isa.unannotated_function, format=Format.STRING
             ),
             {},
         )
@@ -8141,7 +8143,7 @@ class TestGetAnnotations(BaseTestCase):
         )
         mycls = "MyClass" if _PEP_649_OR_749_IMPLEMENTED else "inspect_stock_annotations.MyClass"
         self.assertEqual(
-            get_annotations(wrapped, format=Format.SOURCE),
+            get_annotations(wrapped, format=Format.STRING),
             {"a": "int", "b": "str", "return": mycls},
         )
         self.assertEqual(
@@ -8160,10 +8162,10 @@ class TestGetAnnotations(BaseTestCase):
             {"eval_str": False},
             {"format": Format.VALUE},
             {"format": Format.FORWARDREF},
-            {"format": Format.SOURCE},
+            {"format": Format.STRING},
             {"format": Format.VALUE, "eval_str": False},
             {"format": Format.FORWARDREF, "eval_str": False},
-            {"format": Format.SOURCE, "eval_str": False},
+            {"format": Format.STRING, "eval_str": False},
         ]:
             with self.subTest(**kwargs):
                 self.assertEqual(
@@ -8465,6 +8467,204 @@ class TestGetAnnotationsWithPEP695(BaseTestCase):
             set(results.generic_func_annotations.values()),
             set(results.generic_func.__type_params__)
         )
+
+class TestEvaluateForwardRefs(BaseTestCase):
+    def test_global_constant(self):
+        if sys.version_info[:3] > (3, 10, 0):
+            self.assertTrue(_FORWARD_REF_HAS_CLASS)
+
+    def test_forward_ref_fallback(self):
+        with self.assertRaises(NameError):
+            evaluate_forward_ref(typing.ForwardRef("doesntexist"))
+        ref = typing.ForwardRef("doesntexist")
+        self.assertIs(evaluate_forward_ref(ref, format=Format.FORWARDREF), ref)
+
+        class X:
+            unresolvable = "doesnotexist2"
+
+        evaluated_ref = evaluate_forward_ref(
+            typing.ForwardRef("X.unresolvable"),
+            locals={"X": X},
+            type_params=None,
+            format=Format.FORWARDREF,
+        )
+        self.assertEqual(evaluated_ref, typing.ForwardRef("doesnotexist2"))
+
+    def test_evaluate_with_type_params(self):
+        # Use a T name that is not in globals
+        self.assertNotIn("Tx", globals())
+        if not TYPING_3_12_0:
+            Tx = TypeVar("Tx")
+            class Gen(Generic[Tx]):
+                alias = int
+            if not hasattr(Gen, "__type_params__"):
+                Gen.__type_params__ = (Tx,)
+            self.assertEqual(Gen.__type_params__, (Tx,))
+            del Tx
+        else:
+            ns = {}
+            exec(textwrap.dedent("""
+            class Gen[Tx]:
+                alias = int
+            """), None, ns)
+            Gen = ns["Gen"]
+
+        # owner=None, type_params=None
+        # NOTE: The behavior of owner=None might change in the future when ForwardRef.__owner__ is available
+        with self.assertRaises(NameError):
+            evaluate_forward_ref(typing.ForwardRef("Tx"))
+        with self.assertRaises(NameError):
+            evaluate_forward_ref(typing.ForwardRef("Tx"), type_params=())
+        with self.assertRaises(NameError):
+            evaluate_forward_ref(typing.ForwardRef("Tx"), owner=int)
+
+        (Tx,) = Gen.__type_params__
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), type_params=Gen.__type_params__), Tx)
+
+        # For this test its important that Tx is not a global variable, i.e. do not use "T" here
+        self.assertNotIn("Tx", globals())
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), owner=Gen), Tx)
+
+        # Different type_params take precedence
+        not_Tx = TypeVar("Tx")  # different TypeVar with same name
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), type_params=(not_Tx,), owner=Gen), not_Tx)
+
+        # globals can take higher precedence
+        if _FORWARD_REF_HAS_CLASS:
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx", is_class=True), owner=Gen, globals={"Tx": str}), str)
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx", is_class=True), owner=Gen, type_params=(not_Tx,), globals={"Tx": str}), str)
+
+        with self.assertRaises(NameError):
+            evaluate_forward_ref(typing.ForwardRef("alias"), type_params=Gen.__type_params__)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("alias"), owner=Gen), int)
+        # If you pass custom locals, we don't look at the owner's locals
+        with self.assertRaises(NameError):
+            evaluate_forward_ref(typing.ForwardRef("alias"), owner=Gen, locals={})
+        # But if the name exists in the locals, it works
+        self.assertIs(
+            evaluate_forward_ref(typing.ForwardRef("alias"), owner=Gen, locals={"alias": str}), str
+        )
+
+    @skipUnless(
+        HAS_FORWARD_MODULE, "Needs module 'forward' to test forward references"
+    )
+    def test_fwdref_with_module(self):
+        self.assertIs(
+            evaluate_forward_ref(typing.ForwardRef("Counter", module="collections")), collections.Counter
+        )
+        self.assertEqual(
+            evaluate_forward_ref(typing.ForwardRef("Counter[int]", module="collections")),
+            collections.Counter[int],
+        )
+
+        with self.assertRaises(NameError):
+            # If globals are passed explicitly, we don't look at the module dict
+            evaluate_forward_ref(typing.ForwardRef("Format", module="annotationlib"), globals={})
+
+    def test_fwdref_to_builtin(self):
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), int)
+        if HAS_FORWARD_MODULE:
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("int", module="collections")), int)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), owner=str), int)
+
+        # builtins are still searched with explicit globals
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={}), int)
+
+    def test_fwdref_with_globals(self):
+        # explicit values in globals have precedence
+        obj = object()
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={"int": obj}), obj)
+
+    def test_fwdref_value_is_cached(self):
+        fr = typing.ForwardRef("hello")
+        with self.assertRaises(NameError):
+            evaluate_forward_ref(fr)
+        self.assertIs(evaluate_forward_ref(fr, globals={"hello": str}), str)
+        self.assertIs(evaluate_forward_ref(fr), str)
+
+    @skipUnless(TYPING_3_9_0, "Needs PEP 585 support")
+    def test_fwdref_with_owner(self):
+        self.assertEqual(
+            evaluate_forward_ref(typing.ForwardRef("Counter[int]"), owner=collections),
+            collections.Counter[int],
+        )
+
+    def test_name_lookup_without_eval(self):
+        # test the codepath where we look up simple names directly in the
+        # namespaces without going through eval()
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), int)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), locals={"int": str}), str)
+        self.assertIs(
+            evaluate_forward_ref(typing.ForwardRef("int"), locals={"int": float}, globals={"int": str}),
+            float,
+        )
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={"int": str}), str)
+        import builtins
+
+        from test import support
+        with support.swap_attr(builtins, "int", dict):
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), dict)
+
+    def test_nested_strings(self):
+        # This variable must have a different name TypeVar
+        Tx = TypeVar("Tx")
+
+        class Y(Generic[Tx]):
+            a = "X"
+            bT = "Y[T_nonlocal]"
+
+        Z = TypeAliasType("Z", Y[Tx], type_params=(Tx,))
+
+        evaluated_ref1a = evaluate_forward_ref(typing.ForwardRef("Y[Y['Tx']]"), locals={"Y": Y, "Tx": Tx})
+        self.assertEqual(get_origin(evaluated_ref1a), Y)
+        self.assertEqual(get_args(evaluated_ref1a), (Y[Tx],))
+
+        evaluated_ref1b = evaluate_forward_ref(
+            typing.ForwardRef("Y[Y['Tx']]"), locals={"Y": Y}, type_params=(Tx,)
+        )
+        self.assertEqual(get_origin(evaluated_ref1b), Y)
+        self.assertEqual(get_args(evaluated_ref1b), (Y[Tx],))
+
+        with self.subTest("nested string of TypeVar"):
+            evaluated_ref2 = evaluate_forward_ref(typing.ForwardRef("""Y["Y['Tx']"]"""), locals={"Y": Y})
+            self.assertEqual(get_origin(evaluated_ref2), Y)
+            if not TYPING_3_9_0:
+                self.skipTest("Nested string 'Tx' stays ForwardRef in 3.8")
+            self.assertEqual(get_args(evaluated_ref2), (Y[Tx],))
+
+        with self.subTest("nested string of TypeAliasType and alias"):
+            # NOTE: Using Y here works for 3.10
+            evaluated_ref3 = evaluate_forward_ref(typing.ForwardRef("""Y['Z["StrAlias"]']"""), locals={"Y": Y, "Z": Z, "StrAlias": str})
+            self.assertEqual(get_origin(evaluated_ref3), Y)
+            if sys.version_info[:2] in ((3,8), (3, 10)):
+                self.skipTest("Nested string 'StrAlias' is not resolved in 3.8 and 3.10")
+            self.assertEqual(get_args(evaluated_ref3), (Z[str],))
+
+    def test_invalid_special_forms(self):
+        # tests _lax_type_check to raise errors the same way as the typing module.
+        # Regex capture "< class 'module.name'> and "module.name"
+        with self.assertRaisesRegex(
+            TypeError, r"Plain .*Protocol('>)? is not valid as type argument"
+        ):
+            evaluate_forward_ref(typing.ForwardRef("Protocol"), globals=vars(typing))
+        with self.assertRaisesRegex(
+            TypeError, r"Plain .*Generic('>)? is not valid as type argument"
+        ):
+            evaluate_forward_ref(typing.ForwardRef("Generic"), globals=vars(typing))
+        with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.Final is not valid as type argument"):
+            evaluate_forward_ref(typing.ForwardRef("Final"), globals=vars(typing))
+        with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.ClassVar is not valid as type argument"):
+            evaluate_forward_ref(typing.ForwardRef("ClassVar"), globals=vars(typing))
+        if _FORWARD_REF_HAS_CLASS:
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("Final", is_class=True), globals=vars(typing)), Final)
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("ClassVar", is_class=True), globals=vars(typing)), ClassVar)
+            with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.Final is not valid as type argument"):
+                evaluate_forward_ref(typing.ForwardRef("Final", is_argument=False), globals=vars(typing))
+            with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.ClassVar is not valid as type argument"):
+                evaluate_forward_ref(typing.ForwardRef("ClassVar", is_argument=False), globals=vars(typing))
+        else:
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("Final", is_argument=False), globals=vars(typing)), Final)
+            self.assertIs(evaluate_forward_ref(typing.ForwardRef("ClassVar", is_argument=False), globals=vars(typing)), ClassVar)
 
 
 if __name__ == '__main__':
