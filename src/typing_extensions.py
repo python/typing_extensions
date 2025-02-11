@@ -971,7 +971,8 @@ else:
                 break
 
     class _TypedDictMeta(type):
-        def __new__(cls, name, bases, ns, *, total=True, closed=None, extra_items=NoExtraItems):
+        def __new__(cls, name, bases, ns, *, total=True, closed=None,
+                    extra_items=NoExtraItems):
             """Create new typed dict class object.
 
             This method is called when TypedDict is subclassed,
@@ -1044,6 +1045,7 @@ else:
                             "Child of a closed TypedDict must also be closed. This will "
                             "be an error in Python 3.14.",
                             DeprecationWarning,
+                            stacklevel=2,
                         )
                     else:
                         raise TypeError("Child of a closed TypedDict must also be closed")
@@ -1052,9 +1054,10 @@ else:
                 extra_items_type = Never
 
             # This was specified in an earlier version of PEP 728. Support
-            # is retained for backwards compatibility, but only for Python 3.13
-            # and lower.
-            if closed and sys.version_info < (3, 14) and "__extra_items__" in own_annotations:
+            # is retained for backwards compatibility, but only for Python
+            # 3.13 and lower.
+            if (closed and sys.version_info < (3, 14)
+                       and "__extra_items__" in own_annotations):
                 annotation_type = own_annotations.pop("__extra_items__")
                 qualifiers = set(_get_typeddict_qualifiers(annotation_type))
                 if Required in qualifiers:
@@ -1208,7 +1211,8 @@ else:
             # Setting correct module is necessary to make typed dict classes pickleable.
             ns['__module__'] = module
 
-        td = _TypedDictMeta(typename, (), ns, total=total, closed=closed, extra_items=extra_items)
+        td = _TypedDictMeta(typename, (), ns, total=total, closed=closed,
+                            extra_items=extra_items)
         td.__orig_bases__ = (TypedDict,)
         return td
 
