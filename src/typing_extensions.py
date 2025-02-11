@@ -1,10 +1,12 @@
 import abc
+import builtins
 import collections
 import collections.abc
 import contextlib
 import enum
 import functools
 import inspect
+import keyword
 import operator
 import sys
 import types as _types
@@ -63,6 +65,7 @@ __all__ = [
     'dataclass_transform',
     'deprecated',
     'Doc',
+    'evaluate_forward_ref',
     'get_overloads',
     'final',
     'Format',
@@ -142,6 +145,9 @@ __all__ = [
 PEP_560 = True
 GenericMeta = type
 _PEP_696_IMPLEMENTED = sys.version_info >= (3, 13, 0, "beta")
+
+# Added with bpo-45166 to 3.10.1+ and some 3.9 versions
+_FORWARD_REF_HAS_CLASS = "__forward_is_class__" in typing.ForwardRef.__slots__
 
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
@@ -2201,7 +2207,7 @@ elif sys.version_info[:2] >= (3, 9):
 
         1. The return value is a boolean.
         2. If the return value is ``True``, the type of its argument
-        is the intersection of the type inside ``TypeGuard`` and the argument's
+        is the intersection of the type inside ``TypeIs`` and the argument's
         previously known type.
 
         For example::
@@ -2249,7 +2255,7 @@ else:
 
         1. The return value is a boolean.
         2. If the return value is ``True``, the type of its argument
-        is the intersection of the type inside ``TypeGuard`` and the argument's
+        is the intersection of the type inside ``TypeIs`` and the argument's
         previously known type.
 
         For example::
@@ -4065,7 +4071,7 @@ _PEP_649_OR_749_IMPLEMENTED = (
 class Format(enum.IntEnum):
     VALUE = 1
     FORWARDREF = 2
-    SOURCE = 3
+    STRING = 3
 
 
 if _PEP_649_OR_749_IMPLEMENTED:
@@ -4096,13 +4102,13 @@ else:
           undefined names with ForwardRef objects. The implementation proposed by
           PEP 649 relies on language changes that cannot be backported; the
           typing-extensions implementation simply returns the same result as VALUE.
-        * SOURCE: return annotations as strings, in a format close to the original
+        * STRING: return annotations as strings, in a format close to the original
           source. Again, this behavior cannot be replicated directly in a backport.
           As an approximation, typing-extensions retrieves the annotations under
           VALUE semantics and then stringifies them.
 
         The purpose of this backport is to allow users who would like to use
-        FORWARDREF or SOURCE semantics once PEP 649 is implemented, but who also
+        FORWARDREF or STRING semantics once PEP 649 is implemented, but who also
         want to support earlier Python versions, to simply write:
 
             typing_extensions.get_annotations(obj, format=Format.FORWARDREF)
@@ -4161,7 +4167,7 @@ else:
             return {}
 
         if not eval_str:
-            if format is Format.SOURCE:
+            if format is Format.STRING:
                 return {
                     key: value if isinstance(value, str) else typing._type_repr(value)
                     for key, value in ann.items()
@@ -4195,6 +4201,259 @@ else:
             value if not isinstance(value, str) else eval(value, globals, locals)
             for key, value in ann.items() }
         return return_value
+
+
+if hasattr(typing, "evaluate_forward_ref"):
+    evaluate_forward_ref = typing.evaluate_forward_ref
+else:
+    # Implements annotationlib.ForwardRef.evaluate
+    def _eval_with_owner(
+        forward_ref, *, owner=None, globals=None, locals=None, type_params=None
+    ):
+        if forward_ref.__forward_evaluated__:
+            return forward_ref.__forward_value__
+        if getattr(forward_ref, "__cell__", None) is not None:
+            try:
+                value = forward_ref.__cell__.cell_contents
+            except ValueError:
+                pass
+            else:
+                forward_ref.__forward_evaluated__ = True
+                forward_ref.__forward_value__ = value
+                return value
+        if owner is None:
+            owner = getattr(forward_ref, "__owner__", None)
+
+        if (
+            globals is None
+            and getattr(forward_ref, "__forward_module__", None) is not None
+        ):
+            globals = getattr(
+                sys.modules.get(forward_ref.__forward_module__, None), "__dict__", None
+            )
+        if globals is None:
+            globals = getattr(forward_ref, "__globals__", None)
+        if globals is None:
+            if isinstance(owner, type):
+                module_name = getattr(owner, "__module__", None)
+                if module_name:
+                    module = sys.modules.get(module_name, None)
+                    if module:
+                        globals = getattr(module, "__dict__", None)
+            elif isinstance(owner, _types.ModuleType):
+                globals = getattr(owner, "__dict__", None)
+            elif callable(owner):
+                globals = getattr(owner, "__globals__", None)
+
+        # If we pass None to eval() below, the globals of this module are used.
+        if globals is None:
+            globals = {}
+
+        if locals is None:
+            locals = {}
+            if isinstance(owner, type):
+                locals.update(vars(owner))
+
+        if type_params is None and owner is not None:
+            # "Inject" type parameters into the local namespace
+            # (unless they are shadowed by assignments *in* the local namespace),
+            # as a way of emulating annotation scopes when calling `eval()`
+            type_params = getattr(owner, "__type_params__", None)
+
+        # type parameters require some special handling,
+        # as they exist in their own scope
+        # but `eval()` does not have a dedicated parameter for that scope.
+        # For classes, names in type parameter scopes should override
+        # names in the global scope (which here are called `localns`!),
+        # but should in turn be overridden by names in the class scope
+        # (which here are called `globalns`!)
+        if type_params is not None:
+            globals = dict(globals)
+            locals = dict(locals)
+            for param in type_params:
+                param_name = param.__name__
+                if (
+                    _FORWARD_REF_HAS_CLASS and not forward_ref.__forward_is_class__
+                ) or param_name not in globals:
+                    globals[param_name] = param
+                    locals.pop(param_name, None)
+
+        arg = forward_ref.__forward_arg__
+        if arg.isidentifier() and not keyword.iskeyword(arg):
+            if arg in locals:
+                value = locals[arg]
+            elif arg in globals:
+                value = globals[arg]
+            elif hasattr(builtins, arg):
+                return getattr(builtins, arg)
+            else:
+                raise NameError(arg)
+        else:
+            code = forward_ref.__forward_code__
+            value = eval(code, globals, locals)
+        forward_ref.__forward_evaluated__ = True
+        forward_ref.__forward_value__ = value
+        return value
+
+    def _lax_type_check(
+        value, msg, is_argument=True, *, module=None, allow_special_forms=False
+    ):
+        """
+        A lax Python 3.11+ like version of typing._type_check
+        """
+        if hasattr(typing, "_type_convert"):
+            if _FORWARD_REF_HAS_CLASS:
+                type_ = typing._type_convert(
+                    value,
+                    module=module,
+                    allow_special_forms=allow_special_forms,
+                )
+            # module was added with bpo-41249 before is_class (bpo-46539)
+            elif "__forward_module__" in typing.ForwardRef.__slots__:
+                type_ = typing._type_convert(value, module=module)
+            else:
+                type_ = typing._type_convert(value)
+        else:
+            if value is None:
+                return type(None)
+            if isinstance(value, str):
+                return ForwardRef(value)
+            type_ = value
+        invalid_generic_forms = (Generic, Protocol)
+        if not allow_special_forms:
+            invalid_generic_forms += (ClassVar,)
+            if is_argument:
+                invalid_generic_forms += (Final,)
+        if (
+            isinstance(type_, typing._GenericAlias)
+            and get_origin(type_) in invalid_generic_forms
+        ):
+            raise TypeError(f"{type_} is not valid as type argument") from None
+        if type_ in (Any, LiteralString, NoReturn, Never, Self, TypeAlias):
+            return type_
+        if allow_special_forms and type_ in (ClassVar, Final):
+            return type_
+        if (
+            isinstance(type_, (_SpecialForm, typing._SpecialForm))
+            or type_ in (Generic, Protocol)
+        ):
+            raise TypeError(f"Plain {type_} is not valid as type argument") from None
+        if type(type_) is tuple:  # lax version with tuple instead of callable
+            raise TypeError(f"{msg} Got {type_!r:.100}.")
+        return type_
+
+    def evaluate_forward_ref(
+        forward_ref,
+        *,
+        owner=None,
+        globals=None,
+        locals=None,
+        type_params=None,
+        format=Format.VALUE,
+        _recursive_guard=frozenset(),
+    ):
+        """Evaluate a forward reference as a type hint.
+
+        This is similar to calling the ForwardRef.evaluate() method,
+        but unlike that method, evaluate_forward_ref() also:
+
+        * Recursively evaluates forward references nested within the type hint.
+        * Rejects certain objects that are not valid type hints.
+        * Replaces type hints that evaluate to None with types.NoneType.
+        * Supports the *FORWARDREF* and *STRING* formats.
+
+        *forward_ref* must be an instance of ForwardRef. *owner*, if given,
+        should be the object that holds the annotations that the forward reference
+        derived from, such as a module, class object, or function. It is used to
+        infer the namespaces to use for looking up names. *globals* and *locals*
+        can also be explicitly given to provide the global and local namespaces.
+        *type_params* is a tuple of type parameters that are in scope when
+        evaluating the forward reference. This parameter must be provided (though
+        it may be an empty tuple) if *owner* is not given and the forward reference
+        does not already have an owner set. *format* specifies the format of the
+        annotation and is a member of the annotationlib.Format enum.
+
+        """
+        if format == Format.STRING:
+            return forward_ref.__forward_arg__
+        if forward_ref.__forward_arg__ in _recursive_guard:
+            return forward_ref
+
+        # Evaluate the forward reference
+        try:
+            value = _eval_with_owner(
+                forward_ref,
+                owner=owner,
+                globals=globals,
+                locals=locals,
+                type_params=type_params,
+            )
+        except NameError:
+            if format == Format.FORWARDREF:
+                return forward_ref
+            else:
+                raise
+
+        msg = "Forward references must evaluate to types."
+        if not _FORWARD_REF_HAS_CLASS:
+            allow_special_forms = not forward_ref.__forward_is_argument__
+        else:
+            allow_special_forms = forward_ref.__forward_is_class__
+        type_ = _lax_type_check(
+            value,
+            msg,
+            is_argument=forward_ref.__forward_is_argument__,
+            allow_special_forms=allow_special_forms,
+        )
+
+        # Recursively evaluate the type
+        if isinstance(type_, ForwardRef):
+            if getattr(type_, "__forward_module__", True) is not None:
+                globals = None
+            return evaluate_forward_ref(
+                type_,
+                globals=globals,
+                locals=locals,
+                 type_params=type_params, owner=owner,
+                _recursive_guard=_recursive_guard, format=format
+            )
+        if sys.version_info < (3, 12, 5) and type_params:
+            # Make use of type_params
+            locals = dict(locals) if locals else {}
+            for tvar in type_params:
+                if tvar.__name__ not in locals:  # lets not overwrite something present
+                    locals[tvar.__name__] = tvar
+        if sys.version_info < (3, 9):
+            return typing._eval_type(
+                type_,
+                globals,
+                locals,
+            )
+        if sys.version_info < (3, 12, 5):
+            return typing._eval_type(
+                type_,
+                globals,
+                locals,
+                recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
+            )
+        if sys.version_info < (3, 14):
+            return typing._eval_type(
+                type_,
+                globals,
+                locals,
+                type_params,
+                recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
+            )
+        return typing._eval_type(
+            type_,
+            globals,
+            locals,
+            type_params,
+            recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
+            format=format,
+            owner=owner,
+        )
+
 
 # Aliases for items that have always been in typing.
 # Explicitly assign these (rather than using `from typing import *` at the top),
