@@ -4060,16 +4060,19 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(TD.__annotations__, {'cls': type, 'self': object, 'typename': str,
                                               '_typename': int, 'fields': list, '_fields': dict,
                                               'closed': bool, 'extra_items': bool})
-        self.assertIs(TD.__closed__, False)
+        self.assertIs(TD.__closed__, None)
         self.assertIs(TD.__extra_items__, NoExtraItems)
         a = TD(cls=str, self=42, typename='foo', _typename=53,
-               fields=[('bar', tuple)], _fields={'baz', set})
+               fields=[('bar', tuple)], _fields={'baz', set},
+               closed=None, extra_items="tea pot")
         self.assertEqual(a['cls'], str)
         self.assertEqual(a['self'], 42)
         self.assertEqual(a['typename'], 'foo')
         self.assertEqual(a['_typename'], 53)
         self.assertEqual(a['fields'], [('bar', tuple)])
         self.assertEqual(a['_fields'], {'baz', set})
+        self.assertEqual(a['closed'], None)
+        self.assertEqual(a['extra_items'], "tea pot")
 
     def test_typeddict_create_errors(self):
         with self.assertRaises(TypeError):
@@ -4316,6 +4319,16 @@ class TypedDictTests(BaseTestCase):
                 ):
                     class Wrong(*bases):
                         pass
+
+    def test_closed_values(self):
+        class Implicit(TypedDict): ...
+        class ExplicitTrue(TypedDict, closed=True): ...
+        class ExplicitFalse(TypedDict, closed=False): ...
+
+        self.assertIs(Implicit.__closed__, None)
+        self.assertIs(ExplicitTrue.__closed__, True)
+        self.assertIs(ExplicitFalse.__closed__, False)
+
 
     @skipIf(TYPING_3_14_0, "only supported on older versions")
     def test_closed_typeddict_compat(self):
@@ -4843,6 +4856,10 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(ChildA.__extra_items__, Never)
         self.assertTrue(ChildA.__closed__)
 
+    @skipIf(TYPING_3_14_0, "Backwards compatibility only for Python 3.13")
+    def test_implicit_extra_items_before_3_14(self):
+        class Base(TypedDict):
+            a: int
         class ChildB(Base, closed=True):
             __extra_items__: None
 
