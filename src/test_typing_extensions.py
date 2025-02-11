@@ -4736,7 +4736,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Child.__optional_keys__, frozenset({'a'}))
         self.assertEqual(Child.__readonly_keys__, frozenset({}))
         self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
-
+    @skipIf(TYPING_3_14_0, "Only supported on <3.14")
     def test_extra_keys_readonly_explicit_closed(self):
         class Base(TypedDict, closed=True):
             __extra_items__: ReadOnly[str]
