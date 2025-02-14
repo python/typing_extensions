@@ -4807,7 +4807,7 @@ class TypedDictTests(BaseTestCase):
         self.assertFalse(ExtraNotRequired.__closed__)
 
     @skipIf(TYPING_3_14_0, "Only supported on <3.14")
-    def test_closed_inheritance(self):
+    def test_closed_inheritance_legacy(self):
         class Base(TypedDict, closed=True):
             __extra_items__: ReadOnly[Union[str, None]]
 
@@ -4840,6 +4840,40 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(GrandChild.__mutable_keys__, frozenset({'a'}))
         self.assertEqual(GrandChild.__annotations__, {"a": int})
         self.assertEqual(GrandChild.__extra_items__, str)
+        self.assertTrue(GrandChild.__closed__)
+
+    def test_closed_inheritance(self):
+        class Base(TypedDict, extra_items=ReadOnly[Union[str, None]]):
+            a: int
+
+        self.assertEqual(Base.__required_keys__, frozenset({"a"}))
+        self.assertEqual(Base.__optional_keys__, frozenset({}))
+        self.assertEqual(Base.__readonly_keys__, frozenset({}))
+        self.assertEqual(Base.__mutable_keys__, frozenset({"a"}))
+        self.assertEqual(Base.__annotations__, {"a": int})
+        self.assertEqual(Base.__extra_items__, ReadOnly[Union[str, None]])
+        self.assertFalse(Base.__closed__)
+
+        class Child(Base, extra_items=int):
+            a: str
+
+        self.assertEqual(Child.__required_keys__, frozenset({'a'}))
+        self.assertEqual(Child.__optional_keys__, frozenset({}))
+        self.assertEqual(Child.__readonly_keys__, frozenset({}))
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
+        self.assertEqual(Child.__annotations__, {"a": str})
+        self.assertEqual(Child.__extra_items__, int)
+        self.assertFalse(Child.__closed__)
+
+        class GrandChild(Child, closed=True):
+            a: float
+
+        self.assertEqual(GrandChild.__required_keys__, frozenset({'a'}))
+        self.assertEqual(GrandChild.__optional_keys__, frozenset({}))
+        self.assertEqual(GrandChild.__readonly_keys__, frozenset({}))
+        self.assertEqual(GrandChild.__mutable_keys__, frozenset({'a'}))
+        self.assertEqual(GrandChild.__annotations__, {"a": float})
+        self.assertEqual(GrandChild.__extra_items__, Never)
         self.assertTrue(GrandChild.__closed__)
 
     def test_implicit_extra_items(self):
