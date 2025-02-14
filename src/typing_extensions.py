@@ -1042,18 +1042,6 @@ else:
                 optional_keys.update(base_dict.get('__optional_keys__', ()))
                 readonly_keys.update(base_dict.get('__readonly_keys__', ()))
                 mutable_keys.update(base_dict.get('__mutable_keys__', ()))
-                if getattr(base, "__closed__", None) and not closed:
-                    if sys.version_info < (3, 14):
-                        # PEP 728 wants this to be an error, but that is not
-                        # compatible with previous versions of typing-extensions.
-                        warnings.warn(
-                            "Child of a closed TypedDict must also be closed. This will "
-                            "be an error in Python 3.14.",
-                            DeprecationWarning,
-                            stacklevel=2,
-                        )
-                    else:
-                        raise TypeError("Child of a closed TypedDict must also be closed")
 
             if closed and extra_items_type is NoExtraItems:
                 extra_items_type = Never
