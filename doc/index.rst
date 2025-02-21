@@ -133,7 +133,7 @@ Example usage::
    False
    >>> is_literal(get_origin(typing.Literal[42]))
    True
-   >>> is_literal(get_origin(typing_extensions.Final[42]))
+   >>> is_literal(get_origin(typing_extensions.Final[int]))
    False
 
 Python version support
