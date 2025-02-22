@@ -4264,6 +4264,10 @@ class TypedDictTests(BaseTestCase):
 
         self.assertIs(TD3.__total__, False)
 
+        TD4 = TypedDict('TD4', {'__total__': "some_value"})  # noqa: F821
+        self.assertIs(TD4.__total__, True)
+
+
     def test_optional_keys(self):
         class Point2Dor3D(Point2D, total=False):
             z: int
