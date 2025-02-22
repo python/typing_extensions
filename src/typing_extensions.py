@@ -1029,8 +1029,7 @@ else:
             tp_dict.__optional_keys__ = frozenset(optional_keys)
             tp_dict.__readonly_keys__ = frozenset(readonly_keys)
             tp_dict.__mutable_keys__ = frozenset(mutable_keys)
-            if not hasattr(tp_dict, '__total__'):
-                tp_dict.__total__ = total
+            tp_dict.__total__ = total
             tp_dict.__closed__ = closed
             tp_dict.__extra_items__ = extra_items_type
             return tp_dict
