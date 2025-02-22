@@ -38,6 +38,10 @@ aliases that have a `Concatenate` special form as their argument.
   Patch by [Daraan](https://github.com/Daraan).
 - Fix error on Python 3.10 when using `typing.Concatenate` and 
   `typing_extensions.Concatenate` together. Patch by [Daraan](https://github.com/Daraan).
+- Backport of CPython PR [#109544](https://github.com/python/cpython/pull/109544)
+  to reflect Python 3.13+ behavior: A value assigned to `__total__` in the class body of a
+  `TypedDict` will be overwritten by the `total` argument of the `TypedDict` constructor.
+  Patch by [Daraan](https://github.com/Daraan), backporting a CPython PR by Jelle Zijlstra.
 
 # Release 4.12.2 (June 7, 2024)
 
