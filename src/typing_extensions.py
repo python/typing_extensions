@@ -1043,9 +1043,6 @@ else:
                 readonly_keys.update(base_dict.get('__readonly_keys__', ()))
                 mutable_keys.update(base_dict.get('__mutable_keys__', ()))
 
-            if closed and extra_items_type is NoExtraItems:
-                extra_items_type = Never
-
             # This was specified in an earlier version of PEP 728. Support
             # is retained for backwards compatibility, but only for Python
             # 3.13 and lower.
