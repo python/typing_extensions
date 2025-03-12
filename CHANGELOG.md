@@ -42,6 +42,9 @@ aliases that have a `Concatenate` special form as their argument.
   to reflect Python 3.13+ behavior: A value assigned to `__total__` in the class body of a
   `TypedDict` will be overwritten by the `total` argument of the `TypedDict` constructor.
   Patch by [Daraan](https://github.com/Daraan), backporting a CPython PR by Jelle Zijlstra.
+- Fix for Python 3.11 that now `isinstance(typing_extensions.Unpack[...], TypeVar)` 
+  evaluates to `False`, however still `True` for <3.11.
+  Patch by [Daraan](https://github.com/Daraan)
 
 # Release 4.12.2 (June 7, 2024)
 
