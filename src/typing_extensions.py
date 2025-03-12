@@ -2657,7 +2657,7 @@ elif sys.version_info[:2] >= (3, 9):  # 3.9+
             self.__doc__ = _UNPACK_DOC
 
     class _UnpackAlias(typing._GenericAlias, _root=True):
-        if sys.version_info[:2] < (3, 11):
+        if sys.version_info < (3, 11):
             # needed for compatibility with Generic[Unpack[Ts]]
             __class__ = typing.TypeVar
 
