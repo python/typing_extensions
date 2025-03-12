@@ -6172,6 +6172,12 @@ class UnpackTests(BaseTestCase):
         self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str, int]], object])
         self.assertEqual(nested_tuple_bare, TupleAliasTsT[Unpack[Tuple[str]], Unpack[Tuple[int]], object])
 
+    @skipUnless(TYPING_3_11_0, "Needed for backport")
+    def test_type_var_inheritance(self):
+        Ts = TypeVarTuple("Ts")
+        self.assertFalse(isinstance(Unpack[Ts], TypeVar))
+        self.assertFalse(isinstance(Unpack[Ts], typing.TypeVar))
+
 
 class TypeVarTupleTests(BaseTestCase):
 
