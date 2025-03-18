@@ -5040,6 +5040,11 @@ class TypedDictTests(BaseTestCase):
         self.assertIs(TD.__closed__, None)
         self.assertEqual(TD.__annotations__, {"closed": int})
 
+        with self.assertWarns(DeprecationWarning):
+            TD = TypedDict("TD", extra_items=int)
+        self.assertIs(TD.__extra_items__, NoExtraItems)
+        self.assertEqual(TD.__annotations__, {"extra_items": int})
+
 
 class AnnotatedTests(BaseTestCase):
 
