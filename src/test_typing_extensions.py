@@ -55,6 +55,7 @@ from typing_extensions import (
     Never,
     NewType,
     NoDefault,
+    NoExtraItems,
     NoReturn,
     NotRequired,
     Optional,
@@ -127,6 +128,8 @@ TYPING_3_13_0 = sys.version_info[:3] >= (3, 13, 0)
 
 # 3.13.0.rc1 fixes a problem with @deprecated
 TYPING_3_13_0_RC = sys.version_info[:4] >= (3, 13, 0, "candidate")
+
+TYPING_3_14_0 = sys.version_info[:3] >= (3, 14, 0)
 
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
@@ -4140,18 +4143,25 @@ class TypedDictTests(BaseTestCase):
     def test_typeddict_special_keyword_names(self):
         with self.assertWarns(DeprecationWarning):
             TD = TypedDict("TD", cls=type, self=object, typename=str, _typename=int,
-                           fields=list, _fields=dict)
+                           fields=list, _fields=dict,
+                           closed=bool, extra_items=bool)
         self.assertEqual(TD.__name__, 'TD')
         self.assertEqual(TD.__annotations__, {'cls': type, 'self': object, 'typename': str,
-                                              '_typename': int, 'fields': list, '_fields': dict})
+                                              '_typename': int, 'fields': list, '_fields': dict,
+                                              'closed': bool, 'extra_items': bool})
+        self.assertIsNone(TD.__closed__)
+        self.assertIs(TD.__extra_items__, NoExtraItems)
         a = TD(cls=str, self=42, typename='foo', _typename=53,
-               fields=[('bar', tuple)], _fields={'baz', set})
+               fields=[('bar', tuple)], _fields={'baz', set},
+               closed=None, extra_items="tea pot")
         self.assertEqual(a['cls'], str)
         self.assertEqual(a['self'], 42)
         self.assertEqual(a['typename'], 'foo')
         self.assertEqual(a['_typename'], 53)
         self.assertEqual(a['fields'], [('bar', tuple)])
         self.assertEqual(a['_fields'], {'baz', set})
+        self.assertIsNone(a['closed'])
+        self.assertEqual(a['extra_items'], "tea pot")
 
     def test_typeddict_create_errors(self):
         with self.assertRaises(TypeError):
@@ -4414,24 +4424,6 @@ class TypedDictTests(BaseTestCase):
             {'inline': bool, 'untotal': str, 'child': bool},
         )
 
-        class Closed(TypedDict, closed=True):
-            __extra_items__: None
-
-        class Unclosed(TypedDict, closed=False):
-            ...
-
-        class ChildUnclosed(Closed, Unclosed):
-            ...
-
-        self.assertFalse(ChildUnclosed.__closed__)
-        self.assertEqual(ChildUnclosed.__extra_items__, type(None))
-
-        class ChildClosed(Unclosed, Closed):
-            ...
-
-        self.assertFalse(ChildClosed.__closed__)
-        self.assertEqual(ChildClosed.__extra_items__, type(None))
-
         wrong_bases = [
             (One, Regular),
             (Regular, One),
@@ -4447,6 +4439,53 @@ class TypedDictTests(BaseTestCase):
                 ):
                     class Wrong(*bases):
                         pass
+
+    def test_closed_values(self):
+        class Implicit(TypedDict): ...
+        class ExplicitTrue(TypedDict, closed=True): ...
+        class ExplicitFalse(TypedDict, closed=False): ...
+
+        self.assertIsNone(Implicit.__closed__)
+        self.assertIs(ExplicitTrue.__closed__, True)
+        self.assertIs(ExplicitFalse.__closed__, False)
+
+
+    @skipIf(TYPING_3_14_0, "only supported on older versions")
+    def test_closed_typeddict_compat(self):
+        class Closed(TypedDict, closed=True):
+            __extra_items__: None
+
+        class Unclosed(TypedDict, closed=False):
+            ...
+
+        class ChildUnclosed(Closed, Unclosed):
+            ...
+
+        self.assertIsNone(ChildUnclosed.__closed__)
+        self.assertEqual(ChildUnclosed.__extra_items__, NoExtraItems)
+
+        class ChildClosed(Unclosed, Closed):
+            ...
+
+        self.assertIsNone(ChildClosed.__closed__)
+        self.assertEqual(ChildClosed.__extra_items__, NoExtraItems)
+
+    def test_extra_items_class_arg(self):
+        class TD(TypedDict, extra_items=int):
+            a: str
+
+        self.assertIs(TD.__extra_items__, int)
+        self.assertEqual(TD.__annotations__, {'a': str})
+        self.assertEqual(TD.__required_keys__, frozenset({'a'}))
+        self.assertEqual(TD.__optional_keys__, frozenset())
+
+        class NoExtra(TypedDict):
+            a: str
+
+        self.assertIs(NoExtra.__extra_items__, NoExtraItems)
+        self.assertEqual(NoExtra.__annotations__, {'a': str})
+        self.assertEqual(NoExtra.__required_keys__, frozenset({'a'}))
+        self.assertEqual(NoExtra.__optional_keys__, frozenset())
 
     def test_is_typeddict(self):
         self.assertIs(is_typeddict(Point2D), True)
@@ -4803,7 +4842,8 @@ class TypedDictTests(BaseTestCase):
             },
         )
 
-    def test_extra_keys_non_readonly(self):
+    @skipIf(TYPING_3_14_0, "Old syntax only supported on <3.14")
+    def test_extra_keys_non_readonly_legacy(self):
         class Base(TypedDict, closed=True):
             __extra_items__: str
 
@@ -4815,7 +4855,8 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Child.__readonly_keys__, frozenset({}))
         self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
 
-    def test_extra_keys_readonly(self):
+    @skipIf(TYPING_3_14_0, "Only supported on <3.14")
+    def test_extra_keys_readonly_legacy(self):
         class Base(TypedDict, closed=True):
             __extra_items__: ReadOnly[str]
 
@@ -4827,7 +4868,21 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Child.__readonly_keys__, frozenset({}))
         self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
 
-    def test_extra_key_required(self):
+    @skipIf(TYPING_3_14_0, "Only supported on <3.14")
+    def test_extra_keys_readonly_explicit_closed_legacy(self):
+        class Base(TypedDict, closed=True):
+            __extra_items__: ReadOnly[str]
+
+        class Child(Base, closed=True):
+            a: NotRequired[str]
+
+        self.assertEqual(Child.__required_keys__, frozenset({}))
+        self.assertEqual(Child.__optional_keys__, frozenset({'a'}))
+        self.assertEqual(Child.__readonly_keys__, frozenset({}))
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
+
+    @skipIf(TYPING_3_14_0, "Only supported on <3.14")
+    def test_extra_key_required_legacy(self):
         with self.assertRaisesRegex(
             TypeError,
             "Special key __extra_items__ does not support Required"
@@ -4840,7 +4895,7 @@ class TypedDictTests(BaseTestCase):
         ):
             TypedDict("A", {"__extra_items__": NotRequired[int]}, closed=True)
 
-    def test_regular_extra_items(self):
+    def test_regular_extra_items_legacy(self):
         class ExtraReadOnly(TypedDict):
             __extra_items__: ReadOnly[str]
 
@@ -4848,8 +4903,8 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(ExtraReadOnly.__optional_keys__, frozenset({}))
         self.assertEqual(ExtraReadOnly.__readonly_keys__, frozenset({'__extra_items__'}))
         self.assertEqual(ExtraReadOnly.__mutable_keys__, frozenset({}))
-        self.assertEqual(ExtraReadOnly.__extra_items__, None)
-        self.assertFalse(ExtraReadOnly.__closed__)
+        self.assertIs(ExtraReadOnly.__extra_items__, NoExtraItems)
+        self.assertIsNone(ExtraReadOnly.__closed__)
 
         class ExtraRequired(TypedDict):
             __extra_items__: Required[str]
@@ -4858,8 +4913,8 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(ExtraRequired.__optional_keys__, frozenset({}))
         self.assertEqual(ExtraRequired.__readonly_keys__, frozenset({}))
         self.assertEqual(ExtraRequired.__mutable_keys__, frozenset({'__extra_items__'}))
-        self.assertEqual(ExtraRequired.__extra_items__, None)
-        self.assertFalse(ExtraRequired.__closed__)
+        self.assertIs(ExtraRequired.__extra_items__, NoExtraItems)
+        self.assertIsNone(ExtraRequired.__closed__)
 
         class ExtraNotRequired(TypedDict):
             __extra_items__: NotRequired[str]
@@ -4868,10 +4923,11 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(ExtraNotRequired.__optional_keys__, frozenset({'__extra_items__'}))
         self.assertEqual(ExtraNotRequired.__readonly_keys__, frozenset({}))
         self.assertEqual(ExtraNotRequired.__mutable_keys__, frozenset({'__extra_items__'}))
-        self.assertEqual(ExtraNotRequired.__extra_items__, None)
-        self.assertFalse(ExtraNotRequired.__closed__)
+        self.assertIs(ExtraNotRequired.__extra_items__, NoExtraItems)
+        self.assertIsNone(ExtraNotRequired.__closed__)
 
-    def test_closed_inheritance(self):
+    @skipIf(TYPING_3_14_0, "Only supported on <3.14")
+    def test_closed_inheritance_legacy(self):
         class Base(TypedDict, closed=True):
             __extra_items__: ReadOnly[Union[str, None]]
 
@@ -4881,49 +4937,97 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Base.__mutable_keys__, frozenset({}))
         self.assertEqual(Base.__annotations__, {})
         self.assertEqual(Base.__extra_items__, ReadOnly[Union[str, None]])
-        self.assertTrue(Base.__closed__)
+        self.assertIs(Base.__closed__, True)
 
-        class Child(Base):
+        class Child(Base, closed=True):
             a: int
             __extra_items__: int
 
-        self.assertEqual(Child.__required_keys__, frozenset({'a', "__extra_items__"}))
+        self.assertEqual(Child.__required_keys__, frozenset({'a'}))
         self.assertEqual(Child.__optional_keys__, frozenset({}))
         self.assertEqual(Child.__readonly_keys__, frozenset({}))
-        self.assertEqual(Child.__mutable_keys__, frozenset({'a', "__extra_items__"}))
-        self.assertEqual(Child.__annotations__, {"__extra_items__": int, "a": int})
-        self.assertEqual(Child.__extra_items__, ReadOnly[Union[str, None]])
-        self.assertFalse(Child.__closed__)
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
+        self.assertEqual(Child.__annotations__, {"a": int})
+        self.assertIs(Child.__extra_items__, int)
+        self.assertIs(Child.__closed__, True)
 
         class GrandChild(Child, closed=True):
             __extra_items__: str
 
-        self.assertEqual(GrandChild.__required_keys__, frozenset({'a', "__extra_items__"}))
+        self.assertEqual(GrandChild.__required_keys__, frozenset({'a'}))
         self.assertEqual(GrandChild.__optional_keys__, frozenset({}))
         self.assertEqual(GrandChild.__readonly_keys__, frozenset({}))
-        self.assertEqual(GrandChild.__mutable_keys__, frozenset({'a', "__extra_items__"}))
-        self.assertEqual(GrandChild.__annotations__, {"__extra_items__": int, "a": int})
-        self.assertEqual(GrandChild.__extra_items__, str)
-        self.assertTrue(GrandChild.__closed__)
+        self.assertEqual(GrandChild.__mutable_keys__, frozenset({'a'}))
+        self.assertEqual(GrandChild.__annotations__, {"a": int})
+        self.assertIs(GrandChild.__extra_items__, str)
+        self.assertIs(GrandChild.__closed__, True)
+
+    def test_closed_inheritance(self):
+        class Base(TypedDict, extra_items=ReadOnly[Union[str, None]]):
+            a: int
+
+        self.assertEqual(Base.__required_keys__, frozenset({"a"}))
+        self.assertEqual(Base.__optional_keys__, frozenset({}))
+        self.assertEqual(Base.__readonly_keys__, frozenset({}))
+        self.assertEqual(Base.__mutable_keys__, frozenset({"a"}))
+        self.assertEqual(Base.__annotations__, {"a": int})
+        self.assertEqual(Base.__extra_items__, ReadOnly[Union[str, None]])
+        self.assertIsNone(Base.__closed__)
+
+        class Child(Base, extra_items=int):
+            a: str
+
+        self.assertEqual(Child.__required_keys__, frozenset({'a'}))
+        self.assertEqual(Child.__optional_keys__, frozenset({}))
+        self.assertEqual(Child.__readonly_keys__, frozenset({}))
+        self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
+        self.assertEqual(Child.__annotations__, {"a": str})
+        self.assertIs(Child.__extra_items__, int)
+        self.assertIsNone(Child.__closed__)
+
+        class GrandChild(Child, closed=True):
+            a: float
+
+        self.assertEqual(GrandChild.__required_keys__, frozenset({'a'}))
+        self.assertEqual(GrandChild.__optional_keys__, frozenset({}))
+        self.assertEqual(GrandChild.__readonly_keys__, frozenset({}))
+        self.assertEqual(GrandChild.__mutable_keys__, frozenset({'a'}))
+        self.assertEqual(GrandChild.__annotations__, {"a": float})
+        self.assertIs(GrandChild.__extra_items__, NoExtraItems)
+        self.assertIs(GrandChild.__closed__, True)
+
+        class GrandGrandChild(GrandChild):
+            ...
+        self.assertEqual(GrandGrandChild.__required_keys__, frozenset({'a'}))
+        self.assertEqual(GrandGrandChild.__optional_keys__, frozenset({}))
+        self.assertEqual(GrandGrandChild.__readonly_keys__, frozenset({}))
+        self.assertEqual(GrandGrandChild.__mutable_keys__, frozenset({'a'}))
+        self.assertEqual(GrandGrandChild.__annotations__, {"a": float})
+        self.assertIs(GrandGrandChild.__extra_items__, NoExtraItems)
+        self.assertIsNone(GrandGrandChild.__closed__)
 
     def test_implicit_extra_items(self):
         class Base(TypedDict):
             a: int
 
-        self.assertEqual(Base.__extra_items__, None)
-        self.assertFalse(Base.__closed__)
+        self.assertIs(Base.__extra_items__, NoExtraItems)
+        self.assertIsNone(Base.__closed__)
 
         class ChildA(Base, closed=True):
             ...
 
-        self.assertEqual(ChildA.__extra_items__, Never)
-        self.assertTrue(ChildA.__closed__)
+        self.assertEqual(ChildA.__extra_items__, NoExtraItems)
+        self.assertIs(ChildA.__closed__, True)
 
+    @skipIf(TYPING_3_14_0, "Backwards compatibility only for Python 3.13")
+    def test_implicit_extra_items_before_3_14(self):
+        class Base(TypedDict):
+            a: int
         class ChildB(Base, closed=True):
             __extra_items__: None
 
-        self.assertEqual(ChildB.__extra_items__, type(None))
-        self.assertTrue(ChildB.__closed__)
+        self.assertIs(ChildB.__extra_items__, type(None))
+        self.assertIs(ChildB.__closed__, True)
 
     @skipIf(
         TYPING_3_13_0,
@@ -4933,8 +5037,13 @@ class TypedDictTests(BaseTestCase):
     def test_backwards_compatibility(self):
         with self.assertWarns(DeprecationWarning):
             TD = TypedDict("TD", closed=int)
-        self.assertFalse(TD.__closed__)
+        self.assertIs(TD.__closed__, None)
         self.assertEqual(TD.__annotations__, {"closed": int})
+
+        with self.assertWarns(DeprecationWarning):
+            TD = TypedDict("TD", extra_items=int)
+        self.assertIs(TD.__extra_items__, NoExtraItems)
+        self.assertEqual(TD.__annotations__, {"extra_items": int})
 
 
 class AnnotatedTests(BaseTestCase):
