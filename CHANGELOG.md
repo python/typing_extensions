@@ -1,10 +1,19 @@
-# Unreleased
+# Release 4.13.0rc1 (March 18, 2025)
+
+New features:
 
 - Add `typing_extensions.TypeForm` from PEP 747. Patch by
   Jelle Zijlstra.
 - Add `typing_extensions.get_annotations`, a backport of
   `inspect.get_annotations` that adds features specified
   by PEP 649. Patches by Jelle Zijlstra and Alex Waygood.
+- Backport `evaluate_forward_ref` from CPython PR
+  [#119891](https://github.com/python/cpython/pull/119891) to evaluate `ForwardRef`s.
+  Patch by [Daraan](https://github.com/Daraan), backporting a CPython PR by Jelle Zijlstra.
+
+Bugfixes and changed features:
+
+- Update PEP 728 implementation to a newer version of the PEP. Patch by Jelle Zijlstra.
 - Copy the coroutine status of functions and methods wrapped
   with `@typing_extensions.deprecated`. Patch by Sebastian Rittau.
 - Fix bug where `TypeAliasType` instances could be subscripted even
@@ -17,7 +26,7 @@
   subscripted with an `Unpack` object.
   Patch by [Daraan](https://github.com/Daraan).
 - Backport to Python 3.10 the ability to substitute `...` in generic `Callable`
-aliases that have a `Concatenate` special form as their argument.
+  aliases that have a `Concatenate` special form as their argument.
   Patch by [Daraan](https://github.com/Daraan).
 - Extended the `Concatenate` backport for Python 3.8-3.10 to now accept
   `Ellipsis` as an argument. Patch by [Daraan](https://github.com/Daraan).
@@ -25,24 +34,21 @@ aliases that have a `Concatenate` special form as their argument.
   `Union[..., NoneType]` to annotations that have a `None` default value anymore.
   This fixes wrapping of `Annotated` in an unwanted `Optional` in such cases.
   Patch by [Daraan](https://github.com/Daraan).
-- Fix error in subscription of `Unpack` aliases causing nested Unpacks 
+- Fix error in subscription of `Unpack` aliases causing nested Unpacks
   to not be resolved correctly. Patch by [Daraan](https://github.com/Daraan).
 - Backport CPython PR [#124795](https://github.com/python/cpython/pull/124795):
   fix `TypeAliasType` not raising an error on non-tuple inputs for `type_params`.
   Patch by [Daraan](https://github.com/Daraan).
-- Backport `evaluate_forward_ref` from CPython PR
-  [#119891](https://github.com/python/cpython/pull/119891) to evaluate `ForwardRef`s.
-  Patch by [Daraan](https://github.com/Daraan), backporting a CPython PR by Jelle Zijlstra.
 - Fix that lists and ... could not be used for parameter expressions for `TypeAliasType`
   instances before Python 3.11.
   Patch by [Daraan](https://github.com/Daraan).
-- Fix error on Python 3.10 when using `typing.Concatenate` and 
+- Fix error on Python 3.10 when using `typing.Concatenate` and
   `typing_extensions.Concatenate` together. Patch by [Daraan](https://github.com/Daraan).
 - Backport of CPython PR [#109544](https://github.com/python/cpython/pull/109544)
   to reflect Python 3.13+ behavior: A value assigned to `__total__` in the class body of a
   `TypedDict` will be overwritten by the `total` argument of the `TypedDict` constructor.
   Patch by [Daraan](https://github.com/Daraan), backporting a CPython PR by Jelle Zijlstra.
-- Fix for Python 3.11 that now `isinstance(typing_extensions.Unpack[...], TypeVar)` 
+- Fix for Python 3.11 that now `isinstance(typing_extensions.Unpack[...], TypeVar)`
   evaluates to `False`, however still `True` for <3.11.
   Patch by [Daraan](https://github.com/Daraan)
 
