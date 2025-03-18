@@ -878,7 +878,9 @@ def _ensure_subclassable(mro_entries):
     return inner
 
 
-_NEEDS_SINGLETONMETA = not hasattr(typing, "NoDefault") or not hasattr(typing, "NoExtraItems")
+_NEEDS_SINGLETONMETA = (
+    not hasattr(typing, "NoDefault") or not hasattr(typing, "NoExtraItems")
+)
 
 if _NEEDS_SINGLETONMETA:
     class SingletonMeta(type):
