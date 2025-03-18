@@ -1313,10 +1313,90 @@ else:  # <=3.13
             )
         else:  # 3.8
             hint = typing.get_type_hints(obj, globalns=globalns, localns=localns)
+        if sys.version_info < (3, 11):
+            _clean_optional(obj, hint, globalns, localns)
+        if sys.version_info < (3, 9):
+            # In 3.8 eval_type does not flatten Optional[ForwardRef] correctly
+            # This will recreate and and cache Unions.
+            hint = {
+                k: (t
+                    if get_origin(t) != Union
+                    else Union[t.__args__])
+                for k, t in hint.items()
+            }
         if include_extras:
             return hint
         return {k: _strip_extras(t) for k, t in hint.items()}
 
+    _NoneType = type(None)
+
+    def _could_be_inserted_optional(t):
+        """detects Union[..., None] pattern"""
+        # 3.8+ compatible checking before _UnionGenericAlias
+        if get_origin(t) is not Union:
+            return False
+        # Assume if last argument is not None they are user defined
+        if t.__args__[-1] is not _NoneType:
+            return False
+        return True
+
+    # < 3.11
+    def _clean_optional(obj, hints, globalns=None, localns=None):
+        # reverts injected Union[..., None] cases from typing.get_type_hints
+        # when a None default value is used.
+        # see https://github.com/python/typing_extensions/issues/310
+        if not hints or isinstance(obj, type):
+            return
+        defaults = typing._get_defaults(obj)  # avoid accessing __annotations___
+        if not defaults:
+            return
+        original_hints = obj.__annotations__
+        for name, value in hints.items():
+            # Not a Union[..., None] or replacement conditions not fullfilled
+            if (not _could_be_inserted_optional(value)
+                or name not in defaults
+                or defaults[name] is not None
+            ):
+                continue
+            original_value = original_hints[name]
+            # value=NoneType should have caused a skip above but check for safety
+            if original_value is None:
+                original_value = _NoneType
+            # Forward reference
+            if isinstance(original_value, str):
+                if globalns is None:
+                    if isinstance(obj, _types.ModuleType):
+                        globalns = obj.__dict__
+                    else:
+                        nsobj = obj
+                        # Find globalns for the unwrapped object.
+                        while hasattr(nsobj, '__wrapped__'):
+                            nsobj = nsobj.__wrapped__
+                        globalns = getattr(nsobj, '__globals__', {})
+                    if localns is None:
+                        localns = globalns
+                elif localns is None:
+                    localns = globalns
+                if sys.version_info < (3, 9):
+                    original_value = ForwardRef(original_value)
+                else:
+                    original_value = ForwardRef(
+                        original_value,
+                        is_argument=not isinstance(obj, _types.ModuleType)
+                    )
+            original_evaluated = typing._eval_type(original_value, globalns, localns)
+            if sys.version_info < (3, 9) and get_origin(original_evaluated) is Union:
+                # Union[str, None, "str"] is not reduced to Union[str, None]
+                original_evaluated = Union[original_evaluated.__args__]
+            # Compare if values differ. Note that even if equal
+            # value might be cached by typing._tp_cache contrary to original_evaluated
+            if original_evaluated != value or (
+                # 3.10: ForwardRefs of UnionType might be turned into _UnionGenericAlias
+                hasattr(_types, "UnionType")
+                and isinstance(original_evaluated, _types.UnionType)
+                and not isinstance(value, _types.UnionType)
+            ):
+                hints[name] = original_evaluated
 
 # Python 3.9+ has PEP 593 (Annotated)
 if hasattr(typing, 'Annotated'):
@@ -2621,7 +2701,9 @@ elif sys.version_info[:2] >= (3, 9):  # 3.9+
             self.__doc__ = _UNPACK_DOC
 
     class _UnpackAlias(typing._GenericAlias, _root=True):
-        __class__ = typing.TypeVar
+        if sys.version_info < (3, 11):
+            # needed for compatibility with Generic[Unpack[Ts]]
+            __class__ = typing.TypeVar
 
         @property
         def __typing_unpacked_tuple_args__(self):
