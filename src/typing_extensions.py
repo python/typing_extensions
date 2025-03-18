@@ -878,7 +878,9 @@ def _ensure_subclassable(mro_entries):
     return inner
 
 
-if not hasattr(typing, "NoDefault") or not hasattr(typing, "NoExtraItems"):
+_NEEDS_SINGLETONMETA = not hasattr(typing, "NoDefault") or not hasattr(typing, "NoExtraItems")
+
+if _NEEDS_SINGLETONMETA:
     class SingletonMeta(type):
         def __setattr__(cls, attr, value):
             # TypeError is consistent with the behavior of NoneType
@@ -927,7 +929,7 @@ else:
     NoExtraItems = NoExtraItemsType()
     del NoExtraItemsType
 
-if not hasattr(typing, "NoDefault") or not hasattr(typing, "NoExtraItems"):
+if _NEEDS_SINGLETONMETA:
     del SingletonMeta
 
 
