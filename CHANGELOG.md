@@ -39,7 +39,7 @@ Bugfixes and changed features:
 - Backport CPython PR [#124795](https://github.com/python/cpython/pull/124795):
   fix `TypeAliasType` not raising an error on non-tuple inputs for `type_params`.
   Patch by [Daraan](https://github.com/Daraan).
-- Fix that lists and ... could not be used for parameter expressions for `TypeAliasType`
+- Fix that lists and `...` could not be used for parameter expressions for `TypeAliasType`
   instances before Python 3.11.
   Patch by [Daraan](https://github.com/Daraan).
 - Fix error on Python 3.10 when using `typing.Concatenate` and
@@ -48,9 +48,9 @@ Bugfixes and changed features:
   to reflect Python 3.13+ behavior: A value assigned to `__total__` in the class body of a
   `TypedDict` will be overwritten by the `total` argument of the `TypedDict` constructor.
   Patch by [Daraan](https://github.com/Daraan), backporting a CPython PR by Jelle Zijlstra.
-- Fix for Python 3.11 that now `isinstance(typing_extensions.Unpack[...], TypeVar)`
-  evaluates to `False`, however still `True` for <3.11.
-  Patch by [Daraan](https://github.com/Daraan)
+- `isinstance(typing_extensions.Unpack[...], TypeVar)` now evaluated to `False` on Python 3.11
+  and newer, but remains `True` on versions before 3.11.
+  Patch by [Daraan](https://github.com/Daraan).
 
 # Release 4.12.2 (June 7, 2024)
 
