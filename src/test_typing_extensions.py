@@ -4843,7 +4843,7 @@ class TypedDictTests(BaseTestCase):
         )
 
     @skipIf(TYPING_3_14_0, "Old syntax only supported on <3.14")
-    def test_extra_keys_non_readonly_compat(self):
+    def test_extra_keys_non_readonly_legacy(self):
         class Base(TypedDict, closed=True):
             __extra_items__: str
 
@@ -4856,7 +4856,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
 
     @skipIf(TYPING_3_14_0, "Only supported on <3.14")
-    def test_extra_keys_readonly(self):
+    def test_extra_keys_readonly_legacy(self):
         class Base(TypedDict, closed=True):
             __extra_items__: ReadOnly[str]
 
@@ -4869,7 +4869,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
 
     @skipIf(TYPING_3_14_0, "Only supported on <3.14")
-    def test_extra_keys_readonly_explicit_closed(self):
+    def test_extra_keys_readonly_explicit_closed_legacy(self):
         class Base(TypedDict, closed=True):
             __extra_items__: ReadOnly[str]
 
@@ -4882,7 +4882,7 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Child.__mutable_keys__, frozenset({'a'}))
 
     @skipIf(TYPING_3_14_0, "Only supported on <3.14")
-    def test_extra_key_required(self):
+    def test_extra_key_required_legacy(self):
         with self.assertRaisesRegex(
             TypeError,
             "Special key __extra_items__ does not support Required"
@@ -4895,7 +4895,7 @@ class TypedDictTests(BaseTestCase):
         ):
             TypedDict("A", {"__extra_items__": NotRequired[int]}, closed=True)
 
-    def test_regular_extra_items(self):
+    def test_regular_extra_items_legacy(self):
         class ExtraReadOnly(TypedDict):
             __extra_items__: ReadOnly[str]
 
