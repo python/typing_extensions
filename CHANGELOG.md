@@ -48,7 +48,7 @@ Bugfixes and changed features:
   to reflect Python 3.13+ behavior: A value assigned to `__total__` in the class body of a
   `TypedDict` will be overwritten by the `total` argument of the `TypedDict` constructor.
   Patch by [Daraan](https://github.com/Daraan), backporting a CPython PR by Jelle Zijlstra.
-- `isinstance(typing_extensions.Unpack[...], TypeVar)` now evaluated to `False` on Python 3.11
+- `isinstance(typing_extensions.Unpack[...], TypeVar)` now evaluates to `False` on Python 3.11
   and newer, but remains `True` on versions before 3.11.
   Patch by [Daraan](https://github.com/Daraan).
 
