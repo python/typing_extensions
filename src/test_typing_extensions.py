@@ -5045,6 +5045,14 @@ class TypedDictTests(BaseTestCase):
         self.assertIs(TD.__extra_items__, NoExtraItems)
         self.assertEqual(TD.__annotations__, {"extra_items": int})
 
+    def test_cannot_combine_closed_and_extra_items(self):
+        with self.assertRaisesRegex(
+            TypeError,
+            "Cannot combine closed=True and extra_items"
+        ):
+            class TD(TypedDict, closed=True, extra_items=range):
+                x: str
+
 
 class AnnotatedTests(BaseTestCase):
 
