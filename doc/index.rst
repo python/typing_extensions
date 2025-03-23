@@ -380,6 +380,7 @@ Special typing primitives
 .. data:: TypeIs
 
    See :pep:`742`. Similar to :data:`TypeGuard`, but allows more type narrowing.
+   In ``typing`` since 3.13.
 
    .. versionadded:: 4.10.0
 
