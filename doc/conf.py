@@ -27,7 +27,7 @@ extensions = ['sphinx.ext.intersphinx', '_extensions.gh_link']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-intersphinx_mapping = {'py': ('https://docs.python.org/3.13', None)}
+intersphinx_mapping = {'py': ('https://docs.python.org/3', None)}
 
 add_module_names = False
 
