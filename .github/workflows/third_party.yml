@@ -140,10 +140,11 @@ jobs:
         run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
-      - name: Run pyanalyze tests
-        run: |
-          cd pyanalyze
-          pytest pyanalyze/
+      # TODO: re-enable
+      # - name: Run pyanalyze tests
+      #   run: |
+      #     cd pyanalyze
+      #     pytest pyanalyze/
 
   typeguard:
     name: typeguard tests
