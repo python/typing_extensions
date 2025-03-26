@@ -4371,7 +4371,11 @@ else:
         A lax Python 3.11+ like version of typing._type_check
         """
         if hasattr(typing, "_type_convert"):
-            if _FORWARD_REF_HAS_CLASS:
+            if (
+                sys.version_info >= (3, 10, 3)
+                or (3, 9, 10) < sys.version_info[:3] < (3, 10)
+            ):
+                # allow_special_forms introduced later cpython/#30926 (bpo-46539)
                 type_ = typing._type_convert(
                     value,
                     module=module,
