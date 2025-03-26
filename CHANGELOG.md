@@ -1,3 +1,9 @@
+# Unreleased
+
+Bugfixes and changed features:
+- Fix `TypeError` when using `evaluate_forward_ref` on Python 3.10.1-2 and 3.9.8-10.
+  Patch by [Daraan](https://github.com/Daraan).
+
 # Release 4.13.0 (March 25, 2025)
 
 No user-facing changes since 4.13.0rc1.
