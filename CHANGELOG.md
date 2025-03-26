@@ -1,3 +1,9 @@
+# Unreleased
+
+Bugfixes and changed features:
+- Fix regression in 4.13.0 on Python 3.10.2 causing a `TypeError` when using `Concatenate`.
+  Patch by [Daraan](https://github.com/Daraan).
+
 # Release 4.13.0 (March 25, 2025)
 
 No user-facing changes since 4.13.0rc1.
