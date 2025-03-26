@@ -1,3 +1,7 @@
+# Release 4.13.0 (March 25, 2025)
+
+No user-facing changes since 4.13.0rc1.
+
 # Release 4.13.0rc1 (March 18, 2025)
 
 New features:
