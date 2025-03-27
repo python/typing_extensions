@@ -309,6 +309,7 @@ jobs:
         # PyPy is deliberately omitted here, since SQLAlchemy's tests
         # fail on PyPy for reasons unrelated to typing_extensions.
         python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        checkout-ref: [ "main", "rel_2_0" ]
     # sqlalchemy tests fail when using the Ubuntu 24.04 runner
     # https://github.com/sqlalchemy/sqlalchemy/commit/8d73205f352e68c6603e90494494ef21027ec68f
     runs-on: ubuntu-22.04
@@ -322,7 +323,7 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Checkout sqlalchemy
-        run: git clone --depth=1 https://github.com/sqlalchemy/sqlalchemy.git || git clone --depth=1 https://github.com/sqlalchemy/sqlalchemy.git
+        run: for i in {1..2}; do git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git && break; done
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
