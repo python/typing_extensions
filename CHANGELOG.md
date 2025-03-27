@@ -1,6 +1,8 @@
 # Unreleased
 
 Bugfixes and changed features:
+- Fix regression in 4.13.0 on Python 3.10.2 causing a `TypeError` when using `Concatenate`.
+  Patch by [Daraan](https://github.com/Daraan).
 - Fix `TypeError` when using `evaluate_forward_ref` on Python 3.10.1-2 and 3.9.8-10.
   Patch by [Daraan](https://github.com/Daraan).
 

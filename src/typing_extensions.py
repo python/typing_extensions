@@ -2072,7 +2072,7 @@ def _create_concatenate_alias(origin, parameters):
     if parameters[-1] is ... and sys.version_info < (3, 9, 2):
         # Hack: Arguments must be types, replace it with one.
         parameters = (*parameters[:-1], _EllipsisDummy)
-    if sys.version_info >= (3, 10, 2):
+    if sys.version_info >= (3, 10, 3):
         concatenate = _ConcatenateGenericAlias(origin, parameters,
                                         _typevar_types=(TypeVar, ParamSpec),
                                         _paramspec_tvars=True)

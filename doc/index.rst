@@ -255,7 +255,7 @@ Special typing primitives
 
 .. data:: NoDefault
 
-   See :py:class:`typing.NoDefault`. In ``typing`` since 3.13.0.
+   See :py:data:`typing.NoDefault`. In ``typing`` since 3.13.
 
    .. versionadded:: 4.12.0
 
@@ -341,7 +341,9 @@ Special typing primitives
 
 .. data:: ReadOnly
 
-   See :pep:`705`. Indicates that a :class:`TypedDict` item may not be modified.
+   See :py:data:`typing.ReadOnly` and :pep:`705`. In ``typing`` since 3.13.
+
+   Indicates that a :class:`TypedDict` item may not be modified.
 
    .. versionadded:: 4.9.0
 
@@ -379,8 +381,9 @@ Special typing primitives
 
 .. data:: TypeIs
 
-   See :pep:`742`. Similar to :data:`TypeGuard`, but allows more type narrowing.
-   In ``typing`` since 3.13.
+   See :py:data:`typing.TypeIs` and :pep:`742`. In ``typing`` since 3.13.
+
+   Similar to :data:`TypeGuard`, but allows more type narrowing.
 
    .. versionadded:: 4.10.0
 
@@ -843,6 +846,8 @@ Functions
 
 .. function:: get_protocol_members(tp)
 
+   See :py:func:`typing.get_protocol_members`. In ``typing`` since 3.13.
+
    Return the set of members defined in a :class:`Protocol`. This works with protocols
    defined using either :class:`typing.Protocol` or :class:`typing_extensions.Protocol`.
 
@@ -877,6 +882,8 @@ Functions
       :data:`ReadOnly` from the annotation.
 
 .. function:: is_protocol(tp)
+
+   See :py:func:`typing.is_protocol`. In ``typing`` since 3.13.
 
    Determine if a type is a :class:`Protocol`. This works with protocols
    defined using either :py:class:`typing.Protocol` or :class:`typing_extensions.Protocol`.
