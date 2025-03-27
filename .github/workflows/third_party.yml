@@ -330,15 +330,18 @@ jobs:
           path: typing-extensions-latest
       - name: Install sqlalchemy test dependencies
         run: uv pip install --system tox setuptools
-      - name: Install typing_extensions latest
-        run: uv pip install --system -e 'typing-extensions @ ./typing-extensions-latest'
       - name: List installed dependencies
-        # Note: additional dependencies are installed when running tox below
+        # Note: tox installs SQLAlchemy and its dependencies in a different isolated
+        # environment before running the tests. To see the dependencies installed
+        # in the test environment, look for the line 'freeze> python -m pip freeze --all'
+        # in the output of the test step below.
         run: uv pip list
       - name: Run sqlalchemy tests
         run: |
           cd sqlalchemy
-          tox -e github-nocext -- -q --nomemory --notimingintensive
+          tox -e github-nocext \
+            --force-dep "typing-extensions @ file://$(pwd)/../typing-extensions-latest" \
+            -- -q --nomemory --notimingintensive
         env:
           TOX_WORKERS: -n4
 
