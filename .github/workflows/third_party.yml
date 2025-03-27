@@ -328,19 +328,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
-      - name: Install test dependencies
-        run: |
-          cd sqlalchemy
-          uv add --editable ../typing-extensions-latest
-          uv add tox setuptools
-          uv sync
+      - name: Install sqlalchemy test dependencies
+        run: uv pip install --system tox setuptools
+      - name: Install typing_extensions latest
+        run: uv pip install --system -e 'typing-extensions @ ./typing-extensions-latest'
       - name: List installed dependencies
         # Note: additional dependencies are installed when running tox below
-        run: cd sqlalchemy; uv pip list
+        run: uv pip list
       - name: Run sqlalchemy tests
         run: |
           cd sqlalchemy
-          uv run tox -e github-nocext -- -q --nomemory --notimingintensive
+          tox -e github-nocext -- -q --nomemory --notimingintensive
         env:
           TOX_WORKERS: -n4
 
