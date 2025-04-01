@@ -312,7 +312,7 @@ jobs:
         checkout-ref: [ "main", "rel_2_0" ]
     # sqlalchemy tests fail when using the Ubuntu 24.04 runner
     # https://github.com/sqlalchemy/sqlalchemy/commit/8d73205f352e68c6603e90494494ef21027ec68f
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Setup Python
