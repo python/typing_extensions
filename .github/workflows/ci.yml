@@ -54,23 +54,23 @@ jobs:
           - "pypy3.9"
           - "pypy3.10"
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: astral-sh/setup-uv@v5
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          enable-cache: false
+          allow-prereleases: true
 
       - name: Test typing_extensions
         run: |
           # Be wary of running `pip install` here, since it becomes easy for us to
           # accidentally pick up typing_extensions as installed by a dependency
           cd src
-          python --version
+          python --version  # just to make sure we're running the right one
           python -m unittest test_typing_extensions.py
 
       - name: Test CPython typing test suite
