@@ -63,6 +63,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: false
 
       - name: Test typing_extensions
         run: |
