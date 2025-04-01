@@ -4186,7 +4186,9 @@ else:
         """
         format = Format(format)
         if format is Format.VALUE_WITH_FAKE_GLOBALS:
-            raise ValueError("The VALUE_WITH_FAKE_GLOBALS format is for internal use only")
+            raise ValueError(
+                "The VALUE_WITH_FAKE_GLOBALS format is for internal use only"
+            )
 
         if eval_str and format is not Format.VALUE:
             raise ValueError("eval_str=True is only supported with format=Format.VALUE")
