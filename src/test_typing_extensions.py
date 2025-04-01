@@ -8844,9 +8844,12 @@ class TestEvaluateForwardRefs(BaseTestCase):
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={"int": str}), str)
         import builtins
 
-        from test import support
-        with support.swap_attr(builtins, "int", dict):
+        real_int = builtins.int
+        try:
+            builtins.int = dict
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), dict)
+        finally:
+            builtins.int = real_int
 
     def test_nested_strings(self):
         # This variable must have a different name TypeVar
