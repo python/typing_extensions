@@ -4139,8 +4139,9 @@ _PEP_649_OR_749_IMPLEMENTED = (
 
 class Format(enum.IntEnum):
     VALUE = 1
-    FORWARDREF = 2
-    STRING = 3
+    VALUE_WITH_FAKE_GLOBALS = 2
+    FORWARDREF = 3
+    STRING = 4
 
 
 if _PEP_649_OR_749_IMPLEMENTED:
@@ -4184,6 +4185,8 @@ else:
 
         """
         format = Format(format)
+        if format is Format.VALUE_WITH_FAKE_GLOBALS:
+            raise ValueError("The VALUE_WITH_FAKE_GLOBALS format is for internal use only")
 
         if eval_str and format is not Format.VALUE:
             raise ValueError("eval_str=True is only supported with format=Format.VALUE")
