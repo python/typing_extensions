@@ -38,8 +38,6 @@ jobs:
         # For available versions, see:
         # https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
         python-version:
-          - "3.8"
-          - "3.8.12"
           - "3.9"
           - "3.9.12"
           - "3.10"
