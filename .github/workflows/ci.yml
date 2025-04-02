@@ -39,11 +39,11 @@ jobs:
         # https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
         python-version:
           - "3.8"
-          - "3.8.0"
+          - "3.8.12"
           - "3.9"
-          - "3.9.0"
+          - "3.9.12"
           - "3.10"
-          - "3.10.0"
+          - "3.10.4"
           - "3.11"
           - "3.11.0"
           - "3.12"
