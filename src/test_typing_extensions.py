@@ -7819,6 +7819,10 @@ class TypeAliasTypeTests(BaseTestCase):
             self.assertEqual(Alias | None, Union[Alias, None])
             self.assertEqual(Alias | (int | str), Union[Alias, int | str])
             self.assertEqual(Alias | list[float], Union[Alias, list[float]])
+
+            if sys.version_info >= (3, 12):
+                Alias2 = typing.TypeAliasType("Alias2", str)
+                self.assertEqual(Alias | Alias2, Union[Alias, Alias2])
         else:
             with self.assertRaises(TypeError):
                 Alias | int

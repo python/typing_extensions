@@ -3827,14 +3827,27 @@ if sys.version_info >= (3, 14):
     TypeAliasType = typing.TypeAliasType
 # 3.8-3.13
 else:
-    def _is_unionable(obj):
-        """Corresponds to is_unionable() in unionobject.c in CPython."""
-        return obj is None or isinstance(obj, (
-            type,
-            _types.GenericAlias,
-            _types.UnionType,
-            TypeAliasType,
-        ))
+    if sys.version_info >= (3, 12):
+        # 3.12-3.14
+        def _is_unionable(obj):
+            """Corresponds to is_unionable() in unionobject.c in CPython."""
+            return obj is None or isinstance(obj, (
+                type,
+                _types.GenericAlias,
+                _types.UnionType,
+                typing.TypeAliasType,
+                TypeAliasType,
+            ))
+    else:
+        # 3.8-3.11
+        def _is_unionable(obj):
+            """Corresponds to is_unionable() in unionobject.c in CPython."""
+            return obj is None or isinstance(obj, (
+                type,
+                _types.GenericAlias,
+                _types.UnionType,
+                TypeAliasType,
+            ))
 
     if sys.version_info < (3, 10):
         # Copied and pasted from https://github.com/python/cpython/blob/986a4e1b6fcae7fe7a1d0a26aea446107dd58dd2/Objects/genericaliasobject.c#L568-L582,
