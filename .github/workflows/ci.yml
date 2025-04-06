@@ -39,11 +39,10 @@ jobs:
         # https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
         python-version:
           - "3.8"
-          - "3.8.0"
           - "3.9"
-          - "3.9.0"
+          - "3.9.12"
           - "3.10"
-          - "3.10.0"
+          - "3.10.4"
           - "3.11"
           - "3.11.0"
           - "3.12"
@@ -55,7 +54,7 @@ jobs:
           - "pypy3.9"
           - "pypy3.10"
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -71,6 +70,7 @@ jobs:
           # Be wary of running `pip install` here, since it becomes easy for us to
           # accidentally pick up typing_extensions as installed by a dependency
           cd src
+          python --version  # just to make sure we're running the right one
           python -m unittest test_typing_extensions.py
         continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
 
