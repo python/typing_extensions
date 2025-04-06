@@ -910,11 +910,11 @@ if _NEEDS_SINGLETONMETA:
     del SingletonMeta
 
 
-# Update this to something like >=3.13.0b1 if and when
-# PEP 728 is implemented in CPython
-_PEP_728_IMPLEMENTED = False
+# Update this to something like >=3.14 if and when
+# PEP 728/PEP 764 is implemented in CPython
+_PEP_728_OR_764_IMPLEMENTED = False
 
-if _PEP_728_IMPLEMENTED:
+if _PEP_728_OR_764_IMPLEMENTED:
     # The standard library TypedDict in Python 3.9.0/1 does not honour the "total"
     # keyword with old-style TypedDict().  See https://bugs.python.org/issue42059
     # The standard library TypedDict below Python 3.11 does not store runtime
@@ -924,7 +924,7 @@ if _PEP_728_IMPLEMENTED:
     # to enable better runtime introspection.
     # On 3.13 we deprecate some odd ways of creating TypedDicts.
     # Also on 3.13, PEP 705 adds the ReadOnly[] qualifier.
-    # PEP 728 (still pending) makes more changes.
+    # PEP 728 and PEP 764 (still pending) makes more changes.
     TypedDict = typing.TypedDict
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
@@ -1068,7 +1068,11 @@ else:
             tp_dict.__extra_items__ = extra_items_type
             return tp_dict
 
-        __call__ = dict  # static method
+        def __call__(cls, /, *args, **kwargs):
+            if cls is TypedDict:
+                # Functional syntax, let `TypedDict.__new__` handle it:
+                return super().__call__(*args, **kwargs)
+            return dict(*args, **kwargs)
 
         def __subclasscheck__(cls, other):
             # Typed dicts are only for static structural subtyping.
@@ -1078,17 +1082,7 @@ else:
 
     _TypedDict = type.__new__(_TypedDictMeta, 'TypedDict', (), {})
 
-    @_ensure_subclassable(lambda bases: (_TypedDict,))
-    def TypedDict(
-        typename,
-        fields=_marker,
-        /,
-        *,
-        total=True,
-        closed=None,
-        extra_items=NoExtraItems,
-        **kwargs
-    ):
+    class TypedDict(metaclass=_TypedDictMeta):
         """A simple typed namespace. At runtime it is equivalent to a plain dict.
 
         TypedDict creates a dictionary type such that a type checker will expect all
@@ -1135,52 +1129,77 @@ else:
 
         See PEP 655 for more details on Required and NotRequired.
         """
-        if fields is _marker or fields is None:
-            if fields is _marker:
-                deprecated_thing = "Failing to pass a value for the 'fields' parameter"
-            else:
-                deprecated_thing = "Passing `None` as the 'fields' parameter"
 
-            example = f"`{typename} = TypedDict({typename!r}, {{}})`"
-            deprecation_msg = (
-                f"{deprecated_thing} is deprecated and will be disallowed in "
-                "Python 3.15. To create a TypedDict class with 0 fields "
-                "using the functional syntax, pass an empty dictionary, e.g. "
-            ) + example + "."
-            warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
-            # Support a field called "closed"
-            if closed is not False and closed is not True and closed is not None:
-                kwargs["closed"] = closed
-                closed = None
-            # Or "extra_items"
-            if extra_items is not NoExtraItems:
-                kwargs["extra_items"] = extra_items
-                extra_items = NoExtraItems
-            fields = kwargs
-        elif kwargs:
-            raise TypeError("TypedDict takes either a dict or keyword arguments,"
-                            " but not both")
-        if kwargs:
-            if sys.version_info >= (3, 13):
-                raise TypeError("TypedDict takes no keyword arguments")
-            warnings.warn(
-                "The kwargs-based syntax for TypedDict definitions is deprecated "
-                "in Python 3.11, will be removed in Python 3.13, and may not be "
-                "understood by third-party type checkers.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+        def __new__(
+            cls,
+            typename,
+            fields=_marker,
+            /,
+            *,
+            total=True,
+            closed=None,
+            extra_items=NoExtraItems,
+            **kwargs
+        ):
+            if fields is _marker or fields is None:
+                if fields is _marker:
+                    deprecated_thing = (
+                        "Failing to pass a value for the 'fields' parameter"
+                    )
+                else:
+                    deprecated_thing = "Passing `None` as the 'fields' parameter"
 
-        ns = {'__annotations__': dict(fields)}
-        module = _caller()
-        if module is not None:
-            # Setting correct module is necessary to make typed dict classes pickleable.
-            ns['__module__'] = module
+                example = f"`{typename} = TypedDict({typename!r}, {{}})`"
+                deprecation_msg = (
+                    f"{deprecated_thing} is deprecated and will be disallowed in "
+                    "Python 3.15. To create a TypedDict class with 0 fields "
+                    "using the functional syntax, pass an empty dictionary, e.g. "
+                ) + example + "."
+                warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
+                # Support a field called "closed"
+                if closed is not False and closed is not True and closed is not None:
+                    kwargs["closed"] = closed
+                    closed = None
+                # Or "extra_items"
+                if extra_items is not NoExtraItems:
+                    kwargs["extra_items"] = extra_items
+                    extra_items = NoExtraItems
+                fields = kwargs
+            elif kwargs:
+                raise TypeError("TypedDict takes either a dict or keyword arguments,"
+                                " but not both")
+            if kwargs:
+                if sys.version_info >= (3, 13):
+                    raise TypeError("TypedDict takes no keyword arguments")
+                warnings.warn(
+                    "The kwargs-based syntax for TypedDict definitions is deprecated "
+                    "in Python 3.11, will be removed in Python 3.13, and may not be "
+                    "understood by third-party type checkers.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
 
-        td = _TypedDictMeta(typename, (), ns, total=total, closed=closed,
-                            extra_items=extra_items)
-        td.__orig_bases__ = (TypedDict,)
-        return td
+            ns = {'__annotations__': dict(fields)}
+            module = _caller(depth=3)
+            if module is not None:
+                # Setting correct module is necessary to make typed dict classes
+                # pickleable.
+                ns['__module__'] = module
+
+            td = _TypedDictMeta(typename, (), ns, total=total, closed=closed,
+                                extra_items=extra_items)
+            td.__orig_bases__ = (TypedDict,)
+            return td
+
+        def __class_getitem__(cls, args):
+            if not isinstance(args, tuple):
+                args = (args,)
+            if len(args) != 1 or not isinstance(args[0], dict):
+                raise TypeError(
+                    "TypedDict[...] should be used with a single dict argument"
+                )
+
+            return cls.__new__(cls, "<inlined TypedDict>", args[0])
 
     _TYPEDDICT_TYPES = (typing._TypedDictMeta, _TypedDictMeta)
 
@@ -1195,7 +1214,11 @@ else:
             is_typeddict(Film)  # => True
             is_typeddict(Union[list, str])  # => False
         """
-        return isinstance(tp, _TYPEDDICT_TYPES)
+        return (
+            tp is not TypedDict
+            and tp is not typing.TypedDict
+            and isinstance(tp, _TYPEDDICT_TYPES)
+        )
 
 
 if hasattr(typing, "assert_type"):

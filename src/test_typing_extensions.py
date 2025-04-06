@@ -5066,6 +5066,38 @@ class TypedDictTests(BaseTestCase):
             class TD(TypedDict, closed=True, extra_items=range):
                 x: str
 
+    def test_inlined_too_many_arguments(self):
+        with self.assertRaises(TypeError):
+            TypedDict[{"a": int}, "extra"]
+
+    def test_inlined_not_a_dict(self):
+        with self.assertRaises(TypeError):
+            TypedDict["not_a_dict"]
+
+    def test_inlined(self):
+        TD = TypedDict[{
+            "a": int,
+            "b": Required[int],
+            "c": NotRequired[int],
+            "d": ReadOnly[int],
+        }]
+        self.assertIsSubclass(TD, dict)
+        self.assertIsSubclass(TD, typing.MutableMapping)
+        self.assertNotIsSubclass(TD, collections.abc.Sequence)
+        self.assertTrue(is_typeddict(TD))
+        self.assertEqual(TD.__name__, "<inlined TypedDict>")
+        self.assertEqual(TD.__module__, __name__)
+        self.assertEqual(TD.__bases__, (dict,))
+        self.assertEqual(TD.__total__, True)
+        self.assertEqual(TD.__required_keys__, {"a", "b", "d"})
+        self.assertEqual(TD.__optional_keys__, {"c"})
+        self.assertEqual(TD.__readonly_keys__, {"d"})
+        self.assertEqual(TD.__mutable_keys__, {"a", "b", "c"})
+
+        inst = TD(a=1, b=2, d=3)
+        self.assertIs(type(inst), dict)
+        self.assertEqual(inst["a"], 1)
+
 
 class AnnotatedTests(BaseTestCase):
 
@@ -6629,7 +6661,7 @@ class AllTests(BaseTestCase):
             exclude |= {
                 'TypeAliasType'
             }
-        if not typing_extensions._PEP_728_IMPLEMENTED:
+        if not typing_extensions._PEP_728_OR_764_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
