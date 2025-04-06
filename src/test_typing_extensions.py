@@ -5074,6 +5074,10 @@ class TypedDictTests(BaseTestCase):
         with self.assertRaises(TypeError):
             TypedDict["not_a_dict"]
 
+    def test_inlined_empty(self):
+        TD = TypedDict[{}]
+        self.assertEqual(TD.__required_keys__, set())
+
     def test_inlined(self):
         TD = TypedDict[{
             "a": int,
