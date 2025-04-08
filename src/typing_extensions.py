@@ -3123,7 +3123,8 @@ else:  # <=3.11
         return arg
 
 
-if hasattr(warnings, "deprecated"):
+# Python 3.13.3+ contains a fix for the wrapped __new__
+if sys.version_info >= (3, 13, 3):
     deprecated = warnings.deprecated
 else:
     _T = typing.TypeVar("_T")
