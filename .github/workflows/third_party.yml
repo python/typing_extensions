@@ -271,8 +271,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # skip 3.13 because msgspec doesn't support 3.13 yet
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
