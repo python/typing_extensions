@@ -3123,7 +3123,8 @@ else:  # <=3.11
         return arg
 
 
-if hasattr(warnings, "deprecated"):
+# Python 3.13.3+ contains a fix for the wrapped __new__
+if sys.version_info >= (3, 13, 3):
     deprecated = warnings.deprecated
 else:
     _T = typing.TypeVar("_T")
@@ -3203,7 +3204,7 @@ else:
                 original_new = arg.__new__
 
                 @functools.wraps(original_new)
-                def __new__(cls, *args, **kwargs):
+                def __new__(cls, /, *args, **kwargs):
                     if cls is arg:
                         warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                     if original_new is not object.__new__:
