@@ -8196,6 +8196,7 @@ class TestGetAnnotations(BaseTestCase):
             get_annotations(f2, format=Format.FORWARDREF),
             {"a": "undefined"},
         )
+        # Test that the raw int also works
         self.assertEqual(
             get_annotations(f2, format=Format.FORWARDREF.value),
             {"a": "undefined"},
