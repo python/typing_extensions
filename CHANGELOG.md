@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.13.2 (April 10, 2025)
 
 - Fix `TypeError` when taking the union of `typing_extensions.TypeAliasType` and a
   `typing.TypeAliasType` on Python 3.12 and 3.13.
