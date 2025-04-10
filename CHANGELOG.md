@@ -1,7 +1,15 @@
 # Unreleased
 
-Bugfixes and changed features:
+- Fix `TypeError` when taking the union of `typing_extensions.TypeAliasType` and a
+  `typing.TypeAliasType` on Python 3.12 and 3.13.
+  Patch by [Joren Hammudoglu](https://github.com/jorenham).
+
+# Release 4.13.1 (April 3, 2025)
+
+Bugfixes:
 - Fix regression in 4.13.0 on Python 3.10.2 causing a `TypeError` when using `Concatenate`.
+  Patch by [Daraan](https://github.com/Daraan).
+- Fix `TypeError` when using `evaluate_forward_ref` on Python 3.10.1-2 and 3.9.8-10.
   Patch by [Daraan](https://github.com/Daraan).
 
 # Release 4.13.0 (March 25, 2025)

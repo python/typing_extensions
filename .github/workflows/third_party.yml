@@ -343,6 +343,33 @@ jobs:
             --force-dep "typing-extensions @ file://$(pwd)/../typing-extensions-latest" \
             -- -q --nomemory --notimingintensive
 
+
+  litestar:
+    name: litestar tests
+    needs: skip-schedule-on-fork
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Checkout litestar
+        run: git clone --depth=1 https://github.com/litestar-org/litestar.git || git clone --depth=1 https://github.com/litestar-org/litestar.git
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v4
+        with:
+          path: typing-extensions-latest
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Run litestar tests
+        run: uv run --with=../typing-extensions-latest -- python -m pytest tests/unit/test_typing.py tests/unit/test_dto
+        working-directory: litestar
+
   create-issue-on-failure:
     name: Create an issue if daily tests failed
     runs-on: ubuntu-latest
