@@ -1,3 +1,4 @@
+# pyright: ignore
 import abc
 import builtins
 import collections
@@ -568,7 +569,7 @@ else:
         # but is necessary for several reasons...
         #
         # NOTE: DO NOT call super() in any methods in this class
-        # That would call the methods on typing._ProtocolMeta on Python 3.9-3.11
+        # That would call the methods on typing._ProtocolMeta on Python <=3.11
         # and those are slow
         def __new__(mcls, name, bases, namespace, **kwargs):
             if name == "Protocol" and len(bases) < 2:
@@ -769,7 +770,7 @@ else:
 runtime = runtime_checkable
 
 
-# Our version of runtime-checkable protocols is faster on Python 3.9-3.11
+# Our version of runtime-checkable protocols is faster on Python <=3.11
 if sys.version_info >= (3, 12):
     SupportsInt = typing.SupportsInt
     SupportsFloat = typing.SupportsFloat
@@ -1182,7 +1183,7 @@ else:
         td.__orig_bases__ = (TypedDict,)
         return td
 
-    _TYPEDDICT_TYPES = (typing._TypedDictMeta, _TypedDictMeta,)
+    _TYPEDDICT_TYPES = (typing._TypedDictMeta, _TypedDictMeta)
 
     def is_typeddict(tp):
         """Check if an annotation is a TypedDict class
@@ -1291,8 +1292,7 @@ else:  # <=3.13
 
     def _could_be_inserted_optional(t):
         """detects Union[..., None] pattern"""
-        # 3.8+ compatible checking before _UnionGenericAlias
-        if get_origin(t) is not Union:
+        if not isinstance(t, typing._UnionGenericAlias):
             return False
         # Assume if last argument is not None they are user defined
         if t.__args__[-1] is not _NoneType:
@@ -1336,11 +1336,11 @@ else:  # <=3.13
                         localns = globalns
                 elif localns is None:
                     localns = globalns
-                else:
-                    original_value = ForwardRef(
-                        original_value,
-                        is_argument=not isinstance(obj, _types.ModuleType)
-                    )
+
+                original_value = ForwardRef(
+                    original_value,
+                    is_argument=not isinstance(obj, _types.ModuleType)
+                )
             original_evaluated = typing._eval_type(original_value, globalns, localns)
             # Compare if values differ. Note that even if equal
             # value might be cached by typing._tp_cache contrary to original_evaluated
@@ -1359,7 +1359,6 @@ if sys.version_info[:2] >= (3, 10):
     get_args = typing.get_args
 # 3.9
 else:
-    from typing import GenericAlias as _typing_GenericAlias
     from typing import _AnnotatedAlias, _BaseGenericAlias
 
     def get_origin(tp):
@@ -1379,7 +1378,7 @@ else:
         """
         if isinstance(tp, _AnnotatedAlias):
             return Annotated
-        if isinstance(tp, (_typing_GenericAlias, _BaseGenericAlias,
+        if isinstance(tp, (_types.GenericAlias, _BaseGenericAlias,
                            ParamSpecArgs, ParamSpecKwargs)):
             return tp.__origin__
         if tp is typing.Generic:
@@ -1399,7 +1398,7 @@ else:
         """
         if isinstance(tp, _AnnotatedAlias):
             return (tp.__origin__, *tp.__metadata__)
-        if isinstance(tp, (typing._GenericAlias, _typing_GenericAlias)):
+        if isinstance(tp, (typing._GenericAlias, _types.GenericAlias)):
             res = tp.__args__
             if get_origin(tp) is collections.abc.Callable and res[0] is not Ellipsis:
                 res = (list(res[:-1]), res[-1])
@@ -1882,7 +1881,7 @@ else:
 class _EllipsisDummy: ...
 
 
-# 3.9-3.10
+# <=3.10
 def _create_concatenate_alias(origin, parameters):
     if parameters[-1] is ... and sys.version_info < (3, 9, 2):
         # Hack: Arguments must be types, replace it with one.
@@ -1906,7 +1905,7 @@ def _create_concatenate_alias(origin, parameters):
     return concatenate
 
 
-# 3.9-3.10
+# <=3.10
 @typing._tp_cache
 def _concatenate_getitem(self, parameters):
     if parameters == ():
@@ -1925,7 +1924,7 @@ def _concatenate_getitem(self, parameters):
 # 3.11+; Concatenate does not accept ellipsis in 3.10
 if sys.version_info >= (3, 11):
     Concatenate = typing.Concatenate
-# 3.9-3.10
+# <=3.10
 else:
     @_ExtensionsSpecialForm
     def Concatenate(self, parameters):
@@ -1998,7 +1997,7 @@ else:
 # 3.13+
 if hasattr(typing, 'TypeIs'):
     TypeIs = typing.TypeIs
-# 3.9
+# <=3.12
 else:
     @_ExtensionsSpecialForm
     def TypeIs(self, parameters):
@@ -2045,7 +2044,7 @@ else:
 # 3.14+?
 if hasattr(typing, 'TypeForm'):
     TypeForm = typing.TypeForm
-# 3.9
+# <=3.13
 else:
     class _TypeFormForm(_ExtensionsSpecialForm, _root=True):
         # TypeForm(X) is equivalent to X but indicates to the type checker
@@ -2197,7 +2196,7 @@ else:
 if hasattr(typing, 'Required'):  # 3.11+
     Required = typing.Required
     NotRequired = typing.NotRequired
-else:  # 3.9-3.10
+else:  # <=3.10
     @_ExtensionsSpecialForm
     def Required(self, parameters):
         """A special typing construct to mark a key of a total=False TypedDict
@@ -2238,7 +2237,7 @@ else:  # 3.9-3.10
 
 if hasattr(typing, 'ReadOnly'):
     ReadOnly = typing.ReadOnly
-else:  # 3.9-3.12
+else:  # <=3.12
     @_ExtensionsSpecialForm
     def ReadOnly(self, parameters):
         """A special typing construct to mark an item of a TypedDict as read-only.
@@ -2307,7 +2306,7 @@ if sys.version_info >= (3, 12):  # PEP 692 changed the repr of Unpack[]
     def _is_unpack(obj):
         return get_origin(obj) is Unpack
 
-else:  # 3.9+
+else:  # <=3.11
     class _UnpackSpecialForm(_ExtensionsSpecialForm, _root=True):
         def __init__(self, getitem):
             super().__init__(getitem)
@@ -3394,10 +3393,10 @@ else:
 
 if sys.version_info >= (3, 14):
     TypeAliasType = typing.TypeAliasType
-# 3.8-3.13
+# <=3.13
 else:
     if sys.version_info >= (3, 12):
-        # 3.12-3.14
+        # 3.12-3.13
         def _is_unionable(obj):
             """Corresponds to is_unionable() in unionobject.c in CPython."""
             return obj is None or isinstance(obj, (
@@ -3408,7 +3407,7 @@ else:
                 TypeAliasType,
             ))
     else:
-        # 3.9-3.11
+        # <=3.11
         def _is_unionable(obj):
             """Corresponds to is_unionable() in unionobject.c in CPython."""
             return obj is None or isinstance(obj, (
@@ -3485,7 +3484,7 @@ else:
             for type_param in type_params:
                 if (
                     not isinstance(type_param, (TypeVar, TypeVarTuple, ParamSpec))
-                    # 3.9-3.11
+                    # <=3.11
                     # Unpack Backport passes isinstance(type_param, TypeVar)
                     or _is_unpack(type_param)
                 ):

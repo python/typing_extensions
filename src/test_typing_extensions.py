@@ -5157,7 +5157,7 @@ class AnnotatedTests(BaseTestCase):
         A.x = 5
         self.assertEqual(C.x, 5)
 
-    @skipIf(sys.version_info[:2] == (3, 10), "Waiting for bpo-46491 bugfix.")
+    @skipIf(sys.version_info[:2] == (3, 10), "Waiting for https://github.com/python/cpython/issues/90649 bugfix.")
     def test_special_form_containment(self):
         class C:
             classvar: Annotated[ClassVar[int], "a decoration"] = 4
@@ -5482,7 +5482,7 @@ class ParamSpecTests(BaseTestCase):
         self.assertTrue(hasattr(P, 'args'))
         self.assertTrue(hasattr(P, 'kwargs'))
 
-    @skipIf((3, 10, 0) <= sys.version_info[:3] <= (3, 10, 2), "Needs bpo-46676.")
+    @skipIf((3, 10, 0) <= sys.version_info[:3] <= (3, 10, 2), "Needs https://github.com/python/cpython/issues/90834.")
     def test_args_kwargs(self):
         P = ParamSpec('P')
         P_2 = ParamSpec('P_2')
@@ -7202,7 +7202,7 @@ class TypeVarTests(BaseTestCase):
             TypeVar('X', bound=(1, 2))
 
     def test_missing__name__(self):
-        # See bpo-39942
+        # See https://github.com/python/cpython/issues/84123
         code = ("import typing\n"
                 "T = typing.TypeVar('T')\n"
                 )
