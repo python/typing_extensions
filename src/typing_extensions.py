@@ -1,4 +1,3 @@
-# pyright: ignore
 import abc
 import builtins
 import collections
@@ -1359,8 +1358,6 @@ if sys.version_info[:2] >= (3, 10):
     get_args = typing.get_args
 # 3.9
 else:
-    from typing import _AnnotatedAlias, _BaseGenericAlias
-
     def get_origin(tp):
         """Get the unsubscripted version of a type.
 
@@ -1376,9 +1373,9 @@ else:
             get_origin(List[Tuple[T, T]][int]) == list
             get_origin(P.args) is P
         """
-        if isinstance(tp, _AnnotatedAlias):
+        if isinstance(tp, typing._AnnotatedAlias):
             return Annotated
-        if isinstance(tp, (_types.GenericAlias, _BaseGenericAlias,
+        if isinstance(tp, ( typing._BaseGenericAlias,
                            ParamSpecArgs, ParamSpecKwargs)):
             return tp.__origin__
         if tp is typing.Generic:
@@ -1396,7 +1393,7 @@ else:
             get_args(Union[int, Tuple[T, int]][str]) == (int, Tuple[str, int])
             get_args(Callable[[], T][int]) == ([], int)
         """
-        if isinstance(tp, _AnnotatedAlias):
+        if isinstance(tp, typing._AnnotatedAlias):
             return (tp.__origin__, *tp.__metadata__)
         if isinstance(tp, (typing._GenericAlias, _types.GenericAlias)):
             res = tp.__args__
