@@ -1375,7 +1375,7 @@ else:
         """
         if isinstance(tp, typing._AnnotatedAlias):
             return Annotated
-        if isinstance(tp, ( typing._BaseGenericAlias,
+        if isinstance(tp, (typing._BaseGenericAlias, _types.GenericAlias,
                            ParamSpecArgs, ParamSpecKwargs)):
             return tp.__origin__
         if tp is typing.Generic:
