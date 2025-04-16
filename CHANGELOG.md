@@ -1,3 +1,7 @@
+# Unreleased
+
+- Drop support for Python 3.8 (including PyPy-3.8). Patch by [Victorien Plot](https://github.com/Viicos).
+
 # Release 4.13.2 (April 10, 2025)
 
 - Fix `TypeError` when taking the union of `typing_extensions.TypeAliasType` and a
