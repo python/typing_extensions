@@ -4095,7 +4095,7 @@ else:
         )
 
 
-# Aliases for items that have always been in typing.
+# Aliases for items that are in typing in all supported versions.
 # Explicitly assign these (rather than using `from typing import *` at the top),
 # so that we get a CI error if one of these is deleted from typing.py
 # in a future version of Python
@@ -4136,3 +4136,6 @@ ValuesView = typing.ValuesView
 cast = typing.cast
 no_type_check = typing.no_type_check
 no_type_check_decorator = typing.no_type_check_decorator
+# This is private, but it was defined by typing_extensions for a long time
+# and some users rely on it.
+_AnnotatedAlias = typing._AnnotatedAlias

@@ -5251,6 +5251,11 @@ class AnnotatedTests(BaseTestCase):
         self.assertEqual(X.__origin__, List[Annotated[str, {"unhashable_metadata"}]])
         self.assertEqual(X.__metadata__, ("metadata",))
 
+    def test_compatibility(self):
+        # Test that the _AnnotatedAlias compatibility alias works
+        self.assertTrue(hasattr(typing_extensions, "_AnnotatedAlias"))
+        self.assertIs(typing_extensions._AnnotatedAlias, typing._AnnotatedAlias)
+
 
 class GetTypeHintsTests(BaseTestCase):
     def test_get_type_hints(self):
