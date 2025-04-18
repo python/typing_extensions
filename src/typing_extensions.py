@@ -1078,17 +1078,73 @@ else:
 
     _TypedDict = type.__new__(_TypedDictMeta, 'TypedDict', (), {})
 
+
+    class _TypedDictSpecialForm(_ExtensionsSpecialForm, _root=True):
+        def __call__(
+            self,
+            typename,
+            fields=_marker,
+            /,
+            *,
+            total=True,
+            closed=None,
+            extra_items=NoExtraItems,
+            __typing_is_inline__=False,
+            **kwargs
+        ):
+            if fields is _marker or fields is None:
+                if fields is _marker:
+                    deprecated_thing = (
+                        "Failing to pass a value for the 'fields' parameter"
+                    )
+                else:
+                    deprecated_thing = "Passing `None` as the 'fields' parameter"
+
+                example = f"`{typename} = TypedDict({typename!r}, {{}})`"
+                deprecation_msg = (
+                    f"{deprecated_thing} is deprecated and will be disallowed in "
+                    "Python 3.15. To create a TypedDict class with 0 fields "
+                    "using the functional syntax, pass an empty dictionary, e.g. "
+                ) + example + "."
+                warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
+                # Support a field called "closed"
+                if closed is not False and closed is not True and closed is not None:
+                    kwargs["closed"] = closed
+                    closed = None
+                # Or "extra_items"
+                if extra_items is not NoExtraItems:
+                    kwargs["extra_items"] = extra_items
+                    extra_items = NoExtraItems
+                fields = kwargs
+            elif kwargs:
+                raise TypeError("TypedDict takes either a dict or keyword arguments,"
+                                " but not both")
+            if kwargs:
+                if sys.version_info >= (3, 13):
+                    raise TypeError("TypedDict takes no keyword arguments")
+                warnings.warn(
+                    "The kwargs-based syntax for TypedDict definitions is deprecated "
+                    "in Python 3.11, will be removed in Python 3.13, and may not be "
+                    "understood by third-party type checkers.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+
+            ns = {'__annotations__': dict(fields)}
+            module = _caller(depth=5 if __typing_is_inline__ else 2)
+            if module is not None:
+                # Setting correct module is necessary to make typed dict classes
+                # pickleable.
+                ns['__module__'] = module
+
+            td = _TypedDictMeta(typename, (), ns, total=total, closed=closed,
+                                extra_items=extra_items)
+            td.__orig_bases__ = (TypedDict,)
+            return td
+
     @_ensure_subclassable(lambda bases: (_TypedDict,))
-    def TypedDict(
-        typename,
-        fields=_marker,
-        /,
-        *,
-        total=True,
-        closed=None,
-        extra_items=NoExtraItems,
-        **kwargs
-    ):
+    @_TypedDictSpecialForm
+    def TypedDict(self, args):
         """A simple typed namespace. At runtime it is equivalent to a plain dict.
 
         TypedDict creates a dictionary type such that a type checker will expect all
@@ -1135,52 +1191,16 @@ else:
 
         See PEP 655 for more details on Required and NotRequired.
         """
-        if fields is _marker or fields is None:
-            if fields is _marker:
-                deprecated_thing = "Failing to pass a value for the 'fields' parameter"
-            else:
-                deprecated_thing = "Passing `None` as the 'fields' parameter"
-
-            example = f"`{typename} = TypedDict({typename!r}, {{}})`"
-            deprecation_msg = (
-                f"{deprecated_thing} is deprecated and will be disallowed in "
-                "Python 3.15. To create a TypedDict class with 0 fields "
-                "using the functional syntax, pass an empty dictionary, e.g. "
-            ) + example + "."
-            warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
-            # Support a field called "closed"
-            if closed is not False and closed is not True and closed is not None:
-                kwargs["closed"] = closed
-                closed = None
-            # Or "extra_items"
-            if extra_items is not NoExtraItems:
-                kwargs["extra_items"] = extra_items
-                extra_items = NoExtraItems
-            fields = kwargs
-        elif kwargs:
-            raise TypeError("TypedDict takes either a dict or keyword arguments,"
-                            " but not both")
-        if kwargs:
-            if sys.version_info >= (3, 13):
-                raise TypeError("TypedDict takes no keyword arguments")
-            warnings.warn(
-                "The kwargs-based syntax for TypedDict definitions is deprecated "
-                "in Python 3.11, will be removed in Python 3.13, and may not be "
-                "understood by third-party type checkers.",
-                DeprecationWarning,
-                stacklevel=2,
+        # This runs when creating inline TypedDicts:
+        if not isinstance(args, tuple):
+            args = (args,)
+        if len(args) != 1 or not isinstance(args[0], dict):
+            raise TypeError(
+                "TypedDict[...] should be used with a single dict argument"
             )
 
-        ns = {'__annotations__': dict(fields)}
-        module = _caller()
-        if module is not None:
-            # Setting correct module is necessary to make typed dict classes pickleable.
-            ns['__module__'] = module
-
-        td = _TypedDictMeta(typename, (), ns, total=total, closed=closed,
-                            extra_items=extra_items)
-        td.__orig_bases__ = (TypedDict,)
-        return td
+        # Delegate to _TypedDictSpecialForm.__call__:
+        return self("<inlined TypedDict>", args[0], __typing_is_inline__=True)
 
     _TYPEDDICT_TYPES = (typing._TypedDictMeta, _TypedDictMeta)
 
