@@ -5089,7 +5089,7 @@ class TypedDictTests(BaseTestCase):
         self.assertIsSubclass(TD, typing.MutableMapping)
         self.assertNotIsSubclass(TD, collections.abc.Sequence)
         self.assertTrue(is_typeddict(TD))
-        self.assertEqual(TD.__name__, "<inlined TypedDict>")
+        self.assertEqual(TD.__name__, "<inline TypedDict>")
         self.assertEqual(TD.__module__, __name__)
         self.assertEqual(TD.__bases__, (dict,))
         self.assertEqual(TD.__total__, True)
