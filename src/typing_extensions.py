@@ -846,13 +846,6 @@ else:
             pass
 
 
-def _ensure_subclassable(mro_entries):
-    def inner(obj):
-        obj.__mro_entries__ = mro_entries
-        return obj
-    return inner
-
-
 _NEEDS_SINGLETONMETA = (
     not hasattr(typing, "NoDefault") or not hasattr(typing, "NoExtraItems")
 )
@@ -1161,7 +1154,9 @@ else:
                 **kwargs,
             )
 
-    @_ensure_subclassable(lambda bases: (_TypedDict,))
+        def __mro_entries__(self, bases):
+            return (_TypedDict,)
+
     @_TypedDictSpecialForm
     def TypedDict(self, args):
         """A simple typed namespace. At runtime it is equivalent to a plain dict.
@@ -3239,7 +3234,6 @@ else:
         assert NamedTuple in bases
         return (_NamedTuple,)
 
-    @_ensure_subclassable(_namedtuple_mro_entries)
     def NamedTuple(typename, fields=_marker, /, **kwargs):
         """Typed version of namedtuple.
 
@@ -3304,6 +3298,8 @@ else:
         nt = _make_nmtuple(typename, fields, module=_caller())
         nt.__orig_bases__ = (NamedTuple,)
         return nt
+
+    NamedTuple.__mro_entries__ = _namedtuple_mro_entries
 
 
 if hasattr(collections.abc, "Buffer"):
