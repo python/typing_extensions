@@ -5084,10 +5084,6 @@ class TypedDictTests(BaseTestCase):
         TD = TypedDict[{}]
         self.assertEqual(TD.__required_keys__, set())
 
-    def test_inline_argument_as_tuple(self):
-        TD = TypedDict[({},)]
-        self.assertEqual(TD.__required_keys__, set())
-
     def test_inline(self):
         TD = TypedDict[{
             "a": int,

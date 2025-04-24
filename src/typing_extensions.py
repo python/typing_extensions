@@ -1206,16 +1206,14 @@ else:
         See PEP 655 for more details on Required and NotRequired.
         """
         # This runs when creating inline TypedDicts:
-        if not isinstance(args, tuple):
-            args = (args,)
-        if len(args) != 1 or not isinstance(args[0], dict):
+        if not isinstance(args, dict):
             raise TypeError(
                 "TypedDict[...] should be used with a single dict argument"
             )
 
         return _create_typeddict(
             "<inline TypedDict>",
-            args[0],
+            args,
             typing_is_inline=True,
             total=True,
             closed=None,
