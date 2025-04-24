@@ -5066,19 +5066,29 @@ class TypedDictTests(BaseTestCase):
             class TD(TypedDict, closed=True, extra_items=range):
                 x: str
 
-    def test_inlined_too_many_arguments(self):
+    def test_typed_dict_signature(self):
+        self.assertListEqual(
+            list(inspect.signature(TypedDict).parameters),
+            ['typename', 'fields', 'total', 'closed', 'extra_items', 'kwargs']
+        )
+
+    def test_inline_too_many_arguments(self):
         with self.assertRaises(TypeError):
             TypedDict[{"a": int}, "extra"]
 
-    def test_inlined_not_a_dict(self):
+    def test_inline_not_a_dict(self):
         with self.assertRaises(TypeError):
             TypedDict["not_a_dict"]
 
-    def test_inlined_empty(self):
+    def test_inline_empty(self):
         TD = TypedDict[{}]
         self.assertEqual(TD.__required_keys__, set())
 
-    def test_inlined(self):
+    def test_inline_argument_as_tuple(self):
+        TD = TypedDict[({},)]
+        self.assertEqual(TD.__required_keys__, set())
+
+    def test_inline(self):
         TD = TypedDict[{
             "a": int,
             "b": Required[int],
