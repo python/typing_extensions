@@ -5086,8 +5086,8 @@ class TypedDictTests(BaseTestCase):
 
     def test_inline_empty(self):
         TD = TypedDict[{}]
-        self.assertTrue(TD.__total__)
-        self.assertTrue(TD.__closed__)
+        self.assertIs(TD.__total__, True)
+        self.assertIs(TD.__closed__, True)
         self.assertEqual(TD.__extra_items__, NoExtraItems)
         self.assertEqual(TD.__required_keys__, set())
         self.assertEqual(TD.__optional_keys__, set())
@@ -5112,8 +5112,8 @@ class TypedDictTests(BaseTestCase):
         )
         self.assertEqual(TD.__module__, __name__)
         self.assertEqual(TD.__bases__, (dict,))
-        self.assertTrue(TD.__total__)
-        self.assertTrue(TD.__closed__)
+        self.assertIs(TD.__total__, True)
+        self.assertIs(TD.__closed__, True)
         self.assertEqual(TD.__extra_items__, NoExtraItems)
         self.assertEqual(TD.__required_keys__, {"a", "b", "d"})
         self.assertEqual(TD.__optional_keys__, {"c"})
