@@ -5080,9 +5080,19 @@ class TypedDictTests(BaseTestCase):
         with self.assertRaises(TypeError):
             TypedDict["not_a_dict"]
 
+        # a tuple of elements isn't allowed, even if the first element is a dict:
+        with self.assertRaises(TypeError):
+            TypedDict[({"key": int},)]
+
     def test_inline_empty(self):
         TD = TypedDict[{}]
+        self.assertTrue(TD.__total__)
+        self.assertTrue(TD.__closed__)
+        self.assertEqual(TD.__extra_items__, NoExtraItems)
         self.assertEqual(TD.__required_keys__, set())
+        self.assertEqual(TD.__optional_keys__, set())
+        self.assertEqual(TD.__readonly_keys__, set())
+        self.assertEqual(TD.__mutable_keys__,  set())
 
     def test_inline(self):
         TD = TypedDict[{
@@ -5096,9 +5106,15 @@ class TypedDictTests(BaseTestCase):
         self.assertNotIsSubclass(TD, collections.abc.Sequence)
         self.assertTrue(is_typeddict(TD))
         self.assertEqual(TD.__name__, "<inline TypedDict>")
+        self.assertEqual(
+            TD.__annotations__,
+            {"a": int, "b": Required[int], "c": NotRequired[int], "d": ReadOnly[int]},
+        )
         self.assertEqual(TD.__module__, __name__)
         self.assertEqual(TD.__bases__, (dict,))
-        self.assertEqual(TD.__total__, True)
+        self.assertTrue(TD.__total__)
+        self.assertTrue(TD.__closed__)
+        self.assertEqual(TD.__extra_items__, NoExtraItems)
         self.assertEqual(TD.__required_keys__, {"a", "b", "d"})
         self.assertEqual(TD.__optional_keys__, {"c"})
         self.assertEqual(TD.__readonly_keys__, {"d"})

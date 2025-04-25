@@ -1216,7 +1216,7 @@ else:
             args,
             typing_is_inline=True,
             total=True,
-            closed=None,
+            closed=True,
             extra_items=NoExtraItems,
         )
 
