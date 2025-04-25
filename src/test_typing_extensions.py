@@ -5066,6 +5066,63 @@ class TypedDictTests(BaseTestCase):
             class TD(TypedDict, closed=True, extra_items=range):
                 x: str
 
+    def test_typed_dict_signature(self):
+        self.assertListEqual(
+            list(inspect.signature(TypedDict).parameters),
+            ['typename', 'fields', 'total', 'closed', 'extra_items', 'kwargs']
+        )
+
+    def test_inline_too_many_arguments(self):
+        with self.assertRaises(TypeError):
+            TypedDict[{"a": int}, "extra"]
+
+    def test_inline_not_a_dict(self):
+        with self.assertRaises(TypeError):
+            TypedDict["not_a_dict"]
+
+        # a tuple of elements isn't allowed, even if the first element is a dict:
+        with self.assertRaises(TypeError):
+            TypedDict[({"key": int},)]
+
+    def test_inline_empty(self):
+        TD = TypedDict[{}]
+        self.assertIs(TD.__total__, True)
+        self.assertIs(TD.__closed__, True)
+        self.assertEqual(TD.__extra_items__, NoExtraItems)
+        self.assertEqual(TD.__required_keys__, set())
+        self.assertEqual(TD.__optional_keys__, set())
+        self.assertEqual(TD.__readonly_keys__, set())
+        self.assertEqual(TD.__mutable_keys__,  set())
+
+    def test_inline(self):
+        TD = TypedDict[{
+            "a": int,
+            "b": Required[int],
+            "c": NotRequired[int],
+            "d": ReadOnly[int],
+        }]
+        self.assertIsSubclass(TD, dict)
+        self.assertIsSubclass(TD, typing.MutableMapping)
+        self.assertNotIsSubclass(TD, collections.abc.Sequence)
+        self.assertTrue(is_typeddict(TD))
+        self.assertEqual(TD.__name__, "<inline TypedDict>")
+        self.assertEqual(
+            TD.__annotations__,
+            {"a": int, "b": Required[int], "c": NotRequired[int], "d": ReadOnly[int]},
+        )
+        self.assertEqual(TD.__module__, __name__)
+        self.assertEqual(TD.__bases__, (dict,))
+        self.assertIs(TD.__total__, True)
+        self.assertIs(TD.__closed__, True)
+        self.assertEqual(TD.__extra_items__, NoExtraItems)
+        self.assertEqual(TD.__required_keys__, {"a", "b", "d"})
+        self.assertEqual(TD.__optional_keys__, {"c"})
+        self.assertEqual(TD.__readonly_keys__, {"d"})
+        self.assertEqual(TD.__mutable_keys__, {"a", "b", "c"})
+
+        inst = TD(a=1, b=2, d=3)
+        self.assertIs(type(inst), dict)
+        self.assertEqual(inst["a"], 1)
 
 class AnnotatedTests(BaseTestCase):
 
