@@ -4113,8 +4113,8 @@ class SpecificProtocolTests(BaseTestCase):
             def readx(self, n: int) -> bytes:
                 return b""
 
-        assert isinstance(MyReader(), typing_extensions.Reader)
-        assert not isinstance(WrongReader(), typing_extensions.Reader)
+        self.assertIsInstance(MyReader(), typing_extensions.Reader)
+        self.assertNotIsInstance(WrongReader(), typing_extensions.Reader)
 
     def test_writer_runtime_checkable(self):
         class MyWriter:
@@ -4125,8 +4125,8 @@ class SpecificProtocolTests(BaseTestCase):
             def writex(self, b: bytes) -> int:
                 return 0
 
-        assert isinstance(MyWriter(), typing_extensions.Writer)
-        assert not isinstance(WrongWriter(), typing_extensions.Writer)
+        self.assertIsInstance(MyWriter(), typing_extensions.Writer)
+        self.assertNotIsInstance(WrongWriter(), typing_extensions.Writer)
 
 
 class Point2DGeneric(Generic[T], TypedDict):

@@ -884,8 +884,6 @@ else:
             """Write data to the output stream and return the number of items written."""
 
 
-
-
 _NEEDS_SINGLETONMETA = (
     not hasattr(typing, "NoDefault") or not hasattr(typing, "NoExtraItems")
 )
