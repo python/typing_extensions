@@ -659,6 +659,18 @@ Protocols
 
    .. versionadded:: 4.6.0
 
+.. class:: Reader
+
+    See :py:class:`io.Reader`. Added to the standard library in Python 3.14.
+
+    .. versionadded:: 4.14.0
+
+.. class:: Writer
+
+    See :py:class:`io.Writer`. Added to the standard library in Python 3.14.
+
+    .. versionadded:: 4.14.0
+
 Decorators
 ~~~~~~~~~~
 
