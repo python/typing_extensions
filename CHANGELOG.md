@@ -7,9 +7,19 @@ New features:
 
 Bugfixes:
 
+- Drop support for Python 3.8 (including PyPy-3.8). Patch by [Victorien Plot](https://github.com/Viicos).
+- Add support for inline typed dictionaries ([PEP 764](https://peps.python.org/pep-0764/)).
+  Patch by [Victorien Plot](https://github.com/Viicos).
+
+# Release 4.13.2 (April 10, 2025)
+
 - Fix `TypeError` when taking the union of `typing_extensions.TypeAliasType` and a
   `typing.TypeAliasType` on Python 3.12 and 3.13.
   Patch by [Joren Hammudoglu](https://github.com/jorenham).
+- Backport from CPython PR [#132160](https://github.com/python/cpython/pull/132160)
+  to avoid having user arguments shadowed in generated `__new__` by
+  `@typing_extensions.deprecated`.
+  Patch by [Victorien Plot](https://github.com/Viicos).
 
 # Release 4.13.1 (April 3, 2025)
 
