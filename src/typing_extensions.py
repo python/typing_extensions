@@ -884,19 +884,6 @@ else:
             """Write data to the output stream and return the number of items written."""
 
 
-def _ensure_subclassable(mro_entries):
-    def inner(func):
-        if sys.implementation.name == "pypy" and sys.version_info < (3, 9):
-            cls_dict = {
-                "__call__": staticmethod(func),
-                "__mro_entries__": staticmethod(mro_entries)
-            }
-            t = type(func.__name__, (), cls_dict)
-            return functools.update_wrapper(t(), func)
-        else:
-            func.__mro_entries__ = mro_entries
-            return func
-    return inner
 
 
 _NEEDS_SINGLETONMETA = (
