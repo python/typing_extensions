@@ -881,7 +881,7 @@ else:
 
         @abc.abstractmethod
         def write(self, data: T_contra, /) -> int:
-            """Write *data* to the output stream and return the number of items written."""
+            """Write *data* to the output stream and return the number of items written."""  # noqa: E501
 
 
 _NEEDS_SINGLETONMETA = (
