@@ -866,7 +866,7 @@ else:
         def read(self, size: int = ..., /) -> T_co:
             """Read data from the input stream and return it.
 
-            If size is specified, at most size items (bytes/characters) will be
+            If *size* is specified, at most *size* items (bytes/characters) will be
             read.
             """
 
@@ -881,7 +881,7 @@ else:
 
         @abc.abstractmethod
         def write(self, data: T_contra, /) -> int:
-            """Write data to the output stream and return the number of items written."""
+            """Write *data* to the output stream and return the number of items written."""
 
 
 _NEEDS_SINGLETONMETA = (
