@@ -4103,6 +4103,32 @@ class ProtocolTests(BaseTestCase):
         self.assertIsSubclass(Bar, Functor)
 
 
+class SpecificProtocolTests(BaseTestCase):
+    def test_reader_runtime_checkable(self):
+        class MyReader:
+            def read(self, n: int) -> bytes:
+                return b""
+
+        class WrongReader:
+            def readx(self, n: int) -> bytes:
+                return b""
+
+        self.assertIsInstance(MyReader(), typing_extensions.Reader)
+        self.assertNotIsInstance(WrongReader(), typing_extensions.Reader)
+
+    def test_writer_runtime_checkable(self):
+        class MyWriter:
+            def write(self, b: bytes) -> int:
+                return 0
+
+        class WrongWriter:
+            def writex(self, b: bytes) -> int:
+                return 0
+
+        self.assertIsInstance(MyWriter(), typing_extensions.Writer)
+        self.assertNotIsInstance(WrongWriter(), typing_extensions.Writer)
+
+
 class Point2DGeneric(Generic[T], TypedDict):
     a: T
     b: T

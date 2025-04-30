@@ -6,6 +6,7 @@ import contextlib
 import enum
 import functools
 import inspect
+import io
 import keyword
 import operator
 import sys
@@ -56,6 +57,8 @@ __all__ = [
     'SupportsIndex',
     'SupportsInt',
     'SupportsRound',
+    'Reader',
+    'Writer',
 
     # One-off things.
     'Annotated',
@@ -844,6 +847,41 @@ else:
         @abc.abstractmethod
         def __round__(self, ndigits: int = 0) -> T_co:
             pass
+
+
+if hasattr(io, "Reader") and hasattr(io, "Writer"):
+    Reader = io.Reader
+    Writer = io.Writer
+else:
+    @runtime_checkable
+    class Reader(Protocol[T_co]):
+        """Protocol for simple I/O reader instances.
+
+        This protocol only supports blocking I/O.
+        """
+
+        __slots__ = ()
+
+        @abc.abstractmethod
+        def read(self, size: int = ..., /) -> T_co:
+            """Read data from the input stream and return it.
+
+            If *size* is specified, at most *size* items (bytes/characters) will be
+            read.
+            """
+
+    @runtime_checkable
+    class Writer(Protocol[T_contra]):
+        """Protocol for simple I/O writer instances.
+
+        This protocol only supports blocking I/O.
+        """
+
+        __slots__ = ()
+
+        @abc.abstractmethod
+        def write(self, data: T_contra, /) -> int:
+            """Write *data* to the output stream and return the number of items written."""  # noqa: E501
 
 
 _NEEDS_SINGLETONMETA = (
