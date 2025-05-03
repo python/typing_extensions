@@ -900,10 +900,12 @@ class Cls:
 
 class DeprecatedCoroTests(BaseTestCase):
     def test_asyncio_iscoroutinefunction(self):
-        self.assertFalse(asyncio.coroutines.iscoroutinefunction(func))
-        self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.func))
-        self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
-        self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            self.assertFalse(asyncio.coroutines.iscoroutinefunction(func))
+            self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.func))
+            self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
+            self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
 
     @skipUnless(TYPING_3_12_ONLY or TYPING_3_13_0_RC, "inspect.iscoroutinefunction works differently on Python < 3.12")
     def test_inspect_iscoroutinefunction(self):
@@ -7282,7 +7284,7 @@ class TypeVarTests(BaseTestCase):
 
     def test_bound_errors(self):
         with self.assertRaises(TypeError):
-            TypeVar('X', bound=Union)
+            TypeVar('X', bound=Optional)
         with self.assertRaises(TypeError):
             TypeVar('X', str, float, bound=Employee)
         with self.assertRaisesRegex(TypeError,
@@ -8262,19 +8264,26 @@ class TestGetAnnotations(BaseTestCase):
             get_annotations(f2, format=Format.FORWARDREF),
             {"a": "undefined"},
         )
-        self.assertEqual(get_annotations(f2, format=2), {"a": "undefined"})
+        # Test that the raw int also works
+        self.assertEqual(
+            get_annotations(f2, format=Format.FORWARDREF.value),
+            {"a": "undefined"},
+        )
 
         self.assertEqual(
             get_annotations(f1, format=Format.STRING),
             {"a": "int"},
         )
-        self.assertEqual(get_annotations(f1, format=3), {"a": "int"})
+        self.assertEqual(
+            get_annotations(f1, format=Format.STRING.value),
+            {"a": "int"},
+        )
 
         with self.assertRaises(ValueError):
             get_annotations(f1, format=0)
 
         with self.assertRaises(ValueError):
-            get_annotations(f1, format=4)
+            get_annotations(f1, format=42)
 
     def test_custom_object_with_annotations(self):
         class C:
@@ -8313,10 +8322,17 @@ class TestGetAnnotations(BaseTestCase):
         foo.__annotations__ = {"a": "foo", "b": "str"}
         for format in Format:
             with self.subTest(format=format):
-                self.assertEqual(
-                    get_annotations(foo, format=format),
-                    {"a": "foo", "b": "str"},
-                )
+                if format is Format.VALUE_WITH_FAKE_GLOBALS:
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "The VALUE_WITH_FAKE_GLOBALS format is for internal use only"
+                    ):
+                        get_annotations(foo, format=format)
+                else:
+                    self.assertEqual(
+                        get_annotations(foo, format=format),
+                        {"a": "foo", "b": "str"},
+                    )
 
         self.assertEqual(
             get_annotations(foo, eval_str=True, locals=locals()),
