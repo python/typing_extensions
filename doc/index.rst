@@ -139,7 +139,7 @@ Example usage::
 Python version support
 ----------------------
 
-``typing_extensions`` currently supports Python versions 3.8 and higher. In the future,
+``typing_extensions`` currently supports Python versions 3.9 and higher. In the future,
 support for older Python versions will be dropped some time after that version
 reaches end of life.
 
@@ -658,6 +658,18 @@ Protocols
    protocol on Python 3.11 and lower.
 
    .. versionadded:: 4.6.0
+
+.. class:: Reader
+
+    See :py:class:`io.Reader`. Added to the standard library in Python 3.14.
+
+    .. versionadded:: 4.14.0
+
+.. class:: Writer
+
+    See :py:class:`io.Writer`. Added to the standard library in Python 3.14.
+
+    .. versionadded:: 4.14.0
 
 Decorators
 ~~~~~~~~~~

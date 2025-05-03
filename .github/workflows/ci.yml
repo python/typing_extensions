@@ -38,7 +38,6 @@ jobs:
         # For available versions, see:
         # https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
         python-version:
-          - "3.8"
           - "3.9"
           - "3.9.12"
           - "3.10"
@@ -50,7 +49,6 @@ jobs:
           - "3.13"
           - "3.13.0"
           - "3.14-dev"
-          - "pypy3.8"
           - "pypy3.9"
           - "pypy3.10"
 

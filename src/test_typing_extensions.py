@@ -110,7 +110,6 @@ VT = TypeVar("VT")
 
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
-TYPING_3_9_0 = sys.version_info[:3] >= (3, 9, 0)
 TYPING_3_10_0 = sys.version_info[:3] >= (3, 10, 0)
 
 # 3.11 makes runtime type checks (_type_check) more lenient.
@@ -707,6 +706,25 @@ class DeprecatedTests(BaseTestCase):
         instance = Child(42)
         self.assertEqual(instance.a, 42)
 
+    def test_do_not_shadow_user_arguments(self):
+        new_called = False
+        new_called_cls = None
+
+        @deprecated("MyMeta will go away soon")
+        class MyMeta(type):
+            def __new__(mcs, name, bases, attrs, cls=None):
+                nonlocal new_called, new_called_cls
+                new_called = True
+                new_called_cls = cls
+                return super().__new__(mcs, name, bases, attrs)
+
+        with self.assertWarnsRegex(DeprecationWarning, "MyMeta will go away soon"):
+            class Foo(metaclass=MyMeta, cls='haha'):
+                pass
+
+        self.assertTrue(new_called)
+        self.assertEqual(new_called_cls, 'haha')
+
     def test_existing_init_subclass(self):
         @deprecated("C will go away soon")
         class C:
@@ -882,10 +900,12 @@ class Cls:
 
 class DeprecatedCoroTests(BaseTestCase):
     def test_asyncio_iscoroutinefunction(self):
-        self.assertFalse(asyncio.coroutines.iscoroutinefunction(func))
-        self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.func))
-        self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
-        self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            self.assertFalse(asyncio.coroutines.iscoroutinefunction(func))
+            self.assertFalse(asyncio.coroutines.iscoroutinefunction(Cls.func))
+            self.assertTrue(asyncio.coroutines.iscoroutinefunction(coro))
+            self.assertTrue(asyncio.coroutines.iscoroutinefunction(Cls.coro))
 
     @skipUnless(TYPING_3_12_ONLY or TYPING_3_13_0_RC, "inspect.iscoroutinefunction works differently on Python < 3.12")
     def test_inspect_iscoroutinefunction(self):
@@ -1760,8 +1780,7 @@ class GetUtilitiesTestCase(TestCase):
         self.assertIs(get_origin(List), list)
         self.assertIs(get_origin(Tuple), tuple)
         self.assertIs(get_origin(Callable), collections.abc.Callable)
-        if sys.version_info >= (3, 9):
-            self.assertIs(get_origin(list[int]), list)
+        self.assertIs(get_origin(list[int]), list)
         self.assertIs(get_origin(list), None)
         self.assertIs(get_origin(P.args), P)
         self.assertIs(get_origin(P.kwargs), P)
@@ -1798,20 +1817,18 @@ class GetUtilitiesTestCase(TestCase):
         self.assertEqual(get_args(List), ())
         self.assertEqual(get_args(Tuple), ())
         self.assertEqual(get_args(Callable), ())
-        if sys.version_info >= (3, 9):
-            self.assertEqual(get_args(list[int]), (int,))
+        self.assertEqual(get_args(list[int]), (int,))
         self.assertEqual(get_args(list), ())
-        if sys.version_info >= (3, 9):
-            # Support Python versions with and without the fix for
-            # https://bugs.python.org/issue42195
-            # The first variant is for 3.9.2+, the second for 3.9.0 and 1
-            self.assertIn(get_args(collections.abc.Callable[[int], str]),
-                          (([int], str), ([[int]], str)))
-            self.assertIn(get_args(collections.abc.Callable[[], str]),
-                          (([], str), ([[]], str)))
-            self.assertEqual(get_args(collections.abc.Callable[..., str]), (..., str))
+        # Support Python versions with and without the fix for
+        # https://bugs.python.org/issue42195
+        # The first variant is for 3.9.2+, the second for 3.9.0 and 1
+        self.assertIn(get_args(collections.abc.Callable[[int], str]),
+                        (([int], str), ([[int]], str)))
+        self.assertIn(get_args(collections.abc.Callable[[], str]),
+                        (([], str), ([[]], str)))
+        self.assertEqual(get_args(collections.abc.Callable[..., str]), (..., str))
         P = ParamSpec('P')
-        # In 3.9 and lower we use typing_extensions's hacky implementation
+        # In 3.9 we use typing_extensions's hacky implementation
         # of ParamSpec, which gets incorrectly wrapped in a list
         self.assertIn(get_args(Callable[P, int]), [(P, int), ([P], int)])
         self.assertEqual(get_args(Required[int]), (int,))
@@ -3789,7 +3806,7 @@ class ProtocolTests(BaseTestCase):
             MemoizedFunc[[int, str, str]]
 
         if sys.version_info >= (3, 10):
-            # These unfortunately don't pass on <=3.9,
+            # These unfortunately don't pass on 3.9,
             # due to typing._type_check on older Python versions
             X = MemoizedFunc[[int, str, str], T, T2]
             self.assertEqual(X.__parameters__, (T, T2))
@@ -4086,6 +4103,32 @@ class ProtocolTests(BaseTestCase):
             def foo(self): pass
 
         self.assertIsSubclass(Bar, Functor)
+
+
+class SpecificProtocolTests(BaseTestCase):
+    def test_reader_runtime_checkable(self):
+        class MyReader:
+            def read(self, n: int) -> bytes:
+                return b""
+
+        class WrongReader:
+            def readx(self, n: int) -> bytes:
+                return b""
+
+        self.assertIsInstance(MyReader(), typing_extensions.Reader)
+        self.assertNotIsInstance(WrongReader(), typing_extensions.Reader)
+
+    def test_writer_runtime_checkable(self):
+        class MyWriter:
+            def write(self, b: bytes) -> int:
+                return 0
+
+        class WrongWriter:
+            def writex(self, b: bytes) -> int:
+                return 0
+
+        self.assertIsInstance(MyWriter(), typing_extensions.Writer)
+        self.assertNotIsInstance(WrongWriter(), typing_extensions.Writer)
 
 
 class Point2DGeneric(Generic[T], TypedDict):
@@ -4534,7 +4577,7 @@ class TypedDictTests(BaseTestCase):
         assert is_typeddict(PointDict2D) is True
         assert is_typeddict(PointDict3D) is True
 
-    @skipUnless(HAS_FORWARD_MODULE, "ForwardRef.__forward_module__ was added in 3.9")
+    @skipUnless(HAS_FORWARD_MODULE, "ForwardRef.__forward_module__ was added in 3.9.7")
     def test_get_type_hints_cross_module_subclass(self):
         self.assertNotIn("_DoNotImport", globals())
         self.assertEqual(
@@ -4677,11 +4720,9 @@ class TypedDictTests(BaseTestCase):
         with self.assertRaises(TypeError):
             WithImplicitAny[str]
 
-    @skipUnless(TYPING_3_9_0, "Was changed in 3.9")
     def test_non_generic_subscript(self):
         # For backward compatibility, subscription works
         # on arbitrary TypedDict types.
-        # (But we don't attempt to backport this misfeature onto 3.8.)
         class TD(TypedDict):
             a: T
         A = TD[int]
@@ -5053,6 +5094,63 @@ class TypedDictTests(BaseTestCase):
             class TD(TypedDict, closed=True, extra_items=range):
                 x: str
 
+    def test_typed_dict_signature(self):
+        self.assertListEqual(
+            list(inspect.signature(TypedDict).parameters),
+            ['typename', 'fields', 'total', 'closed', 'extra_items', 'kwargs']
+        )
+
+    def test_inline_too_many_arguments(self):
+        with self.assertRaises(TypeError):
+            TypedDict[{"a": int}, "extra"]
+
+    def test_inline_not_a_dict(self):
+        with self.assertRaises(TypeError):
+            TypedDict["not_a_dict"]
+
+        # a tuple of elements isn't allowed, even if the first element is a dict:
+        with self.assertRaises(TypeError):
+            TypedDict[({"key": int},)]
+
+    def test_inline_empty(self):
+        TD = TypedDict[{}]
+        self.assertIs(TD.__total__, True)
+        self.assertIs(TD.__closed__, True)
+        self.assertEqual(TD.__extra_items__, NoExtraItems)
+        self.assertEqual(TD.__required_keys__, set())
+        self.assertEqual(TD.__optional_keys__, set())
+        self.assertEqual(TD.__readonly_keys__, set())
+        self.assertEqual(TD.__mutable_keys__,  set())
+
+    def test_inline(self):
+        TD = TypedDict[{
+            "a": int,
+            "b": Required[int],
+            "c": NotRequired[int],
+            "d": ReadOnly[int],
+        }]
+        self.assertIsSubclass(TD, dict)
+        self.assertIsSubclass(TD, typing.MutableMapping)
+        self.assertNotIsSubclass(TD, collections.abc.Sequence)
+        self.assertTrue(is_typeddict(TD))
+        self.assertEqual(TD.__name__, "<inline TypedDict>")
+        self.assertEqual(
+            TD.__annotations__,
+            {"a": int, "b": Required[int], "c": NotRequired[int], "d": ReadOnly[int]},
+        )
+        self.assertEqual(TD.__module__, __name__)
+        self.assertEqual(TD.__bases__, (dict,))
+        self.assertIs(TD.__total__, True)
+        self.assertIs(TD.__closed__, True)
+        self.assertEqual(TD.__extra_items__, NoExtraItems)
+        self.assertEqual(TD.__required_keys__, {"a", "b", "d"})
+        self.assertEqual(TD.__optional_keys__, {"c"})
+        self.assertEqual(TD.__readonly_keys__, {"d"})
+        self.assertEqual(TD.__mutable_keys__, {"a", "b", "c"})
+
+        inst = TD(a=1, b=2, d=3)
+        self.assertIs(type(inst), dict)
+        self.assertEqual(inst["a"], 1)
 
 class AnnotatedTests(BaseTestCase):
 
@@ -5144,7 +5242,7 @@ class AnnotatedTests(BaseTestCase):
         A.x = 5
         self.assertEqual(C.x, 5)
 
-    @skipIf(sys.version_info[:2] in ((3, 9), (3, 10)), "Waiting for bpo-46491 bugfix.")
+    @skipIf(sys.version_info[:2] == (3, 10), "Waiting for https://github.com/python/cpython/issues/90649 bugfix.")
     def test_special_form_containment(self):
         class C:
             classvar: Annotated[ClassVar[int], "a decoration"] = 4
@@ -5237,6 +5335,11 @@ class AnnotatedTests(BaseTestCase):
         ]
         self.assertEqual(X.__origin__, List[Annotated[str, {"unhashable_metadata"}]])
         self.assertEqual(X.__metadata__, ("metadata",))
+
+    def test_compatibility(self):
+        # Test that the _AnnotatedAlias compatibility alias works
+        self.assertTrue(hasattr(typing_extensions, "_AnnotatedAlias"))
+        self.assertIs(typing_extensions._AnnotatedAlias, typing._AnnotatedAlias)
 
 
 class GetTypeHintsTests(BaseTestCase):
@@ -5456,21 +5559,20 @@ class ParamSpecTests(BaseTestCase):
         self.assertEqual(C2.__parameters__, (P, T))
 
         # Test collections.abc.Callable too.
-        if sys.version_info[:2] >= (3, 9):
-            # Note: no tests for Callable.__parameters__ here
-            # because types.GenericAlias Callable is hardcoded to search
-            # for tp_name "TypeVar" in C.  This was changed in 3.10.
-            C3 = collections.abc.Callable[P, int]
-            self.assertEqual(C3.__args__, (P, int))
-            C4 = collections.abc.Callable[P, T]
-            self.assertEqual(C4.__args__, (P, T))
+        # Note: no tests for Callable.__parameters__ here
+        # because types.GenericAlias Callable is hardcoded to search
+        # for tp_name "TypeVar" in C.  This was changed in 3.10.
+        C3 = collections.abc.Callable[P, int]
+        self.assertEqual(C3.__args__, (P, int))
+        C4 = collections.abc.Callable[P, T]
+        self.assertEqual(C4.__args__, (P, T))
 
         # ParamSpec instances should also have args and kwargs attributes.
         # Note: not in dir(P) because of __class__ hacks
         self.assertTrue(hasattr(P, 'args'))
         self.assertTrue(hasattr(P, 'kwargs'))
 
-    @skipIf((3, 10, 0) <= sys.version_info[:3] <= (3, 10, 2), "Needs bpo-46676.")
+    @skipIf((3, 10, 0) <= sys.version_info[:3] <= (3, 10, 2), "Needs https://github.com/python/cpython/issues/90834.")
     def test_args_kwargs(self):
         P = ParamSpec('P')
         P_2 = ParamSpec('P_2')
@@ -5630,8 +5732,6 @@ class ParamSpecTests(BaseTestCase):
                 G10 = klass[int, Concatenate[str, P]]
                 with self.subTest("Check invalid form substitution"):
                     self.assertEqual(G10.__parameters__, (P, ))
-                    if sys.version_info < (3, 9):
-                        self.skipTest("3.8 typing._type_subst does not support this substitution process")
                     H10 = G10[int]
                     if (3, 10) <= sys.version_info < (3, 11, 3):
                         self.skipTest("3.10-3.11.2 does not substitute Concatenate here")
@@ -5761,9 +5861,6 @@ class ConcatenateTests(BaseTestCase):
         T = TypeVar('T')
         for callable_variant in (Callable, collections.abc.Callable):
             with self.subTest(callable_variant=callable_variant):
-                if not TYPING_3_9_0 and callable_variant is collections.abc.Callable:
-                    self.skipTest("Needs PEP 585")
-
                 C1 = callable_variant[Concatenate[int, P], int]
                 C2 = callable_variant[Concatenate[int, T, P], T]
                 self.assertEqual(C1.__origin__, C2.__origin__)
@@ -5811,7 +5908,7 @@ class ConcatenateTests(BaseTestCase):
         ):
             Concatenate[(str,), P]
 
-    @skipUnless(TYPING_3_10_0, "Missing backport to <=3.9. See issue #48")
+    @skipUnless(TYPING_3_10_0, "Missing backport to 3.9. See issue #48")
     def test_alias_subscription_with_ellipsis(self):
         P = ParamSpec('P')
         X = Callable[Concatenate[int, P], Any]
@@ -6794,7 +6891,6 @@ class NamedTupleTests(BaseTestCase):
                 with self.assertRaisesRegex(TypeError, f'Too many {things}'):
                     G[int, str]
 
-    @skipUnless(TYPING_3_9_0, "tuple.__class_getitem__ was added in 3.9")
     def test_non_generic_subscript_py39_plus(self):
         # For backward compatibility, subscription works
         # on arbitrary NamedTuple types.
@@ -6808,19 +6904,6 @@ class NamedTupleTests(BaseTestCase):
         a = A(1, [2])
         self.assertIs(type(a), Group)
         self.assertEqual(a, (1, [2]))
-
-    @skipIf(TYPING_3_9_0, "Test isn't relevant to 3.9+")
-    def test_non_generic_subscript_error_message_py38(self):
-        class Group(NamedTuple):
-            key: T
-            group: List[T]
-
-        with self.assertRaisesRegex(TypeError, 'not subscriptable'):
-            Group[int]
-
-        for attr in ('__args__', '__origin__', '__parameters__'):
-            with self.subTest(attr=attr):
-                self.assertFalse(hasattr(Group, attr))
 
     def test_namedtuple_keyword_usage(self):
         with self.assertWarnsRegex(
@@ -6940,20 +7023,12 @@ class NamedTupleTests(BaseTestCase):
     def test_docstring(self):
         self.assertIsInstance(NamedTuple.__doc__, str)
 
-    @skipUnless(TYPING_3_9_0, "NamedTuple was a class on 3.8 and lower")
-    def test_same_as_typing_NamedTuple_39_plus(self):
+    def test_same_as_typing_NamedTuple(self):
         self.assertEqual(
             set(dir(NamedTuple)) - {"__text_signature__"},
             set(dir(typing.NamedTuple))
         )
         self.assertIs(type(NamedTuple), type(typing.NamedTuple))
-
-    @skipIf(TYPING_3_9_0, "tests are only relevant to <=3.8")
-    def test_same_as_typing_NamedTuple_38_minus(self):
-        self.assertEqual(
-            self.NestedEmployee.__annotations__,
-            self.NestedEmployee._field_types
-        )
 
     def test_orig_bases(self):
         T = TypeVar('T')
@@ -7209,18 +7284,15 @@ class TypeVarTests(BaseTestCase):
 
     def test_bound_errors(self):
         with self.assertRaises(TypeError):
-            TypeVar('X', bound=Union)
+            TypeVar('X', bound=Optional)
         with self.assertRaises(TypeError):
             TypeVar('X', str, float, bound=Employee)
         with self.assertRaisesRegex(TypeError,
                                     r"Bound must be a type\. Got \(1, 2\)\."):
             TypeVar('X', bound=(1, 2))
 
-    # Technically we could run it on later versions of 3.8,
-    # but that's not worth the effort.
-    @skipUnless(TYPING_3_9_0, "Fix was not backported")
     def test_missing__name__(self):
-        # See bpo-39942
+        # See https://github.com/python/cpython/issues/84123
         code = ("import typing\n"
                 "T = typing.TypeVar('T')\n"
                 )
@@ -7401,9 +7473,8 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         a1 = Callable[[T_default], T]
         self.assertEqual(a1.__args__, (T_default, T))
 
-        if sys.version_info >= (3, 9):
-            a2 = dict[T_default, T]
-            self.assertEqual(a2.__args__, (T_default, T))
+        a2 = dict[T_default, T]
+        self.assertEqual(a2.__args__, (T_default, T))
 
         a3 = typing.Dict[T_default, T]
         self.assertEqual(a3.__args__, (T_default, T))
@@ -7583,7 +7654,6 @@ class GetOriginalBasesTests(BaseTestCase):
         with self.assertRaisesRegex(TypeError, "Expected an instance of type"):
             get_original_bases(object())
 
-    @skipUnless(TYPING_3_9_0, "PEP 585 is yet to be")
     def test_builtin_generics(self):
         class E(list[T]): pass
         class F(list[int]): pass
@@ -8194,19 +8264,26 @@ class TestGetAnnotations(BaseTestCase):
             get_annotations(f2, format=Format.FORWARDREF),
             {"a": "undefined"},
         )
-        self.assertEqual(get_annotations(f2, format=2), {"a": "undefined"})
+        # Test that the raw int also works
+        self.assertEqual(
+            get_annotations(f2, format=Format.FORWARDREF.value),
+            {"a": "undefined"},
+        )
 
         self.assertEqual(
             get_annotations(f1, format=Format.STRING),
             {"a": "int"},
         )
-        self.assertEqual(get_annotations(f1, format=3), {"a": "int"})
+        self.assertEqual(
+            get_annotations(f1, format=Format.STRING.value),
+            {"a": "int"},
+        )
 
         with self.assertRaises(ValueError):
             get_annotations(f1, format=0)
 
         with self.assertRaises(ValueError):
-            get_annotations(f1, format=4)
+            get_annotations(f1, format=42)
 
     def test_custom_object_with_annotations(self):
         class C:
@@ -8245,10 +8322,17 @@ class TestGetAnnotations(BaseTestCase):
         foo.__annotations__ = {"a": "foo", "b": "str"}
         for format in Format:
             with self.subTest(format=format):
-                self.assertEqual(
-                    get_annotations(foo, format=format),
-                    {"a": "foo", "b": "str"},
-                )
+                if format is Format.VALUE_WITH_FAKE_GLOBALS:
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "The VALUE_WITH_FAKE_GLOBALS format is for internal use only"
+                    ):
+                        get_annotations(foo, format=format)
+                else:
+                    self.assertEqual(
+                        get_annotations(foo, format=format),
+                        {"a": "foo", "b": "str"},
+                    )
 
         self.assertEqual(
             get_annotations(foo, eval_str=True, locals=locals()),
@@ -8829,7 +8913,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
         self.assertIs(evaluate_forward_ref(fr, globals={"hello": str}), str)
         self.assertIs(evaluate_forward_ref(fr), str)
 
-    @skipUnless(TYPING_3_9_0, "Needs PEP 585 support")
     def test_fwdref_with_owner(self):
         self.assertEqual(
             evaluate_forward_ref(typing.ForwardRef("Counter[int]"), owner=collections),
@@ -8875,16 +8958,14 @@ class TestEvaluateForwardRefs(BaseTestCase):
         with self.subTest("nested string of TypeVar"):
             evaluated_ref2 = evaluate_forward_ref(typing.ForwardRef("""Y["Y['Tx']"]"""), locals={"Y": Y})
             self.assertEqual(get_origin(evaluated_ref2), Y)
-            if not TYPING_3_9_0:
-                self.skipTest("Nested string 'Tx' stays ForwardRef in 3.8")
             self.assertEqual(get_args(evaluated_ref2), (Y[Tx],))
 
         with self.subTest("nested string of TypeAliasType and alias"):
             # NOTE: Using Y here works for 3.10
             evaluated_ref3 = evaluate_forward_ref(typing.ForwardRef("""Y['Z["StrAlias"]']"""), locals={"Y": Y, "Z": Z, "StrAlias": str})
             self.assertEqual(get_origin(evaluated_ref3), Y)
-            if sys.version_info[:2] in ((3,8), (3, 10)):
-                self.skipTest("Nested string 'StrAlias' is not resolved in 3.8 and 3.10")
+            if sys.version_info[:2] == (3, 10):
+                self.skipTest("Nested string 'StrAlias' is not resolved in 3.10")
             self.assertEqual(get_args(evaluated_ref3), (Z[str],))
 
     def test_invalid_special_forms(self):
