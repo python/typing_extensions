@@ -108,8 +108,8 @@ jobs:
           cd typing_inspect
           pytest
 
-  pyanalyze:
-    name: pyanalyze tests
+  pycroscope:
+    name: pycroscope tests
     needs: skip-schedule-on-fork
     strategy:
       fail-fast: false
@@ -125,26 +125,25 @@ jobs:
           allow-prereleases: true
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      - name: Check out pyanalyze
-        run: git clone --depth=1 https://github.com/quora/pyanalyze.git || git clone --depth=1 https://github.com/quora/pyanalyze.git
+      - name: Check out pycroscope
+        run: git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git || git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
-      - name: Install pyanalyze test requirements
+      - name: Install pycroscope test requirements
         run: |
           set -x
-          cd pyanalyze
-          uv pip install --system 'pyanalyze[tests] @ .' --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          cd pycroscope
+          uv pip install --system 'pycroscope[tests] @ .' --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
         run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
-      # TODO: re-enable
-      # - name: Run pyanalyze tests
-      #   run: |
-      #     cd pyanalyze
-      #     pytest pyanalyze/
+      - name: Run pycroscope tests
+        run: |
+          cd pycroscope
+          pytest pycroscope/
 
   typeguard:
     name: typeguard tests
@@ -377,7 +376,7 @@ jobs:
     needs:
       - pydantic
       - typing_inspect
-      - pyanalyze
+      - pycroscope
       - typeguard
       - typed-argument-parser
       - mypy
@@ -392,7 +391,7 @@ jobs:
           && (
             needs.pydantic.result == 'failure'
             || needs.typing_inspect.result == 'failure'
-            || needs.pyanalyze.result == 'failure'
+            || needs.pycroscope.result == 'failure'
             || needs.typeguard.result == 'failure'
             || needs.typed-argument-parser.result == 'failure'
             || needs.mypy.result == 'failure'
