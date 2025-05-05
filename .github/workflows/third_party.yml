@@ -291,6 +291,7 @@ jobs:
           cd cattrs
           pdm remove typing-extensions
           pdm add --dev ../typing-extensions-latest
+          pdm update pendulum  # pinned version in lockfile is incompatible with py313 as of 2025/05/05
       - name: Install cattrs test dependencies
         run: cd cattrs; pdm install --dev -G :all
       - name: List all installed dependencies
