@@ -8,6 +8,7 @@ New features:
   Patch by [Victorien Plot](https://github.com/Viicos).
 - Add `typing_extensions.Reader` and `typing_extensions.Writer`. Patch by
   Sebastian Rittau.
+- Fix tests for Python 3.14. Patch by Jelle Zijlstra.
 
 # Release 4.13.2 (April 10, 2025)
 
