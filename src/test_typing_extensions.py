@@ -103,11 +103,6 @@ from typing_extensions import (
     runtime_checkable,
 )
 
-if sys.version_info >= (3, 14):
-    from test.support import EqualToForwardRef
-else:
-    EqualToForwardRef = typing.ForwardRef
-
 NoneType = type(None)
 T = TypeVar("T")
 KT = TypeVar("KT")
@@ -442,6 +437,48 @@ class BaseTestCase(TestCase):
             if msg is not None:
                 message += f' : {msg}'
             raise self.failureException(message)
+
+
+class EqualToForwardRef:
+    """Helper to ease use of annotationlib.ForwardRef in tests.
+
+    This checks only attributes that can be set using the constructor.
+
+    """
+
+    def __init__(
+        self,
+        arg,
+        *,
+        module=None,
+        owner=None,
+        is_class=False,
+    ):
+        self.__forward_arg__ = arg
+        self.__forward_is_class__ = is_class
+        self.__forward_module__ = module
+        self.__owner__ = owner
+
+    def __eq__(self, other):
+        if not isinstance(other, (EqualToForwardRef, typing.ForwardRef)):
+            return NotImplemented
+        if sys.version_info >= (3, 14) and self.__owner__ != other.__owner__:
+            return False
+        return (
+            self.__forward_arg__ == other.__forward_arg__
+            and self.__forward_module__ == other.__forward_module__
+            and self.__forward_is_class__ == other.__forward_is_class__
+        )
+
+    def __repr__(self):
+        extra = []
+        if self.__forward_module__ is not None:
+            extra.append(f", module={self.__forward_module__!r}")
+        if self.__forward_is_class__:
+            extra.append(", is_class=True")
+        if sys.version_info >= (3, 14) and self.__owner__ is not None:
+            extra.append(f", owner={self.__owner__!r}")
+        return f"EqualToForwardRef({self.__forward_arg__!r}{''.join(extra)})"
 
 
 class Employee:
