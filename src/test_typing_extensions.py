@@ -5154,9 +5154,9 @@ class TypedDictTests(BaseTestCase):
 
     def test_annotations(self):
         # _type_check is applied
-        with self.assertRaisesRegex(TypeError, "Plain typing.Final is not valid as type argument"):
+        with self.assertRaisesRegex(TypeError, "Plain typing.Optional is not valid as type argument"):
             class X(TypedDict):
-                a: Final
+                a: Optional
 
         # _type_convert is applied
         class Y(TypedDict):
