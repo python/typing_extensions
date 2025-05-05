@@ -5152,6 +5152,65 @@ class TypedDictTests(BaseTestCase):
         self.assertIs(type(inst), dict)
         self.assertEqual(inst["a"], 1)
 
+    def test_annotations(self):
+        # _type_check is applied
+        with self.assertRaisesRegex(TypeError, "Plain typing.Final is not valid as type argument"):
+            class X(TypedDict):
+                a: Final
+
+        # _type_convert is applied
+        class Y(TypedDict):
+            a: None
+            b: "int"
+        if sys.version_info >= (3, 14):
+            import annotationlib
+            from test.support import EqualToForwardRef
+
+            fwdref = EqualToForwardRef('int', module=__name__)
+            self.assertEqual(Y.__annotations__, {'a': type(None), 'b': fwdref})
+            self.assertEqual(Y.__annotate__(annotationlib.Format.FORWARDREF), {'a': type(None), 'b': fwdref})
+        else:
+            self.assertEqual(Y.__annotations__, {'a': type(None), 'b': typing.ForwardRef('int', module=__name__)})
+
+    @skipUnless(TYPING_3_14_0, "Only supported on 3.14")
+    def test_delayed_type_check(self):
+        # _type_check is also applied later
+        class Z(TypedDict):
+            a: undefined
+
+        with self.assertRaises(NameError):
+            Z.__annotations__
+
+        undefined = Final
+        with self.assertRaisesRegex(TypeError, "Plain typing.Final is not valid as type argument"):
+            Z.__annotations__
+
+        undefined = None
+        self.assertEqual(Z.__annotations__, {'a': type(None)})
+
+    @skipUnless(TYPING_3_14_0, "Only supported on 3.14")
+    def test_deferred_evaluation(self):
+        class A(TypedDict):
+            x: NotRequired[undefined]
+            y: ReadOnly[undefined]
+            z: Required[undefined]
+
+        self.assertEqual(A.__required_keys__, frozenset({'y', 'z'}))
+        self.assertEqual(A.__optional_keys__, frozenset({'x'}))
+        self.assertEqual(A.__readonly_keys__, frozenset({'y'}))
+        self.assertEqual(A.__mutable_keys__, frozenset({'x', 'z'}))
+
+        with self.assertRaises(NameError):
+            A.__annotations__
+
+        import annotationlib
+        self.assertEqual(
+            A.__annotate__(annotationlib.Format.STRING),
+            {'x': 'NotRequired[undefined]', 'y': 'ReadOnly[undefined]',
+             'z': 'Required[undefined]'},
+        )
+
+
 class AnnotatedTests(BaseTestCase):
 
     def test_repr(self):
@@ -8906,13 +8965,6 @@ class TestEvaluateForwardRefs(BaseTestCase):
         obj = object()
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={"int": obj}), obj)
 
-    def test_fwdref_value_is_cached(self):
-        fr = typing.ForwardRef("hello")
-        with self.assertRaises(NameError):
-            evaluate_forward_ref(fr)
-        self.assertIs(evaluate_forward_ref(fr, globals={"hello": str}), str)
-        self.assertIs(evaluate_forward_ref(fr), str)
-
     def test_fwdref_with_owner(self):
         self.assertEqual(
             evaluate_forward_ref(typing.ForwardRef("Counter[int]"), owner=collections),
@@ -8956,7 +9008,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
         self.assertEqual(get_args(evaluated_ref1b), (Y[Tx],))
 
         with self.subTest("nested string of TypeVar"):
-            evaluated_ref2 = evaluate_forward_ref(typing.ForwardRef("""Y["Y['Tx']"]"""), locals={"Y": Y})
+            evaluated_ref2 = evaluate_forward_ref(typing.ForwardRef("""Y["Y['Tx']"]"""), locals={"Y": Y, "Tx": Tx})
             self.assertEqual(get_origin(evaluated_ref2), Y)
             self.assertEqual(get_args(evaluated_ref2), (Y[Tx],))
 

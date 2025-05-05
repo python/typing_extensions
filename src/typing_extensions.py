@@ -14,6 +14,9 @@ import types as _types
 import typing
 import warnings
 
+if sys.version_info >= (3, 14):
+    import annotationlib
+
 __all__ = [
     # Super-special typing primitives.
     'Any',
@@ -1018,21 +1021,27 @@ else:
                 tp_dict.__orig_bases__ = bases
 
             annotations = {}
+            own_annotate = None
             if "__annotations__" in ns:
                 own_annotations = ns["__annotations__"]
-            elif "__annotate__" in ns:
-                # TODO: Use inspect.VALUE here, and make the annotations lazily evaluated
-                own_annotations = ns["__annotate__"](1)
+            elif sys.version_info >= (3, 14):
+                own_annotate = annotationlib.get_annotate_from_class_namespace(ns)
+                if own_annotate is not None:
+                    own_annotations = annotationlib.call_annotate_function(
+                        own_annotate, annotationlib.Format.FORWARDREF, owner=tp_dict
+                    )
+                else:
+                    own_annotations = {}
             else:
                 own_annotations = {}
             msg = "TypedDict('Name', {f0: t0, f1: t1, ...}); each t must be a type"
             if _TAKES_MODULE:
-                own_annotations = {
+                own_checked_annotations = {
                     n: typing._type_check(tp, msg, module=tp_dict.__module__)
                     for n, tp in own_annotations.items()
                 }
             else:
-                own_annotations = {
+                own_checked_annotations = {
                     n: typing._type_check(tp, msg)
                     for n, tp in own_annotations.items()
                 }
@@ -1045,7 +1054,8 @@ else:
             for base in bases:
                 base_dict = base.__dict__
 
-                annotations.update(base_dict.get('__annotations__', {}))
+                if sys.version_info <= (3, 14):
+                    annotations.update(base_dict.get('__annotations__', {}))
                 required_keys.update(base_dict.get('__required_keys__', ()))
                 optional_keys.update(base_dict.get('__optional_keys__', ()))
                 readonly_keys.update(base_dict.get('__readonly_keys__', ()))
@@ -1055,8 +1065,8 @@ else:
             # is retained for backwards compatibility, but only for Python
             # 3.13 and lower.
             if (closed and sys.version_info < (3, 14)
-                       and "__extra_items__" in own_annotations):
-                annotation_type = own_annotations.pop("__extra_items__")
+                       and "__extra_items__" in own_checked_annotations):
+                annotation_type = own_checked_annotations.pop("__extra_items__")
                 qualifiers = set(_get_typeddict_qualifiers(annotation_type))
                 if Required in qualifiers:
                     raise TypeError(
@@ -1070,8 +1080,8 @@ else:
                     )
                 extra_items_type = annotation_type
 
-            annotations.update(own_annotations)
-            for annotation_key, annotation_type in own_annotations.items():
+            annotations.update(own_checked_annotations)
+            for annotation_key, annotation_type in own_checked_annotations.items():
                 qualifiers = set(_get_typeddict_qualifiers(annotation_type))
 
                 if Required in qualifiers:
@@ -1089,7 +1099,38 @@ else:
                     mutable_keys.add(annotation_key)
                     readonly_keys.discard(annotation_key)
 
-            tp_dict.__annotations__ = annotations
+            if sys.version_info >= (3, 14):
+                def __annotate__(format):
+                    annos = {}
+                    for base in bases:
+                        if base is Generic:
+                            continue
+                        base_annotate = base.__annotate__
+                        if base_annotate is None:
+                            continue
+                        base_annos = annotationlib.call_annotate_function(
+                            base.__annotate__, format, owner=base)
+                        annos.update(base_annos)
+                    if own_annotate is not None:
+                        own = annotationlib.call_annotate_function(
+                            own_annotate, format, owner=tp_dict)
+                        if format != annotationlib.Format.STRING:
+                            own = {
+                                n: typing._type_check(tp, msg, module=tp_dict.__module__)
+                                for n, tp in own.items()
+                            }
+                    elif format == annotationlib.Format.STRING:
+                        own = annotationlib.annotations_to_string(own_annotations)
+                    elif format in (annotationlib.Format.FORWARDREF, annotationlib.Format.VALUE):
+                        own = own_checked_annotations
+                    else:
+                        raise NotImplementedError(format)
+                    annos.update(own)
+                    return annos
+
+                tp_dict.__annotate__ = __annotate__
+            else:
+                tp_dict.__annotations__ = annotations
             tp_dict.__required_keys__ = frozenset(required_keys)
             tp_dict.__optional_keys__ = frozenset(optional_keys)
             tp_dict.__readonly_keys__ = frozenset(readonly_keys)
