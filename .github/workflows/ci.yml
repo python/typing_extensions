@@ -48,6 +48,7 @@ jobs:
           - "3.12.0"
           - "3.13"
           - "3.13.0"
+          - "3.14-dev"
           - "pypy3.9"
           - "pypy3.10"
 
@@ -69,6 +70,7 @@ jobs:
           cd src
           python --version  # just to make sure we're running the right one
           python -m unittest test_typing_extensions.py
+        continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
 
       - name: Test CPython typing test suite
         # Test suite fails on PyPy even without typing_extensions
@@ -78,6 +80,7 @@ jobs:
           # Run the typing test suite from CPython with typing_extensions installed,
           # because we monkeypatch typing under some circumstances.
           python -c 'import typing_extensions; import test.__main__' test_typing -v
+        continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
 
   linting:
     name: Lint
