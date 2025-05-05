@@ -270,8 +270,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # skip 3.13 because msgspec doesn't support 3.13 yet
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -292,6 +291,8 @@ jobs:
           cd cattrs
           pdm remove typing-extensions
           pdm add --dev ../typing-extensions-latest
+          pdm update --group=docs pendulum  # pinned version in lockfile is incompatible with py313 as of 2025/05/05
+          pdm sync --clean
       - name: Install cattrs test dependencies
         run: cd cattrs; pdm install --dev -G :all
       - name: List all installed dependencies
