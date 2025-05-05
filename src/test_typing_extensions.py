@@ -103,6 +103,11 @@ from typing_extensions import (
     runtime_checkable,
 )
 
+if sys.version_info >= (3, 14):
+    from test.support import EqualToForwardRef
+else:
+    EqualToForwardRef = typing.ForwardRef
+
 NoneType = type(None)
 T = TypeVar("T")
 KT = TypeVar("KT")
@@ -5164,7 +5169,6 @@ class TypedDictTests(BaseTestCase):
             b: "int"
         if sys.version_info >= (3, 14):
             import annotationlib
-            from test.support import EqualToForwardRef
 
             fwdref = EqualToForwardRef('int', module=__name__)
             self.assertEqual(Y.__annotations__, {'a': type(None), 'b': fwdref})
@@ -6022,7 +6026,7 @@ class ConcatenateTests(BaseTestCase):
         U2 = Unpack[Ts]
         self.assertEqual(C2[U1], (str, int, str))
         self.assertEqual(C2[U2], (str, Unpack[Ts]))
-        self.assertEqual(C2["U2"], (str, typing.ForwardRef("U2")))
+        self.assertEqual(C2["U2"], (str, EqualToForwardRef("U2")))
 
         if (3, 12, 0) <= sys.version_info < (3, 12, 4):
             with self.assertRaises(AssertionError):
@@ -7309,8 +7313,8 @@ class TypeVarTests(BaseTestCase):
             self.assertEqual(X | "x", Union[X, "x"])
             self.assertEqual("x" | X, Union["x", X])
             # make sure the order is correct
-            self.assertEqual(get_args(X | "x"), (X, typing.ForwardRef("x")))
-            self.assertEqual(get_args("x" | X), (typing.ForwardRef("x"), X))
+            self.assertEqual(get_args(X | "x"), (X, EqualToForwardRef("x")))
+            self.assertEqual(get_args("x" | X), (EqualToForwardRef("x"), X))
 
     def test_union_constrained(self):
         A = TypeVar('A', str, bytes)
@@ -8878,7 +8882,7 @@ class TestEvaluateForwardRefs(BaseTestCase):
             type_params=None,
             format=Format.FORWARDREF,
         )
-        self.assertEqual(evaluated_ref, typing.ForwardRef("doesnotexist2"))
+        self.assertEqual(evaluated_ref, EqualToForwardRef("doesnotexist2"))
 
     def test_evaluate_with_type_params(self):
         # Use a T name that is not in globals
