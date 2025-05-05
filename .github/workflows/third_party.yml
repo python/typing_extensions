@@ -108,8 +108,8 @@ jobs:
           cd typing_inspect
           pytest
 
-  pyanalyze:
-    name: pyanalyze tests
+  pycroscope:
+    name: pycroscope tests
     needs: skip-schedule-on-fork
     strategy:
       fail-fast: false
@@ -125,26 +125,25 @@ jobs:
           allow-prereleases: true
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      - name: Check out pyanalyze
-        run: git clone --depth=1 https://github.com/quora/pyanalyze.git || git clone --depth=1 https://github.com/quora/pyanalyze.git
+      - name: Check out pycroscope
+        run: git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git || git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
-      - name: Install pyanalyze test requirements
+      - name: Install pycroscope test requirements
         run: |
           set -x
-          cd pyanalyze
-          uv pip install --system 'pyanalyze[tests] @ .' --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          cd pycroscope
+          uv pip install --system 'pycroscope[tests] @ .' --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
         run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
-      # TODO: re-enable
-      # - name: Run pyanalyze tests
-      #   run: |
-      #     cd pyanalyze
-      #     pytest pyanalyze/
+      - name: Run pycroscope tests
+        run: |
+          cd pycroscope
+          pytest pycroscope/
 
   typeguard:
     name: typeguard tests
@@ -342,6 +341,33 @@ jobs:
             --force-dep "typing-extensions @ file://$(pwd)/../typing-extensions-latest" \
             -- -q --nomemory --notimingintensive
 
+
+  litestar:
+    name: litestar tests
+    needs: skip-schedule-on-fork
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Checkout litestar
+        run: git clone --depth=1 https://github.com/litestar-org/litestar.git || git clone --depth=1 https://github.com/litestar-org/litestar.git
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v4
+        with:
+          path: typing-extensions-latest
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Run litestar tests
+        run: uv run --with=../typing-extensions-latest -- python -m pytest tests/unit/test_typing.py tests/unit/test_dto
+        working-directory: litestar
+
   create-issue-on-failure:
     name: Create an issue if daily tests failed
     runs-on: ubuntu-latest
@@ -349,7 +375,7 @@ jobs:
     needs:
       - pydantic
       - typing_inspect
-      - pyanalyze
+      - pycroscope
       - typeguard
       - typed-argument-parser
       - mypy
@@ -364,7 +390,7 @@ jobs:
           && (
             needs.pydantic.result == 'failure'
             || needs.typing_inspect.result == 'failure'
-            || needs.pyanalyze.result == 'failure'
+            || needs.pycroscope.result == 'failure'
             || needs.typeguard.result == 'failure'
             || needs.typed-argument-parser.result == 'failure'
             || needs.mypy.result == 'failure'

@@ -1,12 +1,28 @@
 # Unreleased
 
+- Drop support for Python 3.8 (including PyPy-3.8). Patch by [Victorien Plot](https://github.com/Viicos).
+
+New features:
+
+- Add support for inline typed dictionaries ([PEP 764](https://peps.python.org/pep-0764/)).
+  Patch by [Victorien Plot](https://github.com/Viicos).
+- Add `typing_extensions.Reader` and `typing_extensions.Writer`. Patch by
+  Sebastian Rittau.
+
+# Release 4.13.2 (April 10, 2025)
+
 - Fix `TypeError` when taking the union of `typing_extensions.TypeAliasType` and a
   `typing.TypeAliasType` on Python 3.12 and 3.13.
   Patch by [Joren Hammudoglu](https://github.com/jorenham).
+- Backport from CPython PR [#132160](https://github.com/python/cpython/pull/132160)
+  to avoid having user arguments shadowed in generated `__new__` by
+  `@typing_extensions.deprecated`.
+  Patch by [Victorien Plot](https://github.com/Viicos).
 
 # Release 4.13.1 (April 3, 2025)
 
 Bugfixes:
+
 - Fix regression in 4.13.0 on Python 3.10.2 causing a `TypeError` when using `Concatenate`.
   Patch by [Daraan](https://github.com/Daraan).
 - Fix `TypeError` when using `evaluate_forward_ref` on Python 3.10.1-2 and 3.9.8-10.
