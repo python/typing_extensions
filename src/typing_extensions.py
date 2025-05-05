@@ -1025,10 +1025,14 @@ else:
             if "__annotations__" in ns:
                 own_annotations = ns["__annotations__"]
             elif sys.version_info >= (3, 14):
-                own_annotate = annotationlib.get_annotate_from_class_namespace(ns)
+                if hasattr(annotationlib, "get_annotate_from_class_namespace"):
+                    own_annotate = annotationlib.get_annotate_from_class_namespace(ns)
+                else:
+                    # 3.14.0a7 and earlier
+                    own_annotate = ns.get("__annotate__")
                 if own_annotate is not None:
                     own_annotations = annotationlib.call_annotate_function(
-                        own_annotate, annotationlib.Format.FORWARDREF, owner=tp_dict
+                        own_annotate, Format.FORWARDREF, owner=tp_dict
                     )
                 else:
                     own_annotations = {}
@@ -1114,14 +1118,14 @@ else:
                     if own_annotate is not None:
                         own = annotationlib.call_annotate_function(
                             own_annotate, format, owner=tp_dict)
-                        if format != annotationlib.Format.STRING:
+                        if format != Format.STRING:
                             own = {
                                 n: typing._type_check(tp, msg, module=tp_dict.__module__)
                                 for n, tp in own.items()
                             }
-                    elif format == annotationlib.Format.STRING:
+                    elif format == Format.STRING:
                         own = annotationlib.annotations_to_string(own_annotations)
-                    elif format in (annotationlib.Format.FORWARDREF, annotationlib.Format.VALUE):
+                    elif format in (Format.FORWARDREF, Format.VALUE):
                         own = own_checked_annotations
                     else:
                         raise NotImplementedError(format)

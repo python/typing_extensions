@@ -5176,7 +5176,7 @@ class TypedDictTests(BaseTestCase):
     def test_delayed_type_check(self):
         # _type_check is also applied later
         class Z(TypedDict):
-            a: undefined
+            a: undefined  # noqa: F821
 
         with self.assertRaises(NameError):
             Z.__annotations__
@@ -5185,15 +5185,15 @@ class TypedDictTests(BaseTestCase):
         with self.assertRaisesRegex(TypeError, "Plain typing.Final is not valid as type argument"):
             Z.__annotations__
 
-        undefined = None
+        undefined = None  # noqa: F841
         self.assertEqual(Z.__annotations__, {'a': type(None)})
 
     @skipUnless(TYPING_3_14_0, "Only supported on 3.14")
     def test_deferred_evaluation(self):
         class A(TypedDict):
-            x: NotRequired[undefined]
-            y: ReadOnly[undefined]
-            z: Required[undefined]
+            x: NotRequired[undefined]  # noqa: F821
+            y: ReadOnly[undefined]  # noqa: F821
+            z: Required[undefined]  # noqa: F821
 
         self.assertEqual(A.__required_keys__, frozenset({'y', 'z'}))
         self.assertEqual(A.__optional_keys__, frozenset({'x'}))
