@@ -66,6 +66,7 @@ from typing_extensions import (
     ReadOnly,
     Required,
     Self,
+    Sentinel,
     Set,
     Tuple,
     Type,
@@ -9086,6 +9087,42 @@ class TestEvaluateForwardRefs(BaseTestCase):
         else:
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("Final", is_argument=False), globals=vars(typing)), Final)
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("ClassVar", is_argument=False), globals=vars(typing)), ClassVar)
+
+
+class TestSentinels(BaseTestCase):
+    def test_sentinel_no_repr(self):
+        sentinel_no_repr = Sentinel('sentinel_no_repr')
+
+        self.assertEqual(sentinel_no_repr._name, 'sentinel_no_repr')
+        self.assertEqual(repr(sentinel_no_repr), '<sentinel_no_repr>')
+
+        sentinel_no_repr_dots = Sentinel('Test.sentinel_no_repr')
+
+        self.assertEqual(sentinel_no_repr_dots._name, 'Test.sentinel_no_repr')
+        self.assertEqual(repr(sentinel_no_repr), '<sentinel_no_repr>')
+
+    def test_sentinel_explicit_repr(self):
+        sentinel_explicit_repr = Sentinel('sentinel_explicit_repr', repr='explicit_repr')
+
+        self.assertEqual(repr(sentinel_explicit_repr), 'explicit_repr')
+
+    @skipIf(sys.version_info < (3, 10), reason='New unions not available in 3.9')
+    def test_sentinel_type_expression_union(self):
+        sentinel = Sentinel('sentinel')
+
+        def func1(a: int | sentinel = sentinel): pass
+        def func2(a: sentinel | int = sentinel): pass
+
+        self.assertEqual(func1.__annotations__['a'], Union[int, sentinel])
+        self.assertEqual(func2.__annotations__['a'], Union[sentinel, int])
+
+    def test_sentinel_not_callable(self):
+        sentinel = Sentinel('sentinel')
+        with self.assertRaisesRegex(
+            TypeError,
+            "'Sentinel' object is not callable"
+        ):
+            sentinel()
 
 
 if __name__ == '__main__':

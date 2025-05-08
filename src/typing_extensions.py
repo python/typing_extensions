@@ -1,3 +1,4 @@
+# pyright: ignore
 import abc
 import builtins
 import collections
@@ -89,6 +90,7 @@ __all__ = [
     'overload',
     'override',
     'Protocol',
+    'Sentinel',
     'reveal_type',
     'runtime',
     'runtime_checkable',
@@ -4220,6 +4222,50 @@ else:
             format=format,
             owner=owner,
         )
+
+
+class Sentinel:
+    """Create a unique sentinel object.
+
+    *name* should be the fully-qualified name of the variable to which the
+    return value shall be assigned.
+
+    *repr*, if supplied, will be used for the repr of the sentinel object.
+    If not provided, "<name>" will be used (with any leading class names
+    removed).
+    """
+
+    def __init__(
+        self,
+        name: str,
+        repr: str | None = None,
+    ):
+        self._name = name
+        self._repr = repr if repr is not None else f'<{name.split(".")[-1]}>'
+
+    def __repr__(self):
+        return self._repr
+
+    def __reduce__(self):
+        return (
+            type(self),
+            (
+                self._name,
+                self._repr,
+            )
+        )
+
+    if sys.version_info < (3, 11):
+        # The presence of this method convinces typing._type_check
+        # that Sentinels are types.
+        def __call__(self, *args, **kwargs):
+            raise TypeError(f"{type(self).__name__!r} object is not callable")
+
+    def __or__(self, other):
+        return Union[self, other]
+
+    def __ror__(self, other):
+        return Union[other, self]
 
 
 # Aliases for items that are in typing in all supported versions.

@@ -9,6 +9,7 @@ New features:
 - Add `typing_extensions.Reader` and `typing_extensions.Writer`. Patch by
   Sebastian Rittau.
 - Fix tests for Python 3.14. Patch by Jelle Zijlstra.
+- Add support for sentinels ([PEP 661](https://peps.python.org/pep-0661/)).
 
 # Release 4.13.2 (April 10, 2025)
 
