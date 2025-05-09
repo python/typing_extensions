@@ -4246,15 +4246,6 @@ class Sentinel:
     def __repr__(self):
         return self._repr
 
-    def __reduce__(self):
-        return (
-            type(self),
-            (
-                self._name,
-                self._repr,
-            )
-        )
-
     if sys.version_info < (3, 11):
         # The presence of this method convinces typing._type_check
         # that Sentinels are types.
