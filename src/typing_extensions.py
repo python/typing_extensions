@@ -4258,6 +4258,9 @@ class Sentinel:
     def __ror__(self, other):
         return Union[other, self]
 
+    def __getstate__(self):
+        raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
+
 
 # Aliases for items that are in typing in all supported versions.
 # Explicitly assign these (rather than using `from typing import *` at the top),

@@ -9124,6 +9124,14 @@ class TestSentinels(BaseTestCase):
         ):
             sentinel()
 
+    def test_sentinel_not_picklable(self):
+        sentinel = Sentinel('sentinel')
+        with self.assertRaisesRegex(
+            TypeError,
+            "Cannot pickle 'Sentinel' object"
+        ):
+            pickle.dumps(sentinel)
+
 
 if __name__ == '__main__':
     main()
