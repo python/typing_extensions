@@ -4238,7 +4238,7 @@ class Sentinel:
     def __init__(
         self,
         name: str,
-        repr: str | None = None,
+        repr: typing.Optional[str] = None,
     ):
         self._name = name
         self._repr = repr if repr is not None else f'<{name.split(".")[-1]}>'
