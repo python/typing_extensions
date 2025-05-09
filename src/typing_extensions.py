@@ -1,4 +1,3 @@
-# pyright: ignore
 import abc
 import builtins
 import collections
@@ -4227,12 +4226,10 @@ else:
 class Sentinel:
     """Create a unique sentinel object.
 
-    *name* should be the fully-qualified name of the variable to which the
-    return value shall be assigned.
+    *name* should be the name of the variable to which the return value shall be assigned.
 
     *repr*, if supplied, will be used for the repr of the sentinel object.
-    If not provided, "<name>" will be used (with any leading class names
-    removed).
+    If not provided, "<name>" will be used.
     """
 
     def __init__(
@@ -4241,7 +4238,7 @@ class Sentinel:
         repr: typing.Optional[str] = None,
     ):
         self._name = name
-        self._repr = repr if repr is not None else f'<{name.split(".")[-1]}>'
+        self._repr = repr if repr is not None else f'<{name}>'
 
     def __repr__(self):
         return self._repr

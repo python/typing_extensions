@@ -1017,6 +1017,34 @@ Capsule objects
    .. versionadded:: 4.12.0
 
 
+Sentinel objects
+~~~~~~~~~~~~~~~~
+
+.. class:: Sentinel(name, repr=None)
+
+   A type used to define sentinel values. The *name* argument should be the
+   name of the variable to which the return value shall be assigned.
+
+   If *repr* is provided, it will be used for the :meth:`~object.__repr__`
+   of the sentinel object. If not provided, ``"<name>"`` will be used.
+
+   Example::
+
+      >>> from typing_extensions import Sentinel, assert_type
+      >>> MISSING = Sentinel('MISSING')
+      >>> def func(arg: int | MISSING = MISSING) -> None:
+      ...     if arg is MISSING:
+      ...         assert_type(arg, MISSING)
+      ...     else:
+      ...         assert_type(arg, int)
+      ...
+      >>> func(MISSING)
+
+   .. versionadded:: 4.14.0
+
+      See :pep:`661`
+
+
 Pure aliases
 ~~~~~~~~~~~~
 

@@ -9096,11 +9096,6 @@ class TestSentinels(BaseTestCase):
         self.assertEqual(sentinel_no_repr._name, 'sentinel_no_repr')
         self.assertEqual(repr(sentinel_no_repr), '<sentinel_no_repr>')
 
-        sentinel_no_repr_dots = Sentinel('Test.sentinel_no_repr')
-
-        self.assertEqual(sentinel_no_repr_dots._name, 'Test.sentinel_no_repr')
-        self.assertEqual(repr(sentinel_no_repr), '<sentinel_no_repr>')
-
     def test_sentinel_explicit_repr(self):
         sentinel_explicit_repr = Sentinel('sentinel_explicit_repr', repr='explicit_repr')
 
