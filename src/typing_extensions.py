@@ -3821,27 +3821,15 @@ if _CapsuleType is not None:
     __all__.append("CapsuleType")
 
 
-# Using this convoluted approach so that this keeps working
-# whether we end up using PEP 649 as written, PEP 749, or
-# some other variation: in any case, inspect.get_annotations
-# will continue to exist and will gain a `format` parameter.
-_PEP_649_OR_749_IMPLEMENTED = (
-    hasattr(inspect, 'get_annotations')
-    and inspect.get_annotations.__kwdefaults__ is not None
-    and "format" in inspect.get_annotations.__kwdefaults__
-)
-
-
-class Format(enum.IntEnum):
-    VALUE = 1
-    VALUE_WITH_FAKE_GLOBALS = 2
-    FORWARDREF = 3
-    STRING = 4
-
-
-if _PEP_649_OR_749_IMPLEMENTED:
-    get_annotations = inspect.get_annotations
+if sys.version_info >= (3,14):
+    from annotationlib import get_annotations, Format
 else:
+    class Format(enum.IntEnum):
+        VALUE = 1
+        VALUE_WITH_FAKE_GLOBALS = 2
+        FORWARDREF = 3
+        STRING = 4
+
     def get_annotations(obj, *, globals=None, locals=None, eval_str=False,
                         format=Format.VALUE):
         """Compute the annotations dict for an object.
@@ -4122,7 +4110,7 @@ else:
         globals=None,
         locals=None,
         type_params=None,
-        format=Format.VALUE,
+        format=None,
         _recursive_guard=frozenset(),
     ):
         """Evaluate a forward reference as a type hint.
