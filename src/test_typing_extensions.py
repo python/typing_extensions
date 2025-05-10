@@ -6827,6 +6827,15 @@ class AllTests(BaseTestCase):
                     getattr(typing_extensions, item),
                     getattr(typing, item))
 
+    def test_alias_names_still_exist(self):
+        for name in typing_extensions._typing_names:
+            # If this fails, change _typing_names to conditionally add the name
+            # depending on the Python version.
+            self.assertTrue(
+                hasattr(typing_extensions, name),
+                f"{name} no longer exists in typing",
+            )
+
     def test_typing_extensions_compiles_with_opt(self):
         file_path = typing_extensions.__file__
         try:
