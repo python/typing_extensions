@@ -29,7 +29,6 @@ import typing_extensions
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 from typing_extensions import (
     _FORWARD_REF_HAS_CLASS,
-    _PEP_649_OR_749_IMPLEMENTED,
     Annotated,
     Any,
     AnyStr,
@@ -8533,7 +8532,7 @@ class TestGetAnnotations(BaseTestCase):
             get_annotations(isa.MyClass, format=Format.STRING),
             {"a": "int", "b": "str"},
         )
-        mycls = "MyClass" if _PEP_649_OR_749_IMPLEMENTED else "inspect_stock_annotations.MyClass"
+        mycls = "MyClass" if sys.version_info >= (3, 14) else "inspect_stock_annotations.MyClass"
         self.assertEqual(
             get_annotations(isa.function, format=Format.STRING),
             {"a": "int", "b": "str", "return": mycls},
@@ -8581,7 +8580,7 @@ class TestGetAnnotations(BaseTestCase):
             get_annotations(wrapped, format=Format.FORWARDREF),
             {"a": int, "b": str, "return": isa.MyClass},
         )
-        mycls = "MyClass" if _PEP_649_OR_749_IMPLEMENTED else "inspect_stock_annotations.MyClass"
+        mycls = "MyClass" if sys.version_info >= (3, 14) else "inspect_stock_annotations.MyClass"
         self.assertEqual(
             get_annotations(wrapped, format=Format.STRING),
             {"a": "int", "b": "str", "return": mycls},
