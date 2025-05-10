@@ -952,9 +952,19 @@ Enums
       for the annotations. This format is identical to the return value for
       the function under earlier versions of Python.
 
+   .. attribute:: VALUE_WITH_FAKE_GLOBALS
+
+      Equal to 2. Special value used to signal that an annotate function is being
+      evaluated in a special environment with fake globals. When passed this
+      value, annotate functions should either return the same value as for
+      the :attr:`Format.VALUE` format, or raise :exc:`NotImplementedError`
+      to signal that they do not support execution in this environment.
+      This format is only used internally and should not be passed to
+      the functions in this module.
+
    .. attribute:: FORWARDREF
 
-      Equal to 2. When :pep:`649` is implemented, this format will attempt to return the
+      Equal to 3. When :pep:`649` is implemented, this format will attempt to return the
       conventional Python values for the annotations. However, if it encounters
       an undefined name, it dynamically creates a proxy object (a ForwardRef)
       that substitutes for that value in the expression.
@@ -964,7 +974,7 @@ Enums
 
    .. attribute:: STRING
 
-      Equal to 3. When :pep:`649` is implemented, this format will produce an annotation
+      Equal to 4. When :pep:`649` is implemented, this format will produce an annotation
       dictionary where the values have been replaced by strings containing
       an approximation of the original source code for the annotation expressions.
 
