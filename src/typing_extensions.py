@@ -4264,10 +4264,9 @@ _typing_names = [
     # and some users rely on it.
     "_AnnotatedAlias",
 ]
-for _name in _typing_names:
-    if hasattr(typing, _name):
-        globals()[_name] = getattr(typing, _name)
-del _name
+globals().update(
+    {name: getattr(typing, name) for name in _typing_names if hasattr(typing, name)}
+)
 # These are defined unconditionally because they are used in
 # typing-extensions itself.
 Generic = typing.Generic
