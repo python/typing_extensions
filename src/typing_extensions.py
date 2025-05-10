@@ -4270,4 +4270,4 @@ _typing_names = [
 for _name in _typing_names:
     if hasattr(typing, _name):
         globals()[_name] = getattr(typing, _name)
-del _typing_names
+del _name
