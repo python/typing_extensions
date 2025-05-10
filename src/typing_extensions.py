@@ -3822,7 +3822,7 @@ if _CapsuleType is not None:
 
 
 if sys.version_info >= (3,14):
-    from annotationlib import get_annotations, Format
+    from annotationlib import Format, get_annotations
 else:
     class Format(enum.IntEnum):
         VALUE = 1
