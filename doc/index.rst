@@ -796,7 +796,7 @@ Functions
    This parameter must be provided (though it may be an empty tuple) if *owner*
    is not given and the forward reference does not already have an owner set.
    *format* specifies the format of the annotation and is a member of
-   the :class:`Format` enum, defaulting :attr:`Format.VALUE`.
+   the :class:`Format` enum, defaulting to :attr:`Format.VALUE`.
 
    .. versionadded:: 4.13.0
 
