@@ -1,6 +1,12 @@
 # Unreleased
 
 - Drop support for Python 3.8 (including PyPy-3.8). Patch by [Victorien Plot](https://github.com/Viicos).
+- Do not attempt to re-export names that have been removed from `typing`,
+  anticipating the removal of `typing.no_type_check_decorator` in Python 3.15.
+  Patch by Jelle Zijlstra.
+- Update `typing_extensions.Format` and `typing_extensions.evaluate_forward_ref` to align
+  with changes in Python 3.14. Patch by Jelle Zijlstra.
+- Fix tests for Python 3.14. Patch by Jelle Zijlstra.
 
 New features:
 
@@ -8,7 +14,6 @@ New features:
   Patch by [Victorien Plot](https://github.com/Viicos).
 - Add `typing_extensions.Reader` and `typing_extensions.Writer`. Patch by
   Sebastian Rittau.
-- Fix tests for Python 3.14. Patch by Jelle Zijlstra.
 - Add support for sentinels ([PEP 661](https://peps.python.org/pep-0661/)).
 
 # Release 4.13.2 (April 10, 2025)

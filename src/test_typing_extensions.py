@@ -29,7 +29,6 @@ import typing_extensions
 from _typed_dict_test_helper import Foo, FooGeneric, VeryAnnotated
 from typing_extensions import (
     _FORWARD_REF_HAS_CLASS,
-    _PEP_649_OR_749_IMPLEMENTED,
     Annotated,
     Any,
     AnyStr,
@@ -6828,6 +6827,15 @@ class AllTests(BaseTestCase):
                     getattr(typing_extensions, item),
                     getattr(typing, item))
 
+    def test_alias_names_still_exist(self):
+        for name in typing_extensions._typing_names:
+            # If this fails, change _typing_names to conditionally add the name
+            # depending on the Python version.
+            self.assertTrue(
+                hasattr(typing_extensions, name),
+                f"{name} no longer exists in typing",
+            )
+
     def test_typing_extensions_compiles_with_opt(self):
         file_path = typing_extensions.__file__
         try:
@@ -8525,7 +8533,7 @@ class TestGetAnnotations(BaseTestCase):
             get_annotations(isa.MyClass, format=Format.STRING),
             {"a": "int", "b": "str"},
         )
-        mycls = "MyClass" if _PEP_649_OR_749_IMPLEMENTED else "inspect_stock_annotations.MyClass"
+        mycls = "MyClass" if sys.version_info >= (3, 14) else "inspect_stock_annotations.MyClass"
         self.assertEqual(
             get_annotations(isa.function, format=Format.STRING),
             {"a": "int", "b": "str", "return": mycls},
@@ -8573,7 +8581,7 @@ class TestGetAnnotations(BaseTestCase):
             get_annotations(wrapped, format=Format.FORWARDREF),
             {"a": int, "b": str, "return": isa.MyClass},
         )
-        mycls = "MyClass" if _PEP_649_OR_749_IMPLEMENTED else "inspect_stock_annotations.MyClass"
+        mycls = "MyClass" if sys.version_info >= (3, 14) else "inspect_stock_annotations.MyClass"
         self.assertEqual(
             get_annotations(wrapped, format=Format.STRING),
             {"a": "int", "b": "str", "return": mycls},
