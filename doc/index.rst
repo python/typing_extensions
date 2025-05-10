@@ -769,7 +769,7 @@ Functions
 
    .. versionadded:: 4.2.0
 
-.. function:: evaluate_forward_ref(forward_ref, *, owner=None, globals=None, locals=None, type_params=None, format=Format.VALUE)
+.. function:: evaluate_forward_ref(forward_ref, *, owner=None, globals=None, locals=None, type_params=None, format=None)
 
    Evaluate an :py:class:`typing.ForwardRef` as a :py:term:`type hint`.
 
@@ -796,7 +796,7 @@ Functions
    This parameter must be provided (though it may be an empty tuple) if *owner*
    is not given and the forward reference does not already have an owner set.
    *format* specifies the format of the annotation and is a member of
-   the :class:`Format` enum.
+   the :class:`Format` enum, defaulting :attr:`Format.VALUE`.
 
    .. versionadded:: 4.13.0
 
