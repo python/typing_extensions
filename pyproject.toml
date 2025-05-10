@@ -94,6 +94,9 @@ ignore = [
     "RUF012",
     "RUF022",
     "RUF023",
+    # Ruff doesn't understand the globals() assignment; we test __all__
+    # directly in test_all_names_in___all__.
+    "F822",
 ]
 
 [tool.ruff.lint.per-file-ignores]

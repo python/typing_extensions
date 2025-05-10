@@ -4227,16 +4227,13 @@ else:
 # future versions of Python that may remove these names.
 _typing_names = [
     "AbstractSet",
-    "Annotated",
     "AnyStr",
     "BinaryIO",
     "Callable",
     "Collection",
     "Container",
     "Dict",
-    "ForwardRef",
     "FrozenSet",
-    "Generic",
     "Hashable",
     "IO",
     "ItemsView",
@@ -4271,3 +4268,8 @@ for _name in _typing_names:
     if hasattr(typing, _name):
         globals()[_name] = getattr(typing, _name)
 del _name
+# These are defined unconditionally because they are used in
+# typing-extensions itself.
+Generic = typing.Generic
+ForwardRef = typing.ForwardRef
+Annotated = typing.Annotated
