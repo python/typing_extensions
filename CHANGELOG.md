@@ -14,7 +14,8 @@ New features:
   Patch by [Victorien Plot](https://github.com/Viicos).
 - Add `typing_extensions.Reader` and `typing_extensions.Writer`. Patch by
   Sebastian Rittau.
-- Add support for sentinels ([PEP 661](https://peps.python.org/pep-0661/)).
+- Add support for sentinels ([PEP 661](https://peps.python.org/pep-0661/)). Patch by
+  [Victorien Plot](https://github.com/Viicos).
 
 # Release 4.13.2 (April 10, 2025)
 
