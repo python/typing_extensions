@@ -4238,10 +4238,10 @@ class Sentinel:
             raise TypeError(f"{type(self).__name__!r} object is not callable")
 
     def __or__(self, other):
-        return Union[self, other]
+        return typing.Union[self, other]
 
     def __ror__(self, other):
-        return Union[other, self]
+        return typing.Union[other, self]
 
     def __getstate__(self):
         raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
