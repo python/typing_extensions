@@ -528,11 +528,16 @@ def _get_protocol_attrs(cls):
     return attrs
 
 
-def _caller(depth=2):
+def _caller(depth=1, default='__main__'):
     try:
-        return sys._getframe(depth).f_globals.get('__name__', '__main__')
+        return sys._getframemodulename(depth + 1) or default
+    except AttributeError:  # For platforms without _getframemodulename()
+        pass
+    try:
+        return sys._getframe(depth + 1).f_globals.get('__name__', default)
     except (AttributeError, ValueError):  # For platforms without _getframe()
-        return None
+        pass
+    return None
 
 
 # `__match_args__` attribute was removed from protocol members in 3.13,
@@ -540,7 +545,7 @@ def _caller(depth=2):
 if sys.version_info >= (3, 13):
     Protocol = typing.Protocol
 else:
-    def _allow_reckless_class_checks(depth=3):
+    def _allow_reckless_class_checks(depth=2):
         """Allow instance and class checks for special stdlib modules.
         The abc and functools modules indiscriminately call isinstance() and
         issubclass() on the whole MRO of a user class, which may contain protocols.
@@ -1205,7 +1210,7 @@ else:
             )
 
         ns = {'__annotations__': dict(fields)}
-        module = _caller(depth=5 if typing_is_inline else 3)
+        module = _caller(depth=4 if typing_is_inline else 2)
         if module is not None:
             # Setting correct module is necessary to make typed dict classes
             # pickleable.
@@ -1552,7 +1557,7 @@ def _set_default(type_param, default):
 
 def _set_module(typevarlike):
     # for pickling:
-    def_mod = _caller(depth=3)
+    def_mod = _caller(depth=2)
     if def_mod != 'typing_extensions':
         typevarlike.__module__ = def_mod
 
