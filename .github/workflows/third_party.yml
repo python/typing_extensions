@@ -172,7 +172,7 @@ jobs:
         run: |
           set -x
           cd typeguard
-          uv pip install --system "typeguard[test] @ ."  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system "typeguard @ ." --group test  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
       - name: Install typing_extensions latest
         run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
