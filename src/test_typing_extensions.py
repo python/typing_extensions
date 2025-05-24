@@ -4402,6 +4402,7 @@ class TypedDictTests(BaseTestCase):
             'voice': str,
         }
 
+    @skipIf(sys.version_info == (3, 14, 0, "beta", 1), "Broken on beta 1, fixed in beta 2")
     def test_inheritance_pep563(self):
         def _make_td(future, class_name, annos, base, extra_names=None):
             lines = []
