@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.14.0rc1 (May 24, 2025)
 
 - Drop support for Python 3.8 (including PyPy-3.8). Patch by [Victorien Plot](https://github.com/Viicos).
 - Do not attempt to re-export names that have been removed from `typing`,
