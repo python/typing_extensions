@@ -4,9 +4,10 @@
 - Do not attempt to re-export names that have been removed from `typing`,
   anticipating the removal of `typing.no_type_check_decorator` in Python 3.15.
   Patch by Jelle Zijlstra.
-- Update `typing_extensions.Format` and `typing_extensions.evaluate_forward_ref` to align
-  with changes in Python 3.14. Patch by Jelle Zijlstra.
-- Fix tests for Python 3.14. Patch by Jelle Zijlstra.
+- Update `typing_extensions.Format`, `typing_extensions.evaluate_forward_ref`, and
+  `typing_extensions.TypedDict` to align
+  with changes in Python 3.14. Patches by Jelle Zijlstra.
+- Fix tests for Python 3.14 and 3.15. Patches by Jelle Zijlstra.
 
 New features:
 

@@ -4402,6 +4402,38 @@ class TypedDictTests(BaseTestCase):
             'voice': str,
         }
 
+    def test_inheritance_pep563(self):
+        def _make_td(future, class_name, annos, base, extra_names=None):
+            lines = []
+            if future:
+                lines.append('from __future__ import annotations')
+            lines.append('from typing import TypedDict')
+            lines.append(f'class {class_name}({base}):')
+            for name, anno in annos.items():
+                lines.append(f'    {name}: {anno}')
+            code = '\n'.join(lines)
+            ns = {**extra_names} if extra_names else {}
+            exec(code, ns)
+            return ns[class_name]
+
+        for base_future in (True, False):
+            for child_future in (True, False):
+                with self.subTest(base_future=base_future, child_future=child_future):
+                    base = _make_td(
+                        base_future, "Base", {"base": "int"}, "TypedDict"
+                    )
+                    if sys.version_info >= (3, 14):
+                        self.assertIsNotNone(base.__annotate__)
+                    child = _make_td(
+                        child_future, "Child", {"child": "int"}, "Base", {"Base": base}
+                    )
+                    base_anno = typing.ForwardRef("int", module="builtins") if base_future else int
+                    child_anno = typing.ForwardRef("int", module="builtins") if child_future else int
+                    self.assertEqual(base.__annotations__, {'base': base_anno})
+                    self.assertEqual(
+                        child.__annotations__, {'child': child_anno, 'base': base_anno}
+                    )
+
     def test_required_notrequired_keys(self):
         self.assertEqual(NontotalMovie.__required_keys__,
                          frozenset({"title"}))
@@ -7014,6 +7046,7 @@ class NamedTupleTests(BaseTestCase):
         self.assertIs(type(a), Group)
         self.assertEqual(a, (1, [2]))
 
+    @skipUnless(sys.version_info <= (3, 15), "Behavior removed in 3.15")
     def test_namedtuple_keyword_usage(self):
         with self.assertWarnsRegex(
             DeprecationWarning,
@@ -7049,6 +7082,7 @@ class NamedTupleTests(BaseTestCase):
         ):
             NamedTuple('Name', None, x=int)
 
+    @skipUnless(sys.version_info <= (3, 15), "Behavior removed in 3.15")
     def test_namedtuple_special_keyword_names(self):
         with self.assertWarnsRegex(
             DeprecationWarning,
@@ -7064,6 +7098,7 @@ class NamedTupleTests(BaseTestCase):
         self.assertEqual(a.typename, 'foo')
         self.assertEqual(a.fields, [('bar', tuple)])
 
+    @skipUnless(sys.version_info <= (3, 15), "Behavior removed in 3.15")
     def test_empty_namedtuple(self):
         expected_warning = re.escape(
             "Failing to pass a value for the 'fields' parameter is deprecated "
