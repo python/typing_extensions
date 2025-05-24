@@ -1016,6 +1016,8 @@ else:
             else:
                 generic_base = ()
 
+            ns_annotations = ns.pop('__annotations__', None)
+
             # typing.py generally doesn't let you inherit from plain Generic, unless
             # the name of the class happens to be "Protocol"
             tp_dict = type.__new__(_TypedDictMeta, "Protocol", (*generic_base, dict), ns)
@@ -1028,8 +1030,8 @@ else:
 
             annotations = {}
             own_annotate = None
-            if "__annotations__" in ns:
-                own_annotations = ns["__annotations__"]
+            if ns_annotations is not None:
+                own_annotations = ns_annotations
             elif sys.version_info >= (3, 14):
                 if hasattr(annotationlib, "get_annotate_from_class_namespace"):
                     own_annotate = annotationlib.get_annotate_from_class_namespace(ns)
@@ -1119,7 +1121,7 @@ else:
                         if base_annotate is None:
                             continue
                         base_annos = annotationlib.call_annotate_function(
-                            base.__annotate__, format, owner=base)
+                            base_annotate, format, owner=base)
                         annos.update(base_annos)
                     if own_annotate is not None:
                         own = annotationlib.call_annotate_function(
