@@ -1,3 +1,10 @@
+# Unreleased
+
+- Remove `__or__` and `__ror__` methods from `typing_extensions.Sentinel`
+  on Python versions <3.10. PEP 604 was introduced in Python 3.10, and
+  `typing_extensions` does not generally attempt to backport PEP-604 methods
+  to prior versions.
+
 # Release 4.14.0rc1 (May 24, 2025)
 
 - Drop support for Python 3.8 (including PyPy-3.8). Patch by [Victorien Plot](https://github.com/Viicos).
