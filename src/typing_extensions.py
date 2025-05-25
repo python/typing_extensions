@@ -4247,7 +4247,7 @@ class Sentinel:
     if sys.version_info >= (3, 10):
         def __or__(self, other):
             return typing.Union[self, other]
-    
+
         def __ror__(self, other):
             return typing.Union[other, self]
 
