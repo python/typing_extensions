@@ -8944,7 +8944,147 @@ class TestGetAnnotationsWithPEP695(BaseTestCase):
             set(results.generic_func.__type_params__)
         )
 
-class TestEvaluateForwardRefs(BaseTestCase):
+
+class EvaluateForwardRefTests(BaseTestCase):
+    def test_evaluate_forward_ref(self):
+        int_ref = typing_extensions.ForwardRef('int')
+        self.assertIs(typing_extensions.evaluate_forward_ref(int_ref), int)
+        self.assertIs(
+            typing_extensions.evaluate_forward_ref(int_ref, type_params=()),
+            int,
+        )
+        self.assertIs(
+            typing_extensions.evaluate_forward_ref(int_ref, format=typing_extensions.Format.VALUE),
+            int,
+        )
+        self.assertIs(
+            typing_extensions.evaluate_forward_ref(
+                int_ref, format=typing_extensions.Format.FORWARDREF,
+            ),
+            int,
+        )
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(
+                int_ref, format=typing_extensions.Format.STRING,
+            ),
+            'int',
+        )
+
+    def test_evaluate_forward_ref_undefined(self):
+        missing = typing_extensions.ForwardRef('missing')
+        with self.assertRaises(NameError):
+            typing_extensions.evaluate_forward_ref(missing)
+        self.assertIs(
+            typing_extensions.evaluate_forward_ref(
+                missing, format=typing_extensions.Format.FORWARDREF,
+            ),
+            missing,
+        )
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(
+                missing, format=typing_extensions.Format.STRING,
+            ),
+            "missing",
+        )
+
+    def test_evaluate_forward_ref_nested(self):
+        ref = typing_extensions.ForwardRef("Union[int, list['str']]")
+        ns = {"Union": Union}
+        if sys.version_info >= (3, 11):
+            expected = Union[int, list[str]]
+        else:
+            expected = Union[int, list['str']]  # TODO: evaluate nested forward refs in Python < 3.11
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref, globals=ns),
+            expected,
+        )
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(
+                ref, globals=ns, format=typing_extensions.Format.FORWARDREF
+            ),
+            expected,
+        )
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref, format=typing_extensions.Format.STRING),
+            "Union[int, list['str']]",
+        )
+
+        why = typing_extensions.ForwardRef('"\'str\'"')
+        self.assertIs(typing_extensions.evaluate_forward_ref(why), str)
+
+    @skipUnless(sys.version_info >= (3, 10), "Relies on PEP 604")
+    def test_evaluate_forward_ref_nested_pep604(self):
+        ref = typing_extensions.ForwardRef("int | list['str']")
+        if sys.version_info >= (3, 11):
+            expected = int | list[str]
+        else:
+            expected = int | list['str']  # TODO: evaluate nested forward refs in Python < 3.11
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref),
+            expected,
+        )
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref, format=typing_extensions.Format.FORWARDREF),
+            expected,
+        )
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref, format=typing_extensions.Format.STRING),
+            "int | list['str']",
+        )
+
+    def test_evaluate_forward_ref_none(self):
+        none_ref = typing_extensions.ForwardRef('None')
+        self.assertIs(typing_extensions.evaluate_forward_ref(none_ref), None)
+
+    def test_globals(self):
+        A = "str"
+        ref = typing_extensions.ForwardRef('list[A]')
+        with self.assertRaises(NameError):
+            typing_extensions.evaluate_forward_ref(ref)
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref, globals={'A': A}),
+            list[str] if sys.version_info >= (3, 11) else list['str'],
+        )
+
+    def test_owner(self):
+        ref = typing_extensions.ForwardRef("A")
+
+        with self.assertRaises(NameError):
+            typing_extensions.evaluate_forward_ref(ref)
+
+        # We default to the globals of `owner`,
+        # so it no longer raises `NameError`
+        self.assertIs(
+            typing_extensions.evaluate_forward_ref(ref, owner=Loop), A
+        )
+
+    @skipUnless(sys.version_info >= (3, 14), "Not yet implemented in Python < 3.14")
+    def test_inherited_owner(self):
+        # owner passed to evaluate_forward_ref
+        ref = typing_extensions.ForwardRef("list['A']")
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref, owner=Loop),
+            list[A],
+        )
+
+        # owner set on the ForwardRef
+        ref = typing_extensions.ForwardRef("list['A']", owner=Loop)
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref),
+            list[A],
+        )
+
+    @skipUnless(sys.version_info >= (3, 14), "Not yet implemented in Python < 3.14")
+    def test_partial_evaluation(self):
+        ref = typing_extensions.ForwardRef("list[A]")
+        with self.assertRaises(NameError):
+            typing_extensions.evaluate_forward_ref(ref)
+
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref, format=typing_extensions.Format.FORWARDREF),
+            list[EqualToForwardRef('A')],
+        )
+
     def test_global_constant(self):
         if sys.version_info[:3] > (3, 10, 0):
             self.assertTrue(_FORWARD_REF_HAS_CLASS)
@@ -9107,30 +9247,17 @@ class TestEvaluateForwardRefs(BaseTestCase):
             self.assertEqual(get_args(evaluated_ref3), (Z[str],))
 
     def test_invalid_special_forms(self):
-        # tests _lax_type_check to raise errors the same way as the typing module.
-        # Regex capture "< class 'module.name'> and "module.name"
-        with self.assertRaisesRegex(
-            TypeError, r"Plain .*Protocol('>)? is not valid as type argument"
-        ):
-            evaluate_forward_ref(typing.ForwardRef("Protocol"), globals=vars(typing))
-        with self.assertRaisesRegex(
-            TypeError, r"Plain .*Generic('>)? is not valid as type argument"
-        ):
-            evaluate_forward_ref(typing.ForwardRef("Generic"), globals=vars(typing))
-        with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.Final is not valid as type argument"):
-            evaluate_forward_ref(typing.ForwardRef("Final"), globals=vars(typing))
-        with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.ClassVar is not valid as type argument"):
-            evaluate_forward_ref(typing.ForwardRef("ClassVar"), globals=vars(typing))
+        for name in ("Protocol", "Final", "ClassVar", "Generic"):
+            with self.subTest(name=name):
+                self.assertIs(
+                    evaluate_forward_ref(typing.ForwardRef(name), globals=vars(typing)),
+                    getattr(typing, name),
+                )
         if _FORWARD_REF_HAS_CLASS:
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("Final", is_class=True), globals=vars(typing)), Final)
             self.assertIs(evaluate_forward_ref(typing.ForwardRef("ClassVar", is_class=True), globals=vars(typing)), ClassVar)
-            with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.Final is not valid as type argument"):
-                evaluate_forward_ref(typing.ForwardRef("Final", is_argument=False), globals=vars(typing))
-            with self.assertRaisesRegex(TypeError, r"Plain typing(_extensions)?\.ClassVar is not valid as type argument"):
-                evaluate_forward_ref(typing.ForwardRef("ClassVar", is_argument=False), globals=vars(typing))
-        else:
-            self.assertIs(evaluate_forward_ref(typing.ForwardRef("Final", is_argument=False), globals=vars(typing)), Final)
-            self.assertIs(evaluate_forward_ref(typing.ForwardRef("ClassVar", is_argument=False), globals=vars(typing)), ClassVar)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("Final", is_argument=False), globals=vars(typing)), Final)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("ClassVar", is_argument=False), globals=vars(typing)), ClassVar)
 
 
 class TestSentinels(BaseTestCase):

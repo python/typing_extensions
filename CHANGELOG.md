@@ -4,6 +4,7 @@
   on Python versions <3.10. PEP 604 was introduced in Python 3.10, and
   `typing_extensions` does not generally attempt to backport PEP-604 methods
   to prior versions.
+- Further update `typing_extensions.evaluate_forward_ref` with changes in Python 3.14.
 
 # Release 4.14.0rc1 (May 24, 2025)
 

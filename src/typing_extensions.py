@@ -4060,57 +4060,6 @@ else:
         forward_ref.__forward_value__ = value
         return value
 
-    def _lax_type_check(
-        value, msg, is_argument=True, *, module=None, allow_special_forms=False
-    ):
-        """
-        A lax Python 3.11+ like version of typing._type_check
-        """
-        if hasattr(typing, "_type_convert"):
-            if (
-                sys.version_info >= (3, 10, 3)
-                or (3, 9, 10) < sys.version_info[:3] < (3, 10)
-            ):
-                # allow_special_forms introduced later cpython/#30926 (bpo-46539)
-                type_ = typing._type_convert(
-                    value,
-                    module=module,
-                    allow_special_forms=allow_special_forms,
-                )
-            # module was added with bpo-41249 before is_class (bpo-46539)
-            elif "__forward_module__" in typing.ForwardRef.__slots__:
-                type_ = typing._type_convert(value, module=module)
-            else:
-                type_ = typing._type_convert(value)
-        else:
-            if value is None:
-                return type(None)
-            if isinstance(value, str):
-                return ForwardRef(value)
-            type_ = value
-        invalid_generic_forms = (Generic, Protocol)
-        if not allow_special_forms:
-            invalid_generic_forms += (ClassVar,)
-            if is_argument:
-                invalid_generic_forms += (Final,)
-        if (
-            isinstance(type_, typing._GenericAlias)
-            and get_origin(type_) in invalid_generic_forms
-        ):
-            raise TypeError(f"{type_} is not valid as type argument") from None
-        if type_ in (Any, LiteralString, NoReturn, Never, Self, TypeAlias):
-            return type_
-        if allow_special_forms and type_ in (ClassVar, Final):
-            return type_
-        if (
-            isinstance(type_, (_SpecialForm, typing._SpecialForm))
-            or type_ in (Generic, Protocol)
-        ):
-            raise TypeError(f"Plain {type_} is not valid as type argument") from None
-        if type(type_) is tuple:  # lax version with tuple instead of callable
-            raise TypeError(f"{msg} Got {type_!r:.100}.")
-        return type_
-
     def evaluate_forward_ref(
         forward_ref,
         *,
@@ -4163,24 +4112,15 @@ else:
             else:
                 raise
 
-        msg = "Forward references must evaluate to types."
-        if not _FORWARD_REF_HAS_CLASS:
-            allow_special_forms = not forward_ref.__forward_is_argument__
-        else:
-            allow_special_forms = forward_ref.__forward_is_class__
-        type_ = _lax_type_check(
-            value,
-            msg,
-            is_argument=forward_ref.__forward_is_argument__,
-            allow_special_forms=allow_special_forms,
-        )
+        if isinstance(value, str):
+            value = ForwardRef(value)
 
         # Recursively evaluate the type
-        if isinstance(type_, ForwardRef):
-            if getattr(type_, "__forward_module__", True) is not None:
+        if isinstance(value, ForwardRef):
+            if getattr(value, "__forward_module__", True) is not None:
                 globals = None
             return evaluate_forward_ref(
-                type_,
+                value,
                 globals=globals,
                 locals=locals,
                  type_params=type_params, owner=owner,
@@ -4194,28 +4134,19 @@ else:
                     locals[tvar.__name__] = tvar
         if sys.version_info < (3, 12, 5):
             return typing._eval_type(
-                type_,
+                value,
                 globals,
                 locals,
                 recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
             )
-        if sys.version_info < (3, 14):
+        else:
             return typing._eval_type(
-                type_,
+                value,
                 globals,
                 locals,
                 type_params,
                 recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
             )
-        return typing._eval_type(
-            type_,
-            globals,
-            locals,
-            type_params,
-            recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
-            format=format,
-            owner=owner,
-        )
 
 
 class Sentinel:
