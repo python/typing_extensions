@@ -8988,22 +8988,49 @@ class EvaluateForwardRefTests(BaseTestCase):
         )
 
     def test_evaluate_forward_ref_nested(self):
+        ref = typing_extensions.ForwardRef("Union[int, list['str']]")
+        ns = {"Union": Union}
+        if sys.version_info >= (3, 11):
+            expected = Union[int, list[str]]
+        else:
+            expected = Union[int, list['str']]  # TODO: evaluate nested forward refs in Python < 3.11
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref, globals=ns),
+            expected,
+        )
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(
+                ref, globals=ns, format=typing_extensions.Format.FORWARDREF
+            ),
+            expected,
+        )
+        self.assertEqual(
+            typing_extensions.evaluate_forward_ref(ref, format=typing_extensions.Format.STRING),
+            "Union[int, list['str']]",
+        )
+
+        why = typing_extensions.ForwardRef('"\'str\'"')
+        self.assertIs(typing_extensions.evaluate_forward_ref(why), str)
+
+    @skipUnless(sys.version_info >= (3, 10), "Relies on PEP 604")
+    def test_evaluate_forward_ref_nested_pep604(self):
         ref = typing_extensions.ForwardRef("int | list['str']")
+        if sys.version_info >= (3, 11):
+            expected = int | list[str]
+        else:
+            expected = int | list['str']  # TODO: evaluate nested forward refs in Python < 3.11
         self.assertEqual(
             typing_extensions.evaluate_forward_ref(ref),
-            int | list[str],
+            expected,
         )
         self.assertEqual(
             typing_extensions.evaluate_forward_ref(ref, format=typing_extensions.Format.FORWARDREF),
-            int | list[str],
+            expected,
         )
         self.assertEqual(
             typing_extensions.evaluate_forward_ref(ref, format=typing_extensions.Format.STRING),
             "int | list['str']",
         )
-
-        why = typing_extensions.ForwardRef('"\'str\'"')
-        self.assertIs(typing_extensions.evaluate_forward_ref(why), str)
 
     def test_evaluate_forward_ref_none(self):
         none_ref = typing_extensions.ForwardRef('None')
@@ -9016,7 +9043,7 @@ class EvaluateForwardRefTests(BaseTestCase):
             typing_extensions.evaluate_forward_ref(ref)
         self.assertEqual(
             typing_extensions.evaluate_forward_ref(ref, globals={'A': A}),
-            list[str],
+            list[str] if sys.version_info >= (3, 11) else list['str'],
         )
 
     def test_owner(self):
