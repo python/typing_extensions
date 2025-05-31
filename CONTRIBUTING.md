@@ -51,6 +51,31 @@ Running these commands in the `src/` directory ensures that the local file
 `typing_extensions.py` is used, instead of any other version of the library you
 may have installed.
 
+# Linting
+
+Linting is done via pre-commit. We recommend running pre-commit via a tool such
+as [uv](https://docs.astral.sh/uv/) or [pipx](https://pipx.pypa.io/stable/) so
+that pre-commit and its dependencies are installed into an isolated environment
+located outside your `typing_extensions` clone. Running pre-commit this way
+ensures that you don't accidentally install a version of `typing_extensions`
+from PyPI into a virtual environment inside your `typing_extensions` clone,
+which could easily happen if pre-commit depended (directly or indirectly) on
+`typing_extensions`. If a version of `typing_extensions` from PyPI *was*
+installed into a project-local virtual environment, it could lead to
+unpredictable results when running `typing_extensions` tests locally.
+
+To run the linters using uv:
+
+```
+uvx pre-commit run -a
+```
+
+Or using pipx:
+
+```
+pipx run pre-commit run -a
+```
+
 # Workflow for PyPI releases
 
 - Make sure you follow the versioning policy in the documentation
