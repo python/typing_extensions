@@ -1,4 +1,6 @@
-# Unreleased
+# Release 4.14.0 (June 2, 2025)
+
+Changes since 4.14.0rc1:
 
 - Remove `__or__` and `__ror__` methods from `typing_extensions.Sentinel`
   on Python versions <3.10. PEP 604 was introduced in Python 3.10, and
