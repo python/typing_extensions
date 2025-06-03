@@ -4202,6 +4202,12 @@ class TypedDictTests(BaseTestCase):
         self.assertEqual(Emp.__annotations__, {'name': str, 'id': int})
         self.assertEqual(Emp.__total__, True)
 
+    def test_allowed_as_type_argument(self):
+        # https://github.com/python/typing_extensions/issues/613
+        obj = typing.Type[typing_extensions.TypedDict]
+        self.assertIs(typing_extensions.get_origin(obj), type)
+        self.assertEqual(typing_extensions.get_args(obj), (typing_extensions.TypedDict,))
+
     @skipIf(sys.version_info < (3, 13), "Change in behavior in 3.13")
     def test_keywords_syntax_raises_on_3_13(self):
         with self.assertRaises(TypeError), self.assertWarns(DeprecationWarning):
