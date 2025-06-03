@@ -1223,7 +1223,50 @@ else:
         td.__orig_bases__ = (TypedDict,)
         return td
 
-    class _TypedDictSpecialForm(_ExtensionsSpecialForm, _root=True):
+    # Cannot inherit from typing._SpecialForm, because then typing._type_check
+    # would reject TypedDict as a type, and we need that to work for compatibility.
+    if hasattr(typing, "_NotIterable"):
+        _special_form_bases = (typing._Final, typing._NotIterable)
+    else:
+        _special_form_bases = (typing._Final,)
+
+    class _TypedDictSpecialForm(*_special_form_bases, _root=True):
+        __slots__ = ('_name', '__doc__', '_getitem')
+
+        def __init__(self, getitem):
+            self._getitem = getitem
+            self._name = getitem.__name__
+            self.__doc__ = getitem.__doc__
+
+        def __getattr__(self, item):
+            if item in {'__name__', '__qualname__'}:
+                return self._name
+
+            raise AttributeError(item)
+
+        def __repr__(self):
+            return 'typing_extensions.' + self._name
+
+        def __reduce__(self):
+            return self._name
+
+        if sys.version_info >= (3, 10):
+            def __or__(self, other):
+                return typing.Union[self, other]
+
+            def __ror__(self, other):
+                return typing.Union[other, self]
+
+        def __instancecheck__(self, obj):
+            raise TypeError(f"{self} cannot be used with isinstance()")
+
+        def __subclasscheck__(self, cls):
+            raise TypeError(f"{self} cannot be used with issubclass()")
+
+        @typing._tp_cache
+        def __getitem__(self, parameters):
+            return self._getitem(self, parameters)
+
         def __call__(
             self,
             typename,
