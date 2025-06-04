@@ -4229,10 +4229,16 @@ class Sentinel:
         def __ror__(self, other):
             return typing.Union[other, self]
 
+    @classmethod
+    def _unpickle_fetch_sentinel(cls, name: str, module_name: str):
+        """Unpickle using the sentinels location."""
+        return cls(name, module_name)
+
     def __reduce__(self):
         """Record where this sentinel is defined."""
+        # Avoid self.__class__ to ensure pickle data does not get locked to a subclass
         return (
-            Sentinel,  # Ensure pickle data does not get locked to a subclass
+            Sentinel._unpickle_fetch_sentinel,
             (  # Only the location of the sentinel needs to be stored
                 self._name,
                 self._module_name,
