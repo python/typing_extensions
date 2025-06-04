@@ -525,7 +525,7 @@ class BottomTypeTestsMixin:
             type(self.bottom_type)()
 
     def test_pickle(self):
-        for proto in range(pickle.HIGHEST_PROTOCOL):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             pickled = pickle.dumps(self.bottom_type, protocol=proto)
             self.assertIs(self.bottom_type, pickle.loads(pickled))
 
@@ -5904,7 +5904,7 @@ class ParamSpecTests(BaseTestCase):
         P_co = ParamSpec('P_co', covariant=True)
         P_contra = ParamSpec('P_contra', contravariant=True)
         P_default = ParamSpec('P_default', default=[int])
-        for proto in range(pickle.HIGHEST_PROTOCOL):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             with self.subTest(f'Pickle protocol {proto}'):
                 for paramspec in (P, P_co, P_contra, P_default):
                     z = pickle.loads(pickle.dumps(paramspec, proto))
@@ -6327,7 +6327,7 @@ class LiteralStringTests(BaseTestCase):
         self.assertIs(StrT.__bound__, LiteralString)
 
     def test_pickle(self):
-        for proto in range(pickle.HIGHEST_PROTOCOL):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             pickled = pickle.dumps(LiteralString, protocol=proto)
             self.assertIs(LiteralString, pickle.loads(pickled))
 
@@ -6374,7 +6374,7 @@ class SelfTests(BaseTestCase):
                 return (self, self)
 
     def test_pickle(self):
-        for proto in range(pickle.HIGHEST_PROTOCOL):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             pickled = pickle.dumps(Self, protocol=proto)
             self.assertIs(Self, pickle.loads(pickled))
 
@@ -6586,7 +6586,7 @@ class TypeVarTupleTests(BaseTestCase):
         Ts = TypeVarTuple('Ts')
         Ts_default = TypeVarTuple('Ts_default', default=Unpack[Tuple[int, str]])
 
-        for proto in range(pickle.HIGHEST_PROTOCOL):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             for typevartuple in (Ts, Ts_default):
                 z = pickle.loads(pickle.dumps(typevartuple, proto))
                 self.assertEqual(z.__name__, typevartuple.__name__)
@@ -7597,7 +7597,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         U_co = typing_extensions.TypeVar('U_co', covariant=True)
         U_contra = typing_extensions.TypeVar('U_contra', contravariant=True)
         U_default = typing_extensions.TypeVar('U_default', default=int)
-        for proto in range(pickle.HIGHEST_PROTOCOL):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             for typevar in (U, U_co, U_contra, U_default):
                 z = pickle.loads(pickle.dumps(typevar, proto))
                 self.assertEqual(z.__name__, typevar.__name__)
@@ -7746,7 +7746,7 @@ class TypeVarInferVarianceTests(BaseTestCase):
         global U, U_infer  # pickle wants to reference the class by name
         U = typing_extensions.TypeVar('U')
         U_infer = typing_extensions.TypeVar('U_infer', infer_variance=True)
-        for proto in range(pickle.HIGHEST_PROTOCOL):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             for typevar in (U, U_infer):
                 z = pickle.loads(pickle.dumps(typevar, proto))
                 self.assertEqual(z.__name__, typevar.__name__)
@@ -8351,7 +8351,7 @@ class DocTests(BaseTestCase):
 
     def test_pickle(self):
         doc_info = Doc("Who to say hi to")
-        for proto in range(pickle.HIGHEST_PROTOCOL):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             pickled = pickle.dumps(doc_info, protocol=proto)
             self.assertEqual(doc_info, pickle.loads(pickled))
 
