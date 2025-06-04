@@ -5290,6 +5290,8 @@ class TypedDictTests(BaseTestCase):
              'z': 'Required[undefined]'},
         )
 
+    def test_dunder_dict(self):
+        self.assertIsInstance(TypedDict.__dict__, dict)
 
 class AnnotatedTests(BaseTestCase):
 

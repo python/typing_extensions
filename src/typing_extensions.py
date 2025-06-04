@@ -1272,8 +1272,6 @@ else:
         return td
 
     class _TypedDictSpecialForm(_SpecialForm, _root=True):
-        __slots__ = ('_name', '__doc__', '_getitem')
-
         def __call__(
             self,
             typename,
