@@ -1030,13 +1030,19 @@ Capsule objects
 Sentinel objects
 ~~~~~~~~~~~~~~~~
 
-.. class:: Sentinel(name, repr=None)
+.. class:: Sentinel(name, module_name=None)
 
-   A type used to define sentinel values. The *name* argument should be the
-   name of the variable to which the return value shall be assigned.
+   A type used to define custom sentinel values.
 
-   If *repr* is provided, it will be used for the :meth:`~object.__repr__`
-   of the sentinel object. If not provided, ``"<name>"`` will be used.
+   *name* should be the qualified name of the variable to which
+   the return value shall be assigned.
+
+   *module_name* is the module where the sentinel is defined.
+   Defaults to the current modules ``__name__``.
+
+   All sentinels with the same *name* and *module_name* have the same identity.
+   Sentinel objects are tested using :py:ref:`is`.
+   Sentinel identity is preserved across :py:mod:`copy` and :py:mod:`pickle`.
 
    Example::
 
@@ -1049,6 +1055,24 @@ Sentinel objects
       ...         assert_type(arg, int)
       ...
       >>> func(MISSING)
+
+   Sentinels defined in a class scope must use fully qualified names.
+
+   Example::
+
+      >>> class MyClass:
+      ...     MISSING = Sentinel('MyClass.MISSING')
+
+   Calling the Sentinel class follows these rules for the return value:
+
+   1. If *name* and *module_name* were used in a previous call then return the same
+      object as that previous call.
+      This preserves the identity of the sentinel.
+   2. Otherwise if *module_name.name* already exists then return that object
+      even if that object is not a :class:`typing_extensions.Sentinel` type.
+      This enables forward compatibility with sentinel types from other libraries
+      (the inverse may not be true.)
+   3. Otherwise a new :class:`typing_extensions.Sentinel` is returned.
 
    .. versionadded:: 4.14.0
 
