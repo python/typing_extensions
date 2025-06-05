@@ -4168,6 +4168,10 @@ class Sentinel:
     *module_name* is the module where the sentinel is defined.
     Defaults to the current modules ``__name__``.
 
+    *repr*, if supplied, will be used for the repr of the sentinel object.
+    If not provided, *name* will be used.
+    Only the initial definition of the sentinel can configure *repr*.
+
     All sentinels with the same *name* and *module_name* have the same identity.
     The ``is`` operator is used to test if an object is a sentinel.
     Sentinel identity is preserved across copy and pickle.
@@ -4177,8 +4181,27 @@ class Sentinel:
         cls,
         name: str,
         module_name: typing.Optional[str] = None,
+        *,
+        repr: typing.Optional[str] = None,
     ):
         """Return an object with a consistent identity."""
+        if module_name is not None and repr is None:
+            # 'repr' used to be the 2nd positional argument but is now 'module_name'
+            # Test if 'module_name' is a module or is the old 'repr' argument
+            # Use 'repr=name' to suppress this check
+            try:
+                importlib.import_module(module_name)
+            except Exception:
+                repr = module_name
+                module_name = None
+                warnings.warn(
+                    "'repr' as a positional argument could be mistaken for the sentinels"
+                    " 'module_name'."
+                    f" Use keyword parameter repr={repr!r} instead.",
+                    category=DeprecationWarning,
+                    stacklevel=2,
+                )
+
         if module_name is None:
             module_name = _caller(default="")
 
@@ -4198,6 +4221,7 @@ class Sentinel:
         sentinel = super().__new__(cls)
         sentinel._name = name
         sentinel._module_name = module_name
+        sentinel._repr = repr if repr is not None else name
         return _sentinel_registry.setdefault(registry_key, sentinel)
 
     @staticmethod
@@ -4214,7 +4238,7 @@ class Sentinel:
             return None
 
     def __repr__(self) -> str:
-        return self._name
+        return self._repr
 
     if sys.version_info < (3, 11):
         # The presence of this method convinces typing._type_check
@@ -4232,7 +4256,8 @@ class Sentinel:
     @classmethod
     def _unpickle_fetch_sentinel(cls, name: str, module_name: str):
         """Unpickle using the sentinels location."""
-        return cls(name, module_name)
+        # Explicit repr=name because a saved module_name is known to be valid
+        return cls(name, module_name, repr=name)
 
     def __reduce__(self):
         """Record where this sentinel is defined."""
