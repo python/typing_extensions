@@ -5,6 +5,7 @@ import collections.abc
 import contextlib
 import enum
 import functools
+import importlib
 import inspect
 import io
 import keyword
@@ -4155,24 +4156,92 @@ else:
             )
 
 
-class Sentinel:
-    """Create a unique sentinel object.
+_sentinel_registry = {}
 
-    *name* should be the name of the variable to which the return value shall be assigned.
+def _unpickle_fetch_sentinel(name: str, module_name: str):
+    """Stable Sentinel unpickling function, fetch Sentinel at 'module_name.name'."""
+    # Explicit repr=name because a saved module_name is known to be valid
+    return Sentinel(name, module_name, repr=name)
+
+class Sentinel:
+    """A sentinel object.
+
+    *name* should be the qualified name of the variable to which
+    the return value shall be assigned.
+
+    *module_name* is the module where the sentinel is defined.
+    Defaults to the current modules ``__name__``.
 
     *repr*, if supplied, will be used for the repr of the sentinel object.
-    If not provided, "<name>" will be used.
+    If not provided, *name* will be used.
+    Only the initial definition of the sentinel can configure *repr*.
+
+    All sentinels with the same *name* and *module_name* have the same identity.
+    The ``is`` operator is used to test if an object is a sentinel.
+    Sentinel identity is preserved across copy and pickle.
     """
 
-    def __init__(
-        self,
+    def __new__(
+        cls,
         name: str,
+        module_name: typing.Optional[str] = None,
+        *,
         repr: typing.Optional[str] = None,
     ):
-        self._name = name
-        self._repr = repr if repr is not None else f'<{name}>'
+        """Return an object with a consistent identity."""
+        if module_name is not None and repr is None:
+            # 'repr' used to be the 2nd positional argument but is now 'module_name'
+            # Test if 'module_name' is a module or is the old 'repr' argument
+            # Use 'repr=name' to suppress this check
+            try:
+                importlib.import_module(module_name)
+            except Exception:
+                repr = module_name
+                module_name = None
+                warnings.warn(
+                    "'repr' as a positional argument could be mistaken for the sentinels"
+                    " 'module_name'."
+                    f" Use keyword parameter repr={repr!r} instead.",
+                    category=DeprecationWarning,
+                    stacklevel=2,
+                )
 
-    def __repr__(self):
+        if module_name is None:
+            module_name = _caller(default="")
+
+        registry_key = f"{module_name}-{name}"
+
+        # Check registered sentinels
+        sentinel = _sentinel_registry.get(registry_key, None)
+        if sentinel is not None:
+            return sentinel
+
+        # Import sentinel at module_name.name
+        sentinel = cls._import_sentinel(name, module_name)
+        if sentinel is not None:
+            return _sentinel_registry.setdefault(registry_key, sentinel)
+
+        # Create initial or anonymous sentinel
+        sentinel = super().__new__(cls)
+        sentinel._name = name
+        sentinel._module_name = module_name
+        sentinel._repr = repr if repr is not None else name
+        return _sentinel_registry.setdefault(registry_key, sentinel)
+
+    @staticmethod
+    def _import_sentinel(name: str, module_name: str):
+        """Return object `name` imported from `module_name`, otherwise return None."""
+        if not module_name:
+            return None
+        try:
+            module = importlib.import_module(module_name)
+            return operator.attrgetter(name)(module)
+        except ImportError:
+            return None
+        except AttributeError:
+            return None
+
+    def __repr__(self) -> str:
         return self._repr
 
     if sys.version_info < (3, 11):
@@ -4188,8 +4257,16 @@ class Sentinel:
         def __ror__(self, other):
             return typing.Union[other, self]
 
-    def __getstate__(self):
-        raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
+    def __reduce__(self):
+        """Record where this sentinel is defined."""
+        # Reduce callable must be at the top-level to be stable whenever Sentinel changes
+        return (
+            _unpickle_fetch_sentinel,
+            (  # Only the location of the sentinel needs to be stored
+                self._name,
+                self._module_name,
+            ),
+        )
 
 
 # Aliases for items that are in typing in all supported versions.
