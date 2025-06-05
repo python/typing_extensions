@@ -4158,6 +4158,10 @@ else:
 
 _sentinel_registry = {}
 
+def _unpickle_fetch_sentinel(name: str, module_name: str):
+    """Stable Sentinel unpickling function, fetch Sentinel at 'module_name.name'."""
+    # Explicit repr=name because a saved module_name is known to be valid
+    return Sentinel(name, module_name, repr=name)
 
 class Sentinel:
     """A sentinel object.
@@ -4253,17 +4257,11 @@ class Sentinel:
         def __ror__(self, other):
             return typing.Union[other, self]
 
-    @classmethod
-    def _unpickle_fetch_sentinel(cls, name: str, module_name: str):
-        """Unpickle using the sentinels location."""
-        # Explicit repr=name because a saved module_name is known to be valid
-        return cls(name, module_name, repr=name)
-
     def __reduce__(self):
         """Record where this sentinel is defined."""
-        # Avoid self.__class__ to ensure pickle data does not get locked to a subclass
+        # Reduce callable must be at the top-level to be stable whenever Sentinel changes
         return (
-            Sentinel._unpickle_fetch_sentinel,
+            _unpickle_fetch_sentinel,
             (  # Only the location of the sentinel needs to be stored
                 self._name,
                 self._module_name,
