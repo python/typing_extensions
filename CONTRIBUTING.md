@@ -24,8 +24,9 @@ Starting with version 4.0.0, `typing_extensions` uses
 [Semantic Versioning](https://semver.org/). See the documentation
 for more detail.
 
-## Development versions
-After a release the version is increased once in the [pyproject.toml](/pyproject.toml) file and appended with a `.dev` suffix, e.g. `4.0.1.dev`.
+## Development version
+After a release the version is increased once in [pyproject.toml](/pyproject.toml) and
+appended with a `.dev` suffix, e.g. `4.0.1.dev`.
 Further subsequent updates, i.e. to `.dev2`, are not planned between releases.
 
 # Type stubs
@@ -72,3 +73,6 @@ may have installed.
 
 - Release automation will finish the release. You'll have to manually
   approve the last step before upload.
+
+- After the release has been published on PyPI the version of the repositiory
+  is upgraded to the next [development versions](#development-version).
