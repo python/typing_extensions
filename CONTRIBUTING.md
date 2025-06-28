@@ -25,8 +25,8 @@ Starting with version 4.0.0, `typing_extensions` uses
 for more detail.
 
 ## Development versions
-After meaningful updates, but without concrete plans for a release, the version can pre increased once in [pyproject.toml](/pyproject.toml) file and appended with a `.dev` suffix, e.g. `4.0.1.dev`.
-Further development versions adjust their suffix in following increasing way `.dev1`, `.dev2`, ...
+After a release the version is increased once in the [pyproject.toml](/pyproject.toml) file and appended with a `.dev` suffix, e.g. `4.0.1.dev`.
+Further subsequent updates, i.e. to `.dev2`, are not planned between releases.
 
 # Type stubs
 
