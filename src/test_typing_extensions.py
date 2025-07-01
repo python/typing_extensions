@@ -9324,9 +9324,18 @@ class TestSentinels(BaseTestCase):
         self.assertIs(Sentinel._import_sentinel("nonexistent", ""), None)
         self.assertIs(Sentinel._import_sentinel("nonexistent", "nonexistent.nonexistent.nonexistent"), None)
 
-    def test_sentinel_picklable(self):
+    def test_sentinel_picklable_qualified(self):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             self.assertIs(self.SENTINEL, pickle.loads(pickle.dumps(self.SENTINEL, protocol=proto)))
+
+    def test_sentinel_picklable_anonymous(self):
+        anonymous_sentinel = Sentinel("anonymous_sentinel")  # Anonymous sentinel can not be pickled
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            with self.assertRaisesRegex(
+                pickle.PicklingError,
+                r"attribute lookup anonymous_sentinel on \w+ failed|not found as \w+.anonymous_sentinel"
+            ):
+                self.assertIs(anonymous_sentinel, pickle.loads(pickle.dumps(anonymous_sentinel, protocol=proto)))
 
 
 

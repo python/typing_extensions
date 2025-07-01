@@ -4158,16 +4158,6 @@ else:
 
 _sentinel_registry = {}
 
-def _unpickle_sentinel(
-    name: str,
-    module_name: str,
-    config: typing.Dict[str, typing.Any],
-    /,
-):
-    """Stable Sentinel unpickling function, get Sentinel at 'module_name.name'."""
-    # Explicit repr=name because a saved module_name is known to be valid
-    return Sentinel(name, module_name, repr=config.get("repr", name))
-
 class Sentinel:
     """A sentinel object.
 
@@ -4229,7 +4219,7 @@ class Sentinel:
         # Create initial or anonymous sentinel
         sentinel = super().__new__(cls)
         sentinel._name = name
-        sentinel._module_name = module_name
+        sentinel.__module__ = module_name  # Assign which module defined this instance
         sentinel._repr = repr if repr is not None else name
         return _sentinel_registry.setdefault(registry_key, sentinel)
 
@@ -4262,18 +4252,9 @@ class Sentinel:
         def __ror__(self, other):
             return typing.Union[other, self]
 
-    def __reduce__(self):
-        """Record where this sentinel is defined and its current parameters."""
-        config = {"repr": self._repr}
-        # Reduce callable must be at the top-level to be stable whenever Sentinel changes
-        return (
-            _unpickle_sentinel,
-            (
-                self._name,
-                self._module_name,
-                config,
-            ),
-        )
+    def __reduce__(self) -> str:
+        """Reduce this sentinel to a singleton."""
+        return self._name  # Module is set from __module__ attribute
 
 
 # Aliases for items that are in typing in all supported versions.
