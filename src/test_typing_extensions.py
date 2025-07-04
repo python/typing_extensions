@@ -9316,14 +9316,6 @@ class TestSentinels(BaseTestCase):
         self.assertIs(self.SENTINEL, copy.copy(self.SENTINEL))
         self.assertIs(self.SENTINEL, copy.deepcopy(self.SENTINEL))
 
-    def test_sentinel_import(self):
-        self.assertIs(Sentinel("TestSentinels"), TestSentinels)
-        self.assertIs(Sentinel._import_sentinel("TestSentinels.SENTINEL", __name__), TestSentinels.SENTINEL)
-        self.assertIs(Sentinel._import_sentinel("nonexistent", __name__), None)
-        self.assertIs(Sentinel._import_sentinel("TestSentinels.nonexistent", __name__), None)
-        self.assertIs(Sentinel._import_sentinel("nonexistent", ""), None)
-        self.assertIs(Sentinel._import_sentinel("nonexistent", "nonexistent.nonexistent.nonexistent"), None)
-
     def test_sentinel_picklable_qualified(self):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             self.assertIs(self.SENTINEL, pickle.loads(pickle.dumps(self.SENTINEL, protocol=proto)))

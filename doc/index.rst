@@ -1067,17 +1067,6 @@ Sentinel objects
       >>> class MyClass:
       ...     MISSING = Sentinel('MyClass.MISSING')
 
-   Calling the Sentinel class follows these rules for the return value:
-
-   1. If *name* and *module_name* were used in a previous call then return the same
-      object as that previous call.
-      This preserves the identity of the sentinel.
-   2. Otherwise if *module_name.name* already exists then return that object
-      even if that object is not a :class:`typing_extensions.Sentinel` type.
-      This enables forward compatibility with sentinel types from other libraries
-      (the inverse may not be true.)
-   3. Otherwise a new :class:`typing_extensions.Sentinel` is returned.
-
    .. versionadded:: 4.14.0
 
       See :pep:`661`

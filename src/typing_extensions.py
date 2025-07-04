@@ -4211,30 +4211,12 @@ class Sentinel:
         if sentinel is not None:
             return sentinel
 
-        # Import sentinel at module_name.name
-        sentinel = cls._import_sentinel(name, module_name)
-        if sentinel is not None:
-            return _sentinel_registry.setdefault(registry_key, sentinel)
-
         # Create initial or anonymous sentinel
         sentinel = super().__new__(cls)
         sentinel._name = name
         sentinel.__module__ = module_name  # Assign which module defined this instance
         sentinel._repr = repr if repr is not None else name
         return _sentinel_registry.setdefault(registry_key, sentinel)
-
-    @staticmethod
-    def _import_sentinel(name: str, module_name: str):
-        """Return object `name` imported from `module_name`, otherwise return None."""
-        if not module_name:
-            return None
-        try:
-            module = importlib.import_module(module_name)
-            return operator.attrgetter(name)(module)
-        except ImportError:
-            return None
-        except AttributeError:
-            return None
 
     def __repr__(self) -> str:
         return self._repr
