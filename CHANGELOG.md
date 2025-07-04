@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.14.1 (July 4, 2025)
 
 - Fix usage of `typing_extensions.TypedDict` nested inside other types
   (e.g., `typing.Type[typing_extensions.TypedDict]`). This is not allowed by the
