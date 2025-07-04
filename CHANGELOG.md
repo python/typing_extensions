@@ -1,6 +1,5 @@
 # Release 4.14.1 (July 4, 2025)
 
-- Fix access to `__dict__` on `typing_extensions.TypedDict`.
 - Fix usage of `typing_extensions.TypedDict` nested inside other types
   (e.g., `typing.Type[typing_extensions.TypedDict]`). This is not allowed by the
   type system but worked on older versions, so we maintain support.
