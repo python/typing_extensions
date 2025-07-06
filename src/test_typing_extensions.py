@@ -9278,7 +9278,11 @@ class TestSentinels(BaseTestCase):
     def test_sentinel_explicit_repr(self):
         sentinel_explicit_repr = Sentinel("sentinel_explicit_repr", repr="explicit_repr")
         self.assertEqual(repr(sentinel_explicit_repr), "explicit_repr")
-        self.assertEqual(repr(Sentinel("sentinel_explicit_repr")), "explicit_repr")
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"repr='sentinel_explicit_repr' conflicts with initial definition of repr='explicit_repr'"
+        ):
+            self.assertEqual(repr(Sentinel("sentinel_explicit_repr")), "explicit_repr")
 
     def test_sentinel_explicit_repr_deprecated(self):
         with self.assertWarnsRegex(
@@ -9287,7 +9291,11 @@ class TestSentinels(BaseTestCase):
         ):
             deprecated_repr = Sentinel("deprecated_repr", "explicit_repr")
         self.assertEqual(repr(deprecated_repr), "explicit_repr")
-        self.assertEqual(repr(Sentinel("deprecated_repr")), "explicit_repr")
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"repr='deprecated_repr' conflicts with initial definition of repr='explicit_repr'"
+        ):
+            self.assertEqual(repr(Sentinel("deprecated_repr")), "explicit_repr")
 
     @skipIf(sys.version_info < (3, 10), reason='New unions not available in 3.9')
     def test_sentinel_type_expression_union(self):

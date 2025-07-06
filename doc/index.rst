@@ -1042,7 +1042,6 @@ Sentinel objects
 
    If *repr* is provided, it will be used for the :meth:`~object.__repr__`
    of the sentinel object. If not provided, *name* will be used.
-   Only the initial definition of the sentinel can configure *repr*.
 
    All sentinels with the same *name* and *module_name* have the same identity.
    Sentinel objects are tested using :py:ref:`is`.

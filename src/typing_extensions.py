@@ -4169,7 +4169,6 @@ class Sentinel:
 
     *repr*, if supplied, will be used for the repr of the sentinel object.
     If not provided, *name* will be used.
-    Only the initial definition of the sentinel can configure *repr*.
 
     All sentinels with the same *name* and *module_name* have the same identity.
     The ``is`` operator is used to test if an object is a sentinel.
@@ -4206,16 +4205,26 @@ class Sentinel:
 
         registry_key = f"{module_name}-{name}"
 
+        repr = repr if repr is not None else name
+
         # Check registered sentinels
         sentinel = _sentinel_registry.get(registry_key, None)
         if sentinel is not None:
+            if sentinel._repr != repr:
+                warnings.warn(
+                    f"repr={repr!r} conflicts with initial definition of "
+                    f"repr={sentinel._repr!r} and will be ignored"
+                    "\nUsage of repr should be consistent across definitions",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
             return sentinel
 
         # Create initial or anonymous sentinel
         sentinel = super().__new__(cls)
         sentinel._name = name
         sentinel.__module__ = module_name  # Assign which module defined this instance
-        sentinel._repr = repr if repr is not None else name
+        sentinel._repr = repr
         return _sentinel_registry.setdefault(registry_key, sentinel)
 
     def __repr__(self) -> str:
