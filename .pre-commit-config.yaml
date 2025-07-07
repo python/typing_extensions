@@ -41,6 +41,10 @@ repos:
           # and checks these with shellcheck. This is arguably its most useful feature,
           # but the integration only works if shellcheck is installed
           - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@v0.10.0"
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v1.11.0
+    hooks:
+      - id: zizmor
   - repo: meta
     hooks:
       - id: check-hooks-apply
