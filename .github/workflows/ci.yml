@@ -166,7 +166,8 @@ jobs:
         run: |
           # List the files to see what we have
           echo "Combining coverage files:"
-          coverage combine --data-file=.coverage .coverage*
+          ls -aR .coverage*
+          coverage combine .coverage*
           # add -i to ignore code in ephemeral python files created in temporary
           # directories during tests; this will result in warnings in the report
           coverage report -i -m
