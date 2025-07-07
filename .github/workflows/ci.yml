@@ -177,7 +177,7 @@ jobs:
           echo "Combining coverage files:"
           coverage combine --data-file=.coverage .coverage*
           # add -i to ignore parsed code of temp files.
-          coverage report -i
+          coverage report -i -m
           coverage xml -i
 
       - name: Code Coverage Report
