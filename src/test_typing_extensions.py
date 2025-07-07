@@ -6887,7 +6887,6 @@ class AllTests(BaseTestCase):
             self.fail('Module does not compile with optimize=2 (-OO flag).')
 
 
-
 class CoolEmployee(NamedTuple):
     name: str
     cool: int
