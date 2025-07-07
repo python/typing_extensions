@@ -33,7 +33,7 @@ jobs:
       - name: Check package metadata
         env:
           GITHUB_REF: ${{ github.ref }}
-        run: python scripts/check_package.py "${github.ref}"
+        run: python scripts/check_package.py "${GITHUB_REF}"
       - name: Install pypa/build
         run: |
           # Be wary of running `pip install` here, since it becomes easy for us to
