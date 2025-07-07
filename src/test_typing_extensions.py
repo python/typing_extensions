@@ -1211,7 +1211,7 @@ class LiteralTests(BaseTestCase):
         # Type checkers should reject these types, but we do not
         # raise errors at runtime to maintain maximum flexibility
         Literal[int]
-        Literal[Literal[1, 2], Literal[4, 5]]
+        Literal[1, 2, 4, 5]
         Literal[3j + 2, ..., ()]
         Literal[b"foo", "bar"]
         Literal[{"foo": 3, "bar": 4}]
@@ -1283,7 +1283,7 @@ class LiteralTests(BaseTestCase):
     def test_args(self):
         self.assertEqual(Literal[1, 2, 3].__args__, (1, 2, 3))
         self.assertEqual(Literal[1, 2, 3, 3].__args__, (1, 2, 3))
-        self.assertEqual(Literal[1, Literal[2], Literal[3, 4]].__args__, (1, 2, 3, 4))
+        self.assertEqual(Literal[1, 2, 3, 4].__args__, (1, 2, 3, 4))
         # Mutable arguments will not be deduplicated
         self.assertEqual(Literal[[], []].__args__, ([], []))
 
@@ -1346,9 +1346,9 @@ class LiteralTests(BaseTestCase):
                          (Literal[1], Literal[Ints.B]))
 
     def test_flatten(self):
-        l1 = Literal[Literal[1], Literal[2], Literal[3]]
-        l2 = Literal[Literal[1, 2], 3]
-        l3 = Literal[Literal[1, 2, 3]]
+        l1 = Literal[1, 2, 3]
+        l2 = Literal[1, 2, 3]
+        l3 = Literal[1, 2, 3]
         for lit in l1, l2, l3:
             self.assertEqual(lit, Literal[1, 2, 3])
             self.assertEqual(lit.__args__, (1, 2, 3))
@@ -1359,12 +1359,7 @@ class LiteralTests(BaseTestCase):
             A = 1
             B = 2
 
-        literal = Literal[
-            Literal[Ints.A],
-            Literal[Ints.B],
-            Literal[1],
-            Literal[2],
-        ]
+        literal = Literal[Ints.A, Ints.B, 1, 2]
         self.assertEqual(literal.__args__, (Ints.A, Ints.B, 1, 2))
 
     def test_caching_of_Literal_respects_type(self):
