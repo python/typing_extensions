@@ -114,3 +114,9 @@ ignore = [
 [tool.ruff.lint.isort]
 extra-standard-library = ["tomllib"]
 known-first-party = ["typing_extensions", "_typed_dict_test_helper"]
+
+[tool.coverage.report]
+show_missing = true
+# Omit files that are created in temporary directories during tests.
+omit = ["inspect*", "ann*"]
+ignore_errors = true
