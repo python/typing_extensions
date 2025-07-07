@@ -6886,6 +6886,13 @@ class AllTests(BaseTestCase):
         except subprocess.CalledProcessError:
             self.fail('Module does not compile with optimize=2 (-OO flag).')
 
+    def test_typing_extensions_is_not_installed(self):
+        #import importlib
+        #with self.assertRaises(ModuleNotFoundError):
+        #    importlib.import_module("typing_extensions")
+        # Importlib tests fail on GitHub CI
+        # weak alternative to check that no version in site-packages is used
+        self.assertIn("src/typing_extensions.py", typing_extensions.__file__)
 
 class CoolEmployee(NamedTuple):
     name: str

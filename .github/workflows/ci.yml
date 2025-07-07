@@ -64,13 +64,28 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
+      - name: Install coverage
+        run: |
+          # Be wary that this does not install typing_extensions in the future
+          pip install coverage
+        
       - name: Test typing_extensions
         run: |
           # Be wary of running `pip install` here, since it becomes easy for us to
           # accidentally pick up typing_extensions as installed by a dependency
           cd src
           python --version  # just to make sure we're running the right one
-          python -m unittest test_typing_extensions.py
+          export COVERAGE_FILE=.coverage_${{ matrix.python-version }}
+          # Run with coverage omit files that are executed in tempfiles
+          coverage run --omit ann_module*,inspect* -m unittest test_typing_extensions.py
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: .coverage_${{ matrix.python-version }}
+          path: ./src/.coverage*
+          include-hidden-files: true
+          compression-level: 0 # no compression
 
       - name: Test CPython typing test suite
         # Test suite fails on PyPy even without typing_extensions
@@ -80,7 +95,7 @@ jobs:
           # Run the typing test suite from CPython with typing_extensions installed,
           # because we monkeypatch typing under some circumstances.
           python -c 'import typing_extensions; import test.__main__' test_typing -v
-
+ 
   linting:
     name: Lint
 
@@ -130,3 +145,36 @@ jobs:
               title: `Daily tests failed on ${new Date().toDateString()}`,
               body: "Runs listed here: https://github.com/python/typing_extensions/actions/workflows/ci.yml",
             })
+
+  report-coverage:
+    name: Report coverage
+
+    runs-on: ubuntu-latest
+
+    needs: [tests]
+
+    if: ${{ always() }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3"
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: .coverage_*
+          path: .
+          # merge only when files are named differently
+          merge-multiple: true
+      - name: Install dependencies
+        run: pip install coverage
+      - name: Combine coverage results
+        run: |
+          # List the files to see what we have
+          echo "Combining coverage files:"
+          coverage combine --data-file=.coverage .coverage*
+          # add -i to ignore parsed code of temp files.
+          coverage report -i
+          coverage xml -i
