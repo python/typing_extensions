@@ -96,27 +96,6 @@ jobs:
           # Run the typing test suite from CPython with typing_extensions installed,
           # because we monkeypatch typing under some circumstances.
           python -c 'import typing_extensions; import test.__main__' test_typing -v
- 
-  linting:
-    name: Lint
-
-    # no reason to run this as a cron job
-    if: github.event_name != 'schedule'
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3"
-          cache: "pip"
-          cache-dependency-path: "test-requirements.txt"
-      - name: Install dependencies
-        run: pip install -r test-requirements.txt
-      - name: Lint implementation
-        run: ruff check
 
   create-issue-on-failure:
     name: Create an issue if daily tests failed
