@@ -35,7 +35,7 @@ jobs:
       github.repository == 'python/typing_extensions'
       || github.event_name != 'schedule'
     steps:
-      - run: true
+      - run: "true"
 
   pydantic:
     name: pydantic tests
