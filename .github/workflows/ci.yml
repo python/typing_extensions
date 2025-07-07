@@ -78,6 +78,7 @@ jobs:
           cd src
           python --version  # just to make sure we're running the right one
           # Run tests under coverage
+          export COVERAGE_FILE=.coverage_${{ matrix.python-version }}
           python -m coverage run -m unittest test_typing_extensions.py
       - name: Test typing_extensions no coverage on pypy
         if: ${{ startsWith(matrix.python-version, 'pypy') }}
