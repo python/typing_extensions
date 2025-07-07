@@ -169,8 +169,6 @@ jobs:
           echo "Combining coverage files..."
           ls -aR .coverage*
           coverage combine .coverage*
-          # add -i to ignore code in ephemeral python files created in temporary
-          # directories during tests; this will result in warnings in the report
           echo "Creating coverage report..."
           coverage report
           coverage xml
