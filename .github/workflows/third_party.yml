@@ -63,6 +63,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
+          persist-credentials: false
       - name: Add local version of typing_extensions as a dependency
         run: cd pydantic; uv add --editable ../typing-extensions-latest
       - name: Install pydantic test dependencies
@@ -94,6 +95,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
+          persist-credentials: false
       - name: Install typing_inspect test dependencies
         run: |
           set -x
@@ -131,6 +133,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
+          persist-credentials: false
       - name: Install pycroscope test requirements
         run: |
           set -x
@@ -168,6 +171,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
+          persist-credentials: false
       - name: Install typeguard test requirements
         run: |
           set -x
@@ -205,6 +209,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
+          persist-credentials: false
       - name: Configure git for typed-argument-parser tests
         # typed-argument parser does this in their CI,
         # and the tests fail unless we do this
@@ -249,6 +254,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
+          persist-credentials: false
       - name: Install mypy test requirements
         run: |
           set -x
@@ -284,6 +290,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
+          persist-credentials: false
       - name: Install pdm for cattrs
         run: pip install pdm
       - name: Add latest typing-extensions as a dependency
@@ -326,6 +333,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
+          persist-credentials: false
       - name: Install sqlalchemy test dependencies
         run: uv pip install --system tox setuptools
       - name: List installed dependencies
@@ -362,6 +370,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
+          persist-credentials: false
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Run litestar tests
