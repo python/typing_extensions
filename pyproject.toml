@@ -114,5 +114,3 @@ ignore = [
 [tool.ruff.lint.isort]
 extra-standard-library = ["tomllib"]
 known-first-party = ["typing_extensions", "_typed_dict_test_helper"]
-
-
