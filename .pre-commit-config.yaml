@@ -21,6 +21,8 @@ repos:
     rev: 0.33.0
     hooks:
       - id: check-dependabot
+      - id: check-github-workflows
+      - id: check-readthedocs
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.24.1
     hooks:
@@ -30,6 +32,11 @@ repos:
     rev: v1.7.7
     hooks:
       - id: actionlint
+        additional_dependencies:
+          # actionlint has a shellcheck integration which extracts shell scripts in `run:` steps from GitHub Actions
+          # and checks these with shellcheck. This is arguably its most useful feature,
+          # but the integration only works if shellcheck is installed
+          - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@v0.10.0"
   - repo: https://github.com/woodruffw/zizmor-pre-commit
     rev: v1.11.0
     hooks:

@@ -69,9 +69,10 @@ jobs:
           path: dist/
       - name: Install wheel
         run: |
-          export path_to_file=$(find dist -type f -name "typing_extensions-*.whl")
+          path_to_file="$(find dist -type f -name "typing_extensions-*.whl")"
+          export path_to_file
           echo "::notice::Installing wheel: $path_to_file"
-          python -m pip install --user $path_to_file
+          python -m pip install --user "$path_to_file"
           python -m pip list
       - name: Run typing_extensions tests against installed package
         run: rm src/typing_extensions.py && python src/test_typing_extensions.py
@@ -97,10 +98,11 @@ jobs:
           path: dist/
       - name: Unpack and test source distribution
         run: |
-          export path_to_file=$(find dist -type f -name "typing_extensions-*.tar.gz")
+          path_to_file="$(find dist -type f -name "typing_extensions-*.tar.gz")"
+          export path_to_file
           echo "::notice::Unpacking source distribution: $path_to_file"
-          tar xzf $path_to_file -C dist/
-          cd ${path_to_file%.tar.gz}/src
+          tar xzf "$path_to_file" -C dist/
+          cd "${path_to_file%.tar.gz}/src"
           python test_typing_extensions.py
 
   test-sdist-installed:
@@ -124,9 +126,10 @@ jobs:
           path: dist/
       - name: Install source distribution
         run: |
-          export path_to_file=$(find dist -type f -name "typing_extensions-*.tar.gz")
+          path_to_file="$(find dist -type f -name "typing_extensions-*.tar.gz")"
+          export path_to_file
           echo "::notice::Installing source distribution: $path_to_file"
-          python -m pip install --user $path_to_file
+          python -m pip install --user "$path_to_file"
           python -m pip list
       - name: Run typing_extensions tests against installed package
         run: rm src/typing_extensions.py && python src/test_typing_extensions.py
@@ -154,6 +157,6 @@ jobs:
           name: python-package-distributions
           path: dist/
       - name: Ensure exactly one sdist and one wheel have been downloaded
-        run: test $(ls dist/*.tar.gz | wc -l) = 1 && test $(ls dist/*.whl | wc -l) = 1
+        run: test "$(find dist/*.tar.gz | wc -l | xargs)" = 1 && test "$(find dist/*.whl | wc -l | xargs)" = 1
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
