@@ -165,13 +165,14 @@ jobs:
       - name: Combine coverage results
         run: |
           # List the files to see what we have
-          echo "Combining coverage files:"
+          echo "Combining coverage files..."
           ls -aR .coverage*
           coverage combine .coverage*
           # add -i to ignore code in ephemeral python files created in temporary
           # directories during tests; this will result in warnings in the report
-          coverage report -i -m
-          coverage xml -i
+          echo "Creating coverage report..."
+          coverage report -i -m --omit inspect*,ann*
+          coverage xml -i --omit inspect*,ann*
 
       - name: Code Coverage Report
         uses: irongut/CodeCoverageSummary@v1.3.0
