@@ -6,10 +6,10 @@ build-backend = "flit_core.buildapi"
 # Project metadata
 [project]
 name = "typing_extensions"
-version = "4.12.2"
-description = "Backported and Experimental Type Hints for Python 3.8+"
+version = "4.14.1"
+description = "Backported and Experimental Type Hints for Python 3.9+"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = "PSF-2.0"
 license-files = ["LICENSE"]
 keywords = [
@@ -34,12 +34,12 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development",
 ]
 
@@ -63,7 +63,7 @@ exclude = []
 
 [tool.ruff]
 line-length = 90
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 select = [
@@ -96,6 +96,9 @@ ignore = [
     "RUF022",
     "RUF023",
     "RUF041",
+    # Ruff doesn't understand the globals() assignment; we test __all__
+    # directly in test_all_names_in___all__.
+    "F822",
 ]
 
 [tool.ruff.lint.per-file-ignores]

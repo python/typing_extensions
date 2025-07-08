@@ -10,4 +10,3 @@ build:
 
 sphinx:
   configuration: doc/conf.py
-

@@ -35,7 +35,7 @@ jobs:
       github.repository == 'python/typing_extensions'
       || github.event_name != 'schedule'
     steps:
-      - run: true
+      - run: "true"
 
   pydantic:
     name: pydantic tests
@@ -98,7 +98,7 @@ jobs:
         run: |
           set -x
           cd typing_inspect
-          uv pip install --system -r test-requirements.txt --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
         run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
@@ -108,8 +108,8 @@ jobs:
           cd typing_inspect
           pytest
 
-  pyanalyze:
-    name: pyanalyze tests
+  pycroscope:
+    name: pycroscope tests
     needs: skip-schedule-on-fork
     strategy:
       fail-fast: false
@@ -125,25 +125,25 @@ jobs:
           allow-prereleases: true
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      - name: Check out pyanalyze
-        run: git clone --depth=1 https://github.com/quora/pyanalyze.git || git clone --depth=1 https://github.com/quora/pyanalyze.git
+      - name: Check out pycroscope
+        run: git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git || git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git
       - name: Checkout typing_extensions
         uses: actions/checkout@v4
         with:
           path: typing-extensions-latest
-      - name: Install pyanalyze test requirements
+      - name: Install pycroscope test requirements
         run: |
           set -x
-          cd pyanalyze
-          uv pip install --system 'pyanalyze[tests] @ .' --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          cd pycroscope
+          uv pip install --system 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
         run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
-      - name: Run pyanalyze tests
+      - name: Run pycroscope tests
         run: |
-          cd pyanalyze
-          pytest pyanalyze/
+          cd pycroscope
+          pytest pycroscope/
 
   typeguard:
     name: typeguard tests
@@ -172,7 +172,7 @@ jobs:
         run: |
           set -x
           cd typeguard
-          uv pip install --system "typeguard[test] @ ."  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
         run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
@@ -215,8 +215,8 @@ jobs:
         run: |
           set -x
           cd typed-argument-parser
-          uv pip install --system "typed-argument-parser @ ."  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
-          uv pip install --system pytest  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install --system pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
         run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
@@ -253,7 +253,7 @@ jobs:
         run: |
           set -x
           cd mypy
-          uv pip install --system -r test-requirements.txt  --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)
+          uv pip install --system -r test-requirements.txt  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install --system -e .
       - name: Install typing_extensions latest
         run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
@@ -270,8 +270,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # skip 3.13 because msgspec doesn't support 3.13 yet
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -299,6 +298,76 @@ jobs:
       - name: Run cattrs tests
         run: cd cattrs; pdm run pytest tests
 
+  sqlalchemy:
+    name: sqlalchemy tests
+    needs: skip-schedule-on-fork
+    strategy:
+      fail-fast: false
+      matrix:
+        # PyPy is deliberately omitted here, since SQLAlchemy's tests
+        # fail on PyPy for reasons unrelated to typing_extensions.
+        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        checkout-ref: [ "main", "rel_2_0" ]
+    # sqlalchemy tests fail when using the Ubuntu 24.04 runner
+    # https://github.com/sqlalchemy/sqlalchemy/commit/8d73205f352e68c6603e90494494ef21027ec68f
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Checkout sqlalchemy
+        run: git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git || git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v4
+        with:
+          path: typing-extensions-latest
+      - name: Install sqlalchemy test dependencies
+        run: uv pip install --system tox setuptools
+      - name: List installed dependencies
+        # Note: tox installs SQLAlchemy and its dependencies in a different isolated
+        # environment before running the tests. To see the dependencies installed
+        # in the test environment, look for the line 'freeze> python -m pip freeze --all'
+        # in the output of the test step below.
+        run: uv pip list
+      - name: Run sqlalchemy tests
+        run: |
+          cd sqlalchemy
+          tox -e github-nocext \
+            --force-dep "typing-extensions @ file://$(pwd)/../typing-extensions-latest" \
+            -- -q --nomemory --notimingintensive
+
+
+  litestar:
+    name: litestar tests
+    needs: skip-schedule-on-fork
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Checkout litestar
+        run: git clone --depth=1 https://github.com/litestar-org/litestar.git || git clone --depth=1 https://github.com/litestar-org/litestar.git
+      - name: Checkout typing_extensions
+        uses: actions/checkout@v4
+        with:
+          path: typing-extensions-latest
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Run litestar tests
+        run: uv run --with=../typing-extensions-latest -- python -m pytest tests/unit/test_typing.py tests/unit/test_dto
+        working-directory: litestar
+
   create-issue-on-failure:
     name: Create an issue if daily tests failed
     runs-on: ubuntu-latest
@@ -306,11 +375,12 @@ jobs:
     needs:
       - pydantic
       - typing_inspect
-      - pyanalyze
+      - pycroscope
       - typeguard
       - typed-argument-parser
       - mypy
       - cattrs
+      - sqlalchemy
 
     if: >-
         ${{
@@ -320,11 +390,12 @@ jobs:
           && (
             needs.pydantic.result == 'failure'
             || needs.typing_inspect.result == 'failure'
-            || needs.pyanalyze.result == 'failure'
+            || needs.pycroscope.result == 'failure'
             || needs.typeguard.result == 'failure'
             || needs.typed-argument-parser.result == 'failure'
             || needs.mypy.result == 'failure'
             || needs.cattrs.result == 'failure'
+            || needs.sqlalchemy.result == 'failure'
           )
         }}
 
