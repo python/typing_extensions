@@ -16,7 +16,7 @@ class Foo(TypedDict):
 
 
 class FooGeneric(TypedDict, Generic[T]):
-    a: Optional[T]  # noqa: UP045 while < (3, 10)
+    a: Optional[T]
 
 
 class VeryAnnotated(TypedDict, total=False):
