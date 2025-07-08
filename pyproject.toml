@@ -91,10 +91,13 @@ ignore = [
     "UP019",
     "UP035",
     "UP038",
+    "UP045",  # X | None instead of Optional[X]
     # Not relevant here
-    "RUF012",
-    "RUF022",
-    "RUF023",
+    "RUF012",  # Use ClassVar for mutables
+    "RUF022",  # Unsorted __all__
+    "RUF023",  # Unsorted __slots__
+    "B903",  # Use dataclass / namedtuple
+    "RUF031",  # parentheses for tuples in subscripts
     # Ruff doesn't understand the globals() assignment; we test __all__
     # directly in test_all_names_in___all__.
     "F822",
@@ -109,6 +112,9 @@ ignore = [
     "E306",
     "E501",
     "E701",
+    # Harmful for tests if applied.
+    "RUF036",  # None not at end of Union
+    "RUF041",  # nested Literal
 ]
 
 [tool.ruff.lint.isort]
