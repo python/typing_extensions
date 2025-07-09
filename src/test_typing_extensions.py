@@ -1207,13 +1207,15 @@ class LiteralTests(BaseTestCase):
 
         self.assertEqual(Literal[My.A].__args__, (My.A,))
 
-    def test_illegal_parameters_do_not_raise_runtime_errors(self):
+    def test_strange_parameters_are_allowed(self):
+        # These are explicitly allowed by the typing spec
+        Literal[Literal[1, 2], Literal[4, 5]]
+        Literal[b"foo", "bar"]
+
         # Type checkers should reject these types, but we do not
         # raise errors at runtime to maintain maximum flexibility
         Literal[int]
-        Literal[Literal[1, 2], Literal[4, 5]]
         Literal[3j + 2, ..., ()]
-        Literal[b"foo", "bar"]
         Literal[{"foo": 3, "bar": 4}]
         Literal[T]
 
