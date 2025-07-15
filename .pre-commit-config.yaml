@@ -47,3 +47,6 @@ repos:
   - repo: meta
     hooks:
       - id: check-hooks-apply
+
+ci:
+  autoupdate_schedule: quarterly
