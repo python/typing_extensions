@@ -9271,16 +9271,33 @@ class EvaluateForwardRefTests(BaseTestCase):
 
 
 class TestSentinels(BaseTestCase):
-    def test_sentinel_no_repr(self):
-        sentinel_no_repr = Sentinel('sentinel_no_repr')
+    SENTINEL = Sentinel("TestSentinels.SENTINEL")
 
-        self.assertEqual(sentinel_no_repr._name, 'sentinel_no_repr')
-        self.assertEqual(repr(sentinel_no_repr), '<sentinel_no_repr>')
+    def test_sentinel_repr(self):
+        self.assertEqual(repr(TestSentinels.SENTINEL), "TestSentinels.SENTINEL")
+        self.assertEqual(repr(Sentinel("sentinel")), "sentinel")
 
     def test_sentinel_explicit_repr(self):
-        sentinel_explicit_repr = Sentinel('sentinel_explicit_repr', repr='explicit_repr')
+        sentinel_explicit_repr = Sentinel("sentinel_explicit_repr", repr="explicit_repr")
+        self.assertEqual(repr(sentinel_explicit_repr), "explicit_repr")
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"repr='sentinel_explicit_repr' conflicts with initial definition of repr='explicit_repr'"
+        ):
+            self.assertEqual(repr(Sentinel("sentinel_explicit_repr")), "explicit_repr")
 
-        self.assertEqual(repr(sentinel_explicit_repr), 'explicit_repr')
+    def test_sentinel_explicit_repr_deprecated(self):
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"Use keyword parameter repr='explicit_repr' instead"
+        ):
+            deprecated_repr = Sentinel("deprecated_repr", "explicit_repr")
+        self.assertEqual(repr(deprecated_repr), "explicit_repr")
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"repr='deprecated_repr' conflicts with initial definition of repr='explicit_repr'"
+        ):
+            self.assertEqual(repr(Sentinel("deprecated_repr")), "explicit_repr")
 
     @skipIf(sys.version_info < (3, 10), reason='New unions not available in 3.9')
     def test_sentinel_type_expression_union(self):
@@ -9300,13 +9317,28 @@ class TestSentinels(BaseTestCase):
         ):
             sentinel()
 
-    def test_sentinel_not_picklable(self):
-        sentinel = Sentinel('sentinel')
-        with self.assertRaisesRegex(
-            TypeError,
-            "Cannot pickle 'Sentinel' object"
-        ):
-            pickle.dumps(sentinel)
+    def test_sentinel_identity(self):
+        self.assertIs(TestSentinels.SENTINEL, Sentinel("TestSentinels.SENTINEL"))
+        self.assertIs(Sentinel("SENTINEL"), Sentinel("SENTINEL", __name__))
+        self.assertIsNot(TestSentinels.SENTINEL, Sentinel("SENTINEL"))
+
+    def test_sentinel_copy(self):
+        self.assertIs(self.SENTINEL, copy.copy(self.SENTINEL))
+        self.assertIs(self.SENTINEL, copy.deepcopy(self.SENTINEL))
+
+    def test_sentinel_picklable_qualified(self):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            self.assertIs(self.SENTINEL, pickle.loads(pickle.dumps(self.SENTINEL, protocol=proto)))
+
+    def test_sentinel_picklable_anonymous(self):
+        anonymous_sentinel = Sentinel("anonymous_sentinel")  # Anonymous sentinel can not be pickled
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            with self.assertRaisesRegex(
+                pickle.PicklingError,
+                r"attribute lookup anonymous_sentinel on \w+ failed|not found as \w+.anonymous_sentinel"
+            ):
+                self.assertIs(anonymous_sentinel, pickle.loads(pickle.dumps(anonymous_sentinel, protocol=proto)))
+
 
 
 if __name__ == '__main__':
