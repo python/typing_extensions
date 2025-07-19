@@ -291,19 +291,16 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
-      - name: Install pdm for cattrs
-        run: pip install pdm
-      - name: Add latest typing-extensions as a dependency
-        run: |
-          cd cattrs
-          pdm remove typing-extensions
-          pdm add --dev ../typing-extensions-latest
-      - name: Install cattrs test dependencies
-        run: cd cattrs; pdm install --dev -G :all
-      - name: List all installed dependencies
-        run: cd cattrs; pdm list -vv
-      - name: Run cattrs tests
-        run: cd cattrs; pdm run pytest tests
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Add local version of typing_extensions as a dependency
+        run: cd cattrs; uv add --editable ../typing-extensions-latest
+      - name: Install test dependencies
+        run: cd cattrs; uv sync --group test --all-extras
+      - name: List installed dependencies
+        run: cd cattrs; uv pip list
+      - name: Run tests
+        run: cd cattrs; uv run pytest tests
 
   sqlalchemy:
     name: sqlalchemy tests
