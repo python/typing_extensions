@@ -1,3 +1,8 @@
+# Unreleased
+
+- Add the `@typing_extensions.solid_base` decorator, as specified
+  in PEP 800. Patch by Jelle Zijlstra.
+
 # Release 4.14.1 (July 4, 2025)
 
 - Fix usage of `typing_extensions.TypedDict` nested inside other types

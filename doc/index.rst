@@ -748,6 +748,17 @@ Decorators
    improved, and ``typing_extensions`` backports these performance
    improvements.
 
+.. decorator:: solid_base
+
+   See :pep:`800`. A class decorator that marks a class as a "solid base", meaning that
+   child classes of the decorated class cannot inherit from other solid bases that are not
+   parent classes of the decorated class.
+
+   This helps type checkers to detect unreachable code and to understand when two types
+   can overlap.
+
+   .. versionadded:: 4.15.0
+
 Functions
 ~~~~~~~~~
 

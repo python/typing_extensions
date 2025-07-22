@@ -315,6 +315,32 @@ else:
         return f
 
 
+if hasattr(typing, "solid_base"):
+    solid_base = typing.solid_base
+else:
+    def solid_base(cls):
+        """This decorator marks a class a solid base.
+        Child classes of a solid base cannot inherit from other solid bases that are
+        not parent classes of the solid base.
+
+        For example:
+
+            @solid_base
+            class Solid1: pass
+
+            @solid_base
+            class Solid2: pass
+
+            class Solid3(Solid1, Solid2): pass  # Type checker error
+
+        Type checkers can use solid bases to detect unreachable code
+        and determine when two types can overlap.
+
+        See PEP 800."""
+        cls.__solid_base__ = True
+        return cls
+
+
 def IntVar(name):
     return typing.TypeVar(name)
 
