@@ -321,6 +321,7 @@ if hasattr(typing, "solid_base"):
 else:
     def solid_base(cls):
         """This decorator marks a class a solid base.
+
         Child classes of a solid base cannot inherit from other solid bases that are
         not parent classes of the solid base.
 
