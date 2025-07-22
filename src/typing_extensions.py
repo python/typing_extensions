@@ -334,7 +334,7 @@ else:
 
             class Solid3(Solid1, Solid2): pass  # Type checker error
 
-        Type checkers can use solid bases to detect unreachable code
+        Type checkers can use knowledge of solid bases to detect unreachable code
         and determine when two types can overlap.
 
         See PEP 800."""
