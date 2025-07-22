@@ -93,6 +93,7 @@ __all__ = [
     'reveal_type',
     'runtime',
     'runtime_checkable',
+    'solid_base',
     'Text',
     'TypeAlias',
     'TypeAliasType',
