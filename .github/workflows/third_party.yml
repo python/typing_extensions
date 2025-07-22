@@ -94,16 +94,17 @@ jobs:
       - name: Install typing_inspect test dependencies
         run: |
           set -x
+          uv venv .venv
           cd typing_inspect
-          uv pip install --system -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
-        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
+        run: uv pip install "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run typing_inspect tests
         run: |
           cd typing_inspect
-          pytest
+          uv run pytest
 
   pycroscope:
     name: pycroscope tests
@@ -129,10 +130,11 @@ jobs:
       - name: Install pycroscope test requirements
         run: |
           set -x
+          uv venv .venv
           cd pycroscope
-          uv pip install --system 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
-        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
+        run: uv pip install "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run pycroscope tests
@@ -164,17 +166,18 @@ jobs:
       - name: Install typeguard test requirements
         run: |
           set -x
+          uv venv .venv
           cd typeguard
-          uv pip install --system "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
-        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
+        run: uv pip install "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run typeguard tests
         run: |
           cd typeguard
           export PYTHON_COLORS=0  # A test fails if tracebacks are colorized
-          pytest
+          uv run pytest
 
   typed-argument-parser:
     name: typed-argument-parser tests
@@ -206,17 +209,18 @@ jobs:
       - name: Install typed-argument-parser test requirements
         run: |
           set -x
+          uv venv .venv
           cd typed-argument-parser
-          uv pip install --system "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-          uv pip install --system pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
-        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
+        run: uv pip install "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run typed-argument-parser tests
         run: |
           cd typed-argument-parser
-          pytest
+          uv run pytest
 
   mypy:
     name: stubtest & mypyc tests
@@ -242,17 +246,18 @@ jobs:
       - name: Install mypy test requirements
         run: |
           set -x
+          uv venv .venv
           cd mypy
-          uv pip install --system -r test-requirements.txt  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-          uv pip install --system -e .
+          uv pip install -r test-requirements.txt  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e .
       - name: Install typing_extensions latest
-        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
+        run: uv pip install "typing-extensions @ ./typing-extensions-latest"
       - name: List all installed dependencies
         run: uv pip freeze
       - name: Run stubtest & mypyc tests
         run: |
           cd mypy
-          pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
+          uv run pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
 
   cattrs:
     name: cattrs tests
@@ -310,18 +315,10 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
-      - name: Install sqlalchemy test dependencies
-        run: uv pip install --system tox setuptools
-      - name: List installed dependencies
-        # Note: tox installs SQLAlchemy and its dependencies in a different isolated
-        # environment before running the tests. To see the dependencies installed
-        # in the test environment, look for the line 'freeze> python -m pip freeze --all'
-        # in the output of the test step below.
-        run: uv pip list
       - name: Run sqlalchemy tests
         run: |
           cd sqlalchemy
-          tox -e github-nocext \
+          uvx --with setuptools tox -e github-nocext \
             --force-dep "typing-extensions @ file://$(pwd)/../typing-extensions-latest" \
             -- -q --nomemory --notimingintensive
 
