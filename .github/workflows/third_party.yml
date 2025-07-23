@@ -94,16 +94,16 @@ jobs:
       - name: Install typing_inspect test dependencies
         run: |
           set -x
-          uv venv .venv
           cd typing_inspect
+          uv venv .venv
           uv pip install -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
-        run: uv pip install "typing-extensions @ ./typing-extensions-latest"
+        run: cd typing_inspect; uv pip install "typing-extensions @ ../typing-extensions-latest"
       - name: List all installed dependencies
-        run: uv pip freeze
+        run: cd typing_inspect; uv pip freeze
       - name: Run typing_inspect tests
         run: |
-          uv run --directory typing_inspect pytest
+          cd typing_inspect; uv run pytest
 
   pycroscope:
     name: pycroscope tests
@@ -129,16 +129,16 @@ jobs:
       - name: Install pycroscope test requirements
         run: |
           set -x
-          uv venv .venv
           cd pycroscope
+          uv venv .venv
           uv pip install 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
-        run: uv pip install "typing-extensions @ ./typing-extensions-latest"
+        run: cd pycroscope; uv pip install "typing-extensions @ ../typing-extensions-latest"
       - name: List all installed dependencies
-        run: uv pip freeze
+        run: cd pycroscope; uv pip freeze
       - name: Run pycroscope tests
         run: |
-          uv run --directory pycroscope pytest pycroscope/
+          cd pycroscope; uv run pytest pycroscope/
 
   typeguard:
     name: typeguard tests
@@ -164,17 +164,17 @@ jobs:
       - name: Install typeguard test requirements
         run: |
           set -x
-          uv venv .venv
           cd typeguard
+          uv venv .venv
           uv pip install "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
-        run: uv pip install "typing-extensions @ ./typing-extensions-latest"
+        run: cd typeguard; uv pip install "typing-extensions @ ../typing-extensions-latest"
       - name: List all installed dependencies
-        run: uv pip freeze
+        run: cd typeguard; uv pip freeze
       - name: Run typeguard tests
         run: |
           export PYTHON_COLORS=0  # A test fails if tracebacks are colorized
-          uv run --directory typeguard pytest
+          cd typeguard; uv run pytest
 
   typed-argument-parser:
     name: typed-argument-parser tests
@@ -206,17 +206,17 @@ jobs:
       - name: Install typed-argument-parser test requirements
         run: |
           set -x
-          uv venv .venv
           cd typed-argument-parser
+          uv venv .venv
           uv pip install "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
       - name: Install typing_extensions latest
-        run: uv pip install "typing-extensions @ ./typing-extensions-latest"
+        run: cd typed-argument-parser; uv pip install "typing-extensions @ ../typing-extensions-latest"
       - name: List all installed dependencies
-        run: uv pip freeze
+        run: cd typed-argument-parser; uv pip freeze
       - name: Run typed-argument-parser tests
         run: |
-          uv run --directory typed-argument-parser pytest
+          cd typed-argument-parser; uv run pytest
 
   mypy:
     name: stubtest & mypyc tests
@@ -242,17 +242,17 @@ jobs:
       - name: Install mypy test requirements
         run: |
           set -x
-          uv venv .venv
           cd mypy
+          uv venv .venv
           uv pip install -r test-requirements.txt  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install -e .
       - name: Install typing_extensions latest
-        run: uv pip install "typing-extensions @ ./typing-extensions-latest"
+        run: cd mypy; uv pip install "typing-extensions @ ../typing-extensions-latest"
       - name: List all installed dependencies
-        run: uv pip freeze
+        run: cd mypy; uv pip freeze
       - name: Run stubtest & mypyc tests
         run: |
-          uv run --directory mypy pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
+          cd mypy; uv run pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
 
   cattrs:
     name: cattrs tests
