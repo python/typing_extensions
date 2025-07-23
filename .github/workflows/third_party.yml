@@ -103,7 +103,7 @@ jobs:
         run: cd typing_inspect; uv pip freeze
       - name: Run typing_inspect tests
         run: |
-          cd typing_inspect; uv run pytest
+          cd typing_inspect; uv run --no-project pytest
 
   pycroscope:
     name: pycroscope tests
@@ -138,7 +138,7 @@ jobs:
         run: cd pycroscope; uv pip freeze
       - name: Run pycroscope tests
         run: |
-          cd pycroscope; uv run pytest pycroscope/
+          cd pycroscope; uv run --no-project pytest pycroscope/
 
   typeguard:
     name: typeguard tests
@@ -174,7 +174,7 @@ jobs:
       - name: Run typeguard tests
         run: |
           export PYTHON_COLORS=0  # A test fails if tracebacks are colorized
-          cd typeguard; uv run pytest
+          cd typeguard; uv run --no-project pytest
 
   typed-argument-parser:
     name: typed-argument-parser tests
@@ -216,7 +216,7 @@ jobs:
         run: cd typed-argument-parser; uv pip freeze
       - name: Run typed-argument-parser tests
         run: |
-          cd typed-argument-parser; uv run pytest
+          cd typed-argument-parser; uv run --no-project pytest
 
   mypy:
     name: stubtest & mypyc tests
@@ -252,7 +252,7 @@ jobs:
         run: cd mypy; uv pip freeze
       - name: Run stubtest & mypyc tests
         run: |
-          cd mypy; uv run pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
+          cd mypy; uv run --no-project pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
 
   cattrs:
     name: cattrs tests
