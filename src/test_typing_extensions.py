@@ -101,6 +101,7 @@ from typing_extensions import (
     reveal_type,
     runtime,
     runtime_checkable,
+    solid_base,
 )
 
 NoneType = type(None)
@@ -6667,6 +6668,18 @@ class FinalDecoratorTests(BaseTestCase):
         )
         self.assertIs(True, Methods.prop.fget.__final__)
         self.assertIs(True, Methods.cached.__final__)
+
+
+class SolidBaseTests(BaseTestCase):
+    def test_solid_base_unmodified(self):
+        class C: ...
+        self.assertIs(C, solid_base(C))
+
+    def test_dunder_solid_base(self):
+        @solid_base
+        class C: ...
+
+        self.assertIs(C.__solid_base__, True)
 
 
 class RevealTypeTests(BaseTestCase):
