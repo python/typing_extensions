@@ -316,7 +316,7 @@ else:
         return f
 
 
-if hasattr(typing, "solid_base"):
+if hasattr(typing, "solid_base"):  # 3.15
     solid_base = typing.solid_base
 else:
     def solid_base(cls):
