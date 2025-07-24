@@ -9337,6 +9337,11 @@ class TestSentinels(BaseTestCase):
             ):
                 self.assertIs(anonymous_sentinel, pickle.loads(pickle.dumps(anonymous_sentinel, protocol=proto)))
 
+    def test_sentinel_bool(self):
+        with self.assertRaisesRegex(
+            TypeError, rf"{self.SENTINEL!r} is not convertable to bool",
+        ):
+            bool(self.SENTINEL)
 
 
 if __name__ == '__main__':

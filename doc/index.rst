@@ -1044,8 +1044,11 @@ Sentinel objects
    of the sentinel object. If not provided, *name* will be used.
 
    All sentinels with the same *name* and *module_name* have the same identity.
-   Sentinel objects are tested using :py:ref:`is`.
    Sentinel identity is preserved across :py:mod:`copy` and :py:mod:`pickle`.
+
+   Sentinel objects are tested using :py:ref:`is`.
+   Sentinels have no truthiness and attempting to convert a sentinel to
+   :py:class:`bool` will raise :py:exc:`TypeError`.
 
    Example::
 

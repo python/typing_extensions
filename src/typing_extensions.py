@@ -4247,6 +4247,10 @@ class Sentinel:
         """Reduce this sentinel to a singleton."""
         return self._name  # Module is set from __module__ attribute
 
+    def __bool__(self) -> Never:
+        """Raise TypeError."""
+        raise TypeError(f"Sentinel {self!r} is not convertable to bool.")
+
 
 # Aliases for items that are in typing in all supported versions.
 # We use hasattr() checks so this library will continue to import on
