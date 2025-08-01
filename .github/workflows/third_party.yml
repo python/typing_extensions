@@ -69,9 +69,9 @@ jobs:
           uv add --editable ../typing-extensions-latest
           uv sync --group dev
 
-          echo "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
-          echo "\n\n"
+          printf "\n\n"
 
           uv run pytest
 
@@ -105,9 +105,9 @@ jobs:
           uv pip install -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
 
-          echo "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip freeze
-          echo "\n\n"
+          printf "\n\n"
 
           uv run --no-project pytest
 
@@ -141,9 +141,9 @@ jobs:
           uv pip install 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
 
-          echo "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip freeze
-          echo "\n\n"
+          printf "\n\n"
 
           uv run --no-project pytest pycroscope/
 
@@ -179,9 +179,9 @@ jobs:
           uv pip install "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
 
-          echo "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip freeze
-          echo "\n\n"
+          printf "\n\n"
 
           uv run --no-project pytest
 
@@ -222,9 +222,9 @@ jobs:
           uv pip install pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
 
-          echo "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip freeze
-          echo "\n\n"
+          printf "\n\n"
 
           uv run --no-project pytest
 
@@ -259,9 +259,9 @@ jobs:
           uv pip install -e .
           uv pip install "typing_extensions @ ../typing-extensions-latest"
 
-          echo "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip freeze
-          echo "\n\n"
+          printf "\n\n"
 
           uv run --no-project pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
 
@@ -294,9 +294,9 @@ jobs:
           uv add --editable ../typing-extensions-latest
           uv sync --group test --all-extras
 
-          echo "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
-          echo "\n\n"
+          printf "\n\n"
 
           uv run pytest tests
 
@@ -365,9 +365,9 @@ jobs:
           uv add --editable ../typing-extensions-latest
           uv sync
 
-          echo "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
-          echo "\n\n"
+          printf "\n\n"
 
           uv run python -m pytest tests/unit/test_typing.py tests/unit/test_dto
 
