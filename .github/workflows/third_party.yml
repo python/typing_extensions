@@ -102,7 +102,9 @@ jobs:
 
           uv pip install -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%s\n\n" "$(uv pip list)"
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
 
           uv run --no-project pytest
 
@@ -135,7 +137,9 @@ jobs:
 
           uv pip install 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%s\n\n" "$(uv pip list)"
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
 
           uv run --no-project pytest pycroscope/
 
@@ -170,7 +174,9 @@ jobs:
 
           uv pip install "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%s\n\n" "$(uv pip list)"
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%"
+          uv pip list
 
           uv run --no-project pytest
 
@@ -210,7 +216,9 @@ jobs:
           uv pip install "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%s\n\n" "$(uv pip list)"
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
 
           uv run --no-project pytest
 
@@ -244,7 +252,9 @@ jobs:
           uv pip install -r test-requirements.txt  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install -e .
           uv pip install "typing_extensions @ ../typing-extensions-latest"
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%s\n\n" "$(uv pip list)"
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
 
           uv run --no-project pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
 
