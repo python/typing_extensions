@@ -101,7 +101,7 @@ jobs:
           uv venv .venv
 
           uv pip install -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-          uv pip install "typing-extensions @ ../typing-extensions-latest"
+          uv pip install -e "typing-extensions @ ../typing-extensions-latest"
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
@@ -135,8 +135,8 @@ jobs:
           set -x
           uv venv .venv
 
-          uv pip install 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-          uv pip install "typing-extensions @ ../typing-extensions-latest"
+          uv pip install -e 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e "typing-extensions @ ../typing-extensions-latest"
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
@@ -172,8 +172,8 @@ jobs:
           set -x
           uv venv .venv
 
-          uv pip install "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-          uv pip install "typing-extensions @ ../typing-extensions-latest"
+          uv pip install -e "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e "typing-extensions @ ../typing-extensions-latest"
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
@@ -213,9 +213,9 @@ jobs:
           set -x
           uv venv .venv
 
-          uv pip install "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-          uv pip install "typing-extensions @ ../typing-extensions-latest"
+          uv pip install -e "typing-extensions @ ../typing-extensions-latest"
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
@@ -251,7 +251,7 @@ jobs:
 
           uv pip install -r test-requirements.txt  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install -e .
-          uv pip install "typing_extensions @ ../typing-extensions-latest"
+          uv pip install -e "typing_extensions @ ../typing-extensions-latest"
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
