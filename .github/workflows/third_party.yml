@@ -175,7 +175,7 @@ jobs:
           uv pip install "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
 
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
 
           uv run --no-project pytest
