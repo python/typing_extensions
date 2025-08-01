@@ -351,7 +351,7 @@ jobs:
       - name: Run litestar tests with typing_extensions main branch
         working-directory: litestar
         run: |
-          # litestar's python-requires means pdm won't let us add typing-extensions-latest
+          # litestar's python-requires means uv won't let us add typing-extensions-latest
           # as a requirement unless we do this
           sed -i 's/^requires-python = ">=3.8/requires-python = ">=3.9/' pyproject.toml
 
