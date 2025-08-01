@@ -64,8 +64,6 @@ jobs:
       - name: Run tests with typing_extensions main branch
         working-directory: pydantic
         run: |
-          set -x
-
           uv add --editable ../typing-extensions-latest
           uv sync --group dev
 
@@ -104,10 +102,7 @@ jobs:
 
           uv pip install -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
-
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
-          uv pip freeze
-          printf "\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%s\n\n" "$(uv pip list)"
 
           uv run --no-project pytest
 
@@ -140,10 +135,7 @@ jobs:
 
           uv pip install 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
-
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
-          uv pip freeze
-          printf "\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%s\n\n" "$(uv pip list)"
 
           uv run --no-project pytest pycroscope/
 
@@ -178,10 +170,7 @@ jobs:
 
           uv pip install "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
-
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
-          uv pip freeze
-          printf "\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%s\n\n" "$(uv pip list)"
 
           uv run --no-project pytest
 
@@ -221,10 +210,7 @@ jobs:
           uv pip install "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install "typing-extensions @ ../typing-extensions-latest"
-
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
-          uv pip freeze
-          printf "\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%s\n\n" "$(uv pip list)"
 
           uv run --no-project pytest
 
@@ -258,10 +244,7 @@ jobs:
           uv pip install -r test-requirements.txt  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
           uv pip install -e .
           uv pip install "typing_extensions @ ../typing-extensions-latest"
-
-          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
-          uv pip freeze
-          printf "\n\n"
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n%s\n\n" "$(uv pip list)"
 
           uv run --no-project pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
 
@@ -289,8 +272,6 @@ jobs:
       - name: Run tests with typing_extensions main branch
         working-directory: cattrs
         run: |
-          set -x
-
           uv add --editable ../typing-extensions-latest
           uv sync --group test --all-extras
 
@@ -360,7 +341,9 @@ jobs:
       - name: Run litestar tests with typing_extensions main branch
         working-directory: litestar
         run: |
-          set -x
+          # litestar's python-requires means pdm won't let us add typing-extensions-latest
+          # as a requirement unless we do this
+          sed -i 's/^requires-python = ">=3.8/requires-python = ">=3.9/' pyproject.toml
 
           uv add --editable ../typing-extensions-latest
           uv sync
