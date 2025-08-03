@@ -2274,7 +2274,7 @@ else:
         raise TypeError(f"{self} is not subscriptable")
 
 
-if hasattr(typing, "Self"):  # 3.11+
+if sys.version_info >= (3, 11):
     Self = typing.Self
 else:
     @_SpecialForm
