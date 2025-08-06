@@ -100,6 +100,7 @@ __all__ = [
     'TypeGuard',
     'TypeIs',
     'TYPE_CHECKING',
+    'type_repr',
     'Never',
     'NoReturn',
     'ReadOnly',
@@ -4190,6 +4191,26 @@ class Sentinel:
 
     def __getstate__(self):
         raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
+
+
+if sys.version_info >= (3, 14, 0, "beta"):
+    type_repr = annotationlib.type_repr
+else:
+    def type_repr(value):
+        """Convert a Python value to a format suitable for use with the STRING format.
+
+        This is intended as a helper for tools that support the STRING format but do
+        not have access to the code that originally produced the annotations. It uses
+        repr() for most objects.
+
+        """
+        if isinstance(value, (type, _types.FunctionType, _types.BuiltinFunctionType)):
+            if value.__module__ == "builtins":
+                return value.__qualname__
+            return f"{value.__module__}.{value.__qualname__}"
+        if value is ...:
+            return "..."
+        return repr(value)
 
 
 # Aliases for items that are in typing in all supported versions.
