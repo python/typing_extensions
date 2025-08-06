@@ -940,7 +940,6 @@ Functions
    Convert an arbitrary Python value to a format suitable for use by
    the :attr:`Format.STRING`.
 
-
    .. versionadded:: 4.15.0
 
 Enums
