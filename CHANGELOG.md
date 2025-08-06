@@ -1,3 +1,11 @@
+# Unreleased
+
+- Add `typing_extensions.type_repr`, a backport of
+  [`annotationlib.type_repr`](https://docs.python.org/3.14/library/annotationlib.html#annotationlib.type_repr),
+  introduced in Python 3.14 (CPython PR [#124551](https://github.com/python/cpython/pull/124551),
+  originally by Jelle Zijlstra). Patch by Semyon Moroz.
+
+
 # Release 4.14.1 (July 4, 2025)
 
 - Fix usage of `typing_extensions.TypedDict` nested inside other types

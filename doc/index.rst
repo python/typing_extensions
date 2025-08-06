@@ -933,6 +933,15 @@ Functions
 
    .. versionadded:: 4.1.0
 
+.. function:: type_repr(value)
+
+   See :py:func:`annotationlib.type_repr`. In ``annotationlib`` since 3.14.
+
+   Convert an arbitrary Python value to a format suitable for use by
+   the :attr:`Format.STRING`.
+
+   .. versionadded:: 4.15.0
+
 Enums
 ~~~~~
 
