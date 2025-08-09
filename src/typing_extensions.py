@@ -14,7 +14,8 @@ import types as _types
 import typing
 import warnings
 
-if sys.version_info >= (3, 14):
+# Breakpoint: https://github.com/python/cpython/pull/119891
+if sys.version_info >= (3, 14, 0, "alpha", 1):
     import annotationlib
 
 __all__ = [
@@ -151,6 +152,7 @@ __all__ = [
 # for backward compatibility
 PEP_560 = True
 GenericMeta = type
+# Breakpoint: https://github.com/python/cpython/pull/116129
 _PEP_696_IMPLEMENTED = sys.version_info >= (3, 13, 0, "beta")
 
 # Added with bpo-45166 to 3.10.1+ and some 3.9 versions
@@ -168,7 +170,8 @@ class _Sentinel:
 _marker = _Sentinel()
 
 
-if sys.version_info >= (3, 10):
+# Breakpoint: https://github.com/python/cpython/pull/27342
+if sys.version_info >= (3, 10, 0, "candidate"):
     def _should_collect_from_parameters(t):
         return isinstance(
             t, (typing._GenericAlias, _types.GenericAlias, _types.UnionType)
@@ -189,7 +192,8 @@ T_co = typing.TypeVar('T_co', covariant=True)  # Any type covariant containers.
 T_contra = typing.TypeVar('T_contra', contravariant=True)  # Ditto contravariant.
 
 
-if sys.version_info >= (3, 11):
+# Breakpoint: https://github.com/python/cpython/pull/31841
+if sys.version_info >= (3, 11, 0, "alpha", 7):
     from typing import Any
 else:
 
@@ -277,7 +281,8 @@ class _ExtensionsSpecialForm(typing._SpecialForm, _root=True):
 
 Final = typing.Final
 
-if sys.version_info >= (3, 11):
+# Breakpoint: https://github.com/python/cpython/pull/30530
+if sys.version_info >= (3, 11, 0, "alpha", 4):
     final = typing.final
 else:
     # @final exists in 3.8+, but we backport it for all versions
@@ -320,6 +325,7 @@ def IntVar(name):
 
 
 # A Literal bug was fixed in 3.11.0, 3.10.1 and 3.9.8
+# Breakpoint: https://github.com/python/cpython/pull/29334
 if sys.version_info >= (3, 10, 1):
     Literal = typing.Literal
 else:
@@ -480,6 +486,7 @@ Text = typing.Text
 TYPE_CHECKING = typing.TYPE_CHECKING
 
 
+# Breakpoint: https://github.com/python/cpython/pull/118681
 if sys.version_info >= (3, 13, 0, "beta"):
     from typing import AsyncContextManager, AsyncGenerator, ContextManager, Generator
 else:
@@ -590,7 +597,8 @@ def _caller(depth=1, default='__main__'):
 
 # `__match_args__` attribute was removed from protocol members in 3.13,
 # we want to backport this change to older Python versions.
-if sys.version_info >= (3, 13):
+# Breakpoint: https://github.com/python/cpython/pull/110683
+if sys.version_info >= (3, 13, 0, "alpha", 1):
     Protocol = typing.Protocol
 else:
     def _allow_reckless_class_checks(depth=2):
@@ -770,7 +778,8 @@ else:
                 cls.__init__ = _no_init
 
 
-if sys.version_info >= (3, 13):
+# Breakpoint: https://github.com/python/cpython/pull/113401
+if sys.version_info >= (3, 13, 0, "alpha", 3):
     runtime_checkable = typing.runtime_checkable
 else:
     def runtime_checkable(cls):
@@ -830,7 +839,8 @@ runtime = runtime_checkable
 
 
 # Our version of runtime-checkable protocols is faster on Python <=3.11
-if sys.version_info >= (3, 12):
+# Breakpoint: https://github.com/python/cpython/pull/112717
+if sys.version_info >= (3, 12, 0, "alpha", 3):
     SupportsInt = typing.SupportsInt
     SupportsFloat = typing.SupportsFloat
     SupportsComplex = typing.SupportsComplex
@@ -1159,7 +1169,8 @@ else:
                     mutable_keys.add(annotation_key)
                     readonly_keys.discard(annotation_key)
 
-            if sys.version_info >= (3, 14):
+            # Breakpoint: https://github.com/python/cpython/pull/119891
+            if sys.version_info >= (3, 14, 0, "alpha", 1):
                 def __annotate__(format):
                     annos = {}
                     for base in bases:
@@ -1249,7 +1260,8 @@ else:
             raise TypeError("TypedDict takes either a dict or keyword arguments,"
                             " but not both")
         if kwargs:
-            if sys.version_info >= (3, 13):
+            # Breakpoint: https://github.com/python/cpython/pull/104891
+            if sys.version_info >= (3, 13, 0, "alpha", 1):
                 raise TypeError("TypedDict takes no keyword arguments")
             warnings.warn(
                 "The kwargs-based syntax for TypedDict definitions is deprecated "
@@ -1458,7 +1470,8 @@ else:  # <=3.13
         hint = typing.get_type_hints(
             obj, globalns=globalns, localns=localns, include_extras=True
         )
-        if sys.version_info < (3, 11):
+        # Breakpoint: https://github.com/python/cpython/pull/30304
+        if sys.version_info < (3, 11, 0, "alpha", 6):
             _clean_optional(obj, hint, globalns, localns)
         if include_extras:
             return hint
@@ -1530,7 +1543,8 @@ else:  # <=3.13
 
 # Python 3.9 has get_origin() and get_args() but those implementations don't support
 # ParamSpecArgs and ParamSpecKwargs, so only Python 3.10's versions will do.
-if sys.version_info[:2] >= (3, 10):
+# Breakpoint: https://github.com/python/cpython/pull/25298
+if sys.version_info >= (3, 10, 0, "beta"):
     get_origin = typing.get_origin
     get_args = typing.get_args
 # 3.9
@@ -2096,7 +2110,8 @@ def _concatenate_getitem(self, parameters):
 
 
 # 3.11+; Concatenate does not accept ellipsis in 3.10
-if sys.version_info >= (3, 11):
+# Breakpoint: https://github.com/python/cpython/pull/30969
+if sys.version_info >= (3, 11, 0, "beta"):
     Concatenate = typing.Concatenate
 # <=3.10
 else:
@@ -2432,7 +2447,9 @@ For more information, see PEP 646 and PEP 692.
 """
 
 
-if sys.version_info >= (3, 12):  # PEP 692 changed the repr of Unpack[]
+# PEP 692 changed the repr of Unpack[]
+# Breakpoint: https://github.com/python/cpython/pull/104048
+if sys.version_info >= (3, 12, 0, "beta"):
     Unpack = typing.Unpack
 
     def _is_unpack(obj):
@@ -2695,8 +2712,9 @@ else:  # <=3.10
         raise AssertionError(f"Expected code to be unreachable, but got: {value}")
 
 
-if sys.version_info >= (3, 12):  # 3.12+
-    # dataclass_transform exists in 3.11 but lacks the frozen_default parameter
+# dataclass_transform exists in 3.11 but lacks the frozen_default parameter
+# Breakpoint: https://github.com/python/cpython/pull/99958
+if sys.version_info >= (3, 12, 0, "alpha", 3):  # 3.12+
     dataclass_transform = typing.dataclass_transform
 else:  # <=3.11
     def dataclass_transform(
@@ -2827,6 +2845,7 @@ else:  # <=3.11
 
 
 # Python 3.13.3+ contains a fix for the wrapped __new__
+# Breakpoint: https://github.com/python/cpython/pull/132160
 if sys.version_info >= (3, 13, 3):
     deprecated = warnings.deprecated
 else:
@@ -2956,7 +2975,8 @@ else:
                     return arg(*args, **kwargs)
 
                 if asyncio.coroutines.iscoroutinefunction(arg):
-                    if sys.version_info >= (3, 12):
+                    # Breakpoint: https://github.com/python/cpython/pull/99247
+                    if sys.version_info >= (3, 12, 0 , "alpha", 4):
                         wrapper = inspect.markcoroutinefunction(wrapper)
                     else:
                         wrapper._is_coroutine = asyncio.coroutines._is_coroutine
@@ -2969,12 +2989,8 @@ else:
                     f"a class or callable, not {arg!r}"
                 )
 
-if sys.version_info < (3, 10):
-    def _is_param_expr(arg):
-        return arg is ... or isinstance(
-            arg, (tuple, list, ParamSpec, _ConcatenateGenericAlias)
-        )
-else:
+# Breakpoint: https://github.com/python/cpython/pull/23702
+if sys.version_info >= (3, 10, 0, "alpha", 4):
     def _is_param_expr(arg):
         return arg is ... or isinstance(
             arg,
@@ -2985,6 +3001,11 @@ else:
                 _ConcatenateGenericAlias,
                 typing._ConcatenateGenericAlias,
             ),
+        )
+else:
+    def _is_param_expr(arg):
+        return arg is ... or isinstance(
+            arg, (tuple, list, ParamSpec, _ConcatenateGenericAlias)
         )
 
 
@@ -3045,7 +3066,12 @@ if not hasattr(typing, "TypeVarTuple"):
 
                     expect_val = f"at least {elen}"
 
-            things = "arguments" if sys.version_info >= (3, 10) else "parameters"
+            # Breakpoint: https://github.com/python/cpython/pull/27515
+            things = (
+                "arguments"
+                if sys.version_info >= (3, 10, 0, "candidate")
+                else "parameters"
+            )
             raise TypeError(f"Too {'many' if alen > elen else 'few'} {things}"
                             f" for {cls}; actual {alen}, expected {expect_val}")
 else:
@@ -3238,6 +3264,7 @@ else:
 # This was explicitly disallowed in 3.9-3.10, and only half-worked in <=3.8.
 # On 3.12, we added __orig_bases__ to call-based NamedTuples
 # On 3.13, we deprecated kwargs-based NamedTuples
+# Breakpoint: https://github.com/python/cpython/pull/105609
 if sys.version_info >= (3, 13):
     NamedTuple = typing.NamedTuple
 else:
@@ -3313,7 +3340,8 @@ else:
                             # using add_note() until py312.
                             # Making sure exceptions are raised in the same way
                             # as in "normal" classes seems most important here.
-                            if sys.version_info >= (3, 12):
+                            # Breakpoint: https://github.com/python/cpython/pull/95915
+                            if sys.version_info >= (3, 12, 0, "alpha", 1):
                                 e.add_note(msg)
                                 raise
                             else:
@@ -3461,7 +3489,8 @@ else:
 
 # NewType is a class on Python 3.10+, making it pickleable
 # The error message for subclassing instances of NewType was improved on 3.11+
-if sys.version_info >= (3, 11):
+# Breakpoint: https://github.com/python/cpython/pull/30268
+if sys.version_info >= (3, 11, 0, "alpha", 7):
     NewType = typing.NewType
 else:
     class NewType:
@@ -3513,7 +3542,8 @@ else:
         def __reduce__(self):
             return self.__qualname__
 
-        if sys.version_info >= (3, 10):
+        # Breakpoint: https://github.com/python/cpython/pull/21515
+        if sys.version_info >= (3, 10, 0, "alpha", 1):
             # PEP 604 methods
             # It doesn't make sense to have these methods on Python <3.10
 
@@ -3524,11 +3554,13 @@ else:
                 return typing.Union[other, self]
 
 
-if sys.version_info >= (3, 14):
+# Breakpoint: https://github.com/python/cpython/pull/124795
+if sys.version_info >= (3, 14, 0, "alpha", 1):
     TypeAliasType = typing.TypeAliasType
 # <=3.13
 else:
-    if sys.version_info >= (3, 12):
+    # Breakpoint: https://github.com/python/cpython/pull/103764
+    if sys.version_info >= (3, 12, 0, "beta"):
         # 3.12-3.13
         def _is_unionable(obj):
             """Corresponds to is_unionable() in unionobject.c in CPython."""
@@ -3723,7 +3755,8 @@ else:
         def __call__(self):
             raise TypeError("Type alias is not callable")
 
-        if sys.version_info >= (3, 10):
+        # Breakpoint: https://github.com/python/cpython/pull/21515
+        if sys.version_info >= (3, 10, 0, "alpha", 1):
             def __or__(self, right):
                 # For forward compatibility with 3.12, reject Unions
                 # that are not accepted by the built-in Union.
@@ -3835,15 +3868,19 @@ if _CapsuleType is not None:
     __all__.append("CapsuleType")
 
 
-if sys.version_info >= (3,14):
+if sys.version_info >= (3, 14, 0, "alpha", 3):
     from annotationlib import Format, get_annotations
 else:
+    # Available since Python 3.14.0a3
+    # PR: https://github.com/python/cpython/pull/124415
     class Format(enum.IntEnum):
         VALUE = 1
         VALUE_WITH_FAKE_GLOBALS = 2
         FORWARDREF = 3
         STRING = 4
 
+    # Available since Python 3.14.0a1
+    # PR: https://github.com/python/cpython/pull/119891
     def get_annotations(obj, *, globals=None, locals=None, eval_str=False,
                         format=Format.VALUE):
         """Compute the annotations dict for an object.
@@ -4181,7 +4218,8 @@ class Sentinel:
         def __call__(self, *args, **kwargs):
             raise TypeError(f"{type(self).__name__!r} object is not callable")
 
-    if sys.version_info >= (3, 10):
+    # Breakpoint: https://github.com/python/cpython/pull/21515
+    if sys.version_info >= (3, 10, 0, "alpha", 1):
         def __or__(self, other):
             return typing.Union[self, other]
 
