@@ -9194,10 +9194,9 @@ class EvaluateForwardRefTests(BaseTestCase):
         not_Tx = TypeVar("Tx")  # different TypeVar with same name
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx"), type_params=(not_Tx,), owner=Gen), not_Tx)
 
-        # globals can take higher precedence
-        if _FORWARD_REF_HAS_CLASS:
-            self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx", is_class=True), owner=Gen, globals={"Tx": str}), str)
-            self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx", is_class=True), owner=Gen, type_params=(not_Tx,), globals={"Tx": str}), str)
+        # globals do not take higher precedence
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx", is_class=True), owner=Gen, globals={"Tx": str}), Tx)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("Tx", is_class=True), owner=Gen, type_params=(not_Tx,), globals={"Tx": str}), not_Tx)
 
         with self.assertRaises(NameError):
             evaluate_forward_ref(typing.ForwardRef("alias"), type_params=Gen.__type_params__)
