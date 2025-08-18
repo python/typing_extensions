@@ -200,5 +200,5 @@ jobs:
         continue-on-error: true
         with:
           name: pr_number.txt
-          path: pr_number.txt
+          path: .
           compression-level: 0 # no compression
