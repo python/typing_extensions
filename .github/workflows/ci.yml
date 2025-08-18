@@ -123,8 +123,8 @@ jobs:
           && needs.tests.result == 'failure'
         }}
 
-    permissions:
-      issues: write
+    #permissions:
+    #  issues: write
 
     steps:
       - uses: actions/github-script@v7
