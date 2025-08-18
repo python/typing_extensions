@@ -6,6 +6,8 @@
   [`annotationlib.type_repr`](https://docs.python.org/3.14/library/annotationlib.html#annotationlib.type_repr),
   introduced in Python 3.14 (CPython PR [#124551](https://github.com/python/cpython/pull/124551),
   originally by Jelle Zijlstra). Patch by Semyon Moroz.
+- Fix behavior of type params in `typing_extensions.evaluate_forward_ref`. Backport of
+  CPython PR [#137227](https://github.com/python/cpython/pull/137227) by Jelle Zijlstra.
 
 # Release 4.14.1 (July 4, 2025)
 
