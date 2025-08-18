@@ -50,13 +50,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc  # v6.4.3
         with:
           python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Checkout pydantic
         run: git clone --depth=1 https://github.com/pydantic/pydantic.git || git clone --depth=1 https://github.com/pydantic/pydantic.git
       - name: Checkout typing_extensions
@@ -64,14 +61,17 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
-      - name: Add local version of typing_extensions as a dependency
-        run: cd pydantic; uv add --editable ../typing-extensions-latest
-      - name: Install pydantic test dependencies
-        run: cd pydantic; uv sync --group dev
-      - name: List installed dependencies
-        run: cd pydantic; uv pip list
-      - name: Run pydantic tests
-        run: cd pydantic; uv run pytest
+      - name: Run tests with typing_extensions main branch
+        working-directory: pydantic
+        run: |
+          uv add --editable ../typing-extensions-latest
+          uv sync --group dev
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
+          printf "\n\n"
+
+          uv run pytest
 
   typing_inspect:
     name: typing_inspect tests
@@ -83,12 +83,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc  # v6.4.3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Checkout typing_inspect
         run: git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git || git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git
       - name: Checkout typing_extensions
@@ -96,19 +94,19 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
-      - name: Install typing_inspect test dependencies
+      - name: Run tests with typing_extensions main branch
+        working-directory: typing_inspect
         run: |
           set -x
-          cd typing_inspect
-          uv pip install --system -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-      - name: Install typing_extensions latest
-        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
-      - name: List all installed dependencies
-        run: uv pip freeze
-      - name: Run typing_inspect tests
-        run: |
-          cd typing_inspect
-          pytest
+          uv venv .venv
+
+          uv pip install -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e "typing-extensions @ ../typing-extensions-latest"
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
+
+          uv run --no-project pytest
 
   pycroscope:
     name: pycroscope tests
@@ -120,13 +118,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc  # v6.4.3
         with:
           python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Check out pycroscope
         run: git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git || git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git
       - name: Checkout typing_extensions
@@ -134,19 +129,19 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
-      - name: Install pycroscope test requirements
+      - name: Run tests with typing_extensions main branch
+        working-directory: pycroscope
         run: |
           set -x
-          cd pycroscope
-          uv pip install --system 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-      - name: Install typing_extensions latest
-        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
-      - name: List all installed dependencies
-        run: uv pip freeze
-      - name: Run pycroscope tests
-        run: |
-          cd pycroscope
-          pytest pycroscope/
+          uv venv .venv
+
+          uv pip install -e 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e "typing-extensions @ ../typing-extensions-latest"
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
+
+          uv run --no-project pytest pycroscope/
 
   typeguard:
     name: typeguard tests
@@ -158,13 +153,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc  # v6.4.3
         with:
           python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Check out typeguard
         run: git clone --depth=1 https://github.com/agronholm/typeguard.git || git clone --depth=1 https://github.com/agronholm/typeguard.git
       - name: Checkout typing_extensions
@@ -172,20 +164,21 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
-      - name: Install typeguard test requirements
+      - name: Run tests with typing_extensions main branch
+        env:
+          PYTHON_COLORS: 0  # A test fails if tracebacks are colorized
+        working-directory: typeguard
         run: |
           set -x
-          cd typeguard
-          uv pip install --system "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-      - name: Install typing_extensions latest
-        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
-      - name: List all installed dependencies
-        run: uv pip freeze
-      - name: Run typeguard tests
-        run: |
-          cd typeguard
-          export PYTHON_COLORS=0  # A test fails if tracebacks are colorized
-          pytest
+          uv venv .venv
+
+          uv pip install -e "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e "typing-extensions @ ../typing-extensions-latest"
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
+
+          uv run --no-project pytest
 
   typed-argument-parser:
     name: typed-argument-parser tests
@@ -197,12 +190,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc  # v6.4.3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Check out typed-argument-parser
         run: git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git || git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git
       - name: Checkout typing_extensions
@@ -216,20 +207,20 @@ jobs:
         run: |
           git config --global user.email "you@example.com"
           git config --global user.name "Your Name"
-      - name: Install typed-argument-parser test requirements
+      - name: Run tests with typing_extensions main branch
+        working-directory: typed-argument-parser
         run: |
           set -x
-          cd typed-argument-parser
-          uv pip install --system "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-          uv pip install --system pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-      - name: Install typing_extensions latest
-        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
-      - name: List all installed dependencies
-        run: uv pip freeze
-      - name: Run typed-argument-parser tests
-        run: |
-          cd typed-argument-parser
-          pytest
+          uv venv .venv
+
+          uv pip install -e "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e "typing-extensions @ ../typing-extensions-latest"
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
+
+          uv run --no-project pytest
 
   mypy:
     name: stubtest & mypyc tests
@@ -241,13 +232,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc  # v6.4.3
         with:
           python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Checkout mypy for stubtest and mypyc tests
         run: git clone --depth=1 https://github.com/python/mypy.git || git clone --depth=1 https://github.com/python/mypy.git
       - name: Checkout typing_extensions
@@ -255,20 +243,20 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
-      - name: Install mypy test requirements
+      - name: Run tests with typing_extensions main branch
+        working-directory: mypy
         run: |
           set -x
-          cd mypy
-          uv pip install --system -r test-requirements.txt  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-          uv pip install --system -e .
-      - name: Install typing_extensions latest
-        run: uv pip install --system "typing-extensions @ ./typing-extensions-latest"
-      - name: List all installed dependencies
-        run: uv pip freeze
-      - name: Run stubtest & mypyc tests
-        run: |
-          cd mypy
-          pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
+          uv venv .venv
+
+          uv pip install -r test-requirements.txt  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e .
+          uv pip install -e "typing_extensions @ ../typing-extensions-latest"
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
+
+          uv run --no-project pytest -n 2 ./mypy/test/teststubtest.py ./mypyc/test/test_run.py ./mypyc/test/test_external.py
 
   cattrs:
     name: cattrs tests
@@ -280,8 +268,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc  # v6.4.3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout cattrs
@@ -291,19 +279,17 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
-      - name: Install pdm for cattrs
-        run: pip install pdm
-      - name: Add latest typing-extensions as a dependency
+      - name: Run tests with typing_extensions main branch
+        working-directory: cattrs
         run: |
-          cd cattrs
-          pdm remove typing-extensions
-          pdm add --dev ../typing-extensions-latest
-      - name: Install cattrs test dependencies
-        run: cd cattrs; pdm install --dev -G :all
-      - name: List all installed dependencies
-        run: cd cattrs; pdm list -vv
-      - name: Run cattrs tests
-        run: cd cattrs; pdm run pytest tests
+          uv add --editable ../typing-extensions-latest
+          uv sync --group test --all-extras
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
+          printf "\n\n"
+
+          uv run pytest tests
 
   sqlalchemy:
     name: sqlalchemy tests
@@ -320,13 +306,10 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc  # v6.4.3
         with:
           python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Checkout sqlalchemy
         run: git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git || git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git
       - name: Checkout typing_extensions
@@ -334,20 +317,14 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
-      - name: Install sqlalchemy test dependencies
-        run: uv pip install --system tox setuptools
-      - name: List installed dependencies
-        # Note: tox installs SQLAlchemy and its dependencies in a different isolated
-        # environment before running the tests. To see the dependencies installed
-        # in the test environment, look for the line 'freeze> python -m pip freeze --all'
-        # in the output of the test step below.
-        run: uv pip list
-      - name: Run sqlalchemy tests
+      - name: Run sqlalchemy tests with typing_extensions main branch
+        working-directory: sqlalchemy
         run: |
-          cd sqlalchemy
-          tox -e github-nocext \
-            --force-dep "typing-extensions @ file://$(pwd)/../typing-extensions-latest" \
-            -- -q --nomemory --notimingintensive
+          set -x
+
+          uvx \
+            --with=setuptools \
+            tox -e github-nocext --force-dep="typing-extensions @ file://$(pwd)/../typing-extensions-latest" -- -q --nomemory --notimingintensive
 
 
   litestar:
@@ -360,8 +337,8 @@ jobs:
       matrix:
         python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc  # v6.4.3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout litestar
@@ -371,11 +348,21 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      - name: Run litestar tests
-        run: uv run --with=../typing-extensions-latest -- python -m pytest tests/unit/test_typing.py tests/unit/test_dto
+      - name: Run litestar tests with typing_extensions main branch
         working-directory: litestar
+        run: |
+          # litestar's python-requires means uv won't let us add typing-extensions-latest
+          # as a requirement unless we do this
+          sed -i 's/^requires-python = ">=3.8/requires-python = ">=3.9/' pyproject.toml
+
+          uv add --editable ../typing-extensions-latest
+          uv sync
+
+          printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
+          uv pip list
+          printf "\n\n"
+
+          uv run python -m pytest tests/unit/test_typing.py tests/unit/test_dto
 
   create-issue-on-failure:
     name: Create an issue if daily tests failed
