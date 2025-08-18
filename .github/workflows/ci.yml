@@ -107,11 +107,13 @@ jobs:
           echo ${{ github.event.number }} > ./pr/NR
       - uses: actions/upload-artifact@v4
         if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+        # Currently: v4 has a bug https://github.com/actions/upload-artifact/issues/506
+        # that fails on multiple parallel writes to the same filename.
+        continue-on-error: true
         with:
           overwrite: true
           name: pr
           path: pr/NR
-          if-no-files-found: error
 
       - name: Test CPython typing test suite
         # Test suite fails on PyPy even without typing_extensions
