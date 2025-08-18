@@ -199,6 +199,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         continue-on-error: true
         with:
-          name: pr_number.txt
-          path: .
+          name: pr_number
+          path: pr_number.txt
           compression-level: 0 # no compression
