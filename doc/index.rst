@@ -409,8 +409,8 @@ Special typing primitives
    raises a :py:exc:`DeprecationWarning` when this syntax is used in Python 3.12
    or lower and fails with a :py:exc:`TypeError` in Python 3.13 and higher.
 
-   ``typing_extensions`` supports the experimental :data:`ReadOnly` qualifier
-   proposed by :pep:`705`. It is reflected in the following attributes:
+   ``typing_extensions`` supports the :data:`ReadOnly` qualifier
+   introduced by :pep:`705`. It is reflected in the following attributes:
 
    .. attribute:: __readonly_keys__
 
