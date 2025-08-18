@@ -84,6 +84,7 @@ from typing_extensions import (
     clear_overloads,
     dataclass_transform,
     deprecated,
+    disjoint_base,
     evaluate_forward_ref,
     final,
     get_annotations,
@@ -6668,6 +6669,18 @@ class FinalDecoratorTests(BaseTestCase):
         )
         self.assertIs(True, Methods.prop.fget.__final__)
         self.assertIs(True, Methods.cached.__final__)
+
+
+class DisjointBaseTests(BaseTestCase):
+    def test_disjoint_base_unmodified(self):
+        class C: ...
+        self.assertIs(C, disjoint_base(C))
+
+    def test_dunder_disjoint_base(self):
+        @disjoint_base
+        class C: ...
+
+        self.assertIs(C.__disjoint_base__, True)
 
 
 class RevealTypeTests(BaseTestCase):

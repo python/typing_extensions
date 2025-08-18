@@ -71,6 +71,7 @@ __all__ = [
     'clear_overloads',
     'dataclass_transform',
     'deprecated',
+    'disjoint_base',
     'Doc',
     'evaluate_forward_ref',
     'get_overloads',
@@ -319,6 +320,33 @@ else:
             # read-only property, TypeError if it's a builtin class.
             pass
         return f
+
+
+if hasattr(typing, "disjoint_base"):  # 3.15
+    disjoint_base = typing.disjoint_base
+else:
+    def disjoint_base(cls):
+        """This decorator marks a class as a disjoint base.
+
+        Child classes of a disjoint base cannot inherit from other disjoint bases that are
+        not parent classes of the disjoint base.
+
+        For example:
+
+            @disjoint_base
+            class Disjoint1: pass
+
+            @disjoint_base
+            class Disjoint2: pass
+
+            class Disjoint3(Disjoint1, Disjoint2): pass  # Type checker error
+
+        Type checkers can use knowledge of disjoint bases to detect unreachable code
+        and determine when two types can overlap.
+
+        See PEP 800."""
+        cls.__disjoint_base__ = True
+        return cls
 
 
 def IntVar(name):

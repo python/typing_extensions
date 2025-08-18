@@ -1,5 +1,7 @@
-# Unreleased
+# Release 4.15.0rc1 (August 18, 2025)
 
+- Add the `@typing_extensions.disjoint_base` decorator, as specified
+  in PEP 800. Patch by Jelle Zijlstra.
 - Add `typing_extensions.type_repr`, a backport of
   [`annotationlib.type_repr`](https://docs.python.org/3.14/library/annotationlib.html#annotationlib.type_repr),
   introduced in Python 3.14 (CPython PR [#124551](https://github.com/python/cpython/pull/124551),
