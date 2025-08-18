@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.15.0rc1 (August 18, 2025)
 
 - Add the `@typing_extensions.disjoint_base` decorator, as specified
   in PEP 800. Patch by Jelle Zijlstra.
