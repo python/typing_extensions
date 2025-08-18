@@ -99,21 +99,7 @@ jobs:
           path: ./src/.coverage*
           include-hidden-files: true
           compression-level: 0 # no compression
-      
-      - name: Save PR number for coverage report
-        if: ${{ !startsWith(matrix.python-version, 'pypy') }} 
-        run: |
-          mkdir -p ./pr
-          echo ${{ github.event.number }} > ./pr/NR
-      - uses: actions/upload-artifact@v4
-        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
-        # Currently: v4 has a bug https://github.com/actions/upload-artifact/issues/506
-        # that fails on multiple parallel writes to the same filename.
-        continue-on-error: true
-        with:
-          overwrite: true
-          name: pr
-          path: pr/NR
+
 
       - name: Test CPython typing test suite
         # Test suite fails on PyPy even without typing_extensions
@@ -152,3 +138,67 @@ jobs:
               title: `Daily tests failed on ${new Date().toDateString()}`,
               body: "Runs listed here: https://github.com/python/typing_extensions/actions/workflows/ci.yml",
             })
+  prepare-report-coverage:
+    name: Report coverage
+
+    runs-on: ubuntu-latest
+
+    needs: [tests]
+
+    if: ${{ always() }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3"
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: .coverage_*
+          path: .
+          # merge only when files are named differently
+          merge-multiple: true
+      - name: Install dependencies
+        run: pip install coverage
+      - name: Combine coverage results
+        run: |
+          # List the files to see what we have
+          echo "Combining coverage files..."
+          ls -aR .coverage*
+          coverage combine .coverage*
+          echo "Creating coverage report..."
+          coverage report
+          coverage xml
+
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95 # v1.3.0
+        with:
+          filename: coverage.xml
+          badge: true
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '80 90'
+
+      - name: Archive code coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-results.md
+          path: code-coverage-results.md
+          compression-level: 0 # no compression
+      - name: Save PR number for coverage report
+        run: |
+          echo ${{ github.event.number }} > ./pr_number.txt
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: pr_number
+          path: pr_number.txt
+          compression-level: 0 # no compression
