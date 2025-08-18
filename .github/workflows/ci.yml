@@ -101,17 +101,17 @@ jobs:
           compression-level: 0 # no compression
       
       - name: Save PR number for coverage report
-        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+        if: ${{ !startsWith(matrix.python-version, 'pypy') }} 
         run: |
           mkdir -p ./pr
           echo ${{ github.event.number }} > ./pr/NR
       - uses: actions/upload-artifact@v4
         if: ${{ !startsWith(matrix.python-version, 'pypy') }}
         with:
-          name: pr
-          path: pr/
-          if-no-files-found: error
           overwrite: true
+          name: pr
+          path: pr/NR
+          if-no-files-found: error
 
       - name: Test CPython typing test suite
         # Test suite fails on PyPy even without typing_extensions
