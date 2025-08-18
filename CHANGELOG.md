@@ -1,6 +1,6 @@
 # Unreleased
 
-- Add the `@typing_extensions.solid_base` decorator, as specified
+- Add the `@typing_extensions.disjoint_base` decorator, as specified
   in PEP 800. Patch by Jelle Zijlstra.
 - Add `typing_extensions.type_repr`, a backport of
   [`annotationlib.type_repr`](https://docs.python.org/3.14/library/annotationlib.html#annotationlib.type_repr),
