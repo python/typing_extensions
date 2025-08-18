@@ -84,6 +84,7 @@ from typing_extensions import (
     clear_overloads,
     dataclass_transform,
     deprecated,
+    disjoint_base,
     evaluate_forward_ref,
     final,
     get_annotations,
@@ -101,7 +102,6 @@ from typing_extensions import (
     reveal_type,
     runtime,
     runtime_checkable,
-    solid_base,
     type_repr,
 )
 
@@ -6671,16 +6671,16 @@ class FinalDecoratorTests(BaseTestCase):
         self.assertIs(True, Methods.cached.__final__)
 
 
-class SolidBaseTests(BaseTestCase):
-    def test_solid_base_unmodified(self):
+class DisjointBaseTests(BaseTestCase):
+    def test_disjoint_base_unmodified(self):
         class C: ...
-        self.assertIs(C, solid_base(C))
+        self.assertIs(C, disjoint_base(C))
 
-    def test_dunder_solid_base(self):
-        @solid_base
+    def test_dunder_disjoint_base(self):
+        @disjoint_base
         class C: ...
 
-        self.assertIs(C.__solid_base__, True)
+        self.assertIs(C.__disjoint_base__, True)
 
 
 class RevealTypeTests(BaseTestCase):

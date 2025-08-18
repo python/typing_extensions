@@ -705,6 +705,17 @@ Decorators
       Inheriting from a deprecated class now also raises a runtime
       :py:exc:`DeprecationWarning`.
 
+.. decorator:: disjoint_base
+
+   See :pep:`800`. A class decorator that marks a class as a "disjoint base", meaning that
+   child classes of the decorated class cannot inherit from other disjoint bases that are not
+   parent classes of the decorated class.
+
+   This helps type checkers to detect unreachable code and to understand when two types
+   can overlap.
+
+   .. versionadded:: 4.15.0
+
 .. decorator:: final
 
    See :py:func:`typing.final` and :pep:`591`. In ``typing`` since 3.8.
@@ -747,17 +758,6 @@ Decorators
    In Python 3.12, the performance of runtime-checkable protocols was
    improved, and ``typing_extensions`` backports these performance
    improvements.
-
-.. decorator:: solid_base
-
-   See :pep:`800`. A class decorator that marks a class as a "solid base", meaning that
-   child classes of the decorated class cannot inherit from other solid bases that are not
-   parent classes of the decorated class.
-
-   This helps type checkers to detect unreachable code and to understand when two types
-   can overlap.
-
-   .. versionadded:: 4.15.0
 
 Functions
 ~~~~~~~~~

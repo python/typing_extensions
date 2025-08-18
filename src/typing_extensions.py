@@ -71,6 +71,7 @@ __all__ = [
     'clear_overloads',
     'dataclass_transform',
     'deprecated',
+    'disjoint_base',
     'Doc',
     'evaluate_forward_ref',
     'get_overloads',
@@ -94,7 +95,6 @@ __all__ = [
     'reveal_type',
     'runtime',
     'runtime_checkable',
-    'solid_base',
     'Text',
     'TypeAlias',
     'TypeAliasType',
@@ -322,30 +322,30 @@ else:
         return f
 
 
-if hasattr(typing, "solid_base"):  # 3.15
-    solid_base = typing.solid_base
+if hasattr(typing, "disjoint_base"):  # 3.15
+    disjoint_base = typing.disjoint_base
 else:
-    def solid_base(cls):
-        """This decorator marks a class a solid base.
+    def disjoint_base(cls):
+        """This decorator marks a class as a disjoint base.
 
-        Child classes of a solid base cannot inherit from other solid bases that are
-        not parent classes of the solid base.
+        Child classes of a disjoint base cannot inherit from other disjoint bases that are
+        not parent classes of the disjoint base.
 
         For example:
 
-            @solid_base
-            class Solid1: pass
+            @disjoint_base
+            class Disjoint1: pass
 
-            @solid_base
-            class Solid2: pass
+            @disjoint_base
+            class Disjoint2: pass
 
-            class Solid3(Solid1, Solid2): pass  # Type checker error
+            class Disjoint3(Disjoint1, Disjoint2): pass  # Type checker error
 
-        Type checkers can use knowledge of solid bases to detect unreachable code
+        Type checkers can use knowledge of disjoint bases to detect unreachable code
         and determine when two types can overlap.
 
         See PEP 800."""
-        cls.__solid_base__ = True
+        cls.__disjoint_base__ = True
         return cls
 
 
