@@ -110,6 +110,8 @@ jobs:
         with:
           name: pr
           path: pr/
+          if-no-files-found: error
+          overwrite: true
 
       - name: Test CPython typing test suite
         # Test suite fails on PyPy even without typing_extensions
