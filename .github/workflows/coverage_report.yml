@@ -23,10 +23,10 @@ jobs:
         id: get_pr_number
         env:
           SHA: "${{ github.event.workflow_run.head_sha }}"
-          REPO: "${{github.repository}}"
+          REPO: "${{ github.repository }}"
         run: |
           # Query GitHub API to find the PR number associated with the head commit SHA
-          PR_DATA=$(curl -s "https://api.github.com/search/issues?q=repo:$REPO+type:pr+sha:$SHA" | jq -c '.')
+          PR_DATA=$(curl -s "https://api.github.com/search/issues?q=repo:$REPO+type:pr+sha:$SHA")
           # Check if head commit is on a single PR else ambiguous which PR triggered the workflow
           ITEMS_COUNT=$(jq '.items | length' <<< "$PR_DATA")
           if [ "$ITEMS_COUNT" -ne 1 ]; then
