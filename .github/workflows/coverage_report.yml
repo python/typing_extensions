@@ -5,7 +5,7 @@ on:
     workflows: ["Test and lint"]
     types:
       - completed
-      
+
 permissions: {}
 
 jobs:
@@ -14,46 +14,49 @@ jobs:
         contents: read
         pull-requests: write
     runs-on: ubuntu-latest
-    #&& github.repository == github.event.workflow_run.repository.full_name
     if: >
       github.event.workflow_run.event == 'pull_request'
+      && github.repository == github.event.workflow_run.repository.full_name
+    # The github.repository == ... check will prevent this workflow from running on forks.
     steps:
-    - name: Get PR number from commit SHA
-      id: get_pr
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        SHA="${{ github.event.workflow_run.head_sha }}"
-        REPO="${{ github.repository }}"
-        PR_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/repos/$REPO/commits/$SHA/pulls" \
-          -H "Accept: application/vnd.github.groot-preview+json")
-        echo "$PR_DATA"
-        PR_NUMBER=$(echo "$PR_DATA" | jq '.[0].number')
-        echo "PR number is $PR_NUMBER"
-        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-    - name: Download coverage report
-      uses: actions/download-artifact@v4
-      with:
-        pattern: coverage.xml
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ github.event.workflow_run.id }}
-    - name: Code Coverage Report
-      uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95 # v1.3.0
-      with:
-        filename: coverage.xml
-        badge: true
-        fail_below_min: false
-        format: markdown
-        hide_branch_rate: false
-        hide_complexity: true
-        indicators: true
-        output: both
-        thresholds: '80 90'
-    - name: Add Coverage PR Comment
-      uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728  # v2.9.3
-      with:
-        recreate: true
-        path: code-coverage-results.md
-        number: ${{ steps.get_pr.outputs.pr_number }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get PR number
+        id: get_pr_number
+        env:
+          SHA: "${{ github.event.workflow_run.head_sha }}"
+          REPO: "${{github.repository}}"
+        run: |
+          # Query GitHub API to find the PR number associated with the head commit SHA
+          PR_DATA=$(curl -s "https://api.github.com/search/issues?q=repo:$REPO+type:pr+sha:$SHA" | jq -c '.')
+          # Check if head commit is on a single PR else ambiguous which PR triggered the workflow
+          ITEMS_COUNT=$(jq '.items | length' <<< "$PR_DATA")
+          if [ "$ITEMS_COUNT" -ne 1 ]; then
+            echo "Error: Expected exactly one PR, but found $ITEMS_COUNT." >&2
+            exit 1
+          fi
+          PR_NUMBER=$(jq '.items[0].number' <<< "$PR_DATA")
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage.xml
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95 # v1.3.0
+        with:
+          filename: coverage.xml
+          badge: true
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '80 90'
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728  # v2.9.3
+        with:
+          recreate: true
+          path: code-coverage-results.md
+          number: ${{ steps.get_pr_number.outputs.pr_number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
