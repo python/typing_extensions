@@ -9,11 +9,9 @@ on:
 permissions: {}
 
 jobs:
-  cov-report:
-    permissions:
-        contents: read
-        pull-requests: write
+  get-pr-number:
     runs-on: ubuntu-latest
+    permissions: {}
     if: >
       github.event.workflow_run.event == 'pull_request'
       && github.repository == github.event.workflow_run.repository.full_name
@@ -35,10 +33,20 @@ jobs:
           fi
           PR_NUMBER=$(jq '.items[0].number' <<< "$PR_DATA")
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+    outputs:
+      pr_number: ${{ steps.get_pr_number.outputs.pr_number }}
+  
+  create-md-comment:
+    runs-on: ubuntu-latest
+    permissions: {}
+    if: >
+      github.event.workflow_run.event == 'pull_request'
+      && github.repository == github.event.workflow_run.repository.full_name
+    steps:
       - name: Download coverage report
         uses: actions/download-artifact@v4
         with:
-          name: coverage.xml
+          name: coverage
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
       - name: Code Coverage Report
@@ -53,10 +61,25 @@ jobs:
           indicators: true
           output: both
           thresholds: '80 90'
+      - name: Upload coverage summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-results
+          path: code-coverage-results.md
+  post-comment:
+    runs-on: ubuntu-latest
+    needs: [get-pr-number, create-md-comment]
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: code-coverage-results
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728  # v2.9.3
         with:
           recreate: true
           path: code-coverage-results.md
-          number: ${{ steps.get_pr_number.outputs.pr_number }}
+          number: ${{ needs.get-pr-number.outputs.pr_number }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
