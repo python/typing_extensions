@@ -171,34 +171,14 @@ jobs:
           ls -aR .coverage*
           coverage combine .coverage*
           echo "Creating coverage report..."
+          # print output
           coverage report
+          # Create xml for comment
           coverage xml
-
-      - name: Code Coverage Report
-        uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95 # v1.3.0
-        with:
-          filename: coverage.xml
-          badge: true
-          fail_below_min: false
-          format: markdown
-          hide_branch_rate: false
-          hide_complexity: true
-          indicators: true
-          output: both
-          thresholds: '80 90'
 
       - name: Archive code coverage report
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-results.md
-          path: code-coverage-results.md
-          compression-level: 0 # no compression
-      - name: Save PR number for coverage report
-        run: |
-          echo ${{ github.event.number }} > ./pr_number.txt
-      - uses: actions/upload-artifact@v4
-        continue-on-error: true
-        with:
-          name: pr_number
-          path: pr_number.txt
+          name: coverage.xml
+          path: coverage.xml
           compression-level: 0 # no compression
