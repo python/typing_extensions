@@ -178,10 +178,10 @@ jobs:
           ls -aR .coverage*
           coverage combine .coverage*
           echo "Creating coverage report..."
-          # Create xml file for further processing; Create even if below minimum
-          coverage xml --fail-under=0
           # Write markdown report to job summary
           coverage report --format=markdown -m >> "$GITHUB_STEP_SUMMARY"
+          # Create xml file for further processing; Create even if below minimum
+          coverage xml --fail-under=0
 
       # For future use in case we want to add a PR comment for 3rd party PRs which requires
       # a workflow with elevated PR write permissions. Move below steps into a separate job.
