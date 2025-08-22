@@ -66,7 +66,24 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
-      - name: Test typing_extensions
+      - name: Install coverage
+        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+        run: |
+          # Be wary that this does not install typing_extensions in the future
+          pip install coverage
+
+      - name: Test typing_extensions with coverage
+        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+        run: |
+          # Be wary of running `pip install` here, since it becomes easy for us to
+          # accidentally pick up typing_extensions as installed by a dependency
+          cd src
+          python --version  # just to make sure we're running the right one
+          # Run tests under coverage
+          export COVERAGE_FILE=.coverage_${{ matrix.python-version }}
+          python -m coverage run -m unittest test_typing_extensions.py
+      - name: Test typing_extensions no coverage on pypy
+        if: ${{ startsWith(matrix.python-version, 'pypy') }}
         run: |
           # Be wary of running `pip install` here, since it becomes easy for us to
           # accidentally pick up typing_extensions as installed by a dependency
@@ -74,6 +91,15 @@ jobs:
           python --version  # just to make sure we're running the right one
           python -m unittest test_typing_extensions.py
 
+      - name: Archive code coverage results
+        id: archive-coverage
+        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: .coverage_${{ matrix.python-version }}
+          path: ./src/.coverage*
+          include-hidden-files: true
+          compression-level: 0 # no compression
       - name: Test CPython typing test suite
         # Test suite fails on PyPy even without typing_extensions
         if: ${{ !startsWith(matrix.python-version, 'pypy') }}
@@ -82,6 +108,9 @@ jobs:
           # Run the typing test suite from CPython with typing_extensions installed,
           # because we monkeypatch typing under some circumstances.
           python -c 'import typing_extensions; import test.__main__' test_typing -v
+    outputs:
+      # report if coverage was uploaded
+      cov_uploaded: ${{ steps.archive-coverage.outputs.artifact-id }}
 
   create-issue-on-failure:
     name: Create an issue if daily tests failed
@@ -111,3 +140,77 @@ jobs:
               title: `Daily tests failed on ${new Date().toDateString()}`,
               body: "Runs listed here: https://github.com/python/typing_extensions/actions/workflows/ci.yml",
             })
+
+  report-coverage:
+    name: Report coverage
+
+    runs-on: ubuntu-latest
+
+    needs: [tests]
+
+    permissions:
+      pull-requests: write
+
+    # Job will run even if tests failed but only if at least one artifact was uploaded
+    if: ${{ always() && needs.tests.outputs.cov_uploaded != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3"
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: .coverage_*
+          path: .
+          # merge only when files are named differently
+          merge-multiple: true
+      - name: Install dependencies
+        run: pip install coverage
+      - name: Combine coverage results
+        run: |
+          # List the files to see what we have
+          echo "Combining coverage files..."
+          ls -aR .coverage*
+          coverage combine .coverage*
+          echo "Creating coverage report..."
+          # Create a coverage report (console)
+          coverage report
+          # Create xml file for further processing
+          coverage xml
+
+      # For future use in case we want to add a PR comment for 3rd party PRs which requires
+      # a workflow with elevated PR write permissions. Move below steps into a separate job.
+      - name: Archive code coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95 # v1.3.0
+        with:
+          filename: coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both  # console, file or both
+          thresholds: '90 95'
+
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728  # v2.9.3
+        # Create PR comment when the branch is on the repo, otherwise we lack PR write permissions
+        # -> need another workflow with access to secret token
+        if: >-
+          github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+        with:
+          recreate: true
+          path: code-coverage-results.md

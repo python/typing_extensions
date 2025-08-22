@@ -16,3 +16,6 @@ venv*/
 *.swp
 *.pyc
 *.egg-info/
+
+.coverage*
+coverage.xml
