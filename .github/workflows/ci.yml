@@ -212,5 +212,5 @@ jobs:
           github.event_name == 'pull_request'
           && github.event.pull_request.head.repo.full_name == github.repository
         with:
-          recreate: true
+          hide_and_recreate: true
           path: code-coverage-results.md
