@@ -181,7 +181,7 @@ jobs:
           # Create xml file for further processing; Create even if below minimum
           coverage xml --fail-under=0
           # Write markdown report to job summary
-          coverage report --format=markdown -m >> $GITHUB_STEP_SUMMARY
+          coverage report --format=markdown -m >> "$GITHUB_STEP_SUMMARY"
 
       # For future use in case we want to add a PR comment for 3rd party PRs which requires
       # a workflow with elevated PR write permissions. Move below steps into a separate job.
@@ -214,7 +214,7 @@ jobs:
 
       - name: Add link to report badge
         run: |
-          run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
           sed -i "1s|^\(!.*\)$|[\1]($run_url)|" code-coverage-results.md
 
       - name: Add Coverage PR Comment
