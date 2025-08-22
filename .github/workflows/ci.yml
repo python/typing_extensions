@@ -178,21 +178,26 @@ jobs:
           ls -aR .coverage*
           coverage combine .coverage*
           echo "Creating coverage report..."
-          # Create a coverage report (console)
-          coverage report
-          # Create xml file for further processing
-          coverage xml
+          # Create xml file for further processing; Create even if below minimum
+          coverage xml --fail-under=0
 
       # For future use in case we want to add a PR comment for 3rd party PRs which requires
       # a workflow with elevated PR write permissions. Move below steps into a separate job.
       - name: Archive code coverage report
+        id: cov_xml_upload
         uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage.xml
+      - name: Code Coverage Report (console)
+        run: |
+          # Create a coverage report (console), respects fail_under in pyproject.toml
+          coverage report
 
       - name: Code Coverage Report
         uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95 # v1.3.0
+        # Create markdown file even if coverage report fails due to fail_under
+        if: ${{ always() && steps.cov_xml_upload.outputs.artifact-id != '' }}
         with:
           filename: coverage.xml
           badge: true
@@ -202,7 +207,7 @@ jobs:
           hide_complexity: true
           indicators: true
           output: both  # console, file or both
-          thresholds: '90 95'
+          thresholds: '96 98'
 
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728  # v2.9.3
