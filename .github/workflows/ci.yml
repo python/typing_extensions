@@ -216,6 +216,7 @@ jobs:
         if: >-
           github.event_name == 'pull_request'
           && github.event.pull_request.head.repo.full_name == github.repository
+          && ${{ always() && steps.cov_xml_upload.outputs.artifact-id != '' }}
         with:
           hide_and_recreate: true
           path: code-coverage-results.md
