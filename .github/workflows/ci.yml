@@ -213,6 +213,7 @@ jobs:
           thresholds: '95 98'
 
       - name: Add link to report badge
+        if: ${{ always() && steps.cov_xml_upload.outputs.artifact-id != '' }}
         run: |
           run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
           sed -i "1s|^\(!.*\)$|[\1]($run_url)|" code-coverage-results.md
