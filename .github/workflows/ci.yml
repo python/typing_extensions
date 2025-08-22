@@ -215,10 +215,12 @@ jobs:
         # Create PR comment when the branch is on the repo, otherwise we lack PR write permissions
         # -> need another workflow with access to secret token
         if: >-
-          ${{ always() }}
-          && github.event_name == 'pull_request'
-          && github.event.pull_request.head.repo.full_name == github.repository
-          && steps.cov_xml_upload.outputs.artifact-id != ''
+          ${{
+            always() 
+            && github.event_name == 'pull_request'
+            && github.event.pull_request.head.repo.full_name == github.repository
+            && steps.cov_xml_upload.outputs.artifact-id != ''
+          }}
         with:
           hide_and_recreate: true
           path: code-coverage-results.md
