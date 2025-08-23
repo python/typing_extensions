@@ -2254,6 +2254,52 @@ class OtherABCTests(BaseTestCase):
         cm2 = typing_extensions.AsyncContextManager[int, None]
         self.assertEqual(get_args(cm2), (int, NoneType))
 
+    def test_setattr(self):
+        if hasattr(typing_extensions, "_SpecialGenericAlias"):
+            mod = typing_extensions
+        else:
+            mod = typing
+        class Foo:
+            _name = "Foo"
+        Alias = mod._SpecialGenericAlias(Foo, 1)
+
+        # Attribute assignment on generic alias sets attribute on origin
+        Alias.foo = 1
+        self.assertEqual(Alias.foo, 1)
+        self.assertEqual(Foo.foo, 1)
+
+        # Except for dunders...
+        Alias.__dunder__ = 2
+        self.assertEqual(Alias.__dunder__, 2)
+        with self.assertRaises(AttributeError):
+            Foo.__dunder__
+
+        # ...and certain known attributes
+        Alias._name = "NewName"
+        self.assertEqual(Alias._name, "NewName")
+        self.assertEqual(Foo._name, "Foo")
+
+    def test_invalid_specialization(self):
+        if hasattr(typing_extensions, "_SpecialGenericAlias"):
+            mod = typing_extensions
+        else:
+            mod = typing
+        class Foo: ...
+        Alias = mod._SpecialGenericAlias(Foo, 2)
+
+        msg = re.escape("Too few arguments for typing.Foo; actual 1, expected 2")
+        with self.assertRaisesRegex(TypeError, msg):
+            Alias[int]
+
+        msg = re.escape("Too many arguments for typing.Foo; actual 3, expected 2")
+        with self.assertRaisesRegex(TypeError, msg):
+            Alias[int, int, int]
+
+        Alias0 = mod._SpecialGenericAlias(Foo, 0)
+        msg = re.escape("typing.Foo is not a generic class")
+        with self.assertRaisesRegex(TypeError, msg):
+            Alias0[int]
+
 
 class TypeTests(BaseTestCase):
 
@@ -2378,6 +2424,16 @@ class NewTypeTests(BaseTestCase):
         ):
             class ProUserId(UserId):
                 ...
+
+    def test_module_with_incomplete_sys(self):
+        def does_not_exist(*args):
+            raise AttributeError
+        with (
+            patch("sys._getframemodulename", does_not_exist, create=True),
+            patch("sys._getframe", does_not_exist, create=True),
+        ):
+            X = NewType("X", int)
+            self.assertEqual(X.__module__, None)
 
 
 class Coordinate(Protocol):
@@ -5499,6 +5555,25 @@ class GetTypeHintsTests(BaseTestCase):
             get_type_hints(foobar, globals(), locals(), include_extras=True),
             {'x': List[Annotated[int, (1, 10)]]}
         )
+        def foobar2(x: list['X']): ...
+        if sys.version_info >= (3, 11):
+            self.assertEqual(
+                get_type_hints(foobar2, globals(), locals()),
+                {'x': list[int]}
+            )
+            self.assertEqual(
+                get_type_hints(foobar2, globals(), locals(), include_extras=True),
+                {'x': list[Annotated[int, (1, 10)]]}
+            )
+        else:  # TODO: evaluate nested forward refs in Python < 3.11
+            self.assertEqual(
+                get_type_hints(foobar2, globals(), locals()),
+                {'x': list['X']}
+            )
+            self.assertEqual(
+                get_type_hints(foobar2, globals(), locals(), include_extras=True),
+                {'x': list['X']}
+            )
         BA = Tuple[Annotated[T, (1, 0)], ...]
         def barfoo(x: BA): ...
         self.assertEqual(get_type_hints(barfoo, globals(), locals())['x'], Tuple[T, ...])
@@ -5973,6 +6048,15 @@ class ParamSpecTests(BaseTestCase):
         # The actual test:
         self.assertEqual(result1, result2)
 
+    def test_subclass(self):
+        if sys.version_info >= (3, 10):
+            with self.assertRaises(TypeError):
+                class MyParamSpec(ParamSpec):
+                    pass
+        else:
+            class MyParamSpec(ParamSpec):  # Does not raise
+                pass
+
 
 class ConcatenateTests(BaseTestCase):
     def test_basics(self):
@@ -6381,6 +6465,14 @@ class SelfTests(BaseTestCase):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             pickled = pickle.dumps(Self, protocol=proto)
             self.assertIs(Self, pickle.loads(pickled))
+
+    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
+    def test_or(self):
+        self.assertEqual(Self | int, Union[Self, int])
+        self.assertEqual(int | Self, Union[int, Self])
+
+        self.assertEqual(get_args(Self | int), (Self, int))
+        self.assertEqual(get_args(int | Self), (int, Self))
 
 
 class UnpackTests(BaseTestCase):
@@ -7747,6 +7839,45 @@ class NoDefaultTests(BaseTestCase):
             type(NoDefault).foo = 3
         with self.assertRaises(AttributeError):
             type(NoDefault).foo
+
+
+class NoExtraItemsTests(BaseTestCase):
+    def test_pickling(self):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            s = pickle.dumps(NoExtraItems, proto)
+            loaded = pickle.loads(s)
+            self.assertIs(NoExtraItems, loaded)
+
+    def test_doc(self):
+        self.assertIsInstance(NoExtraItems.__doc__, str)
+
+    def test_constructor(self):
+        self.assertIs(NoExtraItems, type(NoExtraItems)())
+        with self.assertRaises(TypeError):
+            type(NoExtraItems)(1)
+
+    def test_repr(self):
+        if hasattr(typing, 'NoExtraItems'):
+            mod_name = 'typing'
+        else:
+            mod_name = "typing_extensions"
+        self.assertEqual(repr(NoExtraItems), f"{mod_name}.NoExtraItems")
+
+    def test_no_call(self):
+        with self.assertRaises(TypeError):
+            NoExtraItems()
+
+    def test_immutable(self):
+        with self.assertRaises(AttributeError):
+            NoExtraItems.foo = 'bar'
+        with self.assertRaises(AttributeError):
+            NoExtraItems.foo
+
+        # TypeError is consistent with the behavior of NoneType
+        with self.assertRaises(TypeError):
+            type(NoExtraItems).foo = 3
+        with self.assertRaises(AttributeError):
+            type(NoExtraItems).foo
 
 
 class TypeVarInferVarianceTests(BaseTestCase):
