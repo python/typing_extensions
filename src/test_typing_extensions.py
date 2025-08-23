@@ -651,7 +651,7 @@ class DeprecatedTests(BaseTestCase):
         @overload
         def h(x: str) -> str: ...
         def h(x):
-            return x
+            return x  # pragma: no cover
 
         overloads = get_overloads(h)
         self.assertEqual(len(overloads), 2)
@@ -1516,7 +1516,7 @@ class AwaitableWrapper(Awaitable[T_a]):
 
     def __await__(self) -> typing.Iterator[T_a]:
         yield
-        return self.value
+        return self.value  # pragma: no cover
 
 class AsyncIteratorWrapper(AsyncIterator[T_a]):
 
@@ -1524,7 +1524,7 @@ class AsyncIteratorWrapper(AsyncIterator[T_a]):
         self.value = value
 
     def __aiter__(self) -> AsyncIterator[T_a]:
-        return self
+        return self  # pragma: no cover
 
     async def __anext__(self) -> T_a:
         data = await self.value
@@ -2039,7 +2039,7 @@ class GeneratorTests(BaseTestCase):
 
     def test_generator_basics(self):
         def foo():
-            yield 42
+            yield 42  # pragma: no cover
         g = foo()
 
         self.assertIsInstance(g, typing_extensions.Generator)
@@ -2097,7 +2097,7 @@ class GeneratorTests(BaseTestCase):
 
     def test_async_generator_basics(self):
         async def f():
-            yield 42
+            yield 42  # pragma: no cover
         g = f()
 
         self.assertIsInstance(g, typing_extensions.AsyncGenerator)
@@ -2216,7 +2216,7 @@ class OtherABCTests(BaseTestCase):
     def test_contextmanager(self):
         @contextlib.contextmanager
         def manager():
-            yield 42
+            yield 42  # pragma: no cover
 
         cm = manager()
         self.assertIsInstance(cm, typing_extensions.ContextManager)
@@ -2235,7 +2235,7 @@ class OtherABCTests(BaseTestCase):
         self.assertNotIsInstance(NotACM(), typing_extensions.AsyncContextManager)
         @contextlib.contextmanager
         def manager():
-            yield 42
+            yield 42  # pragma: no cover
 
         cm = manager()
         self.assertNotIsInstance(cm, typing_extensions.AsyncContextManager)
@@ -2614,7 +2614,7 @@ class ProtocolTests(BaseTestCase):
             pass
         class C(B):
             def ameth(self) -> int:
-                return 26
+                return 26  # pragma: no cover
         with self.assertRaises(TypeError):
             B()
         self.assertIsInstance(C(), P)
@@ -3032,11 +3032,11 @@ class ProtocolTests(BaseTestCase):
         class C:
             @property
             def attr(self):
-                return 42
+                return 42  # pragma: no cover
 
         class CustomDescriptor:
             def __get__(self, obj, objtype=None):
-                return 42
+                return 42  # pragma: no cover
 
         class D:
             attr = CustomDescriptor()
@@ -3120,11 +3120,11 @@ class ProtocolTests(BaseTestCase):
         class CustomDirWithX:
             x = 10
             def __dir__(self):
-                return []
+                return []  # pragma: no cover
 
         class CustomDirWithoutX:
             def __dir__(self):
-                return ["x"]
+                return ["x"]  # pragma: no cover
 
         self.assertIsInstance(CustomDirWithX(), HasX)
         self.assertNotIsInstance(CustomDirWithoutX(), HasX)
@@ -3133,11 +3133,11 @@ class ProtocolTests(BaseTestCase):
         class C:
             @property
             def attr(self):
-                raise AttributeError('no')
+                raise AttributeError('no')  # pragma: no cover
 
         class CustomDescriptor:
             def __get__(self, obj, objtype=None):
-                raise RuntimeError("NO")
+                raise RuntimeError("NO")  # pragma: no cover
 
         class D:
             attr = CustomDescriptor()
@@ -3149,7 +3149,7 @@ class ProtocolTests(BaseTestCase):
 
         class WhyWouldYouDoThis:
             def __getattr__(self, name):
-                raise RuntimeError("wut")
+                raise RuntimeError("wut")  # pragma: no cover
 
         T = TypeVar('T')
 
@@ -3220,7 +3220,7 @@ class ProtocolTests(BaseTestCase):
             def __init__(self, attr):
                 self.attr = attr
             def meth(self, arg):
-                return 0
+                return 0  # pragma: no cover
         class Bad: pass
         self.assertIsInstance(APoint(1, 2, 'A'), Point)
         self.assertIsInstance(BPoint(1, 2), Point)
@@ -3491,7 +3491,7 @@ class ProtocolTests(BaseTestCase):
         class NotRuntimeCheckable(Protocol):
             @classmethod
             def __subclasshook__(cls, other):
-                return hasattr(other, 'x')
+                return hasattr(other, 'x')  # pragma: no cover
 
         must_be_runtime_checkable = (
             "Instance and class checks can only be used "
@@ -3577,7 +3577,7 @@ class ProtocolTests(BaseTestCase):
         class Test:
             x = 1
             def bar(self, x: str) -> str:
-                return x
+                return x  # pragma: no cover
         self.assertIsInstance(Test(), PSub)
         if not TYPING_3_10_0:
             with self.assertRaises(TypeError):
@@ -3765,9 +3765,9 @@ class ProtocolTests(BaseTestCase):
         class A: ...
         class B:
             def __iter__(self):
-                return []
+                return []  # pragma: no cover
             def close(self):
-                return 0
+                return 0  # pragma: no cover
 
         self.assertIsSubclass(B, Custom)
         self.assertNotIsSubclass(A, Custom)
@@ -3785,7 +3785,7 @@ class ProtocolTests(BaseTestCase):
         class C: pass
         class D:
             def __buffer__(self, flags: int) -> memoryview:
-                return memoryview(b'')
+                return memoryview(b'')  # pragma: no cover
             def __release_buffer__(self, mv: memoryview) -> None:
                 pass
 
@@ -3811,7 +3811,7 @@ class ProtocolTests(BaseTestCase):
         class C: pass
         class D:
             def __buffer__(self, flags: int) -> memoryview:
-                return memoryview(b'')
+                return memoryview(b'')  # pragma: no cover
             def __release_buffer__(self, mv: memoryview) -> None:
                 pass
 
@@ -4095,7 +4095,7 @@ class ProtocolTests(BaseTestCase):
             y: float
 
             def square_norm(self) -> float:
-                return self.x ** 2 + self.y ** 2
+                return self.x ** 2 + self.y ** 2  # pragma: no cover
 
         self.assertEqual(Vec2D.__protocol_attrs__, {'x', 'y', 'square_norm'})
         expected_error_message = (
@@ -4108,7 +4108,7 @@ class ProtocolTests(BaseTestCase):
     def test_nonruntime_protocol_interaction_with_evil_classproperty(self):
         class classproperty:
             def __get__(self, instance, type):
-                raise RuntimeError("NO")
+                raise RuntimeError("NO")  # pragma: no cover
 
         class Commentable(Protocol):
             evil = classproperty()
@@ -4155,11 +4155,11 @@ class SpecificProtocolTests(BaseTestCase):
     def test_reader_runtime_checkable(self):
         class MyReader:
             def read(self, n: int) -> bytes:
-                return b""
+                return b""  # pragma: no cover
 
         class WrongReader:
             def readx(self, n: int) -> bytes:
-                return b""
+                return b""  # pragma: no cover
 
         self.assertIsInstance(MyReader(), typing_extensions.Reader)
         self.assertNotIsInstance(WrongReader(), typing_extensions.Reader)
@@ -4167,11 +4167,11 @@ class SpecificProtocolTests(BaseTestCase):
     def test_writer_runtime_checkable(self):
         class MyWriter:
             def write(self, b: bytes) -> int:
-                return 0
+                return 0  # pragma: no cover
 
         class WrongWriter:
             def writex(self, b: bytes) -> int:
-                return 0
+                return 0  # pragma: no cover
 
         self.assertIsInstance(MyWriter(), typing_extensions.Writer)
         self.assertNotIsInstance(WrongWriter(), typing_extensions.Writer)
@@ -5959,7 +5959,7 @@ class ParamSpecTests(BaseTestCase):
             proc = subprocess.run(
                 [sys.executable, "-c", code], check=True, capture_output=True, text=True,
             )
-        except subprocess.CalledProcessError as exc:
+        except subprocess.CalledProcessError as exc:  # pragma: no cover
             print("stdout", exc.stdout, sep="\n")
             print("stderr", exc.stderr, sep="\n")
             raise
@@ -6324,7 +6324,7 @@ class LiteralStringTests(BaseTestCase):
         StringTuple = Tuple[LiteralString, LiteralString]
         class Alias:
             def return_tuple(self) -> StringTuple:
-                return ("foo", "pep" + "675")
+                return ("foo", "pep" + "675")  # pragma: no cover
 
     def test_typevar(self):
         StrT = TypeVar("StrT", bound=LiteralString)
@@ -6375,7 +6375,7 @@ class SelfTests(BaseTestCase):
         TupleSelf = Tuple[Self, Self]
         class Alias:
             def return_tuple(self) -> TupleSelf:
-                return (self, self)
+                return (self, self)  # pragma: no cover
 
     def test_pickle(self):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
@@ -6615,7 +6615,7 @@ class FinalDecoratorTests(BaseTestCase):
             def __init__(self, func):
                 self.func = func
             def __call__(self, *args, **kwargs):
-                return self.func(*args, **kwargs)
+                return self.func(*args, **kwargs)  # pragma: no cover
 
         # Check that no error is thrown if the attribute
         # is not writable.
@@ -6899,7 +6899,7 @@ class AllTests(BaseTestCase):
             subprocess.check_output(f'{sys.executable} -OO {file_path}',
                                     stderr=subprocess.STDOUT,
                                     shell=True)
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError:  # pragma: no cover
             self.fail('Module does not compile with optimize=2 (-OO flag).')
 
 
@@ -6989,13 +6989,13 @@ class NamedTupleTests(BaseTestCase):
             class XMethBad(NamedTuple):
                 x: int
                 def _fields(self):
-                    return 'no chance for this'
+                    return 'no chance for this'  # pragma: no cover
 
         with self.assertRaisesRegex(AttributeError, bad_overwrite_error_message):
             class XMethBad2(NamedTuple):
                 x: int
                 def _source(self):
-                    return 'no chance for this as well'
+                    return 'no chance for this as well'  # pragma: no cover
 
     def test_multiple_inheritance(self):
         class A:
@@ -7660,7 +7660,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         class BrokenEq(type):
             def __eq__(self, other):
                 if other is typing_extensions.Protocol:
-                    raise TypeError("I'm broken")
+                    raise TypeError("I'm broken")  # pragma: no cover
                 return False
 
         class G(Generic[T], metaclass=BrokenEq):
@@ -7786,7 +7786,7 @@ class BufferTests(BaseTestCase):
 
         class MyRegisteredBuffer:
             def __buffer__(self, flags: int) -> memoryview:
-                return memoryview(b'')
+                return memoryview(b'')  # pragma: no cover
 
         # On 3.12, collections.abc.Buffer does a structural compatibility check
         if TYPING_3_12_0:
@@ -7801,7 +7801,7 @@ class BufferTests(BaseTestCase):
 
         class MySubclassedBuffer(Buffer):
             def __buffer__(self, flags: int) -> memoryview:
-                return memoryview(b'')
+                return memoryview(b'')  # pragma: no cover
 
         self.assertIsInstance(MySubclassedBuffer(), Buffer)
         self.assertIsSubclass(MySubclassedBuffer, Buffer)
@@ -8460,7 +8460,7 @@ class TestGetAnnotations(BaseTestCase):
             pass
 
         def f2(a: "undefined"):  # noqa: F821
-            pass
+            pass  # pragma: no cover
 
         self.assertEqual(
             get_annotations(f1, format=Format.VALUE), {"a": int}
@@ -9360,5 +9360,5 @@ class TestSentinels(BaseTestCase):
             pickle.dumps(sentinel)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     main()

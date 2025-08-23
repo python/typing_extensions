@@ -165,7 +165,7 @@ _FORWARD_REF_HAS_CLASS = "__forward_is_class__" in typing.ForwardRef.__slots__
 
 
 class _Sentinel:
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return "<sentinel>"
 
 
