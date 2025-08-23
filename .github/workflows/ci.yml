@@ -180,6 +180,8 @@ jobs:
           echo "Creating coverage report..."
           # Create xml file for further processing; Create even if below minimum
           coverage xml --fail-under=0
+          # Write markdown report to job summary
+          coverage report --fail-under=0 --format=markdown -m >> "$GITHUB_STEP_SUMMARY"
 
       # For future use in case we want to add a PR comment for 3rd party PRs which requires
       # a workflow with elevated PR write permissions. Move below steps into a separate job.
@@ -209,6 +211,12 @@ jobs:
           output: both  # console, file or both
           # Note: it appears fail below min is one off, use fail_under -1 here
           thresholds: '95 98'
+
+      - name: Add link to report badge
+        if: ${{ always() && steps.cov_xml_upload.outputs.artifact-id != '' }}
+        run: |
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
+          sed -i "1s|^\(!.*\)$|[\1]($run_url)|" code-coverage-results.md
 
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728  # v2.9.3
