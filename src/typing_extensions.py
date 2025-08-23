@@ -5,6 +5,7 @@ import collections.abc
 import contextlib
 import enum
 import functools
+import importlib
 import inspect
 import io
 import keyword
@@ -4207,24 +4208,78 @@ else:
             )
 
 
-class Sentinel:
-    """Create a unique sentinel object.
+_sentinel_registry = {}
 
-    *name* should be the name of the variable to which the return value shall be assigned.
+class Sentinel:
+    """A sentinel object.
+
+    *name* should be the qualified name of the variable to which
+    the return value shall be assigned.
+
+    *module_name* is the module where the sentinel is defined.
+    Defaults to the current modules ``__name__``.
 
     *repr*, if supplied, will be used for the repr of the sentinel object.
-    If not provided, "<name>" will be used.
+    If not provided, *name* will be used.
+
+    All sentinels with the same *name* and *module_name* have the same identity.
+    The ``is`` operator is used to test if an object is a sentinel.
+    Sentinel identity is preserved across copy and pickle.
     """
 
-    def __init__(
-        self,
+    def __new__(
+        cls,
         name: str,
+        module_name: typing.Optional[str] = None,
+        *,
         repr: typing.Optional[str] = None,
     ):
-        self._name = name
-        self._repr = repr if repr is not None else f'<{name}>'
+        """Return an object with a consistent identity."""
+        if module_name is not None and repr is None:
+            # 'repr' used to be the 2nd positional argument but is now 'module_name'
+            # Test if 'module_name' is a module or is the old 'repr' argument
+            # Use 'repr=name' to suppress this check
+            try:
+                importlib.import_module(module_name)
+            except Exception:
+                repr = module_name
+                module_name = None
+                warnings.warn(
+                    "'repr' as a positional argument could be mistaken for the sentinels"
+                    " 'module_name'."
+                    f" Use keyword parameter repr={repr!r} instead.",
+                    category=DeprecationWarning,
+                    stacklevel=2,
+                )
 
-    def __repr__(self):
+        if module_name is None:
+            module_name = _caller(default="")
+
+        registry_key = f"{module_name}-{name}"
+
+        repr = repr if repr is not None else name
+
+        # Check registered sentinels
+        sentinel = _sentinel_registry.get(registry_key, None)
+        if sentinel is not None:
+            if sentinel._repr != repr:
+                warnings.warn(
+                    f"repr={repr!r} conflicts with initial definition of "
+                    f"repr={sentinel._repr!r} and will be ignored"
+                    "\nUsage of repr should be consistent across definitions",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+            return sentinel
+
+        # Create initial or anonymous sentinel
+        sentinel = super().__new__(cls)
+        sentinel._name = name
+        sentinel.__module__ = module_name  # Assign which module defined this instance
+        sentinel._repr = repr
+        return _sentinel_registry.setdefault(registry_key, sentinel)
+
+    def __repr__(self) -> str:
         return self._repr
 
     if sys.version_info < (3, 11):
@@ -4241,8 +4296,13 @@ class Sentinel:
         def __ror__(self, other):
             return typing.Union[other, self]
 
-    def __getstate__(self):
-        raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
+    def __reduce__(self) -> str:
+        """Reduce this sentinel to a singleton."""
+        return self._name  # Module is set from __module__ attribute
+
+    def __bool__(self) -> Never:
+        """Raise TypeError."""
+        raise TypeError(f"Sentinel {self!r} is not convertable to bool.")
 
 
 if sys.version_info >= (3, 14, 0, "beta"):
