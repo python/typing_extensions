@@ -160,17 +160,48 @@ _PEP_696_IMPLEMENTED = sys.version_info >= (3, 13, 0, "beta")
 # Added with bpo-45166 to 3.10.1+ and some 3.9 versions
 _FORWARD_REF_HAS_CLASS = "__forward_is_class__" in typing.ForwardRef.__slots__
 
+class Sentinel:
+    """Create a unique sentinel object.
+
+    *name* should be the name of the variable to which the return value shall be assigned.
+
+    *repr*, if supplied, will be used for the repr of the sentinel object.
+    If not provided, "<name>" will be used.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        repr: typing.Optional[str] = None,
+    ):
+        self._name = name
+        self._repr = repr if repr is not None else f'<{name}>'
+
+    def __repr__(self):
+        return self._repr
+
+    if sys.version_info < (3, 11):
+        # The presence of this method convinces typing._type_check
+        # that Sentinels are types.
+        def __call__(self, *args, **kwargs):
+            raise TypeError(f"{type(self).__name__!r} object is not callable")
+
+    # Breakpoint: https://github.com/python/cpython/pull/21515
+    if sys.version_info >= (3, 10):
+        def __or__(self, other):
+            return typing.Union[self, other]
+
+        def __ror__(self, other):
+            return typing.Union[other, self]
+
+    def __getstate__(self):
+        raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
+
+
+_marker = Sentinel("_marker")
+
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
-
-
-class _Sentinel:
-    def __repr__(self):
-        return "<sentinel>"
-
-
-_marker = _Sentinel()
-
 
 # Breakpoint: https://github.com/python/cpython/pull/27342
 if sys.version_info >= (3, 10):
@@ -4205,44 +4236,6 @@ else:
                 type_params,
                 recursive_guard=_recursive_guard | {forward_ref.__forward_arg__},
             )
-
-
-class Sentinel:
-    """Create a unique sentinel object.
-
-    *name* should be the name of the variable to which the return value shall be assigned.
-
-    *repr*, if supplied, will be used for the repr of the sentinel object.
-    If not provided, "<name>" will be used.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        repr: typing.Optional[str] = None,
-    ):
-        self._name = name
-        self._repr = repr if repr is not None else f'<{name}>'
-
-    def __repr__(self):
-        return self._repr
-
-    if sys.version_info < (3, 11):
-        # The presence of this method convinces typing._type_check
-        # that Sentinels are types.
-        def __call__(self, *args, **kwargs):
-            raise TypeError(f"{type(self).__name__!r} object is not callable")
-
-    # Breakpoint: https://github.com/python/cpython/pull/21515
-    if sys.version_info >= (3, 10):
-        def __or__(self, other):
-            return typing.Union[self, other]
-
-        def __ror__(self, other):
-            return typing.Union[other, self]
-
-    def __getstate__(self):
-        raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
 
 
 if sys.version_info >= (3, 14, 0, "beta"):
