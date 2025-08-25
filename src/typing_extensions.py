@@ -198,7 +198,7 @@ class Sentinel:
         raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
 
 
-_marker = Sentinel("_marker")
+_marker = Sentinel("sentinel")
 
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
