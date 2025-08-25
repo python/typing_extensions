@@ -123,6 +123,7 @@ known-first-party = ["typing_extensions", "_typed_dict_test_helper"]
 
 [tool.coverage.report]
 fail_under = 96
+precision = 1
 show_missing = true
 # Omit files that are created in temporary directories during tests.
 # If not explicitly omitted they will result in warnings in the report.
