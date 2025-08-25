@@ -1,3 +1,7 @@
+# Release 4.15.0 (August 25, 2025)
+
+No user-facing changes since 4.15.0rc1.
+
 # Release 4.15.0rc1 (August 18, 2025)
 
 - Add the `@typing_extensions.disjoint_base` decorator, as specified
