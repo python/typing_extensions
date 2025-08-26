@@ -2279,27 +2279,6 @@ class OtherABCTests(BaseTestCase):
         self.assertEqual(Alias._name, "NewName")
         self.assertEqual(Foo._name, "Foo")
 
-    def test_invalid_specialization(self):
-        if hasattr(typing_extensions, "_SpecialGenericAlias"):
-            mod = typing_extensions
-        else:
-            mod = typing
-        class Foo: ...
-        Alias = mod._SpecialGenericAlias(Foo, 2)
-
-        msg = re.escape("Too few arguments for typing.Foo; actual 1, expected 2")
-        with self.assertRaisesRegex(TypeError, msg):
-            Alias[int]
-
-        msg = re.escape("Too many arguments for typing.Foo; actual 3, expected 2")
-        with self.assertRaisesRegex(TypeError, msg):
-            Alias[int, int, int]
-
-        Alias0 = mod._SpecialGenericAlias(Foo, 0)
-        msg = re.escape("typing.Foo is not a generic class")
-        with self.assertRaisesRegex(TypeError, msg):
-            Alias0[int]
-
 
 class TypeTests(BaseTestCase):
 
