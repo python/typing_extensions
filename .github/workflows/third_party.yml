@@ -299,7 +299,7 @@ jobs:
       matrix:
         # PyPy is deliberately omitted here, since SQLAlchemy's tests
         # fail on PyPy for reasons unrelated to typing_extensions.
-        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
         checkout-ref: [ "main", "rel_2_0" ]
     # sqlalchemy tests fail when using the Ubuntu 24.04 runner
     # https://github.com/sqlalchemy/sqlalchemy/commit/8d73205f352e68c6603e90494494ef21027ec68f
