@@ -1,5 +1,8 @@
 # Unreleased
 
+- Fix `__init_subclass__()` behavior in the presence of multiple inheritance involving
+  an `@deprecated`-decorated base class. Backport of CPython PR
+  [#138210](https://github.com/python/cpython/pull/138210) by Brian Schubert.
 - Raise `TypeError` when attempting to subclass `typing_extensions.ParamSpec` on
   Python 3.9. The `typing` implementation has always raised an error, and the
   `typing_extensions` implementation has raised an error on Python 3.10+ since
