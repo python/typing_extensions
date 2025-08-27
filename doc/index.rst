@@ -702,7 +702,7 @@ Decorators
 
 .. decorator:: deprecated(msg, *, category=DeprecationWarning, stacklevel=1)
 
-   See :pep:`702`. In the :mod:`warnings` module since Python 3.13.
+   See :py:func:`warnings.deprecated` and :pep:`702`. In the :mod:`warnings` module since Python 3.13.
 
    .. versionadded:: 4.5.0
 
