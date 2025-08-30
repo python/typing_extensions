@@ -38,6 +38,23 @@ add_module_names = False
 
 html_theme = 'alabaster'
 
+html_theme_options = {
+    "description": "Backported and experimental type hints for Python",
+    # Make the sidebar "sticky" so that is stays visible when scrolling.
+    # Also makes the sidebar appear at the top of the page on mobile.
+    "fixed_sidebar": True,
+}
+
+html_sidebars = {
+    '**': [
+        'about.html',
+        'searchfield.html',
+        'localtoc.html',
+    ]
+}
+
+# Don't include object entries (e.g. functions, classes) in the table of contents.
+toc_object_entries = False
 
 class MyTranslator(HTML5Translator):
     """Adds a link target to name without `typing_extensions.` prefix."""

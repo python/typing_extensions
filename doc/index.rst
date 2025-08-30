@@ -259,6 +259,13 @@ Special typing primitives
 
    .. versionadded:: 4.12.0
 
+.. data:: NoExtraItems
+
+   A sentinel used when the ``extra_items`` class argument to :class:`TypedDict` is not
+   provided. In ``typing`` since 3.15.
+
+   .. versionadded:: 4.13.0
+
 .. data:: NotRequired
 
    See :py:data:`typing.NotRequired` and :pep:`655`. In ``typing`` since 3.11.
@@ -387,12 +394,13 @@ Special typing primitives
 
    .. versionadded:: 4.10.0
 
-.. class:: TypedDict(dict, total=True)
+.. class:: TypedDict(dict, total=True, closed=False, extra_items=<no extra items>)
 
-   See :py:class:`typing.TypedDict` and :pep:`589`. In ``typing`` since 3.8.
-
+   See :py:class:`typing.TypedDict` and :pep:`589`. In ``typing`` since 3.8, but
+   changed and enhanced in several ways since then.
    ``typing_extensions`` backports various bug fixes and improvements
-   to ``TypedDict`` on Python 3.11 and lower.
+   to ``TypedDict``.
+
    :py:class:`TypedDict` does not store runtime information
    about which (if any) keys are non-required in Python 3.8, and does not
    honor the ``total`` keyword with old-style ``TypedDict()`` in Python
@@ -426,35 +434,23 @@ Special typing primitives
 
       .. versionadded:: 4.9.0
 
-   The experimental ``closed`` keyword argument and the special key
-   ``__extra_items__`` proposed in :pep:`728` are supported.
-
-   When ``closed`` is unspecified or ``closed=False`` is given,
-   ``__extra_items__`` behaves like a regular key. Otherwise, this becomes a
-   special key that does not show up in ``__readonly_keys__``,
-   ``__mutable_keys__``, ``__required_keys__``, ``__optional_keys``, or
-   ``__annotations__``.
+   The ``closed`` and ``extra_items`` keyword arguments introduced by
+   :pep:`728` and supported in Python 3.15 and newer are supported.
 
    For runtime introspection, two attributes can be looked at:
 
    .. attribute:: __closed__
 
       A boolean flag indicating whether the current ``TypedDict`` is
-      considered closed. This is not inherited by the ``TypedDict``'s
-      subclasses.
+      considered closed. This reflects the ``closed`` class argument.
 
       .. versionadded:: 4.10.0
 
    .. attribute:: __extra_items__
 
-      The type annotation of the extra items allowed on the ``TypedDict``.
-      This attribute defaults to ``None`` on a TypedDict that has itself and
-      all its bases non-closed. This default is different from ``type(None)``
-      that represents ``__extra_items__: None`` defined on a closed
-      ``TypedDict``.
-
-      If ``__extra_items__`` is not defined or inherited on a closed
-      ``TypedDict``, this defaults to ``Never``.
+      The type of the extra items allowed on the ``TypedDict``.
+      This attribute defaults to :data:`NoExtraItems` if the ``extra_items``
+      class argument is not provided.
 
       .. versionadded:: 4.10.0
 
@@ -494,6 +490,16 @@ Special typing primitives
 
       The keyword argument ``closed`` and the special key ``__extra_items__``
       when ``closed=True`` is given were supported.
+
+   .. versionchanged:: 4.13.0
+
+      :pep:`728` support was updated to a newer version. Extra items are now
+      indicated with an ``extra_items`` class argument, not a special key
+      ``__extra_items__``.
+
+      A value assigned to ``__total__`` in the class body of a
+      ``TypedDict`` will be overwritten by the ``total`` argument of the
+      ``TypedDict`` constructor.
 
 .. class:: TypeVar(name, *constraints, bound=None, covariant=False,
                    contravariant=False, infer_variance=False, default=NoDefault)
@@ -696,7 +702,8 @@ Decorators
 
 .. decorator:: deprecated(msg, *, category=DeprecationWarning, stacklevel=1)
 
-   See :pep:`702`. In the :mod:`warnings` module since Python 3.13.
+   See :py:func:`warnings.deprecated` and :pep:`702`. In the :mod:`warnings` module
+   since Python 3.13.
 
    .. versionadded:: 4.5.0
 
