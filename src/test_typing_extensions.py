@@ -5582,7 +5582,7 @@ class GetTypeHintsTests(BaseTestCase):
             BA2
         )
 
-    @skipUnless(sys.version_info >= (3, 11), "TODO: evaluate nested forward refs in Python < 3.11")
+    @skipUnless(TYPING_3_11_0, "TODO: evaluate nested forward refs in Python < 3.11")
     def test_get_type_hints_genericalias(self):
         def foobar(x: list['X']): ...
         X = Annotated[int, (1, 10)]
