@@ -531,6 +531,14 @@ class BottomTypeTestsMixin:
             pickled = pickle.dumps(self.bottom_type, protocol=proto)
             self.assertIs(self.bottom_type, pickle.loads(pickled))
 
+    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
+    def test_or(self):
+        self.assertEqual(self.bottom_type | int, Union[self.bottom_type, int])
+        self.assertEqual(int | self.bottom_type, Union[int, self.bottom_type])
+
+        self.assertEqual(get_args(self.bottom_type | int), (self.bottom_type, int))
+        self.assertEqual(get_args(int | self.bottom_type), (int, self.bottom_type))
+
 
 class NoReturnTests(BottomTypeTestsMixin, BaseTestCase):
     bottom_type = NoReturn
@@ -5332,6 +5340,17 @@ class TypedDictTests(BaseTestCase):
     def test_dunder_dict(self):
         self.assertIsInstance(TypedDict.__dict__, dict)
 
+    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
+    def test_or(self):
+        class TD(TypedDict):
+            a: int
+
+        self.assertEqual(TD | int, Union[TD, int])
+        self.assertEqual(int | TD, Union[int, TD])
+
+        self.assertEqual(get_args(TD | int), (TD, int))
+        self.assertEqual(get_args(int | TD), (int, TD))
+
 class AnnotatedTests(BaseTestCase):
 
     def test_repr(self):
@@ -6393,6 +6412,14 @@ class LiteralStringTests(BaseTestCase):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             pickled = pickle.dumps(LiteralString, protocol=proto)
             self.assertIs(LiteralString, pickle.loads(pickled))
+
+    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
+    def test_or(self):
+        self.assertEqual(LiteralString | int, Union[LiteralString, int])
+        self.assertEqual(int | LiteralString, Union[int, LiteralString])
+
+        self.assertEqual(get_args(LiteralString | int), (LiteralString, int))
+        self.assertEqual(get_args(int | LiteralString), (int, LiteralString))
 
 
 class SelfTests(BaseTestCase):
