@@ -2247,7 +2247,6 @@ class GeneratorTests(BaseTestCase):
         self.assertRaises(AttributeError, lambda: origin.__dunder__)
 
         # ...and certain known attributes
-        old_name = alias._name
         alias._name = "NewName"
         self.assertEqual(alias._name, "NewName")
         self.assertRaises(AttributeError, lambda: origin._name)
