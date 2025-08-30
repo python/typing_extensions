@@ -7804,7 +7804,7 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         self.assertEqual(A[float, [range], int].__args__, (float, (range,), int))
 
 
-class TypedDictSentinelMixin:
+class SentinelTestsMixin:
     @skip_if_py313_beta_1
     def test_pickling(self):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
@@ -7839,7 +7839,7 @@ class TypedDictSentinelMixin:
             type(self.sentinel_type).foo
 
 
-class NoDefaultTests(TypedDictSentinelMixin, BaseTestCase):
+class NoDefaultTests(SentinelTestsMixin, BaseTestCase):
     sentinel_type = NoDefault
 
     def test_repr(self):
@@ -7850,7 +7850,7 @@ class NoDefaultTests(TypedDictSentinelMixin, BaseTestCase):
         self.assertEqual(repr(NoDefault), f"{mod_name}.NoDefault")
 
 
-class NoExtraItemsTests(TypedDictSentinelMixin, BaseTestCase):
+class NoExtraItemsTests(SentinelTestsMixin, BaseTestCase):
     sentinel_type = NoExtraItems
 
     def test_repr(self):
