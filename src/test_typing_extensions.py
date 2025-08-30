@@ -7804,58 +7804,54 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         self.assertEqual(A[float, [range], int].__args__, (float, (range,), int))
 
 
-class NoDefaultTests(BaseTestCase):
+class TypedDictSentinelMixin:
     @skip_if_py313_beta_1
     def test_pickling(self):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
-            s = pickle.dumps(NoDefault, proto)
+            s = pickle.dumps(self.sentinel_type, proto)
             loaded = pickle.loads(s)
-            self.assertIs(NoDefault, loaded)
+            self.assertIs(self.sentinel_type, loaded)
 
     @skip_if_py313_beta_1
     def test_doc(self):
-        self.assertIsInstance(NoDefault.__doc__, str)
+        self.assertIsInstance(self.sentinel_type.__doc__, str)
 
     def test_constructor(self):
-        self.assertIs(NoDefault, type(NoDefault)())
+        self.assertIs(self.sentinel_type, type(self.sentinel_type)())
         with self.assertRaises(TypeError):
-            type(NoDefault)(1)
-
-    def test_repr(self):
-        self.assertRegex(repr(NoDefault), r'typing(_extensions)?\.NoDefault')
+            type(self.sentinel_type)(1)
 
     def test_no_call(self):
         with self.assertRaises(TypeError):
-            NoDefault()
+            self.sentinel_type()
 
     @skip_if_py313_beta_1
     def test_immutable(self):
         with self.assertRaises(AttributeError):
-            NoDefault.foo = 'bar'
+            self.sentinel_type.foo = 'bar'
         with self.assertRaises(AttributeError):
-            NoDefault.foo
+            self.sentinel_type.foo
 
         # TypeError is consistent with the behavior of NoneType
         with self.assertRaises(TypeError):
-            type(NoDefault).foo = 3
+            type(self.sentinel_type).foo = 3
         with self.assertRaises(AttributeError):
-            type(NoDefault).foo
+            type(self.sentinel_type).foo
 
 
-class NoExtraItemsTests(BaseTestCase):
-    def test_pickling(self):
-        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
-            s = pickle.dumps(NoExtraItems, proto)
-            loaded = pickle.loads(s)
-            self.assertIs(NoExtraItems, loaded)
+class NoDefaultTests(TypedDictSentinelMixin, BaseTestCase):
+    sentinel_type = NoDefault
 
-    def test_doc(self):
-        self.assertIsInstance(NoExtraItems.__doc__, str)
+    def test_repr(self):
+        if hasattr(typing, 'NoDefault'):
+            mod_name = 'typing'
+        else:
+            mod_name = "typing_extensions"
+        self.assertEqual(repr(NoDefault), f"{mod_name}.NoDefault")
 
-    def test_constructor(self):
-        self.assertIs(NoExtraItems, type(NoExtraItems)())
-        with self.assertRaises(TypeError):
-            type(NoExtraItems)(1)
+
+class NoExtraItemsTests(TypedDictSentinelMixin, BaseTestCase):
+    sentinel_type = NoExtraItems
 
     def test_repr(self):
         if hasattr(typing, 'NoExtraItems'):
@@ -7863,22 +7859,6 @@ class NoExtraItemsTests(BaseTestCase):
         else:
             mod_name = "typing_extensions"
         self.assertEqual(repr(NoExtraItems), f"{mod_name}.NoExtraItems")
-
-    def test_no_call(self):
-        with self.assertRaises(TypeError):
-            NoExtraItems()
-
-    def test_immutable(self):
-        with self.assertRaises(AttributeError):
-            NoExtraItems.foo = 'bar'
-        with self.assertRaises(AttributeError):
-            NoExtraItems.foo
-
-        # TypeError is consistent with the behavior of NoneType
-        with self.assertRaises(TypeError):
-            type(NoExtraItems).foo = 3
-        with self.assertRaises(AttributeError):
-            type(NoExtraItems).foo
 
 
 class TypeVarInferVarianceTests(BaseTestCase):
