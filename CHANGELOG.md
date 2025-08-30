@@ -1,3 +1,10 @@
+# Unreleased
+
+- Raise `TypeError` when attempting to subclass `typing_extensions.ParamSpec` on
+  Python 3.9. The `typing` implementation has always raised an error, and the
+  `typing_extensions` implementation has raised an error on Python 3.10+ since
+  `typing_extensions` v4.6.0. Patch by Brian Schubert.
+
 # Release 4.15.0rc1 (August 18, 2025)
 
 - Add the `@typing_extensions.disjoint_base` decorator, as specified
