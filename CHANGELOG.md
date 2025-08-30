@@ -1,3 +1,10 @@
+# Unreleased
+
+- Raise `TypeError` when attempting to subclass `typing_extensions.ParamSpec` on
+  Python 3.9. The `typing` implementation has always raised an error, and the
+  `typing_extensions` implementation has raised an error on Python 3.10+ since
+  `typing_extensions` v4.6.0. Patch by Brian Schubert.
+
 # Release 4.15.0 (August 25, 2025)
 
 No user-facing changes since 4.15.0rc1.

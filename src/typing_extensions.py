@@ -555,7 +555,9 @@ else:
 
 
     class _SpecialGenericAlias(typing._SpecialGenericAlias, _root=True):
-        def __init__(self, origin, nparams, *, inst=True, name=None, defaults=()):
+        def __init__(self, origin, nparams, *, defaults, inst=True, name=None):
+            assert nparams > 0, "`nparams` must be a positive integer"
+            assert defaults, "Must always specify a non-empty sequence for `defaults`"
             super().__init__(origin, nparams, inst=inst, name=name)
             self._defaults = defaults
 
@@ -573,20 +575,14 @@ else:
             msg = "Parameters to generic types must be types."
             params = tuple(typing._type_check(p, msg) for p in params)
             if (
-                self._defaults
-                and len(params) < self._nparams
+                len(params) < self._nparams
                 and len(params) + len(self._defaults) >= self._nparams
             ):
                 params = (*params, *self._defaults[len(params) - self._nparams:])
             actual_len = len(params)
 
             if actual_len != self._nparams:
-                if self._defaults:
-                    expected = f"at least {self._nparams - len(self._defaults)}"
-                else:
-                    expected = str(self._nparams)
-                if not self._nparams:
-                    raise TypeError(f"{self} is not a generic class")
+                expected = f"at least {self._nparams - len(self._defaults)}"
                 raise TypeError(
                     f"Too {'many' if actual_len > self._nparams else 'few'}"
                     f" arguments for {self};"
@@ -1959,6 +1955,9 @@ else:
         # Hack to get typing._type_check to pass.
         def __call__(self, *args, **kwargs):
             pass
+
+        def __init_subclass__(cls) -> None:
+            raise TypeError(f"type '{__name__}.ParamSpec' is not an acceptable base type")
 
 
 # 3.9
