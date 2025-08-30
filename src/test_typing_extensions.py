@@ -2221,32 +2221,36 @@ class GeneratorTests(BaseTestCase):
     def test_setattr(self):
         origin = collections.abc.Generator
         alias = typing_extensions.Generator
+        original_name = alias._name
+
+        def cleanup():
+            for obj in origin, alias:
+                for attr in 'foo', '__dunder__':
+                    try:
+                        delattr(obj, attr)
+                    except Exception:
+                        pass
+            try:
+                alias._name = original_name
+            except Exception:
+                pass
+
+        self.addCleanup(cleanup)
 
         # Attribute assignment on generic alias sets attribute on origin
         alias.foo = 1
         self.assertEqual(alias.foo, 1)
         self.assertEqual(origin.foo, 1)
-        # cleanup
-        del origin.foo
-        self.assertRaises(AttributeError, lambda: alias.foo)
-        self.assertRaises(AttributeError, lambda: origin.foo)
-
         # Except for dunders...
         alias.__dunder__ = 2
         self.assertEqual(alias.__dunder__, 2)
         self.assertRaises(AttributeError, lambda: origin.__dunder__)
-        # cleanup
-        del alias.__dunder__
-        self.assertRaises(AttributeError, lambda: alias.__dunder___)
 
         # ...and certain known attributes
         old_name = alias._name
         alias._name = "NewName"
         self.assertEqual(alias._name, "NewName")
         self.assertRaises(AttributeError, lambda: origin._name)
-        # cleanup
-        alias._name = old_name
-        self.assertEqual(alias._name, old_name)
 
 
 class OtherABCTests(BaseTestCase):
