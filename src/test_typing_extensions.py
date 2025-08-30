@@ -531,6 +531,14 @@ class BottomTypeTestsMixin:
             pickled = pickle.dumps(self.bottom_type, protocol=proto)
             self.assertIs(self.bottom_type, pickle.loads(pickled))
 
+    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
+    def test_or(self):
+        self.assertEqual(self.bottom_type | int, Union[self.bottom_type, int])
+        self.assertEqual(int | self.bottom_type, Union[int, self.bottom_type])
+
+        self.assertEqual(get_args(self.bottom_type | int), (self.bottom_type, int))
+        self.assertEqual(get_args(int | self.bottom_type), (int, self.bottom_type))
+
 
 class NoReturnTests(BottomTypeTestsMixin, BaseTestCase):
     bottom_type = NoReturn
@@ -2210,6 +2218,36 @@ class GeneratorTests(BaseTestCase):
             Union[typing_extensions.Generator, typing.Deque]
         )
 
+    def test_setattr(self):
+        origin = collections.abc.Generator
+        alias = typing_extensions.Generator
+
+        # Attribute assignment on generic alias sets attribute on origin
+        alias.foo = 1
+        self.assertEqual(alias.foo, 1)
+        self.assertEqual(origin.foo, 1)
+        # cleanup
+        del origin.foo
+        self.assertRaises(AttributeError, lambda: alias.foo)
+        self.assertRaises(AttributeError, lambda: origin.foo)
+
+        # Except for dunders...
+        alias.__dunder__ = 2
+        self.assertEqual(alias.__dunder__, 2)
+        self.assertRaises(AttributeError, lambda: origin.__dunder__)
+        # cleanup
+        del alias.__dunder__
+        self.assertRaises(AttributeError, lambda: alias.__dunder___)
+
+        # ...and certain known attributes
+        old_name = alias._name
+        alias._name = "NewName"
+        self.assertEqual(alias._name, "NewName")
+        self.assertRaises(AttributeError, lambda: origin._name)
+        # cleanup
+        alias._name = old_name
+        self.assertEqual(alias._name, old_name)
+
 
 class OtherABCTests(BaseTestCase):
 
@@ -2378,6 +2416,16 @@ class NewTypeTests(BaseTestCase):
         ):
             class ProUserId(UserId):
                 ...
+
+    def test_module_with_incomplete_sys(self):
+        def does_not_exist(*args):
+            raise AttributeError
+        with (
+            patch("sys._getframemodulename", does_not_exist, create=True),
+            patch("sys._getframe", does_not_exist, create=True),
+        ):
+            X = NewType("X", int)
+            self.assertEqual(X.__module__, None)
 
 
 class Coordinate(Protocol):
@@ -5297,6 +5345,17 @@ class TypedDictTests(BaseTestCase):
     def test_dunder_dict(self):
         self.assertIsInstance(TypedDict.__dict__, dict)
 
+    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
+    def test_or(self):
+        class TD(TypedDict):
+            a: int
+
+        self.assertEqual(TD | int, Union[TD, int])
+        self.assertEqual(int | TD, Union[int, TD])
+
+        self.assertEqual(get_args(TD | int), (TD, int))
+        self.assertEqual(get_args(int | TD), (int, TD))
+
 class AnnotatedTests(BaseTestCase):
 
     def test_repr(self):
@@ -5517,6 +5576,19 @@ class GetTypeHintsTests(BaseTestCase):
         self.assertIs(
             get_type_hints(barfoo3, globals(), locals(), include_extras=True)["x"],
             BA2
+        )
+
+    @skipUnless(sys.version_info >= (3, 11), "TODO: evaluate nested forward refs in Python < 3.11")
+    def test_get_type_hints_genericalias(self):
+        def foobar(x: list['X']): ...
+        X = Annotated[int, (1, 10)]
+        self.assertEqual(
+            get_type_hints(foobar, globals(), locals()),
+            {'x': list[int]}
+        )
+        self.assertEqual(
+            get_type_hints(foobar, globals(), locals(), include_extras=True),
+            {'x': list[Annotated[int, (1, 10)]]}
         )
 
     def test_get_type_hints_refs(self):
@@ -5973,6 +6045,11 @@ class ParamSpecTests(BaseTestCase):
         # The actual test:
         self.assertEqual(result1, result2)
 
+    def test_subclass(self):
+        with self.assertRaises(TypeError):
+            class MyParamSpec(ParamSpec):
+                pass
+
 
 class ConcatenateTests(BaseTestCase):
     def test_basics(self):
@@ -6335,6 +6412,14 @@ class LiteralStringTests(BaseTestCase):
             pickled = pickle.dumps(LiteralString, protocol=proto)
             self.assertIs(LiteralString, pickle.loads(pickled))
 
+    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
+    def test_or(self):
+        self.assertEqual(LiteralString | int, Union[LiteralString, int])
+        self.assertEqual(int | LiteralString, Union[int, LiteralString])
+
+        self.assertEqual(get_args(LiteralString | int), (LiteralString, int))
+        self.assertEqual(get_args(int | LiteralString), (int, LiteralString))
+
 
 class SelfTests(BaseTestCase):
     def test_basics(self):
@@ -6381,6 +6466,14 @@ class SelfTests(BaseTestCase):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             pickled = pickle.dumps(Self, protocol=proto)
             self.assertIs(Self, pickle.loads(pickled))
+
+    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
+    def test_or(self):
+        self.assertEqual(Self | int, Union[Self, int])
+        self.assertEqual(int | Self, Union[int, Self])
+
+        self.assertEqual(get_args(Self | int), (Self, int))
+        self.assertEqual(get_args(int | Self), (int, Self))
 
 
 class UnpackTests(BaseTestCase):
@@ -7747,6 +7840,45 @@ class NoDefaultTests(BaseTestCase):
             type(NoDefault).foo = 3
         with self.assertRaises(AttributeError):
             type(NoDefault).foo
+
+
+class NoExtraItemsTests(BaseTestCase):
+    def test_pickling(self):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            s = pickle.dumps(NoExtraItems, proto)
+            loaded = pickle.loads(s)
+            self.assertIs(NoExtraItems, loaded)
+
+    def test_doc(self):
+        self.assertIsInstance(NoExtraItems.__doc__, str)
+
+    def test_constructor(self):
+        self.assertIs(NoExtraItems, type(NoExtraItems)())
+        with self.assertRaises(TypeError):
+            type(NoExtraItems)(1)
+
+    def test_repr(self):
+        if hasattr(typing, 'NoExtraItems'):
+            mod_name = 'typing'
+        else:
+            mod_name = "typing_extensions"
+        self.assertEqual(repr(NoExtraItems), f"{mod_name}.NoExtraItems")
+
+    def test_no_call(self):
+        with self.assertRaises(TypeError):
+            NoExtraItems()
+
+    def test_immutable(self):
+        with self.assertRaises(AttributeError):
+            NoExtraItems.foo = 'bar'
+        with self.assertRaises(AttributeError):
+            NoExtraItems.foo
+
+        # TypeError is consistent with the behavior of NoneType
+        with self.assertRaises(TypeError):
+            type(NoExtraItems).foo = 3
+        with self.assertRaises(AttributeError):
+            type(NoExtraItems).foo
 
 
 class TypeVarInferVarianceTests(BaseTestCase):
