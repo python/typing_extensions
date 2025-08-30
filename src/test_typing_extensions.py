@@ -2218,6 +2218,36 @@ class GeneratorTests(BaseTestCase):
             Union[typing_extensions.Generator, typing.Deque]
         )
 
+    def test_setattr(self):
+        origin = collections.abc.Generator
+        alias = typing_extensions.Generator
+
+        # Attribute assignment on generic alias sets attribute on origin
+        alias.foo = 1
+        self.assertEqual(alias.foo, 1)
+        self.assertEqual(origin.foo, 1)
+        # cleanup
+        del origin.foo
+        self.assertRaises(AttributeError, lambda: alias.foo)
+        self.assertRaises(AttributeError, lambda: origin.foo)
+
+        # Except for dunders...
+        alias.__dunder__ = 2
+        self.assertEqual(alias.__dunder__, 2)
+        self.assertRaises(AttributeError, lambda: origin.__dunder__)
+        # cleanup
+        del alias.__dunder__
+        self.assertRaises(AttributeError, lambda: alias.__dunder___)
+
+        # ...and certain known attributes
+        old_name = alias._name
+        alias._name = "NewName"
+        self.assertEqual(alias._name, "NewName")
+        self.assertRaises(AttributeError, lambda: origin._name)
+        # cleanup
+        alias._name = old_name
+        self.assertEqual(alias._name, old_name)
+
 
 class OtherABCTests(BaseTestCase):
 
@@ -2261,31 +2291,6 @@ class OtherABCTests(BaseTestCase):
         self.assertEqual(get_args(cm1), (int, typing.Optional[bool]))
         cm2 = typing_extensions.AsyncContextManager[int, None]
         self.assertEqual(get_args(cm2), (int, NoneType))
-
-    def test_setattr(self):
-        if hasattr(typing_extensions, "_SpecialGenericAlias"):
-            mod = typing_extensions
-        else:
-            mod = typing
-        class Foo:
-            _name = "Foo"
-        Alias = mod._SpecialGenericAlias(Foo, 1)
-
-        # Attribute assignment on generic alias sets attribute on origin
-        Alias.foo = 1
-        self.assertEqual(Alias.foo, 1)
-        self.assertEqual(Foo.foo, 1)
-
-        # Except for dunders...
-        Alias.__dunder__ = 2
-        self.assertEqual(Alias.__dunder__, 2)
-        with self.assertRaises(AttributeError):
-            Foo.__dunder__
-
-        # ...and certain known attributes
-        Alias._name = "NewName"
-        self.assertEqual(Alias._name, "NewName")
-        self.assertEqual(Foo._name, "Foo")
 
 
 class TypeTests(BaseTestCase):
