@@ -5553,25 +5553,6 @@ class GetTypeHintsTests(BaseTestCase):
             get_type_hints(foobar, globals(), locals(), include_extras=True),
             {'x': List[Annotated[int, (1, 10)]]}
         )
-        def foobar2(x: list['X']): ...
-        if sys.version_info >= (3, 11):
-            self.assertEqual(
-                get_type_hints(foobar2, globals(), locals()),
-                {'x': list[int]}
-            )
-            self.assertEqual(
-                get_type_hints(foobar2, globals(), locals(), include_extras=True),
-                {'x': list[Annotated[int, (1, 10)]]}
-            )
-        else:  # TODO: evaluate nested forward refs in Python < 3.11
-            self.assertEqual(
-                get_type_hints(foobar2, globals(), locals()),
-                {'x': list['X']}
-            )
-            self.assertEqual(
-                get_type_hints(foobar2, globals(), locals(), include_extras=True),
-                {'x': list['X']}
-            )
         BA = Tuple[Annotated[T, (1, 0)], ...]
         def barfoo(x: BA): ...
         self.assertEqual(get_type_hints(barfoo, globals(), locals())['x'], Tuple[T, ...])
@@ -5590,6 +5571,19 @@ class GetTypeHintsTests(BaseTestCase):
         self.assertIs(
             get_type_hints(barfoo3, globals(), locals(), include_extras=True)["x"],
             BA2
+        )
+
+    @skipUnless(sys.version_info >= (3, 11), "TODO: evaluate nested forward refs in Python < 3.11")
+    def test_get_type_hints_genericalias(self):
+        def foobar(x: list['X']): ...
+        X = Annotated[int, (1, 10)]
+        self.assertEqual(
+            get_type_hints(foobar, globals(), locals()),
+            {'x': list[int]}
+        )
+        self.assertEqual(
+            get_type_hints(foobar, globals(), locals(), include_extras=True),
+            {'x': list[Annotated[int, (1, 10)]]}
         )
 
     def test_get_type_hints_refs(self):
