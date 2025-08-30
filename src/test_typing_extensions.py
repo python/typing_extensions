@@ -6028,12 +6028,8 @@ class ParamSpecTests(BaseTestCase):
         self.assertEqual(result1, result2)
 
     def test_subclass(self):
-        if sys.version_info >= (3, 10):
-            with self.assertRaises(TypeError):
-                class MyParamSpec(ParamSpec):
-                    pass
-        else:
-            class MyParamSpec(ParamSpec):  # Does not raise
+        with self.assertRaises(TypeError):
+            class MyParamSpec(ParamSpec):
                 pass
 
 

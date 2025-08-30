@@ -1925,6 +1925,9 @@ else:
         def __call__(self, *args, **kwargs):
             pass
 
+        def __init_subclass__(cls) -> None:
+            raise TypeError(f"type '{__name__}.ParamSpec' is not an acceptable base type")
+
 
 # 3.9
 if not hasattr(typing, 'Concatenate'):
