@@ -1,6 +1,6 @@
 # Unreleased
 
-- Fix incorrect behaviour on PyPy 3.9 and PyPy 3.10 that meant that the result of
+- Fix incorrect behaviour on PyPy 3.9 and PyPy 3.10 that meant that
   calling `isinstance` with `typing_extensions.Concatenate[...]` or
   `typing_extensions.Unpack[...]` as the first argument could have a different
   result in some situations depending on whether or not a profiling function had been
