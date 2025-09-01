@@ -1,5 +1,10 @@
 # Unreleased
 
+- Backport CPython PR [#137281](https://github.com/python/cpython/pull/137281),
+  fixing how type parameters are collected when a `Protocol` base class is parametrized
+  with type variables. Now, parametrized `Generic` or `Protocol` base classes always
+  dictate the number and the order of the type parameters. Patch by Brian Schubert,
+  backporting a CPython PR by Nikita Sobolev.
 - Raise `TypeError` when attempting to subclass `typing_extensions.ParamSpec` on
   Python 3.9. The `typing` implementation has always raised an error, and the
   `typing_extensions` implementation has raised an error on Python 3.10+ since
