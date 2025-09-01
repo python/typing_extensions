@@ -3580,12 +3580,14 @@ class ProtocolTests(BaseTestCase):
 
     def test_defining_generic_protocols(self):
         T = TypeVar('T')
+        T2 = TypeVar('T2')
         S = TypeVar('S')
         @runtime_checkable
         class PR(Protocol[T, S]):
             def meth(self): pass
         class P(PR[int, T], Protocol[T]):
             y = 1
+        self.assertEqual(P.__parameters__, (T,))
         with self.assertRaises(TypeError):
             issubclass(PR[int, T], PR)
         with self.assertRaises(TypeError):
@@ -3594,16 +3596,23 @@ class ProtocolTests(BaseTestCase):
             PR[int]
         with self.assertRaises(TypeError):
             P[int, str]
+        with self.assertRaisesRegex(
+            TypeError,
+            re.escape('Some type variables (~S) are not listed in Protocol[~T, ~T2]'),
+        ):
+            class ExtraTypeVars(P[S], Protocol[T, T2]): ...
         if not TYPING_3_10_0:
             with self.assertRaises(TypeError):
                 PR[int, 1]
             with self.assertRaises(TypeError):
                 PR[int, ClassVar]
         class C(PR[int, T]): pass
+        self.assertEqual(C.__parameters__, (T,))
         self.assertIsInstance(C[str](), C)
 
     def test_defining_generic_protocols_old_style(self):
         T = TypeVar('T')
+        T2 = TypeVar('T2')
         S = TypeVar('S')
         @runtime_checkable
         class PR(Protocol, Generic[T, S]):
@@ -3620,8 +3629,15 @@ class ProtocolTests(BaseTestCase):
                 PR[int, 1]
         class P1(Protocol, Generic[T]):
             def bar(self, x: T) -> str: ...
+        self.assertEqual(P1.__parameters__, (T,))
         class P2(Generic[T], Protocol):
             def bar(self, x: T) -> str: ...
+        self.assertEqual(P2.__parameters__, (T,))
+        msg = re.escape('Some type variables (~S) are not listed in Protocol[~T, ~T2]')
+        with self.assertRaisesRegex(TypeError, msg):
+            class ExtraTypeVars(P1[S], Protocol[T, T2]): ...
+        with self.assertRaisesRegex(TypeError, msg):
+            class ExtraTypeVars(P2[S], Protocol[T, T2]): ...
         @runtime_checkable
         class PSub(P1[str], Protocol):
             x = 1
@@ -3634,9 +3650,33 @@ class ProtocolTests(BaseTestCase):
             with self.assertRaises(TypeError):
                 PR[int, ClassVar]
 
+    def test_protocol_parameter_order(self):
+        # https://github.com/python/cpython/issues/137191
+        T1 = TypeVar("T1")
+        T2 = TypeVar("T2", default=object)
+
+        class A(Protocol[T1]): ...
+
+        class B0(A[T2], Generic[T1, T2]): ...
+        self.assertEqual(B0.__parameters__, (T1, T2))
+
+        class B1(A[T2], Protocol, Generic[T1, T2]): ...
+        self.assertEqual(B1.__parameters__, (T1, T2))
+
+        class B2(A[T2], Protocol[T1, T2]): ...
+        self.assertEqual(B2.__parameters__, (T1, T2))
+
     if hasattr(typing, "TypeAliasType"):
         exec(textwrap.dedent(
             """
+            def test_pep695_protocol_parameter_order(self):
+                class A[T1](Protocol): ...
+                class B3[T1, T2](A[T2], Protocol):
+                    @staticmethod
+                    def get_typeparams():
+                        return (T1, T2)
+                self.assertEqual(B3.__parameters__, B3.get_typeparams())
+
             def test_pep695_generic_protocol_callable_members(self):
                 @runtime_checkable
                 class Foo[T](Protocol):
