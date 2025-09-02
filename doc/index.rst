@@ -312,10 +312,9 @@ Special typing primitives
       with :py:class:`typing.ParamSpec` on Python 3.13+.
 
 .. class:: ParamSpecArgs
+           ParamSpecKwargs
 
-.. class:: ParamSpecKwargs
-
-   See :py:class:`typing.ParamSpecArgs` and :py:class:`typing.ParamSpecKwargs`.
+   See :py:data:`typing.ParamSpecArgs` and :py:data:`typing.ParamSpecKwargs`.
    In ``typing`` since 3.10.
 
 .. class:: Protocol
