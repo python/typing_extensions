@@ -303,7 +303,7 @@ Special typing primitives
       ``default=None`` is passed, and to :data:`NoDefault` if no value is passed.
 
       Previously, passing ``None`` would result in :attr:`!__default__` being set
-      to :py:class:`types.NoneType`, and passing no value for the parameter would
+      to :py:data:`types.NoneType`, and passing no value for the parameter would
       result in :attr:`!__default__` being set to ``None``.
 
    .. versionchanged:: 4.12.0
@@ -470,7 +470,7 @@ Special typing primitives
 
       ``TypedDict`` is now a function rather than a class.
       This brings ``typing_extensions.TypedDict`` closer to the implementation
-      of :py:mod:`typing.TypedDict` on Python 3.9 and higher.
+      of :py:class:`typing.TypedDict` on Python 3.9 and higher.
 
    .. versionchanged:: 4.7.0
 
@@ -525,7 +525,7 @@ Special typing primitives
       ``default=None`` is passed, and to :data:`NoDefault` if no value is passed.
 
       Previously, passing ``None`` would result in :attr:`!__default__` being set
-      to :py:class:`types.NoneType`, and passing no value for the parameter would
+      to :py:data:`types.NoneType`, and passing no value for the parameter would
       result in :attr:`!__default__` being set to ``None``.
 
    .. versionchanged:: 4.12.0
@@ -556,7 +556,7 @@ Special typing primitives
       ``default=None`` is passed, and to :data:`NoDefault` if no value is passed.
 
       Previously, passing ``None`` would result in :attr:`!__default__` being set
-      to :py:class:`types.NoneType`, and passing no value for the parameter would
+      to :py:data:`types.NoneType`, and passing no value for the parameter would
       result in :attr:`!__default__` being set to ``None``.
 
    .. versionchanged:: 4.12.0
@@ -798,7 +798,7 @@ Functions
    * Raises :exc:`TypeError` when it encounters certain objects that are
      not valid type hints.
    * Replaces type hints that evaluate to :const:`!None` with
-     :class:`types.NoneType`.
+     :data:`types.NoneType`.
    * Supports the :attr:`Format.FORWARDREF` and
      :attr:`Format.STRING` formats.
 
@@ -1368,7 +1368,7 @@ versions of Python, but all are listed here for completeness.
 
 .. data:: Union
 
-   See :py:data:`typing.Union`.
+   See :py:class:`typing.Union`.
 
    .. versionadded:: 4.7.0
 
