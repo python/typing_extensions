@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -155,7 +155,7 @@ jobs:
     if: ${{ always() && needs.tests.outputs.cov_uploaded != '' }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Set up Python
@@ -163,7 +163,7 @@ jobs:
         with:
           python-version: "3"
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: .coverage_*
           path: .
@@ -219,7 +219,7 @@ jobs:
           sed -i "1s|^\(!.*\)$|[\1]($run_url)|" code-coverage-results.md
 
       - name: Add Coverage PR Comment
-        uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728  # v2.9.3
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405  # v2.9.3
         # Create PR comment when the branch is on the repo, otherwise we lack PR write permissions
         # -> need another workflow with access to secret token
         if: >-
