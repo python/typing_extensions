@@ -56,6 +56,10 @@ html_sidebars = {
 # Don't include object entries (e.g. functions, classes) in the table of contents.
 toc_object_entries = False
 
+# Warn about all references where the target cannot be found.
+nitpicky = True
+
+
 class MyTranslator(HTML5Translator):
     """Adds a link target to name without `typing_extensions.` prefix."""
     def visit_desc_signature(self, node: Element) -> None:
