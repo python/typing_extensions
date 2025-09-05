@@ -2903,9 +2903,9 @@ else:  # <=3.11
         return arg
 
 
-# Python 3.13.3+ contains a fix for the wrapped __new__
-# Breakpoint: https://github.com/python/cpython/pull/132160
-if sys.version_info >= (3, 13, 3):
+# Python 3.13.8+ and 3.14.1+ contain a fix for the wrapped __init_subclass__
+# Breakpoint: https://github.com/python/cpython/pull/138210
+if ((3, 13, 8) <= sys.version_info < (3, 14)) or sys.version_info >= (3, 14, 1):
     deprecated = warnings.deprecated
 else:
     _T = typing.TypeVar("_T")
@@ -2998,27 +2998,27 @@ else:
 
                 arg.__new__ = staticmethod(__new__)
 
-                original_init_subclass = arg.__init_subclass__
-                # We need slightly different behavior if __init_subclass__
-                # is a bound method (likely if it was implemented in Python)
-                if isinstance(original_init_subclass, MethodType):
-                    original_init_subclass = original_init_subclass.__func__
+                if "__init_subclass__" in arg.__dict__:
+                    # __init_subclass__ is directly present on the decorated class.
+                    # Synthesize a wrapper that calls this method directly.
+                    original_init_subclass = arg.__init_subclass__
+                    # We need slightly different behavior if __init_subclass__
+                    # is a bound method (likely if it was implemented in Python).
+                    # Otherwise, it likely means it's a builtin such as
+                    # object's implementation of __init_subclass__.
+                    if isinstance(original_init_subclass, MethodType):
+                        original_init_subclass = original_init_subclass.__func__
 
                     @functools.wraps(original_init_subclass)
                     def __init_subclass__(*args, **kwargs):
                         warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
                         return original_init_subclass(*args, **kwargs)
-
-                    arg.__init_subclass__ = classmethod(__init_subclass__)
-                # Or otherwise, which likely means it's a builtin such as
-                # object's implementation of __init_subclass__.
                 else:
-                    @functools.wraps(original_init_subclass)
-                    def __init_subclass__(*args, **kwargs):
+                    def __init_subclass__(cls, *args, **kwargs):
                         warnings.warn(msg, category=category, stacklevel=stacklevel + 1)
-                        return original_init_subclass(*args, **kwargs)
+                        return super(arg, cls).__init_subclass__(*args, **kwargs)
 
-                    arg.__init_subclass__ = __init_subclass__
+                arg.__init_subclass__ = classmethod(__init_subclass__)
 
                 arg.__deprecated__ = __new__.__deprecated__ = msg
                 __init_subclass__.__deprecated__ = msg
