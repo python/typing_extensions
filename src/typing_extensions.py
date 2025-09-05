@@ -1986,7 +1986,7 @@ if not hasattr(typing, 'Concatenate'):
         __class__ = typing._GenericAlias
 
         def __init__(self, origin, args):
-            super().__init__(args)
+            list.__init__(self, args)
             self.__origin__ = origin
             self.__args__ = args
 
@@ -2545,7 +2545,7 @@ else:  # <=3.11
         def __getitem__(self, args):
             if self.__typing_is_unpacked_typevartuple__:
                 return args
-            return super().__getitem__(args)
+            return typing._GenericAlias.__getitem__(self, args)
 
     @_UnpackSpecialForm
     def Unpack(self, parameters):
