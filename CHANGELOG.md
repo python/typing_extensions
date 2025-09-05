@@ -1,5 +1,10 @@
 # Unreleased
 
+- Backport CPython PR [#137281](https://github.com/python/cpython/pull/137281),
+  fixing how type parameters are collected when a `Protocol` base class is parametrized
+  with type variables. Now, parametrized `Generic` or `Protocol` base classes always
+  dictate the number and the order of the type parameters. Patch by Brian Schubert,
+  backporting a CPython PR by Nikita Sobolev.
 - Fix `__init_subclass__()` behavior in the presence of multiple inheritance involving
   an `@deprecated`-decorated base class. Backport of CPython PR
   [#138210](https://github.com/python/cpython/pull/138210) by Brian Schubert.
