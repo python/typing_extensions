@@ -69,8 +69,9 @@ jobs:
       - name: Install coverage
         if: ${{ !startsWith(matrix.python-version, 'pypy') }}
         run: |
-          # Be wary that this does not install typing_extensions in the future
-          pip install coverage
+          # Be wary that this does not install typing_extensions in the future.
+          # 'toml' extra is needed to read settings from pyproject.toml on Python <3.11
+          pip install 'coverage[toml]'
 
       - name: Test typing_extensions with coverage
         if: ${{ !startsWith(matrix.python-version, 'pypy') }}
