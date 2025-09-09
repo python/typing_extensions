@@ -4,7 +4,3 @@
 comment:
   # https://docs.codecov.com/docs/pull-request-comments
   layout: "condensed_header, diff, flags, files"
-  # TODO: remove; temporary to test PR comment
-  # https://docs.codecov.com/docs/pull-request-comments#requiring-the-base-andor-head-commit
-  require_base: false
-  require_head: false
