@@ -1,10 +1,11 @@
 # Unreleased
 
-- Fix incorrect behaviour on PyPy 3.9 and PyPy 3.10 that meant that
+- Fix incorrect behaviour on Python 3.9 and Python 3.10 that meant that
   calling `isinstance` with `typing_extensions.Concatenate[...]` or
   `typing_extensions.Unpack[...]` as the first argument could have a different
   result in some situations depending on whether or not a profiling function had been
-  set using `sys.setprofile`. Patch by Brian Schubert.
+  set using `sys.setprofile`. This affected both CPython and PyPy implementations.
+  Patch by Brian Schubert.
 - Fix `__init_subclass__()` behavior in the presence of multiple inheritance involving
   an `@deprecated`-decorated base class. Backport of CPython PR
   [#138210](https://github.com/python/cpython/pull/138210) by Brian Schubert.
