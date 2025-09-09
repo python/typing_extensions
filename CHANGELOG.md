@@ -5,6 +5,12 @@
   with type variables. Now, parametrized `Generic` or `Protocol` base classes always
   dictate the number and the order of the type parameters. Patch by Brian Schubert,
   backporting a CPython PR by Nikita Sobolev.
+- Fix incorrect behaviour on Python 3.9 and Python 3.10 that meant that
+  calling `isinstance` with `typing_extensions.Concatenate[...]` or
+  `typing_extensions.Unpack[...]` as the first argument could have a different
+  result in some situations depending on whether or not a profiling function had been
+  set using `sys.setprofile`. This affected both CPython and PyPy implementations.
+  Patch by Brian Schubert.
 - Fix `__init_subclass__()` behavior in the presence of multiple inheritance involving
   an `@deprecated`-decorated base class. Backport of CPython PR
   [#138210](https://github.com/python/cpython/pull/138210) by Brian Schubert.

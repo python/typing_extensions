@@ -1,0 +1,6 @@
+# Inherits global settings from https://app.codecov.io/account/gh/python/yaml/
+# TODO: enable status checks to fail CI if coverage drops?
+# https://docs.codecov.com/docs/commit-status
+comment:
+  # https://docs.codecov.com/docs/pull-request-comments
+  layout: "condensed_header, diff, flags, files"
