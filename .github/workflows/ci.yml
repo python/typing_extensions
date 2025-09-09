@@ -67,14 +67,12 @@ jobs:
           allow-prereleases: true
 
       - name: Install coverage
-        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
         run: |
           # Be wary that this does not install typing_extensions in the future.
           # 'toml' extra is needed to read settings from pyproject.toml on Python <3.11
           pip install 'coverage[toml]'
 
       - name: Test typing_extensions with coverage
-        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
         run: |
           # Be wary of running `pip install` here, since it becomes easy for us to
           # accidentally pick up typing_extensions as installed by a dependency
@@ -84,14 +82,6 @@ jobs:
           python -m coverage run -m unittest test_typing_extensions.py
           # Create xml file for Codecov
           coverage xml --rcfile=../pyproject.toml --fail-under=0
-      - name: Test typing_extensions no coverage on pypy
-        if: ${{ startsWith(matrix.python-version, 'pypy') }}
-        run: |
-          # Be wary of running `pip install` here, since it becomes easy for us to
-          # accidentally pick up typing_extensions as installed by a dependency
-          cd src
-          python --version  # just to make sure we're running the right one
-          python -m unittest test_typing_extensions.py
 
       - name: Test CPython typing test suite
         # Test suite fails on PyPy even without typing_extensions
@@ -104,11 +94,7 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
-        if: >-
-            ${{
-              !startsWith(matrix.python-version, 'pypy')
-              && (github.event_name == 'push' || github.event_name == 'pull_request')
-            }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'pull_request') }}
         with:
           token: ${{ secrets.CODECOV_ORG_TOKEN }}
           flags: ${{ matrix.python-version }}
