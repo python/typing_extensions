@@ -1986,6 +1986,8 @@ if not hasattr(typing, 'Concatenate'):
         __class__ = typing._GenericAlias
 
         def __init__(self, origin, args):
+            # Cannot use `super().__init__` here because of the `__class__` assignment
+            # in the class body (https://github.com/python/typing_extensions/issues/661)
             list.__init__(self, args)
             self.__origin__ = origin
             self.__args__ = args
@@ -2545,6 +2547,9 @@ else:  # <=3.11
         def __getitem__(self, args):
             if self.__typing_is_unpacked_typevartuple__:
                 return args
+            # Cannot use `super().__getitem__` here because of the `__class__` assignment
+            # in the class body on Python <=3.11
+            # (https://github.com/python/typing_extensions/issues/661)
             return typing._GenericAlias.__getitem__(self, args)
 
     @_UnpackSpecialForm
