@@ -6230,6 +6230,47 @@ class ConcatenateTests(BaseTestCase):
             self.assertTrue(typing._is_param_expr(concat))
             self.assertTrue(typing._is_param_expr(typing_concat))
 
+    def test_isinstance_results_unaffected_by_presence_of_tracing_function(self):
+        # See https://github.com/python/typing_extensions/issues/661
+
+        code = textwrap.dedent(
+            """\
+            import sys, typing
+
+            def trace_call(*args):
+                return trace_call
+
+            def run():
+                sys.modules.pop("typing_extensions", None)
+                from typing_extensions import Concatenate
+                return isinstance(Concatenate[...], typing._GenericAlias)
+            isinstance_result_1 = run()
+            sys.setprofile(trace_call)
+            isinstance_result_2 = run()
+            sys.stdout.write(f"{isinstance_result_1} {isinstance_result_2}")
+            """
+        )
+
+        # Run this in an isolated process or it pollutes the environment
+        # and makes other tests fail:
+        try:
+            proc = subprocess.run(
+                [sys.executable, "-c", code], check=True, capture_output=True, text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            print("stdout", exc.stdout, sep="\n")
+            print("stderr", exc.stderr, sep="\n")
+            raise
+
+        # Sanity checks that assert the test is working as expected
+        self.assertIsInstance(proc.stdout, str)
+        result1, result2 = proc.stdout.split(" ")
+        self.assertIn(result1, {"True", "False"})
+        self.assertIn(result2, {"True", "False"})
+
+        # The actual test:
+        self.assertEqual(result1, result2)
+
 class TypeGuardTests(BaseTestCase):
     def test_basics(self):
         TypeGuard[int]  # OK
@@ -6652,6 +6693,46 @@ class UnpackTests(BaseTestCase):
         self.assertFalse(isinstance(Unpack[Ts], TypeVar))
         self.assertFalse(isinstance(Unpack[Ts], typing.TypeVar))
 
+    def test_isinstance_results_unaffected_by_presence_of_tracing_function(self):
+        # See https://github.com/python/typing_extensions/issues/661
+
+        code = textwrap.dedent(
+            """\
+            import sys, typing
+
+            def trace_call(*args):
+                return trace_call
+
+            def run():
+                sys.modules.pop("typing_extensions", None)
+                from typing_extensions import TypeVarTuple, Unpack
+                return isinstance(Unpack[TypeVarTuple("Ts")], typing.TypeVar)
+            isinstance_result_1 = run()
+            sys.setprofile(trace_call)
+            isinstance_result_2 = run()
+            sys.stdout.write(f"{isinstance_result_1} {isinstance_result_2}")
+            """
+        )
+
+        # Run this in an isolated process or it pollutes the environment
+        # and makes other tests fail:
+        try:
+            proc = subprocess.run(
+                [sys.executable, "-c", code], check=True, capture_output=True, text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            print("stdout", exc.stdout, sep="\n")
+            print("stderr", exc.stderr, sep="\n")
+            raise
+
+        # Sanity checks that assert the test is working as expected
+        self.assertIsInstance(proc.stdout, str)
+        result1, result2 = proc.stdout.split(" ")
+        self.assertIn(result1, {"True", "False"})
+        self.assertIn(result2, {"True", "False"})
+
+        # The actual test:
+        self.assertEqual(result1, result2)
 
 class TypeVarTupleTests(BaseTestCase):
 
