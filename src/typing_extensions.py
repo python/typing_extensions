@@ -657,7 +657,7 @@ def _caller(depth=1, default='__main__'):
 # `__match_args__` attribute was removed from protocol members in 3.13,
 # we want to backport this change to older Python versions.
 # 3.14 additionally added `io.Reader`, `io.Writer` and `os.PathLike` to
-# the list of allowed non-protocol bases.
+# the list of allowed protocol allowlist.
 # https://github.com/python/cpython/issues/127647
 if sys.version_info >= (3, 14):
     Protocol = typing.Protocol
