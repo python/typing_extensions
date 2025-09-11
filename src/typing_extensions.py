@@ -614,10 +614,11 @@ else:
 _PROTO_ALLOWLIST = {
     'collections.abc': [
         'Callable', 'Awaitable', 'Iterable', 'Iterator', 'AsyncIterable',
-        'AsyncIterator','Hashable', 'Sized', 'Container', 'Collection',
-        'Reversible', 'Buffer'
+        'AsyncIterator', 'Hashable', 'Sized', 'Container', 'Collection',
+        'Reversible', 'Buffer',
     ],
     'contextlib': ['AbstractContextManager', 'AbstractAsyncContextManager'],
+    'io': ['Reader', 'Writer'],
     'typing_extensions': ['Buffer'],
     'os': ['PathLike'],
 }
@@ -655,8 +656,10 @@ def _caller(depth=1, default='__main__'):
 
 # `__match_args__` attribute was removed from protocol members in 3.13,
 # we want to backport this change to older Python versions.
-# Breakpoint: https://github.com/python/cpython/pull/110683
-if sys.version_info >= (3, 13):
+# 3.14 additionally added `io.Reader`, `io.Writer` and `os.PathLike` to
+# the list of allowed non-protocol bases.
+# https://github.com/python/cpython/issues/127647
+if sys.version_info >= (3, 14):
     Protocol = typing.Protocol
 else:
     def _allow_reckless_class_checks(depth=2):
