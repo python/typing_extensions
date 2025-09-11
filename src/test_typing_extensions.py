@@ -7071,13 +7071,13 @@ class AllTests(BaseTestCase):
             }
         if sys.version_info < (3, 13):
             exclude |= {
-                'NamedTuple', 'Protocol', 'runtime_checkable', 'Generator',
+                'NamedTuple', 'runtime_checkable', 'Generator',
                 'AsyncGenerator', 'ContextManager', 'AsyncContextManager',
                 'ParamSpec', 'TypeVar', 'TypeVarTuple', 'get_type_hints',
             }
         if sys.version_info < (3, 14):
             exclude |= {
-                'TypeAliasType'
+                'TypeAliasType', 'Protocol'
             }
         if not typing_extensions._PEP_728_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}
