@@ -614,10 +614,12 @@ else:
 _PROTO_ALLOWLIST = {
     'collections.abc': [
         'Callable', 'Awaitable', 'Iterable', 'Iterator', 'AsyncIterable',
-        'Hashable', 'Sized', 'Container', 'Collection', 'Reversible', 'Buffer',
+        'AsyncIterator','Hashable', 'Sized', 'Container', 'Collection',
+        'Reversible', 'Buffer'
     ],
     'contextlib': ['AbstractContextManager', 'AbstractAsyncContextManager'],
     'typing_extensions': ['Buffer'],
+    'os': ['PathLike'],
 }
 
 

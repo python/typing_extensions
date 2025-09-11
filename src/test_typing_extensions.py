@@ -11,6 +11,7 @@ import inspect
 import io
 import itertools
 import pickle
+import os
 import re
 import subprocess
 import sys
@@ -3869,7 +3870,13 @@ class ProtocolTests(BaseTestCase):
             class CustomProtocol(TestCase, Protocol):
                 pass
 
+        class CustomPathLikeProtocol(os.PathLike, Protocol):
+            pass
+
         class CustomContextManager(typing.ContextManager, Protocol):
+            pass
+
+        class CustomAsyncIterator(typing.AsyncIterator, Protocol):
             pass
 
     @skip_if_py312b1
