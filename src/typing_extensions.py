@@ -2635,7 +2635,7 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
 
             tvt.__typing_prepare_subst__ = _typevartuple_prepare_subst
 
-            def __mro_entries__(self, bases):
+            def __mro_entries__(bases):
                 raise TypeError("Cannot subclass an instance of TypeVarTuple.")
             tvt.__mro_entries__ =  __mro_entries__
 
