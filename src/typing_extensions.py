@@ -2637,7 +2637,9 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
             return tvt
 
         def __init_subclass__(self, *args, **kwds):
-            raise TypeError("Cannot subclass special typing classes")
+            raise TypeError(
+                f"type '{__name__}.TypeVarTuple' is not an acceptable base type"
+            )
 
 else:  # <=3.10
     class TypeVarTuple(_DefaultMixin):
