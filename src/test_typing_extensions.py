@@ -6813,7 +6813,7 @@ class TypeVarTupleTests(BaseTestCase):
                                     r'Cannot subclass typing\.Unpack'):
             class H(Unpack): pass
         with self.assertRaisesRegex(TypeError, r'Cannot subclass typing.Unpack\[Ts\]'):
-            class I(*Ts): pass
+            class I(*Ts): pass  # noqa: E742
         with self.assertRaisesRegex(TypeError, r'Cannot subclass typing.Unpack\[Ts\]'):
             class J(Unpack[Ts]): pass
 
