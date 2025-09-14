@@ -6810,11 +6810,11 @@ class TypeVarTupleTests(BaseTestCase):
         with self.assertRaisesRegex(TypeError, CANNOT_SUBCLASS_TYPE):
             class G(type(Unpack[Ts])): pass
         with self.assertRaisesRegex(TypeError,
-                                    r'Cannot subclass typing\.Unpack'):
+                                    r'Cannot subclass (typing|typing_extensions)\.Unpack'):
             class H(Unpack): pass
-        with self.assertRaisesRegex(TypeError, r'Cannot subclass typing.Unpack\[Ts\]'):
+        with self.assertRaisesRegex(TypeError, r'Cannot subclass (typing|typing_extensions)\.Unpack\[Ts\]'):
             class I(*Ts): pass  # noqa: E742
-        with self.assertRaisesRegex(TypeError, r'Cannot subclass typing.Unpack\[Ts\]'):
+        with self.assertRaisesRegex(TypeError, r'Cannot subclass (typing|typing_extensions)\.Unpack\[Ts\]'):
             class J(Unpack[Ts]): pass
 
 
