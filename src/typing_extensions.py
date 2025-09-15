@@ -2637,7 +2637,7 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
 
             def __mro_entries__(bases):
                 raise TypeError("Cannot subclass an instance of TypeVarTuple.")
-            tvt.__mro_entries__ =  __mro_entries__
+            tvt.__mro_entries__ = __mro_entries__
 
             return tvt
 
