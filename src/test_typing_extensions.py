@@ -4508,8 +4508,12 @@ class TypedDictTests(BaseTestCase):
                     child = _make_td(
                         child_future, "Child", {"child": "int"}, "Base", {"Base": base}
                     )
-                    base_anno = typing.ForwardRef("int", module="builtins") if base_future else int
-                    child_anno = typing.ForwardRef("int", module="builtins") if child_future else int
+                    if sys.version_info >= (3, 14):
+                        base_anno = typing.ForwardRef("int", module="builtins", owner=base) if base_future else int
+                        child_anno = typing.ForwardRef("int", module="builtins", owner=child) if child_future else int
+                    else:
+                        base_anno = typing.ForwardRef("int", module="builtins") if base_future else int
+                        child_anno = typing.ForwardRef("int", module="builtins") if child_future else int
                     self.assertEqual(base.__annotations__, {'base': base_anno})
                     self.assertEqual(
                         child.__annotations__, {'child': child_anno, 'base': base_anno}
