@@ -2291,10 +2291,10 @@ else:
         return typing._GenericAlias(self, (item,))
 
 
-# 3.14+?
+# 3.15+?
 if hasattr(typing, 'TypeForm'):
     TypeForm = typing.TypeForm
-# <=3.13
+# <=3.14
 else:
     class _TypeFormForm(_ExtensionsSpecialForm, _root=True):
         # TypeForm(X) is equivalent to X but indicates to the type checker
