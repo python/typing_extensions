@@ -110,6 +110,10 @@ T = TypeVar("T")
 KT = TypeVar("KT")
 VT = TypeVar("VT")
 
+CANNOT_SUBCLASS_TYPE = 'Cannot subclass special typing classes'
+NOT_A_BASE_TYPE = r"type '(?:typing|typing_extensions).%s' is not an acceptable base type"
+CANNOT_SUBCLASS_INSTANCE = 'Cannot subclass an instance of %s'
+
 # Flags used to mark tests that only apply after a specific
 # version of the typing module.
 TYPING_3_10_0 = sys.version_info[:3] >= (3, 10, 0)
@@ -6795,6 +6799,26 @@ class TypeVarTupleTests(BaseTestCase):
                 z = pickle.loads(pickle.dumps(typevartuple, proto))
                 self.assertEqual(z.__name__, typevartuple.__name__)
                 self.assertEqual(z.__default__, typevartuple.__default__)
+
+    def test_cannot_subclass(self):
+        with self.assertRaisesRegex(TypeError, NOT_A_BASE_TYPE % 'TypeVarTuple'):
+            class C(TypeVarTuple): pass
+        Ts = TypeVarTuple('Ts')
+        with self.assertRaisesRegex(TypeError,
+                CANNOT_SUBCLASS_INSTANCE % 'TypeVarTuple'):
+            class D(Ts): pass
+        with self.assertRaisesRegex(TypeError, CANNOT_SUBCLASS_TYPE):
+            class E(type(Unpack)): pass
+        with self.assertRaisesRegex(TypeError, CANNOT_SUBCLASS_TYPE):
+            class F(type(*Ts)): pass
+        with self.assertRaisesRegex(TypeError, CANNOT_SUBCLASS_TYPE):
+            class G(type(Unpack[Ts])): pass
+        with self.assertRaises(TypeError):
+            class H(Unpack): pass
+        with self.assertRaises(TypeError):
+            class I(*Ts): pass  # noqa: E742
+        with self.assertRaises(TypeError):
+            class J(Unpack[Ts]): pass
 
 
 class FinalDecoratorTests(BaseTestCase):
