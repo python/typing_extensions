@@ -46,6 +46,7 @@ jobs:
         # PyPy is deliberately omitted here,
         # since pydantic's tests intermittently segfault on PyPy,
         # and it's nothing to do with typing_extensions
+        # Tests on 3.14 don't pass as of 18 October 2025
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -79,7 +80,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]  # 3.14 is not yet supported
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -114,7 +115,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -149,7 +150,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -186,7 +187,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # 3.9 is no longer supported. 3.14 fails some tests as of 18 October 2025
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -228,6 +230,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # As of 18 October 2025, 3.14 fails a test
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -264,7 +267,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -299,7 +302,7 @@ jobs:
       matrix:
         # PyPy is deliberately omitted here, since SQLAlchemy's tests
         # fail on PyPy for reasons unrelated to typing_extensions.
-        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
         checkout-ref: [ "main", "rel_2_0" ]
     # sqlalchemy tests fail when using the Ubuntu 24.04 runner
     # https://github.com/sqlalchemy/sqlalchemy/commit/8d73205f352e68c6603e90494494ef21027ec68f
@@ -335,6 +338,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # As of 18 October 2025 a dependency is missing 3.14 wheels
         python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
     steps:
       - name: Install the latest version of uv
@@ -377,6 +381,7 @@ jobs:
       - mypy
       - cattrs
       - sqlalchemy
+      - litestar
 
     if: >-
         ${{
@@ -392,6 +397,7 @@ jobs:
             || needs.mypy.result == 'failure'
             || needs.cattrs.result == 'failure'
             || needs.sqlalchemy.result == 'failure'
+            || needs.litestar.result == 'failure'
           )
         }}
 
