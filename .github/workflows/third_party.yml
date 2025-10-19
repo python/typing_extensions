@@ -381,6 +381,7 @@ jobs:
       - mypy
       - cattrs
       - sqlalchemy
+      - litestar
 
     if: >-
         ${{
