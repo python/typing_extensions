@@ -1,5 +1,10 @@
 # Unreleased
 
+- Backport CPython PR [#137281](https://github.com/python/cpython/pull/137281),
+  fixing how type parameters are collected when a `Protocol` base class is parametrized
+  with type variables. Now, parametrized `Generic` or `Protocol` base classes always
+  dictate the number and the order of the type parameters. Patch by Brian Schubert,
+  backporting a CPython PR by Nikita Sobolev.
 - Fix incorrect behaviour on Python 3.9 and Python 3.10 that meant that
   calling `isinstance` with `typing_extensions.Concatenate[...]` or
   `typing_extensions.Unpack[...]` as the first argument could have a different
