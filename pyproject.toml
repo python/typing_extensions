@@ -90,7 +90,6 @@ ignore = [
     "UP014",
     "UP019",
     "UP035",
-    "UP038",
     "UP045",  # X | None instead of Optional[X]
     # Not relevant here
     "RUF012",  # Use ClassVar for mutables
