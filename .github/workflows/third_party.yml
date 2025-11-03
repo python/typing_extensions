@@ -46,8 +46,8 @@ jobs:
         # PyPy is deliberately omitted here,
         # since pydantic's tests intermittently segfault on PyPy,
         # and it's nothing to do with typing_extensions
-        # Tests on 3.14 don't pass as of 18 October 2025
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # Tests on 3.14 don't pass as of 2 November 2025
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -80,7 +80,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]  # 3.14 is not yet supported
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -115,7 +115,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -150,7 +150,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -187,7 +187,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 3.9 is no longer supported. 3.14 fails some tests as of 18 October 2025
+        # 3.9 is no longer supported. 3.14 fails some tests as of 2 November 2025
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -230,8 +230,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # As of 18 October 2025, 3.14 fails a test
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # 3.14 fails a test as of 2 November 2025
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -267,7 +267,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -338,8 +338,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # As of 18 October 2025 a dependency is missing 3.14 wheels
-        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        # As of 2 November 2025 a dependency is missing 3.14 wheels
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
     steps:
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41  # v7.1.2
@@ -357,7 +357,7 @@ jobs:
         run: |
           # litestar's python-requires means uv won't let us add typing-extensions-latest
           # as a requirement unless we do this
-          sed -i 's/^requires-python = ">=3.8/requires-python = ">=3.9/' pyproject.toml
+          sed -i 's/^requires-python = ">=3.8/requires-python = ">=3.10/' pyproject.toml
 
           uv add --editable ../typing-extensions-latest
           uv sync
