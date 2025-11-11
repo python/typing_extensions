@@ -65,9 +65,8 @@ jobs:
       - name: Run tests with typing_extensions main branch
         working-directory: pydantic
         run: |
-          uv sync --all-packages --group dev
-          uv pip uninstall typing-extensions
-          uv pip install --editable ../typing-extensions-latest
+          uv add --editable ../typing-extensions-latest
+          uv sync --all-packages --group testing-extra --all-extras
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
