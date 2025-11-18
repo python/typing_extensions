@@ -4313,5 +4313,5 @@ ForwardRef = typing.ForwardRef
 Annotated = typing.Annotated
 
 # Breakpoint: https://github.com/python/cpython/pull/133602
-if sys.version_info >= (3, 15, 0):
+if sys.version_info < (3, 15, 0):
     __all__.append("no_type_check_decorator")
