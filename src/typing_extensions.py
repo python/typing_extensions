@@ -148,7 +148,6 @@ __all__ = [
     'ValuesView',
     'cast',
     'no_type_check',
-    'no_type_check_decorator',
 ]
 
 # for backward compatibility
@@ -4312,3 +4311,7 @@ globals().update(
 Generic = typing.Generic
 ForwardRef = typing.ForwardRef
 Annotated = typing.Annotated
+
+# Breakpoint: https://github.com/python/cpython/pull/133602
+if sys.version_info >= (3, 15, 0):
+    __all__.append("no_type_check_decorator")
