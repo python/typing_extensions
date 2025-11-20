@@ -2633,10 +2633,18 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
                 )
 
             tvt.__typing_prepare_subst__ = _typevartuple_prepare_subst
+
+            def __mro_entries__(bases):
+                raise TypeError("Cannot subclass an instance of TypeVarTuple.")
+            tvt.__mro_entries__ = __mro_entries__
+
             return tvt
 
         def __init_subclass__(self, *args, **kwds):
-            raise TypeError("Cannot subclass special typing classes")
+            raise TypeError(
+                f"type '{__name__}.TypeVarTuple' is not an acceptable base type"
+            )
+
 
 else:  # <=3.10
     class TypeVarTuple(_DefaultMixin):
@@ -2714,7 +2722,12 @@ else:  # <=3.10
 
         def __init_subclass__(self, *args, **kwds):
             if '_root' not in kwds:
-                raise TypeError("Cannot subclass special typing classes")
+                raise TypeError(
+                    f"type '{__name__}.TypeVarTuple' is not an acceptable base type"
+                )
+
+        def __mro_entries__(self, bases):
+            raise TypeError("Cannot subclass an instance of TypeVarTuple.")
 
 
 if hasattr(typing, "reveal_type"):  # 3.11+
