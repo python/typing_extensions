@@ -9541,6 +9541,8 @@ class EvaluateForwardRefTests(BaseTestCase):
 
 
 class TestSentinels(BaseTestCase):
+    SENTINEL = Sentinel("TestSentinels.SENTINEL")
+
     def test_sentinel_no_repr(self):
         sentinel_no_repr = Sentinel('sentinel_no_repr')
 
@@ -9570,13 +9572,26 @@ class TestSentinels(BaseTestCase):
         ):
             sentinel()
 
-    def test_sentinel_not_picklable(self):
-        sentinel = Sentinel('sentinel')
-        with self.assertRaisesRegex(
-            TypeError,
-            "Cannot pickle 'Sentinel' object"
-        ):
-            pickle.dumps(sentinel)
+    def test_sentinel_copy_identity(self):
+        self.assertIs(self.SENTINEL, copy.copy(self.SENTINEL))
+        self.assertIs(self.SENTINEL, copy.deepcopy(self.SENTINEL))
+
+        anonymous_sentinel = Sentinel("anonymous_sentinel")
+        self.assertIs(anonymous_sentinel, copy.copy(anonymous_sentinel))
+        self.assertIs(anonymous_sentinel, copy.deepcopy(anonymous_sentinel))
+
+    def test_sentinel_picklable_qualified(self):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            self.assertIs(self.SENTINEL, pickle.loads(pickle.dumps(self.SENTINEL, protocol=proto)))
+
+    def test_sentinel_picklable_anonymous(self):
+        anonymous_sentinel = Sentinel("anonymous_sentinel")  # Anonymous sentinel can not be pickled
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            with self.assertRaisesRegex(
+                pickle.PicklingError,
+                r"attribute lookup anonymous_sentinel on \w+ failed|not found as \w+.anonymous_sentinel"
+            ):
+                self.assertIs(anonymous_sentinel, pickle.loads(pickle.dumps(anonymous_sentinel, protocol=proto)))
 
 def load_tests(loader, tests, pattern):
     import doctest

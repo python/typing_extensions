@@ -164,6 +164,9 @@ class Sentinel:
 
     *name* should be the name of the variable to which the return value shall be assigned.
 
+    *module_name* is the module where the sentinel is defined.
+    Defaults to the current modules ``__name__``.
+
     *repr*, if supplied, will be used for the repr of the sentinel object.
     If not provided, "<name>" will be used.
     """
@@ -171,10 +174,15 @@ class Sentinel:
     def __init__(
         self,
         name: str,
+        module_name: typing.Optional[str] = None,
+        *,
         repr: typing.Optional[str] = None,
     ):
         self._name = name
         self._repr = repr if repr is not None else f'<{name}>'
+
+        # For pickling as a singleton:
+        self.__module__ = module_name if module_name is not None else _caller()
 
     def __repr__(self):
         return self._repr
@@ -193,11 +201,12 @@ class Sentinel:
         def __ror__(self, other):
             return typing.Union[other, self]
 
-    def __getstate__(self):
-        raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
+    def __reduce__(self) -> str:
+        """Reduce this sentinel to a singleton."""
+        return self._name  # Module is taken from the __module__ attribute
 
 
-_marker = Sentinel("sentinel")
+_marker = Sentinel("sentinel", __name__)
 
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
