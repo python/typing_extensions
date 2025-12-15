@@ -39,3 +39,6 @@ complete listing of module contents.
 
 See [CONTRIBUTING.md](https://github.com/python/typing_extensions/blob/main/CONTRIBUTING.md)
 for how to contribute to `typing_extensions`.
+
+<!-- Contribution consistency update -->
+
