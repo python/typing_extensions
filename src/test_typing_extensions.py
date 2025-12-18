@@ -9583,5 +9583,17 @@ def load_tests(loader, tests, pattern):
     tests.addTests(doctest.DocTestSuite(typing_extensions))
     return tests
 
+
+def test_literal_string_is_instance_of_str():
+    from typing_extensions import LiteralString
+
+    def accepts_str(x: str) -> None:
+        pass
+
+    s: LiteralString = "hello"
+    accepts_str(s)
+
+
 if __name__ == '__main__':  # pragma: no cover
     main()
+
