@@ -9593,6 +9593,18 @@ def test_literal_string_is_instance_of_str():
     s: LiteralString = "hello"
     accepts_str(s)
 
+def test_literal_string_is_not_bytes():
+    from typing_extensions import LiteralString
+
+    def accepts_bytes(x: bytes) -> None:
+        pass
+
+    s: LiteralString = "hello"
+
+    # This should be rejected by type checkers.
+    accepts_bytes(s)  # type: ignore[arg-type]
+
+
 
 if __name__ == '__main__':  # pragma: no cover
     main()
