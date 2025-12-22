@@ -41,4 +41,3 @@ See [CONTRIBUTING.md](https://github.com/python/typing_extensions/blob/main/CONT
 for how to contribute to `typing_extensions`.
 
 <!-- Contribution consistency update -->
-

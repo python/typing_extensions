@@ -9608,4 +9608,3 @@ def test_literal_string_is_not_bytes():
 
 if __name__ == '__main__':  # pragma: no cover
     main()
-
