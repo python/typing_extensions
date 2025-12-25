@@ -1538,6 +1538,12 @@ class AssertTypeTests(BaseTestCase):
         result = assert_type(obj, object)
         self.assertIs(result, obj)
 
+    def test_assert_type_accepts_typing_any(self):
+        arg = 42
+        result = assert_type(arg, Any)
+        self.assertIs(result, arg)
+
+
 
 
 T_a = TypeVar('T_a')
