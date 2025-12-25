@@ -1533,6 +1533,12 @@ class AssertTypeTests(BaseTestCase):
         self.assertIs(assert_type(arg, 42), arg)
         self.assertIs(assert_type(arg, 'hello'), arg)
 
+    def test_assert_type_preserves_identity(self):
+        obj = object()
+        result = assert_type(obj, object)
+        self.assertIs(result, obj)
+
+
 
 T_a = TypeVar('T_a')
 
