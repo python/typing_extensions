@@ -15,9 +15,10 @@ The `typing_extensions` module serves two related purposes:
 - Enable experimentation with new type system PEPs before they are accepted and
   added to the `typing` module.
 
-`typing_extensions` is treated specially by static type checkers such as
-mypy and pyright. Objects defined in `typing_extensions` are treated the same
-way as equivalent forms in `typing`.
+ `typing_extensions` is treated specially by static type checkers such as
+mypy and pyright, which recognize its objects as equivalent to those in
+the `typing` module. Objects defined in `typing_extensions` are therefore
+handled the same way as their counterparts in `typing`.
 
 `typing_extensions` uses
 [Semantic Versioning](https://semver.org/). The
