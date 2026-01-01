@@ -52,7 +52,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867  # v7.1.6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout pydantic
@@ -85,7 +85,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867  # v7.1.6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout typing_inspect
@@ -120,7 +120,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867  # v7.1.6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Check out pycroscope
@@ -155,7 +155,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867  # v7.1.6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Check out typeguard
@@ -193,7 +193,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867  # v7.1.6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Check out typed-argument-parser
@@ -236,7 +236,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867  # v7.1.6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout mypy for stubtest and mypyc tests
@@ -272,7 +272,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867  # v7.1.6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout cattrs
@@ -310,7 +310,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867  # v7.1.6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout sqlalchemy
@@ -342,7 +342,7 @@ jobs:
         python-version: [ "3.10", "3.11", "3.12", "3.13" ]
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867  # v7.1.6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout litestar
