@@ -9546,8 +9546,10 @@ class TestSentinels(BaseTestCase):
     def test_sentinel_no_repr(self):
         sentinel_no_repr = Sentinel('sentinel_no_repr')
 
-        self.assertEqual(sentinel_no_repr._name, 'sentinel_no_repr')
+        self.assertEqual(sentinel_no_repr.__name__, 'sentinel_no_repr')
         self.assertEqual(repr(sentinel_no_repr), '<sentinel_no_repr>')
+
+        self.assertEqual(repr(Sentinel), "<class 'typing_extensions.Sentinel'>")
 
     def test_sentinel_explicit_repr(self):
         sentinel_explicit_repr = Sentinel('sentinel_explicit_repr', repr='explicit_repr')
@@ -9568,7 +9570,7 @@ class TestSentinels(BaseTestCase):
         sentinel = Sentinel('sentinel')
         with self.assertRaisesRegex(
             TypeError,
-            "'Sentinel' object is not callable"
+            f"Sentinel object {re.escape(repr(sentinel))} is not callable"
         ):
             sentinel()
 
@@ -9592,6 +9594,21 @@ class TestSentinels(BaseTestCase):
                 r"attribute lookup anonymous_sentinel on \w+ failed|not found as \w+.anonymous_sentinel"
             ):
                 self.assertIs(anonymous_sentinel, pickle.loads(pickle.dumps(anonymous_sentinel, protocol=proto)))
+
+    def test_sentinel_isinstance(self):
+        anonymous_sentinel = Sentinel("anonymous_sentinel")
+        self.assertIsInstance(self.SENTINEL, self.SENTINEL)
+        self.assertIsInstance(anonymous_sentinel, anonymous_sentinel)
+        self.assertNotIsInstance(self.SENTINEL, anonymous_sentinel)
+
+        self.assertIsInstance(self.SENTINEL, object)
+        self.assertIsInstance(self.SENTINEL, type)
+        self.assertNotIsInstance(self.SENTINEL, Sentinel)
+
+        self.assertIsSubclass(self.SENTINEL, object)
+        self.assertIsSubclass(self.SENTINEL, Sentinel)
+        self.assertIsSubclass(self.SENTINEL, self.SENTINEL)
+        self.assertNotIsSubclass(self.SENTINEL, anonymous_sentinel)
 
 def load_tests(loader, tests, pattern):
     import doctest

@@ -159,7 +159,17 @@ _PEP_696_IMPLEMENTED = sys.version_info >= (3, 13, 0, "beta")
 # Added with bpo-45166 to 3.10.1+ and some 3.9 versions
 _FORWARD_REF_HAS_CLASS = "__forward_is_class__" in typing.ForwardRef.__slots__
 
-class Sentinel:
+class _SentinelMeta(type):
+    def __instancecheck__(self, instance) -> bool:
+        return self is instance
+
+    def __repr__(self) -> str:
+        if self is Sentinel:
+            return super().__repr__()  # self._repr missing on base class
+        return self._repr
+
+
+class Sentinel(metaclass=_SentinelMeta):
     """Create a unique sentinel object.
 
     *name* should be the name of the variable to which the return value shall be assigned.
@@ -171,39 +181,28 @@ class Sentinel:
     If not provided, "<name>" will be used.
     """
 
-    def __init__(
-        self,
+    def __new__(
+        cls,
         name: str,
         module_name: typing.Optional[str] = None,
         *,
         repr: typing.Optional[str] = None,
     ):
-        self._name = name
-        self._repr = repr if repr is not None else f'<{name}>'
+        def stubbed_call(cls, *args, **kwargs):
+            raise TypeError(f"Sentinel object {cls!r} is not callable")
 
-        # For pickling as a singleton:
-        self.__module__ = module_name if module_name is not None else _caller()
+        repr = repr if repr is not None else f'<{name}>'
+        module_name = module_name if module_name is not None else _caller()
 
-    def __repr__(self):
-        return self._repr
-
-    if sys.version_info < (3, 11):
-        # The presence of this method convinces typing._type_check
-        # that Sentinels are types.
-        def __call__(self, *args, **kwargs):
-            raise TypeError(f"{type(self).__name__!r} object is not callable")
-
-    # Breakpoint: https://github.com/python/cpython/pull/21515
-    if sys.version_info >= (3, 10):
-        def __or__(self, other):
-            return typing.Union[self, other]
-
-        def __ror__(self, other):
-            return typing.Union[other, self]
-
-    def __reduce__(self) -> str:
-        """Reduce this sentinel to a singleton."""
-        return self._name  # Module is taken from the __module__ attribute
+        return type(
+            name,
+            (cls,),
+            {
+                "__new__": stubbed_call,  # Disable calling sentinel definitions
+                "_repr": repr,
+                "__module__": module_name,  # For pickling
+            },
+        )
 
 
 _marker = Sentinel("sentinel", __name__)

@@ -1067,17 +1067,28 @@ Sentinel objects
    If *repr* is provided, it will be used for the :meth:`~object.__repr__`
    of the sentinel object. If not provided, ``"<name>"`` will be used.
 
+   Sentinels can be tested using :ref:`is`, :func:`isinstance`,
+   or :ref:`match`.
+
    Example::
 
       >>> from typing_extensions import Sentinel, assert_type
       >>> MISSING = Sentinel('MISSING')
-      >>> def func(arg: int | MISSING = MISSING) -> None:
+      >>> def check_identity(arg: int | MISSING = MISSING) -> None:
       ...     if arg is MISSING:
       ...         assert_type(arg, MISSING)
       ...     else:
       ...         assert_type(arg, int)
       ...
-      >>> func(MISSING)
+      >>> check_identity(MISSING)
+      >>> def check_match(arg: int | MISSING = MISSING) -> None:
+      ...     match arg:
+      ...         case MISSING():
+      ...             assert_type(arg, MISSING)
+      ...         case int()
+      ...             assert_type(arg, int)
+      ...
+      >>> check_match(MISSING)
 
    Sentinels defined inside a class scope should use a :term:`qualified name`.
 
