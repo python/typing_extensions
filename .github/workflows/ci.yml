@@ -93,7 +93,7 @@ jobs:
           python -c 'import typing_extensions; import test.__main__' test_typing -v
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         if: ${{ (github.event_name == 'push' || github.event_name == 'pull_request') }}
         with:
           token: ${{ secrets.CODECOV_ORG_TOKEN }}
