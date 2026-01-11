@@ -174,8 +174,8 @@ class Sentinel:
     def __init__(
         self,
         name: str,
-        module_name: typing.Optional[str] = None,
         *,
+        module_name: typing.Optional[str] = None,
         repr: typing.Optional[str] = None,
     ):
         self._name = name
@@ -206,7 +206,7 @@ class Sentinel:
         return self._name  # Module is taken from the __module__ attribute
 
 
-_marker = Sentinel("sentinel", __name__)
+_marker = Sentinel("sentinel", module_name=__name__)
 
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
