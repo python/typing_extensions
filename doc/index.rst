@@ -1056,7 +1056,7 @@ Capsule objects
 Sentinel objects
 ~~~~~~~~~~~~~~~~
 
-.. class:: Sentinel(name, module_name=None, *, repr=None)
+.. class:: Sentinel(name, *, module_name=None, repr=None)
 
    A type used to define sentinel values. The *name* argument should be the
    name of the variable to which the return value shall be assigned.
