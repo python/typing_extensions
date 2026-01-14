@@ -4298,11 +4298,14 @@ _typing_names = [
     "ValuesView",
     "cast",
     "no_type_check",
-    "no_type_check_decorator",
     # This is private, but it was defined by typing_extensions for a long time
     # and some users rely on it.
     "_AnnotatedAlias",
 ]
+# Breakpoint: https://github.com/python/cpython/pull/133602
+if sys.version_info < (3, 15, 0):
+    _typing_names.append("no_type_check_decorator")
+    __all__.append("no_type_check_decorator")
 globals().update(
     {name: getattr(typing, name) for name in _typing_names if hasattr(typing, name)}
 )
@@ -4311,7 +4314,3 @@ globals().update(
 Generic = typing.Generic
 ForwardRef = typing.ForwardRef
 Annotated = typing.Annotated
-
-# Breakpoint: https://github.com/python/cpython/pull/133602
-if sys.version_info < (3, 15, 0):
-    __all__.append("no_type_check_decorator")
