@@ -4302,10 +4302,12 @@ _typing_names = [
     # and some users rely on it.
     "_AnnotatedAlias",
 ]
+
 # Breakpoint: https://github.com/python/cpython/pull/133602
 if sys.version_info < (3, 15, 0):
     _typing_names.append("no_type_check_decorator")
     __all__.append("no_type_check_decorator")
+
 globals().update(
     {name: getattr(typing, name) for name in _typing_names if hasattr(typing, name)}
 )
