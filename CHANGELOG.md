@@ -1,5 +1,7 @@
 # Unreleased
 
+- Fix setting of `__required_keys__` and `__optional_keys__` when inheriting
+  keys with the same name.
 - Fix incorrect behaviour on Python 3.9 and Python 3.10 that meant that
   calling `isinstance` with `typing_extensions.Concatenate[...]` or
   `typing_extensions.Unpack[...]` as the first argument could have a different
