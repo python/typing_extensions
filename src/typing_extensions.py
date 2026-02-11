@@ -663,10 +663,6 @@ else:
         """
         return _caller(depth) in {'abc', 'functools', None}
 
-    def _no_init(self, *args, **kwargs):
-        if type(self)._is_protocol:
-            raise TypeError('Protocols cannot be instantiated')
-
     def _type_check_issubclass_arg_1(arg):
         """Raise TypeError if `arg` is not an instance of `type`
         in `issubclass(arg, <protocol>)`.
@@ -830,7 +826,7 @@ else:
 
             # Prohibit instantiation for protocol classes
             if cls._is_protocol and cls.__init__ is Protocol.__init__:
-                cls.__init__ = _no_init
+                cls.__init__ = typing._no_init_or_replace_init
 
 
 # Breakpoint: https://github.com/python/cpython/pull/113401
