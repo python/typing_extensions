@@ -1071,25 +1071,46 @@ Capsule objects
 Sentinel objects
 ~~~~~~~~~~~~~~~~
 
-.. class:: Sentinel(name, repr=None)
+.. class:: Sentinel(name, module_name=None, *, repr=None)
 
    A type used to define sentinel values. The *name* argument should be the
    name of the variable to which the return value shall be assigned.
 
+   *module_name* is the module where the sentinel is defined.
+   Defaults to the current modules ``__name__``.
+
    If *repr* is provided, it will be used for the :meth:`~object.__repr__`
    of the sentinel object. If not provided, ``"<name>"`` will be used.
+
+   Sentinels can be tested using :ref:`is`, :func:`isinstance`,
+   or :ref:`match`.
 
    Example::
 
       >>> from typing_extensions import Sentinel, assert_type
       >>> MISSING = Sentinel('MISSING')
-      >>> def func(arg: int | MISSING = MISSING) -> None:
+      >>> def check_identity(arg: int | MISSING = MISSING) -> None:
       ...     if arg is MISSING:
       ...         assert_type(arg, MISSING)
       ...     else:
       ...         assert_type(arg, int)
       ...
-      >>> func(MISSING)
+      >>> check_identity(MISSING)
+      >>> def check_match(arg: int | MISSING = MISSING) -> None:
+      ...     match arg:
+      ...         case MISSING():
+      ...             assert_type(arg, MISSING)
+      ...         case int()
+      ...             assert_type(arg, int)
+      ...
+      >>> check_match(MISSING)
+
+   Sentinels defined inside a class scope should use a :term:`qualified name`.
+
+   Example::
+
+      >>> class MyClass:
+      ...     MISSING = Sentinel('MyClass.MISSING')
 
    .. versionadded:: 4.14.0
 
