@@ -3207,7 +3207,13 @@ def _is_unpacked_typevartuple(x) -> bool:
     )
 
 
-# Python 3.11+ _collect_type_vars was renamed to _collect_parameters
+# - Python 3.11+ _collect_type_vars was renamed to _collect_parameters.
+#   Breakpoint: https://github.com/python/cpython/pull/31143
+# - Python 3.13+ _collect_parameters was renamed to _collect_type_parameters.
+#   Breakpoint: https://github.com/python/cpython/pull/118900
+# - Monkey patch Generic.__init_subclass__ on <3.15 to fix type parameter
+#   collection from Protocol bases with listed parameters.
+#   Breakpoint: https://github.com/python/cpython/pull/137281
 if hasattr(typing, '_collect_type_vars'):
     def _collect_type_vars(types, typevar_types=None):
         """Collect all type variable contained in types in order of
@@ -3257,21 +3263,82 @@ if hasattr(typing, '_collect_type_vars'):
                             tvars.append(collected)
         return tuple(tvars)
 
+    def _generic_init_subclass(cls, *args, **kwargs):
+        super(Generic, cls).__init_subclass__(*args, **kwargs)
+        tvars = []
+        if '__orig_bases__' in cls.__dict__:
+            error = Generic in cls.__orig_bases__
+        else:
+            error = (Generic in cls.__bases__ and
+                     cls.__name__ != 'Protocol' and
+                     type(cls) not in (_TypedDictMeta, typing._TypedDictMeta))
+        if error:
+            raise TypeError("Cannot inherit from plain Generic")
+        if '__orig_bases__' in cls.__dict__:
+            typevar_types = (TypeVar, typing.TypeVar, ParamSpec)
+            if hasattr(typing, "ParamSpec"):  # Python 3.10+
+                typevar_types += (typing.ParamSpec,)
+            tvars = _collect_type_vars(cls.__orig_bases__, typevar_types)
+            # Look for Generic[T1, ..., Tn].
+            # If found, tvars must be a subset of it.
+            # If not found, tvars is it.
+            # Also check for and reject plain Generic,
+            # and reject multiple Generic[...].
+            gvars = None
+            basename = None
+            for base in cls.__orig_bases__:
+                if (isinstance(base, typing._GenericAlias) and
+                    base.__origin__ in (Generic, typing.Protocol, Protocol)):
+                    if gvars is not None:
+                        raise TypeError(
+                            "Cannot inherit from Generic[...] multiple times."
+                        )
+                    gvars = base.__parameters__
+                    basename = base.__origin__.__name__
+            if gvars is not None:
+                tvarset = set(tvars)
+                gvarset = set(gvars)
+                if not tvarset <= gvarset:
+                    s_vars = ', '.join(str(t) for t in tvars if t not in gvarset)
+                    s_args = ', '.join(str(g) for g in gvars)
+                    raise TypeError(
+                        f"Some type variables ({s_vars}) are"
+                        f" not listed in {basename}[{s_args}]"
+                    )
+                tvars = gvars
+        cls.__parameters__ = tuple(tvars)
+
     typing._collect_type_vars = _collect_type_vars
-else:
-    def _collect_parameters(args):
+    typing.Generic.__init_subclass__ = classmethod(_generic_init_subclass)
+elif sys.version_info < (3, 15):
+    def _collect_parameters(
+        args,
+        *,
+        enforce_default_ordering=_marker,
+        validate_all=False,
+    ):
         """Collect all type variables and parameter specifications in args
         in order of first appearance (lexicographic order).
 
+        Having an explicit `Generic` or `Protocol` base class determines
+        the exact parameter order.
+
         For example::
 
-            assert _collect_parameters((T, Callable[P, T])) == (T, P)
+            >>> P = ParamSpec('P')
+            >>> T = TypeVar('T')
+            >>> _collect_parameters((T, Callable[P, T]))
+            (~T, ~P)
+            >>> _collect_parameters((list[T], Generic[P, T]))
+            (~P, ~T)
         """
         parameters = []
 
         # A required TypeVarLike cannot appear after a TypeVarLike with default
         # if it was a direct call to `Generic[]` or `Protocol[]`
-        enforce_default_ordering = _has_generic_or_protocol_as_origin()
+        if enforce_default_ordering is _marker:
+            enforce_default_ordering = _has_generic_or_protocol_as_origin()
+
         default_encountered = False
 
         # Also, a TypeVarLike with a default cannot appear after a TypeVarTuple
@@ -3306,6 +3373,17 @@ else:
                                             ' follows type parameter with a default')
 
                     parameters.append(t)
+            elif (
+                not validate_all
+                and isinstance(t, typing._GenericAlias)
+                and t.__origin__ in (Generic, typing.Protocol, Protocol)
+            ):
+                # If we see explicit `Generic[...]` or `Protocol[...]` base classes,
+                # we need to just copy them as-is.
+                # Unless `validate_all` is passed, in this case it means that
+                # we are doing a validation of `Generic` subclasses,
+                # then we collect all unique parameters to be able to inspect them.
+                parameters = t.__parameters__
             else:
                 if _is_unpacked_typevartuple(t):
                     type_var_tuple_encountered = True
@@ -3315,8 +3393,55 @@ else:
 
         return tuple(parameters)
 
-    if not _PEP_696_IMPLEMENTED:
+    def _generic_init_subclass(cls, *args, **kwargs):
+        super(Generic, cls).__init_subclass__(*args, **kwargs)
+        tvars = []
+        if '__orig_bases__' in cls.__dict__:
+            error = Generic in cls.__orig_bases__
+        else:
+            error = (Generic in cls.__bases__ and
+                     cls.__name__ != 'Protocol' and
+                     type(cls) not in (_TypedDictMeta, typing._TypedDictMeta))
+        if error:
+            raise TypeError("Cannot inherit from plain Generic")
+        if '__orig_bases__' in cls.__dict__:
+            tvars = _collect_parameters(cls.__orig_bases__, validate_all=True)
+            # Look for Generic[T1, ..., Tn].
+            # If found, tvars must be a subset of it.
+            # If not found, tvars is it.
+            # Also check for and reject plain Generic,
+            # and reject multiple Generic[...].
+            gvars = None
+            basename = None
+            for base in cls.__orig_bases__:
+                if (isinstance(base, typing._GenericAlias) and
+                    base.__origin__ in (Generic, typing.Protocol, Protocol)):
+                    if gvars is not None:
+                        raise TypeError(
+                            "Cannot inherit from Generic[...] multiple times."
+                        )
+                    gvars = base.__parameters__
+                    basename = base.__origin__.__name__
+            if gvars is not None:
+                tvarset = set(tvars)
+                gvarset = set(gvars)
+                if not tvarset <= gvarset:
+                    s_vars = ', '.join(str(t) for t in tvars if t not in gvarset)
+                    s_args = ', '.join(str(g) for g in gvars)
+                    raise TypeError(
+                        f"Some type variables ({s_vars}) are"
+                        f" not listed in {basename}[{s_args}]"
+                    )
+                tvars = gvars
+        cls.__parameters__ = tuple(tvars)
+
+    if _PEP_696_IMPLEMENTED:
+        typing._collect_type_parameters = _collect_parameters
+        typing._generic_init_subclass = _generic_init_subclass
+    else:
         typing._collect_parameters = _collect_parameters
+        typing.Generic.__init_subclass__ = classmethod(_generic_init_subclass)
+
 
 # Backport typing.NamedTuple as it exists in Python 3.13.
 # In 3.11, the ability to define generic `NamedTuple`s was supported.
