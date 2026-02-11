@@ -369,6 +369,8 @@ Special typing primitives
 
    See :py:data:`typing.TypeAlias` and :pep:`613`. In ``typing`` since 3.10.
 
+   .. versionadded:: 3.10.0.0
+
 .. class:: TypeAliasType(name, value, *, type_params=())
 
    See :py:class:`typing.TypeAliasType` and :pep:`695`. In ``typing`` since 3.12.
