@@ -9570,13 +9570,24 @@ class TestSentinels(BaseTestCase):
         ):
             sentinel()
 
-    def test_sentinel_not_picklable(self):
+    def test_sentinel_picklable(self):
         sentinel = Sentinel('sentinel')
-        with self.assertRaisesRegex(
-            TypeError,
-            "Cannot pickle 'Sentinel' object"
-        ):
-            pickle.dumps(sentinel)
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            pickled = pickle.dumps(sentinel, protocol=proto)
+            loaded = pickle.loads(pickled)
+            self.assertIs(loaded, sentinel)
+
+    def test_sentinel_pickle_preserves_identity(self):
+        sentinel = Sentinel('pickle_identity_test')
+        pickled = pickle.dumps(sentinel)
+        loaded = pickle.loads(pickled)
+        self.assertIs(loaded, sentinel)
+        self.assertEqual(repr(loaded), '<pickle_identity_test>')
+
+    def test_sentinel_singleton(self):
+        s1 = Sentinel('singleton_test')
+        s2 = Sentinel('singleton_test')
+        self.assertIs(s1, s2)
 
 def load_tests(loader, tests, pattern):
     import doctest
