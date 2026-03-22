@@ -143,6 +143,183 @@ Python version support
 support for older Python versions will be dropped some time after that version
 reaches end of life.
 
+Version compatibility table
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following table lists objects provided by ``typing_extensions`` that
+backport or extend features from the standard library, along with the
+Python version in which each feature was added to :py:mod:`typing` and the
+``typing_extensions`` release that first included it.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 15 20 15
+
+   * - Object
+     - In :mod:`typing` (Python)
+     - In ``typing_extensions``
+     - PEP
+   * - :data:`Annotated`
+     - 3.9
+     - 3.7.4
+     - :pep:`593`
+   * - :data:`Any` (as base class)
+     - 3.11
+     - 4.4.0
+     -
+   * - :class:`Buffer`
+     - 3.12
+     - 4.6.0
+     -
+   * - :class:`CapsuleType`
+     - 3.13
+     - 4.12.0
+     -
+   * - :data:`Concatenate`
+     - 3.10
+     - 3.7.4
+     - :pep:`612`
+   * - :func:`dataclass_transform`
+     - 3.11
+     - 4.1.0
+     - :pep:`681`
+   * - :func:`deprecated`
+     - 3.13
+     - 4.5.0
+     - :pep:`702`
+   * - :func:`disjoint_base`
+     -
+     - 4.15.0
+     - :pep:`800`
+   * - :func:`evaluate_forward_ref`
+     -
+     - 4.13.0
+     -
+   * - :class:`Format`
+     -
+     - 4.13.0
+     - :pep:`649`
+   * - :func:`get_annotations`
+     - 3.10
+     - 4.13.0
+     - :pep:`649`
+   * - :func:`get_original_bases`
+     - 3.12
+     - 4.6.0
+     -
+   * - :func:`get_protocol_members`
+     - 3.13
+     - 4.7.0
+     -
+   * - :data:`Literal`
+     - 3.8
+     - 2.4.0
+     - :pep:`586`
+   * - :data:`LiteralString`
+     - 3.11
+     - 4.1.0
+     - :pep:`675`
+   * - :class:`NamedTuple` (generic)
+     - 3.11
+     - 4.3.0
+     -
+   * - :data:`Never`
+     - 3.11
+     - 4.1.0
+     -
+   * - :class:`NewType` (picklable)
+     - 3.10
+     - 4.6.0
+     -
+   * - :data:`NoDefault`
+     - 3.13
+     - 4.12.0
+     - :pep:`696`
+   * - :data:`NoExtraItems`
+     - 3.15
+     - 4.13.0
+     - :pep:`728`
+   * - :data:`NotRequired`
+     - 3.11
+     - 4.0.0
+     - :pep:`655`
+   * - :class:`ParamSpec`
+     - 3.10
+     - 3.7.4
+     - :pep:`612`
+   * - :class:`Protocol`
+     - 3.8
+     - 2.4.0
+     - :pep:`544`
+   * - :data:`ReadOnly`
+     - 3.13
+     - 4.9.0
+     - :pep:`705`
+   * - :data:`Required`
+     - 3.11
+     - 4.0.0
+     - :pep:`655`
+   * - :data:`Self`
+     - 3.11
+     - 4.0.0
+     - :pep:`673`
+   * - :class:`Sentinel`
+     - 3.14
+     - 4.14.0
+     - :pep:`661`
+   * - :class:`TypeAliasType`
+     - 3.12
+     - 4.6.0
+     - :pep:`695`
+   * - :data:`TypeForm`
+     -
+     - 4.13.0
+     - :pep:`747`
+   * - :data:`TypeGuard`
+     - 3.10
+     - 3.10
+     - :pep:`647`
+   * - :data:`TypeIs`
+     - 3.13
+     - 4.10.0
+     - :pep:`742`
+   * - :class:`TypeVar` (``default``/``infer_variance``)
+     - 3.12/3.13
+     - 4.4.0
+     - :pep:`695`, :pep:`696`
+   * - :class:`TypeVarTuple`
+     - 3.11
+     - 4.1.0
+     - :pep:`646`
+   * - :func:`assert_never`
+     - 3.11
+     - 4.1.0
+     -
+   * - :func:`assert_type`
+     - 3.11
+     - 4.2.0
+     -
+   * - :func:`get_overloads`
+     - 3.11
+     - 4.2.0
+     -
+   * - :func:`is_protocol`
+     - 3.13
+     - 4.7.0
+     -
+   * - :func:`is_typeddict`
+     - 3.10
+     - 4.1.0
+     -
+   * - :func:`reveal_type`
+     - 3.11
+     - 4.1.0
+     -
+   * - :func:`type_repr`
+     - 3.14
+     - 4.15.0
+     -
+
 Module contents
 ---------------
 
