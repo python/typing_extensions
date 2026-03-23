@@ -94,7 +94,9 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
-        if: ${{ (github.event_name == 'push' || github.event_name == 'pull_request') }}
+        if: >-
+          github.repository == 'python/typing_extensions'
+          && (github.event_name == 'push' || github.event_name == 'pull_request')
         with:
           token: ${{ secrets.CODECOV_ORG_TOKEN }}
           flags: ${{ matrix.python-version }}
