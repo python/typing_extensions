@@ -339,7 +339,7 @@ jobs:
       fail-fast: false
       matrix:
         # As of 2 November 2025 a dependency is missing 3.14 wheels
-        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        python-version: [ "3.11", "3.12", "3.13" ]
     steps:
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
