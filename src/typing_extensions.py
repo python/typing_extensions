@@ -159,6 +159,9 @@ _PEP_696_IMPLEMENTED = sys.version_info >= (3, 13, 0, "beta")
 # Added with bpo-45166 to 3.10.1+ and some 3.9 versions
 _FORWARD_REF_HAS_CLASS = "__forward_is_class__" in typing.ForwardRef.__slots__
 
+_sentinel_registry = {}
+
+
 class Sentinel:
     """Create a unique sentinel object.
 
@@ -168,13 +171,27 @@ class Sentinel:
     If not provided, "<name>" will be used.
     """
 
-    def __init__(
-        self,
-        name: str,
-        repr: typing.Optional[str] = None,
-    ):
-        self._name = name
-        self._repr = repr if repr is not None else f'<{name}>'
+    def __new__(cls, name: str, repr: typing.Optional[str] = None, module_name: typing.Optional[str] = None):
+        if module_name is None:
+            # Auto-detect calling module
+            frame = inspect.currentframe()
+            try:
+                caller = frame.f_back
+                module_name = caller.f_globals.get('__name__', '__main__')
+            finally:
+                del frame
+
+        key = (module_name, name)
+        existing = _sentinel_registry.get(key)
+        if existing is not None:
+            return existing
+
+        instance = super().__new__(cls)
+        instance._name = name
+        instance._repr = repr if repr is not None else f'<{name}>'
+        instance._module_name = module_name
+        _sentinel_registry[key] = instance
+        return instance
 
     def __repr__(self):
         return self._repr
@@ -193,8 +210,8 @@ class Sentinel:
         def __ror__(self, other):
             return typing.Union[other, self]
 
-    def __getstate__(self):
-        raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
+    def __reduce__(self):
+        return (self.__class__, (self._name, None, self._module_name))
 
 
 _marker = Sentinel("sentinel")
