@@ -2571,20 +2571,32 @@ def _unpack_args(*args):
     return newargs
 
 
-if _PEP_696_IMPLEMENTED:
+if sys.version_info >= (3, 15):
     from typing import TypeVarTuple
 
 elif hasattr(typing, "TypeVarTuple"):  # 3.11+
 
-    # Add default parameter - PEP 696
+    # Add default parameter - PEP 696 and bound/variance parameters
     class TypeVarTuple(metaclass=_TypeVarLikeMeta):
         """Type variable tuple."""
 
         _backported_typevarlike = typing.TypeVarTuple
 
-        def __new__(cls, name, *, default=NoDefault):
-            tvt = typing.TypeVarTuple(name)
-            _set_default(tvt, default)
+        def __new__(cls, name, *, bound=None,
+                    covariant=False, contravariant=False,
+                    infer_variance=False, default=NoDefault):
+
+            if _PEP_696_IMPLEMENTED:
+                # can pass default argument
+                tvt = typing.TypeVarTuple(name, default=default)
+            else:
+                tvt = typing.TypeVarTuple(name)
+                _set_default(tvt, default)
+
+            tvt.__covariant__ = covariant
+            tvt.__contravariant__ = contravariant
+            tvt.__infer_variance__ = infer_variance
+
             _set_module(tvt)
 
             def _typevartuple_prepare_subst(alias, args):
@@ -2689,8 +2701,16 @@ else:  # <=3.10
         def __iter__(self):
             yield self.__unpacked__
 
-        def __init__(self, name, *, default=NoDefault):
+        def __init__(self, name, *, bound=None, covariant=False, contravariant=False,
+                     infer_variance=False, default=NoDefault):
             self.__name__ = name
+            self.__covariant__ = bool(covariant)
+            self.__contravariant__ = bool(contravariant)
+            self.__infer_variance__ = bool(infer_variance)
+            if bound:
+                self.__bound__ = typing._type_check(bound, 'Bound must be a type.')
+            else:
+                self.__bound__ = None
             _DefaultMixin.__init__(self, default)
 
             # for pickling:
@@ -2701,7 +2721,15 @@ else:  # <=3.10
             self.__unpacked__ = Unpack[self]
 
         def __repr__(self):
-            return self.__name__
+            if self.__infer_variance__:
+                prefix = ''
+            elif self.__covariant__:
+                prefix = '+'
+            elif self.__contravariant__:
+                prefix = '-'
+            else:
+                prefix = '~'
+            return prefix + self.__name__
 
         def __hash__(self):
             return object.__hash__(self)
