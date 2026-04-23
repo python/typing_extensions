@@ -6552,7 +6552,10 @@ class UnpackTests(BaseTestCase):
 
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
-        self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
+        if not hasattr(typing, 'TypeVarTuple') or sys.version_info >= (3, 15):
+            self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[~Ts]')
+        else:
+            self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
 
     def test_cannot_subclass_vars(self):
         with self.assertRaises(TypeError):
@@ -6750,7 +6753,43 @@ class TypeVarTupleTests(BaseTestCase):
 
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
-        self.assertEqual(repr(Ts), 'Ts')
+        Ts_co = TypeVarTuple('Ts_co', covariant=True)
+        Ts_contra = TypeVarTuple('Ts_contra', contravariant=True)
+        Ts_infer = TypeVarTuple('Ts_infer', infer_variance=True)
+        Ts_2 = TypeVarTuple('Ts_2')
+        if not hasattr(typing, 'TypeVarTuple') or sys.version_info >= (3, 15):
+            self.assertEqual(repr(Ts), '~Ts')
+            self.assertEqual(repr(Ts_2), '~Ts_2')
+
+            self.assertEqual(repr(Ts_co), '+Ts_co')
+            self.assertEqual(repr(Ts_contra), '-Ts_contra')
+            self.assertEqual(repr(Ts_infer), 'Ts_infer')
+        else:
+            # Not worth creating our own version of TypeVarTuple
+            # to backport the repr
+            self.assertEqual(repr(Ts), 'Ts')
+            self.assertEqual(repr(Ts_2), 'Ts_2')
+
+            self.assertEqual(repr(Ts_co), 'Ts_co')
+            self.assertEqual(repr(Ts_contra), 'Ts_contra')
+            self.assertEqual(repr(Ts_infer), 'Ts_infer')
+
+    def test_variance(self):
+        Ts_co = TypeVarTuple('Ts_co', covariant=True)
+        Ts_contra = TypeVarTuple('Ts_contra', contravariant=True)
+        Ts_infer = TypeVarTuple('Ts_infer', infer_variance=True)
+
+        self.assertIs(Ts_co.__covariant__, True)
+        self.assertIs(Ts_co.__contravariant__, False)
+        self.assertIs(Ts_co.__infer_variance__, False)
+
+        self.assertIs(Ts_contra.__covariant__, False)
+        self.assertIs(Ts_contra.__contravariant__, True)
+        self.assertIs(Ts_contra.__infer_variance__, False)
+
+        self.assertIs(Ts_infer.__covariant__, False)
+        self.assertIs(Ts_infer.__contravariant__, False)
+        self.assertIs(Ts_infer.__infer_variance__, True)
 
     def test_no_redefinition(self):
         self.assertNotEqual(TypeVarTuple('Ts'), TypeVarTuple('Ts'))

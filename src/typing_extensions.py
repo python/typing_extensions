@@ -2593,6 +2593,7 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
                 tvt = typing.TypeVarTuple(name)
                 _set_default(tvt, default)
 
+            tvt.__bound__ = bound
             tvt.__covariant__ = covariant
             tvt.__contravariant__ = contravariant
             tvt.__infer_variance__ = infer_variance
