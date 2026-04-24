@@ -1756,11 +1756,9 @@ class GetTypeHintTests(BaseTestCase):
             annotation              : annotation,
             Optional[int]           : Optional[int],
             Optional[List[str]]     : Optional[List[str]],
-            Optional[annotation]     : Optional[annotation],
+            Optional[annotation]    : Optional[annotation],
             Union[str, None, str]   : Optional[str],
             Unpack[Tuple[int, None]]: Unpack[Tuple[int, None]],
-            # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
-            Unpack[Ts]              : Unpack[Ts],
         }
         # contains a ForwardRef, TypeVar(~prefix) or no expression
         do_not_stringify_cases = {
@@ -1776,6 +1774,8 @@ class GetTypeHintTests(BaseTestCase):
             Union[str, "Union[None, StrAlias]"]: Optional[str],
             Union["annotation", T_default]     : Union[annotation, T_default],
             Annotated["annotation", "nested"]  : Annotated[Union[int, None], "data", "nested"],
+            # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
+            Unpack[Ts]                         : Unpack[Ts],
         }
         if TYPING_3_10_0:  # cannot construct UnionTypes before 3.10
             do_not_stringify_cases["str | NoneAlias | StrAlias"] = str | None
@@ -6765,8 +6765,9 @@ class TypeVarTupleTests(BaseTestCase):
             self.assertEqual(repr(Ts_contra), '-Ts_contra')
             self.assertEqual(repr(Ts_infer), 'Ts_infer')
         else:
-            # Not worth creating our own version of TypeVarTuple
-            # to backport the repr
+            # On other versions we use typing.TypeVarTuple, but it is not aware of
+            # variance. Not worth creating our own version of TypeVarTuple
+            # for this.
             self.assertEqual(repr(Ts), 'Ts')
             self.assertEqual(repr(Ts_2), 'Ts_2')
 
@@ -7114,6 +7115,10 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 14):
             exclude |= {
                 'TypeAliasType'
+            }
+        if sys.version_info < (3, 15):
+            exclude |= {
+                'TypeVarTuple'
             }
         if not typing_extensions._PEP_728_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}

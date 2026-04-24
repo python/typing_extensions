@@ -1671,7 +1671,10 @@ else:
 
 def _set_default(type_param, default):
     type_param.has_default = lambda: default is not NoDefault
-    type_param.__default__ = default
+    if default is NoDefault:
+        type_param.__default__ = default
+    else:
+        type_param.__default__ = typing._type_check(default, "Default must be a type.")
 
 
 def _set_module(typevarlike):
@@ -1824,7 +1827,7 @@ elif hasattr(typing, 'ParamSpec'):
                 paramspec = typing.ParamSpec(name, bound=bound,
                                              covariant=covariant,
                                              contravariant=contravariant)
-                paramspec.__infer_variance__ = infer_variance
+                paramspec.__infer_variance__ = bool(infer_variance)
 
             _set_default(paramspec, default)
             _set_module(paramspec)
@@ -2593,10 +2596,10 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
                 tvt = typing.TypeVarTuple(name)
                 _set_default(tvt, default)
 
-            tvt.__bound__ = bound
-            tvt.__covariant__ = covariant
-            tvt.__contravariant__ = contravariant
-            tvt.__infer_variance__ = infer_variance
+            tvt.__bound__ = typing._type_check(bound, "Bound must be a type.")
+            tvt.__covariant__ = bool(covariant)
+            tvt.__contravariant__ = bool(contravariant)
+            tvt.__infer_variance__ = bool(infer_variance)
 
             _set_module(tvt)
 
