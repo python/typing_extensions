@@ -177,16 +177,14 @@ class sentinel:
     """Create a unique sentinel object.
 
     *name* should be the name of the variable to which the return value shall be assigned.
-
-    *repr*, if supplied, will be used for the repr of the sentinel object.
-    If not provided, "<name>" will be used.
     """
 
     @overload
-    def __init__(self, name: str, /, *, repr: typing.Optional[str] = None): ...
+    def __init__(self, name: str, /): ...
 
     @overload
-    @deprecated("'name' must be positional-only, 'repr' must be keyword-only.")
+    @deprecated("'name' must be positional-only, \
+'repr' is deprecated and must be removed.")
     def __init__(self, name: str, repr: typing.Optional[str] = None): ...
 
     def __init__(

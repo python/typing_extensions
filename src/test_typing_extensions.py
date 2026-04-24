@@ -9550,7 +9550,7 @@ class TestSentinels(BaseTestCase):
         self.assertEqual(sentinel_no_repr.__name__, 'sentinel_no_repr')
         self.assertEqual(repr(sentinel_no_repr), 'sentinel_no_repr')
 
-    def test_sentinel_explicit_repr(self):
+    def test_sentinel_deprecated_explicit_repr(self):
         sentinel_explicit_repr = sentinel('sentinel_explicit_repr', repr='explicit_repr')
 
         self.assertEqual(repr(sentinel_explicit_repr), 'explicit_repr')

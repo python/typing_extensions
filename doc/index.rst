@@ -1071,16 +1071,15 @@ Capsule objects
 Sentinel objects
 ~~~~~~~~~~~~~~~~
 
-.. class:: sentinel(name, /, *, repr=None)
+.. class:: sentinel(name, /)
 
    A type used to define sentinel values. The *name* argument should be the
    name of the variable to which the return value shall be assigned.
 
-   If *repr* is provided, it will be used for the :meth:`~object.__repr__`
-   of the sentinel object. If not provided, ``"<name>"`` will be used.
-
    A sentinel is bound to the module it is created within,
    sentinels are not equal to similar named sentinels from other modules.
+
+   Assigning attributes to a sentinel including `__weakref__` is forbidden.
 
    Example::
 
