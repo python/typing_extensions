@@ -91,6 +91,7 @@ __all__ = [
     'overload',
     'override',
     'Protocol',
+    'sentinel',
     'Sentinel',
     'reveal_type',
     'runtime',
@@ -172,30 +173,45 @@ def _caller(depth=1, default='__main__'):
     return None
 
 
-class Sentinel:
+class sentinel:
     """Create a unique sentinel object.
 
     *name* should be the name of the variable to which the return value shall be assigned.
-
-    *module_name* is the module where the sentinel is defined.
-    Defaults to the current modules ``__name__``.
 
     *repr*, if supplied, will be used for the repr of the sentinel object.
     If not provided, "<name>" will be used.
     """
 
+    @overload
+    def __init__(self, name: str, /, *, repr: typing.Optional[str] = None): ...
+
+    @overload
+    @deprecated("'name' must be positional-only, 'repr' must be keyword-only.")
+    def __init__(self, name: str, repr: typing.Optional[str] = None): ...
+
     def __init__(
         self,
         name: str,
-        *,
-        module_name: typing.Optional[str] = None,
         repr: typing.Optional[str] = None,
     ):
-        self._name = name
-        self._repr = repr if repr is not None else f'<{name}>'
+        self.__name__ = name
+        self._repr = repr if repr is not None else name
 
         # For pickling as a singleton:
-        self.__module__ = module_name if module_name is not None else _caller()
+        self.__module__ = _caller()
+
+    @deprecated("Subclassing sentinel is forbidden by PEP 661")
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+
+    def __setattr__(self, attr: str, value: object) -> None:
+        if attr not in {"__name__", "_repr", "__module__"}:
+            warnings.warn(
+                "Setting attributes on sentinel is deprecated",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        super().__setattr__(attr, value)
 
     def __repr__(self):
         return self._repr
@@ -216,10 +232,17 @@ class Sentinel:
 
     def __reduce__(self) -> str:
         """Reduce this sentinel to a singleton."""
-        return self._name  # Module is taken from the __module__ attribute
+        return self.__name__  # Module is taken from the __module__ attribute
 
+with warnings.catch_warnings():  # Allow sentinel subclass for backwards compatibility
+    warnings.simplefilter("ignore")
 
-_marker = Sentinel("sentinel", module_name=__name__)
+    @deprecated("""Sentinel was renamed to typing_extensions.sentinel""")
+    class Sentinel(sentinel):
+        pass
+
+_marker = sentinel("sentinel")
+
 
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
