@@ -159,6 +159,19 @@ _PEP_696_IMPLEMENTED = sys.version_info >= (3, 13, 0, "beta")
 # Added with bpo-45166 to 3.10.1+ and some 3.9 versions
 _FORWARD_REF_HAS_CLASS = "__forward_is_class__" in typing.ForwardRef.__slots__
 
+
+def _caller(depth=1, default='__main__'):
+    try:
+        return sys._getframemodulename(depth + 1) or default
+    except AttributeError:  # For platforms without _getframemodulename()
+        pass
+    try:
+        return sys._getframe(depth + 1).f_globals.get('__name__', default)
+    except (AttributeError, ValueError):  # For platforms without _getframe()
+        pass
+    return None
+
+
 class Sentinel:
     """Create a unique sentinel object.
 
@@ -645,18 +658,6 @@ def _get_protocol_attrs(cls):
             if (not attr.startswith('_abc_') and attr not in _EXCLUDED_ATTRS):
                 attrs.add(attr)
     return attrs
-
-
-def _caller(depth=1, default='__main__'):
-    try:
-        return sys._getframemodulename(depth + 1) or default
-    except AttributeError:  # For platforms without _getframemodulename()
-        pass
-    try:
-        return sys._getframe(depth + 1).f_globals.get('__name__', default)
-    except (AttributeError, ValueError):  # For platforms without _getframe()
-        pass
-    return None
 
 
 # `__match_args__` attribute was removed from protocol members in 3.13,
