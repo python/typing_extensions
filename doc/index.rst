@@ -1076,9 +1076,6 @@ Sentinel objects
    A type used to define sentinel values. The *name* argument should be the
    name of the variable to which the return value shall be assigned.
 
-   A sentinel is bound to the module it is created within,
-   sentinels are not equal to similar named sentinels from other modules.
-
    Assigning attributes to a sentinel including `__weakref__` is forbidden.
 
    Example::
@@ -1093,16 +1090,18 @@ Sentinel objects
       ...
       >>> func(MISSING)
 
-   Sentinels defined inside a class scope should use a :term:`qualified name`.
-
-   Example::
-
-      >>> class MyClass:
-      ...     MISSING = sentinel('MyClass.MISSING')
-
    .. versionadded:: 4.14.0
 
       See :pep:`661`
+
+   .. versionchanged:: 4.16.0
+
+      Now supports pickle and will be reduced as a singleton.
+      Renamed from `Sentinel` to `sentinel`, `Sentinel` is deprecated.
+      Automatic `repr` string no longer has angle brackets.
+      `repr` parameter was deprecated.
+      `name` as a keyword is deprecated.
+      Subclasssing and attribute assignment are deprecated.
 
 
 Pure aliases
