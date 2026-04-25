@@ -173,27 +173,42 @@ def _caller(depth=1, default='__main__'):
     return None
 
 
+# Placeholder for sentinel methods, because sentinels can not have their own sentinels
+_sentinel_placeholder = object()
+
+
 class sentinel:
     """Create a unique sentinel object.
 
     *name* should be the name of the variable to which the return value shall be assigned.
     """
 
-    @overload
-    def __init__(self, name: str, /): ...
-
-    @overload
-    @deprecated("'name' must be positional-only, \
-'repr' is deprecated and must be removed.")
-    def __init__(self, name: str, repr: typing.Optional[str] = None): ...
-
     def __init__(
         self,
-        name: str,
+        __name: str = _sentinel_placeholder,
+        /,
         repr: typing.Optional[str] = None,
-    ):
-        self.__name__ = name
-        self._repr = repr if repr is not None else name
+        *,
+        name: str = _sentinel_placeholder,
+    ) -> None:
+        if name is not _sentinel_placeholder:
+            warnings.warn(
+                "'name' is positional-only and must not be a keyword parameter",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            __name = name
+        if __name is _sentinel_placeholder:
+            raise TypeError("First parameter 'name' is required")
+        if repr is not None:
+            warnings.warn(
+                "'repr' is deprecated and must be removed",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        self.__name__ = __name
+        self._repr = repr if repr is not None else __name
 
         # For pickling as a singleton:
         self.__module__ = _caller()

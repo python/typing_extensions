@@ -9551,7 +9551,8 @@ class TestSentinels(BaseTestCase):
         self.assertEqual(repr(sentinel_no_repr), 'sentinel_no_repr')
 
     def test_sentinel_deprecated_explicit_repr(self):
-        sentinel_explicit_repr = sentinel('sentinel_explicit_repr', repr='explicit_repr')
+        with self.assertWarnsRegex(DeprecationWarning, r"'repr' is deprecated and must be removed"):
+            sentinel_explicit_repr = sentinel('sentinel_explicit_repr', repr='explicit_repr')
 
         self.assertEqual(repr(sentinel_explicit_repr), 'explicit_repr')
 
@@ -9598,8 +9599,11 @@ class TestSentinels(BaseTestCase):
         with self.assertWarnsRegex(DeprecationWarning, r"Subclassing sentinel is forbidden by PEP 661"):
             class SentinelSubclass(Sentinel):
                 pass
+        with self.assertRaisesRegex(TypeError, r"First parameter 'name' is required"):
+            sentinel()
 
-        my_sentinel = Sentinel(name="my_sentinel")
+        with self.assertWarnsRegex(DeprecationWarning, r"'name' is positional-only and must not be a keyword parameter"):
+            my_sentinel = Sentinel(name="my_sentinel")
         with self.assertWarnsRegex(DeprecationWarning, r"Setting attributes on sentinel is deprecated"):
             my_sentinel.foo = "bar"
 
