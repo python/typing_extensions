@@ -213,8 +213,12 @@ class sentinel:
         # For pickling as a singleton:
         self.__module__ = _caller()
 
-    @deprecated("Subclassing sentinel is forbidden by PEP 661")
     def __init_subclass__(cls):
+        warnings.warn(
+            "Subclassing sentinel is forbidden by PEP 661",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init_subclass__()
 
     def __setattr__(self, attr: str, value: object) -> None:
