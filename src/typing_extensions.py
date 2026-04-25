@@ -176,80 +176,87 @@ def _caller(depth=1, default='__main__'):
 # Placeholder for sentinel methods, because sentinels can not have their own sentinels
 _sentinel_placeholder = object()
 
+if hasattr(builtins, "sentinel"):  # 3.15+
+    sentinel = builtins.sentinel
+else:
+    class sentinel:
+        """Create a unique sentinel object.
 
-class sentinel:
-    """Create a unique sentinel object.
+        *name* should be the name of the variable to which the return value
+        shall be assigned.
+        """
 
-    *name* should be the name of the variable to which the return value shall be assigned.
-    """
+        def __init__(
+            self,
+            __name: str = _sentinel_placeholder,
+            /,
+            repr: typing.Optional[str] = None,
+            *,
+            name: str = _sentinel_placeholder,
+        ) -> None:
+            if name is not _sentinel_placeholder:
+                warnings.warn(
+                    "Passing 'name' as a keyword argument is deprecated; "
+                    "pass it positionally instead.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                __name = name
+            if __name is _sentinel_placeholder:
+                raise TypeError("First parameter 'name' is required")
+            if repr is not None:
+                warnings.warn(
+                    "The 'repr' parameter is deprecated "
+                    "and will be removed in Python 3.15.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
 
-    def __init__(
-        self,
-        __name: str = _sentinel_placeholder,
-        /,
-        repr: typing.Optional[str] = None,
-        *,
-        name: str = _sentinel_placeholder,
-    ) -> None:
-        if name is not _sentinel_placeholder:
+            self.__name__ = __name
+            self._repr = repr if repr is not None else __name
+
+            # For pickling as a singleton:
+            self.__module__ = _caller()
+
+        def __init_subclass__(cls):
             warnings.warn(
-                "Passing 'name' as a keyword argument is deprecated; pass it positionally instead.",
+                "Subclassing sentinel is deprecated "
+                "and will be disallowed in Python 3.15",
                 DeprecationWarning,
                 stacklevel=2,
             )
-            __name = name
-        if __name is _sentinel_placeholder:
-            raise TypeError("First parameter 'name' is required")
-        if repr is not None:
-            warnings.warn(
-                "The 'repr' parameter is deprecated and will be removed in Python 3.15.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+            super().__init_subclass__()
 
-        self.__name__ = __name
-        self._repr = repr if repr is not None else __name
+        def __setattr__(self, attr: str, value: object) -> None:
+            if attr not in {"__name__", "_repr", "__module__"}:
+                warnings.warn(
+                    f"Setting attribute {attr!r} on sentinel objects is deprecated "
+                    "and will be disallowed in Python 3.15.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+            super().__setattr__(attr, value)
 
-        # For pickling as a singleton:
-        self.__module__ = _caller()
+        def __repr__(self):
+            return self._repr
 
-    def __init_subclass__(cls):
-        warnings.warn(
-            "Subclassing sentinel is deprecated and will be disallowed in Python 3.15",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init_subclass__()
+        if sys.version_info < (3, 11):
+            # The presence of this method convinces typing._type_check
+            # that Sentinels are types.
+            def __call__(self, *args, **kwargs):
+                raise TypeError(f"{type(self).__name__!r} object is not callable")
 
-    def __setattr__(self, attr: str, value: object) -> None:
-        if attr not in {"__name__", "_repr", "__module__"}:
-            warnings.warn(
-                f"Setting attribute {attr!r} on sentinel objects is deprecated and will be disallowed in Python 3.15.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-        super().__setattr__(attr, value)
+        # Breakpoint: https://github.com/python/cpython/pull/21515
+        if sys.version_info >= (3, 10):
+            def __or__(self, other):
+                return typing.Union[self, other]
 
-    def __repr__(self):
-        return self._repr
+            def __ror__(self, other):
+                return typing.Union[other, self]
 
-    if sys.version_info < (3, 11):
-        # The presence of this method convinces typing._type_check
-        # that Sentinels are types.
-        def __call__(self, *args, **kwargs):
-            raise TypeError(f"{type(self).__name__!r} object is not callable")
-
-    # Breakpoint: https://github.com/python/cpython/pull/21515
-    if sys.version_info >= (3, 10):
-        def __or__(self, other):
-            return typing.Union[self, other]
-
-        def __ror__(self, other):
-            return typing.Union[other, self]
-
-    def __reduce__(self) -> str:
-        """Reduce this sentinel to a singleton."""
-        return self.__name__  # Module is taken from the __module__ attribute
+        def __reduce__(self) -> str:
+            """Reduce this sentinel to a singleton."""
+            return self.__name__  # Module is taken from the __module__ attribute
 
 Sentinel = sentinel
 
