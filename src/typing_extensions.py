@@ -232,12 +232,7 @@ class sentinel:
         """Reduce this sentinel to a singleton."""
         return self.__name__  # Module is taken from the __module__ attribute
 
-with warnings.catch_warnings():  # Allow sentinel subclass for backwards compatibility
-    warnings.simplefilter("ignore")
-
-    @deprecated("""Sentinel was renamed to typing_extensions.sentinel""")
-    class Sentinel(sentinel):
-        pass
+Sentinel = sentinel
 
 _marker = sentinel("sentinel")
 

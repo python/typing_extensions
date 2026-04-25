@@ -9599,8 +9599,7 @@ class TestSentinels(BaseTestCase):
             class SentinelSubclass(Sentinel):
                 pass
 
-        with self.assertWarnsRegex(DeprecationWarning, r"Sentinel was renamed to typing_extensions.sentinel"):
-            my_sentinel = Sentinel(name="my_sentinel")
+        my_sentinel = Sentinel(name="my_sentinel")
         with self.assertWarnsRegex(DeprecationWarning, r"Setting attributes on sentinel is deprecated"):
             my_sentinel.foo = "bar"
 
