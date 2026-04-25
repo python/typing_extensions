@@ -1076,7 +1076,7 @@ Sentinel objects
    A type used to define sentinel values. The *name* argument should be the
    name of the variable to which the return value shall be assigned.
 
-   Assigning attributes to a sentinel including `__weakref__` is forbidden.
+   Assigning attributes to a sentinel is deprecated.
 
    Example::
 
@@ -1096,12 +1096,15 @@ Sentinel objects
 
    .. versionchanged:: 4.16.0
 
+      The implementation of this class has been updated to conform to
+      the accepted version of :pep:`661`.
+
       Now supports pickle and will be reduced as a singleton.
       Renamed from `Sentinel` to `sentinel`, `Sentinel` is deprecated.
       Automatic `repr` string no longer has angle brackets.
       `repr` parameter was deprecated.
       `name` as a keyword is deprecated.
-      Subclasssing and attribute assignment are deprecated.
+      Subclassing and attribute assignment are deprecated.
 
 
 Pure aliases

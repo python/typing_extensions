@@ -9551,7 +9551,7 @@ class TestSentinels(BaseTestCase):
         self.assertEqual(repr(sentinel_no_repr), 'sentinel_no_repr')
 
     def test_sentinel_deprecated_explicit_repr(self):
-        with self.assertWarnsRegex(DeprecationWarning, r"'repr' is deprecated and must be removed"):
+        with self.assertWarnsRegex(DeprecationWarning, r"'repr' parameter is deprecated and will be removed"):
             sentinel_explicit_repr = sentinel('sentinel_explicit_repr', repr='explicit_repr')
 
         self.assertEqual(repr(sentinel_explicit_repr), 'explicit_repr')
@@ -9596,15 +9596,15 @@ class TestSentinels(BaseTestCase):
                 self.assertIs(anonymous_sentinel, pickle.loads(pickle.dumps(anonymous_sentinel, protocol=proto)))
 
     def test_sentinel_deprecated(self):
-        with self.assertWarnsRegex(DeprecationWarning, r"Subclassing sentinel is forbidden by PEP 661"):
+        with self.assertWarnsRegex(DeprecationWarning, r"Subclassing sentinel is deprecated"):
             class SentinelSubclass(Sentinel):
                 pass
         with self.assertRaisesRegex(TypeError, r"First parameter 'name' is required"):
             sentinel()
 
-        with self.assertWarnsRegex(DeprecationWarning, r"'name' is positional-only and must not be a keyword parameter"):
+        with self.assertWarnsRegex(DeprecationWarning, r"Passing 'name' as a keyword argument is deprecated"):
             my_sentinel = Sentinel(name="my_sentinel")
-        with self.assertWarnsRegex(DeprecationWarning, r"Setting attributes on sentinel is deprecated"):
+        with self.assertWarnsRegex(DeprecationWarning, r"Setting attribute 'foo' on sentinel objects is deprecated"):
             my_sentinel.foo = "bar"
 
 

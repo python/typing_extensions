@@ -193,7 +193,7 @@ class sentinel:
     ) -> None:
         if name is not _sentinel_placeholder:
             warnings.warn(
-                "'name' is positional-only and must not be a keyword parameter",
+                "Passing 'name' as a keyword argument is deprecated; pass it positionally instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -202,7 +202,7 @@ class sentinel:
             raise TypeError("First parameter 'name' is required")
         if repr is not None:
             warnings.warn(
-                "'repr' is deprecated and must be removed",
+                "The 'repr' parameter is deprecated and will be removed in Python 3.15.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -215,7 +215,7 @@ class sentinel:
 
     def __init_subclass__(cls):
         warnings.warn(
-            "Subclassing sentinel is forbidden by PEP 661",
+            "Subclassing sentinel is deprecated and will be disallowed in Python 3.15",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -224,7 +224,7 @@ class sentinel:
     def __setattr__(self, attr: str, value: object) -> None:
         if attr not in {"__name__", "_repr", "__module__"}:
             warnings.warn(
-                "Setting attributes on sentinel is deprecated",
+                f"Setting attribute {attr!r} on sentinel objects is deprecated and will be disallowed in Python 3.15.",
                 DeprecationWarning,
                 stacklevel=2,
             )
