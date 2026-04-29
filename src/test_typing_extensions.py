@@ -8255,6 +8255,18 @@ class TypeAliasTypeTests(BaseTestCase):
         ):
             Simple.some_attribute = "not allowed"
 
+    def test_with_module(self):
+        Simple = TypeAliasType("Simple", int, module="my.custom.pkg")
+        self.assertEqual(Simple.__module__, "my.custom.pkg")
+
+    def test_module_overrides_in_exec(self):
+        ns = {}
+        exec(textwrap.dedent("""
+        from typing_extensions import TypeAliasType
+        TA = TypeAliasType('TA', int, module='x.y')
+        """), ns, ns)
+        self.assertEqual(ns["TA"].__module__, "x.y")
+
     def test_cannot_delete_attributes(self):
         Simple = TypeAliasType("Simple", int)
         with self.assertRaisesRegex(AttributeError, "readonly attribute"):

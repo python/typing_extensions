@@ -1,5 +1,12 @@
 # Unreleased
 
+- Add a `module` keyword argument to `typing_extensions.TypeAliasType` on
+  Python versions where `typing.TypeAliasType` does not (yet) accept one. When
+  supplied, it overrides the module inferred from the calling frame; useful for
+  aliases constructed dynamically (inside `exec()`, factory helpers, code
+  generators) where frame introspection yields the wrong module or `None`. The
+  version gate for `TypeAliasType` being a re-export from `typing` is raised to
+  3.15.
 - Fix incorrect behaviour on Python 3.9 and Python 3.10 that meant that
   calling `isinstance` with `typing_extensions.Concatenate[...]` or
   `typing_extensions.Unpack[...]` as the first argument could have a different

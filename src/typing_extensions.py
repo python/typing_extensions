@@ -3613,8 +3613,8 @@ else:
                 return typing.Union[other, self]
 
 
-# Breakpoint: https://github.com/python/cpython/pull/124795
-if sys.version_info >= (3, 14):
+# Breakpoint: https://github.com/python/cpython/pull/149133
+if sys.version_info >= (3, 15):
     TypeAliasType = typing.TypeAliasType
 # <=3.13
 else:
@@ -3695,7 +3695,7 @@ else:
 
         """
 
-        def __init__(self, name: str, value, *, type_params=()):
+        def __init__(self, name: str, value, *, type_params=(), module=None):
             if not isinstance(name, str):
                 raise TypeError("TypeAliasType name must be a string")
             if not isinstance(type_params, tuple):
@@ -3726,9 +3726,12 @@ else:
                 else:
                     parameters.append(type_param)
             self.__parameters__ = tuple(parameters)
-            def_mod = _caller()
-            if def_mod != 'typing_extensions':
-                self.__module__ = def_mod
+            if module is None:
+                def_mod = _caller()
+                if def_mod != 'typing_extensions':
+                    self.__module__ = def_mod
+            else:
+                self.__module__ = module
             # Setting this attribute closes the TypeAliasType from further modification
             self.__name__ = name
 
