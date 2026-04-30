@@ -3613,14 +3613,14 @@ else:
                 return typing.Union[other, self]
 
 
-# Breakpoint: https://github.com/python/cpython/pull/124795
-if sys.version_info >= (3, 14):
+# Breakpoint: https://github.com/python/cpython/pull/149172
+if sys.version_info >= (3, 15):
     TypeAliasType = typing.TypeAliasType
-# <=3.13
+# <=3.14
 else:
     # Breakpoint: https://github.com/python/cpython/pull/103764
     if sys.version_info >= (3, 12):
-        # 3.12-3.13
+        # 3.12-3.14
         def _is_unionable(obj):
             """Corresponds to is_unionable() in unionobject.c in CPython."""
             return obj is None or isinstance(obj, (

@@ -7072,7 +7072,7 @@ class AllTests(BaseTestCase):
                 'AsyncGenerator', 'ContextManager', 'AsyncContextManager',
                 'ParamSpec', 'TypeVar', 'TypeVarTuple', 'get_type_hints',
             }
-        if sys.version_info < (3, 14):
+        if sys.version_info < (3, 15):
             exclude |= {
                 'TypeAliasType'
             }
