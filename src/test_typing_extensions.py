@@ -8244,11 +8244,12 @@ class TypeAliasTypeTests(BaseTestCase):
             "attribute '__parameters__' of 'typing.TypeAliasType' objects is not writable",
         ):
             Simple.__parameters__ = (T,)
-        with self.assertRaisesRegex(
-            AttributeError,
-            "attribute '__module__' of 'typing.TypeAliasType' objects is not writable",
-        ):
-            Simple.__module__ = 42
+
+        # __module__ is the exception---it's assignable
+        module_sentinel = object()
+        Simple.__module__ = module_sentinel
+        self.assertIs(Simple.__module__, module_sentinel)
+
         with self.assertRaisesRegex(
             AttributeError,
             "'typing.TypeAliasType' object has no attribute 'some_attribute'",
