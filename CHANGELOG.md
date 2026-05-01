@@ -1,5 +1,8 @@
 # Unreleased
 
+- Update error message when attempting to subclass `typing_extensions.TypeVarTuple`
+  to align with the message produced by `typing` in Python 3.12+.
+  Patch by Jan-Eric Nitschke.
 - Fix setting of `__required_keys__` and `__optional_keys__` when inheriting
   keys with the same name.
 - Fix incorrect behaviour on Python 3.9 and Python 3.10 that meant that
