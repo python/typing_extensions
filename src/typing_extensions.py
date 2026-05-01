@@ -91,6 +91,7 @@ __all__ = [
     'overload',
     'override',
     'Protocol',
+    'sentinel',
     'Sentinel',
     'reveal_type',
     'runtime',
@@ -148,7 +149,6 @@ __all__ = [
     'ValuesView',
     'cast',
     'no_type_check',
-    'no_type_check_decorator',
 ]
 
 # for backward compatibility
@@ -160,45 +160,108 @@ _PEP_696_IMPLEMENTED = sys.version_info >= (3, 13, 0, "beta")
 # Added with bpo-45166 to 3.10.1+ and some 3.9 versions
 _FORWARD_REF_HAS_CLASS = "__forward_is_class__" in typing.ForwardRef.__slots__
 
-class Sentinel:
-    """Create a unique sentinel object.
 
-    *name* should be the name of the variable to which the return value shall be assigned.
-
-    *repr*, if supplied, will be used for the repr of the sentinel object.
-    If not provided, "<name>" will be used.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        repr: typing.Optional[str] = None,
-    ):
-        self._name = name
-        self._repr = repr if repr is not None else f'<{name}>'
-
-    def __repr__(self):
-        return self._repr
-
-    if sys.version_info < (3, 11):
-        # The presence of this method convinces typing._type_check
-        # that Sentinels are types.
-        def __call__(self, *args, **kwargs):
-            raise TypeError(f"{type(self).__name__!r} object is not callable")
-
-    # Breakpoint: https://github.com/python/cpython/pull/21515
-    if sys.version_info >= (3, 10):
-        def __or__(self, other):
-            return typing.Union[self, other]
-
-        def __ror__(self, other):
-            return typing.Union[other, self]
-
-    def __getstate__(self):
-        raise TypeError(f"Cannot pickle {type(self).__name__!r} object")
+def _caller(depth=1, default='__main__'):
+    try:
+        return sys._getframemodulename(depth + 1) or default
+    except AttributeError:  # For platforms without _getframemodulename()
+        pass
+    try:
+        return sys._getframe(depth + 1).f_globals.get('__name__', default)
+    except (AttributeError, ValueError):  # For platforms without _getframe()
+        pass
+    return None
 
 
-_marker = Sentinel("sentinel")
+# Placeholder for sentinel methods, because sentinels can not have their own sentinels
+_sentinel_placeholder = object()
+
+if hasattr(builtins, "sentinel"):  # 3.15+
+    sentinel = builtins.sentinel
+else:
+    class sentinel:
+        """Create a unique sentinel object.
+
+        *name* should be the name of the variable to which the return value
+        shall be assigned.
+        """
+
+        def __init__(
+            self,
+            __name: str = _sentinel_placeholder,
+            /,
+            repr: typing.Optional[str] = None,
+            *,
+            name: str = _sentinel_placeholder,
+        ) -> None:
+            if name is not _sentinel_placeholder:
+                warnings.warn(
+                    "Passing 'name' as a keyword argument is deprecated; "
+                    "pass it positionally instead.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                __name = name
+            if __name is _sentinel_placeholder:
+                raise TypeError("First parameter 'name' is required")
+            if repr is not None:
+                warnings.warn(
+                    "The 'repr' parameter is deprecated "
+                    "and will be removed in Python 3.15.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+
+            self.__name__ = __name
+            self._repr = repr if repr is not None else __name
+
+            # For pickling as a singleton:
+            self.__module__ = _caller()
+
+        def __init_subclass__(cls):
+            warnings.warn(
+                "Subclassing sentinel is deprecated "
+                "and will be disallowed in Python 3.15",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            super().__init_subclass__()
+
+        def __setattr__(self, attr: str, value: object) -> None:
+            if attr not in {"__name__", "_repr", "__module__"}:
+                warnings.warn(
+                    f"Setting attribute {attr!r} on sentinel objects is deprecated "
+                    "and will be disallowed in Python 3.15.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+            super().__setattr__(attr, value)
+
+        def __repr__(self):
+            return self._repr
+
+        if sys.version_info < (3, 11):
+            # The presence of this method convinces typing._type_check
+            # that Sentinels are types.
+            def __call__(self, *args, **kwargs):
+                raise TypeError(f"{type(self).__name__!r} object is not callable")
+
+        # Breakpoint: https://github.com/python/cpython/pull/21515
+        if sys.version_info >= (3, 10):
+            def __or__(self, other):
+                return typing.Union[self, other]
+
+            def __ror__(self, other):
+                return typing.Union[other, self]
+
+        def __reduce__(self) -> str:
+            """Reduce this sentinel to a singleton."""
+            return self.__name__  # Module is taken from the __module__ attribute
+
+Sentinel = sentinel
+
+_marker = sentinel("sentinel")
+
 
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
@@ -637,18 +700,6 @@ def _get_protocol_attrs(cls):
             if (not attr.startswith('_abc_') and attr not in _EXCLUDED_ATTRS):
                 attrs.add(attr)
     return attrs
-
-
-def _caller(depth=1, default='__main__'):
-    try:
-        return sys._getframemodulename(depth + 1) or default
-    except AttributeError:  # For platforms without _getframemodulename()
-        pass
-    try:
-        return sys._getframe(depth + 1).f_globals.get('__name__', default)
-    except (AttributeError, ValueError):  # For platforms without _getframe()
-        pass
-    return None
 
 
 # `__match_args__` attribute was removed from protocol members in 3.13,
@@ -1182,8 +1233,14 @@ else:
 
                 if sys.version_info <= (3, 14):
                     annotations.update(base_dict.get('__annotations__', {}))
-                required_keys.update(base_dict.get('__required_keys__', ()))
-                optional_keys.update(base_dict.get('__optional_keys__', ()))
+                base_required = base_dict.get('__required_keys__', set())
+                required_keys |= base_required
+                optional_keys -= base_required
+
+                base_optional = base_dict.get('__optional_keys__', set())
+                required_keys -= base_optional
+                optional_keys |= base_optional
+
                 readonly_keys.update(base_dict.get('__readonly_keys__', ()))
                 mutable_keys.update(base_dict.get('__mutable_keys__', ()))
 
@@ -1211,13 +1268,19 @@ else:
                 qualifiers = set(_get_typeddict_qualifiers(annotation_type))
 
                 if Required in qualifiers:
-                    required_keys.add(annotation_key)
+                    is_required = True
                 elif NotRequired in qualifiers:
-                    optional_keys.add(annotation_key)
-                elif total:
+                    is_required = False
+                else:
+                    is_required = total
+
+                if is_required:
                     required_keys.add(annotation_key)
+                    optional_keys.discard(annotation_key)
                 else:
                     optional_keys.add(annotation_key)
+                    required_keys.discard(annotation_key)
+
                 if ReadOnly in qualifiers:
                     mutable_keys.discard(annotation_key)
                     readonly_keys.add(annotation_key)
@@ -2291,10 +2354,10 @@ else:
         return typing._GenericAlias(self, (item,))
 
 
-# 3.14+?
+# 3.15+?
 if hasattr(typing, 'TypeForm'):
     TypeForm = typing.TypeForm
-# <=3.13
+# <=3.14
 else:
     class _TypeFormForm(_ExtensionsSpecialForm, _root=True):
         # TypeForm(X) is equivalent to X but indicates to the type checker
@@ -3877,8 +3940,8 @@ else:
             >>> class P(Protocol):
             ...     def a(self) -> str: ...
             ...     b: int
-            >>> get_protocol_members(P)
-            frozenset({'a', 'b'})
+            >>> get_protocol_members(P) == frozenset({'a', 'b'})
+            True
 
         Raise a TypeError for arguments that are not Protocols.
         """
@@ -4312,11 +4375,16 @@ _typing_names = [
     "ValuesView",
     "cast",
     "no_type_check",
-    "no_type_check_decorator",
     # This is private, but it was defined by typing_extensions for a long time
     # and some users rely on it.
     "_AnnotatedAlias",
 ]
+
+# Breakpoint: https://github.com/python/cpython/pull/133602
+if sys.version_info < (3, 15, 0):
+    _typing_names.append("no_type_check_decorator")
+    __all__.append("no_type_check_decorator")
+
 globals().update(
     {name: getattr(typing, name) for name in _typing_names if hasattr(typing, name)}
 )

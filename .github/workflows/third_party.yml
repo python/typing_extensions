@@ -46,18 +46,19 @@ jobs:
         # PyPy is deliberately omitted here,
         # since pydantic's tests intermittently segfault on PyPy,
         # and it's nothing to do with typing_extensions
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # Tests on 3.14 don't pass as of 2 November 2025
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  # v6.6.1
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout pydantic
         run: git clone --depth=1 https://github.com/pydantic/pydantic.git || git clone --depth=1 https://github.com/pydantic/pydantic.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -65,7 +66,7 @@ jobs:
         working-directory: pydantic
         run: |
           uv add --editable ../typing-extensions-latest
-          uv sync --group dev
+          uv sync --all-packages --group testing-extra --all-extras
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
           uv pip list
@@ -79,18 +80,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  # v6.6.1
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout typing_inspect
         run: git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git || git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -114,18 +115,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  # v6.6.1
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Check out pycroscope
         run: git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git || git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -149,18 +150,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  # v6.6.1
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Check out typeguard
         run: git clone --depth=1 https://github.com/agronholm/typeguard.git || git clone --depth=1 https://github.com/agronholm/typeguard.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -186,18 +187,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # 3.9 is no longer supported. 3.14 fails some tests as of 2 November 2025
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  # v6.6.1
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Check out typed-argument-parser
         run: git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git || git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -228,18 +230,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # 3.14 fails a test as of 2 November 2025
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  # v6.6.1
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout mypy for stubtest and mypyc tests
         run: git clone --depth=1 https://github.com/python/mypy.git || git clone --depth=1 https://github.com/python/mypy.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -264,18 +267,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  # v6.6.1
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout cattrs
         run: git clone --depth=1 https://github.com/python-attrs/cattrs.git || git clone --depth=1 https://github.com/python-attrs/cattrs.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -299,7 +302,7 @@ jobs:
       matrix:
         # PyPy is deliberately omitted here, since SQLAlchemy's tests
         # fail on PyPy for reasons unrelated to typing_extensions.
-        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
         checkout-ref: [ "main", "rel_2_0" ]
     # sqlalchemy tests fail when using the Ubuntu 24.04 runner
     # https://github.com/sqlalchemy/sqlalchemy/commit/8d73205f352e68c6603e90494494ef21027ec68f
@@ -307,13 +310,13 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  # v6.6.1
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout sqlalchemy
         run: git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git || git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -335,16 +338,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        # As of 2 November 2025 a dependency is missing 3.14 wheels
+        python-version: [ "3.11", "3.12", "3.13" ]
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  # v6.6.1
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244  # v7.1.4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Checkout litestar
         run: git clone --depth=1 https://github.com/litestar-org/litestar.git || git clone --depth=1 https://github.com/litestar-org/litestar.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -353,7 +357,7 @@ jobs:
         run: |
           # litestar's python-requires means uv won't let us add typing-extensions-latest
           # as a requirement unless we do this
-          sed -i 's/^requires-python = ">=3.8/requires-python = ">=3.9/' pyproject.toml
+          sed -i 's/^requires-python = ">=3.8/requires-python = ">=3.10/' pyproject.toml
 
           uv add --editable ../typing-extensions-latest
           uv sync
@@ -377,6 +381,7 @@ jobs:
       - mypy
       - cattrs
       - sqlalchemy
+      - litestar
 
     if: >-
         ${{
@@ -392,6 +397,7 @@ jobs:
             || needs.mypy.result == 'failure'
             || needs.cattrs.result == 'failure'
             || needs.sqlalchemy.result == 'failure'
+            || needs.litestar.result == 'failure'
           )
         }}
 
