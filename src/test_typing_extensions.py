@@ -102,6 +102,7 @@ from typing_extensions import (
     reveal_type,
     runtime,
     runtime_checkable,
+    sentinel,
     type_repr,
 )
 
@@ -9541,42 +9542,71 @@ class EvaluateForwardRefTests(BaseTestCase):
 
 
 class TestSentinels(BaseTestCase):
+    SENTINEL = sentinel("TestSentinels.SENTINEL")
+
     def test_sentinel_no_repr(self):
-        sentinel_no_repr = Sentinel('sentinel_no_repr')
+        sentinel_no_repr = sentinel('sentinel_no_repr')
 
-        self.assertEqual(sentinel_no_repr._name, 'sentinel_no_repr')
-        self.assertEqual(repr(sentinel_no_repr), '<sentinel_no_repr>')
+        self.assertEqual(sentinel_no_repr.__name__, 'sentinel_no_repr')
+        self.assertEqual(repr(sentinel_no_repr), 'sentinel_no_repr')
 
-    def test_sentinel_explicit_repr(self):
-        sentinel_explicit_repr = Sentinel('sentinel_explicit_repr', repr='explicit_repr')
+    def test_sentinel_deprecated_explicit_repr(self):
+        with self.assertWarnsRegex(DeprecationWarning, r"'repr' parameter is deprecated and will be removed"):
+            sentinel_explicit_repr = sentinel('sentinel_explicit_repr', repr='explicit_repr')
 
         self.assertEqual(repr(sentinel_explicit_repr), 'explicit_repr')
 
     @skipIf(sys.version_info < (3, 10), reason='New unions not available in 3.9')
     def test_sentinel_type_expression_union(self):
-        sentinel = Sentinel('sentinel')
+        sentinel_type = sentinel('sentinel')
 
-        def func1(a: int | sentinel = sentinel): pass
-        def func2(a: sentinel | int = sentinel): pass
+        def func1(a: int | sentinel_type = sentinel_type): pass
+        def func2(a: sentinel_type | int = sentinel_type): pass
 
-        self.assertEqual(func1.__annotations__['a'], Union[int, sentinel])
-        self.assertEqual(func2.__annotations__['a'], Union[sentinel, int])
+        self.assertEqual(func1.__annotations__['a'], Union[int, sentinel_type])
+        self.assertEqual(func2.__annotations__['a'], Union[sentinel_type, int])
 
     def test_sentinel_not_callable(self):
-        sentinel = Sentinel('sentinel')
+        sentinel_ = sentinel('sentinel')
         with self.assertRaisesRegex(
             TypeError,
-            "'Sentinel' object is not callable"
+            "'sentinel' object is not callable"
         ):
+            sentinel_()
+
+    def test_sentinel_copy_identity(self):
+        self.assertIs(self.SENTINEL, copy.copy(self.SENTINEL))
+        self.assertIs(self.SENTINEL, copy.deepcopy(self.SENTINEL))
+
+        anonymous_sentinel = sentinel("anonymous_sentinel")
+        self.assertIs(anonymous_sentinel, copy.copy(anonymous_sentinel))
+        self.assertIs(anonymous_sentinel, copy.deepcopy(anonymous_sentinel))
+
+    def test_sentinel_picklable_qualified(self):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            self.assertIs(self.SENTINEL, pickle.loads(pickle.dumps(self.SENTINEL, protocol=proto)))
+
+    def test_sentinel_picklable_anonymous(self):
+        anonymous_sentinel = sentinel("anonymous_sentinel")  # Anonymous sentinel can not be pickled
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            with self.assertRaisesRegex(
+                pickle.PicklingError,
+                r"attribute lookup anonymous_sentinel on \w+ failed|not found as \w+.anonymous_sentinel"
+            ):
+                self.assertIs(anonymous_sentinel, pickle.loads(pickle.dumps(anonymous_sentinel, protocol=proto)))
+
+    def test_sentinel_deprecated(self):
+        with self.assertWarnsRegex(DeprecationWarning, r"Subclassing sentinel is deprecated"):
+            class SentinelSubclass(Sentinel):
+                pass
+        with self.assertRaisesRegex(TypeError, r"First parameter 'name' is required"):
             sentinel()
 
-    def test_sentinel_not_picklable(self):
-        sentinel = Sentinel('sentinel')
-        with self.assertRaisesRegex(
-            TypeError,
-            "Cannot pickle 'Sentinel' object"
-        ):
-            pickle.dumps(sentinel)
+        with self.assertWarnsRegex(DeprecationWarning, r"Passing 'name' as a keyword argument is deprecated"):
+            my_sentinel = Sentinel(name="my_sentinel")
+        with self.assertWarnsRegex(DeprecationWarning, r"Setting attribute 'foo' on sentinel objects is deprecated"):
+            my_sentinel.foo = "bar"
+
 
 def load_tests(loader, tests, pattern):
     import doctest

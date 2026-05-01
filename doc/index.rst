@@ -1071,18 +1071,17 @@ Capsule objects
 Sentinel objects
 ~~~~~~~~~~~~~~~~
 
-.. class:: Sentinel(name, repr=None)
+.. class:: sentinel(name, /)
 
    A type used to define sentinel values. The *name* argument should be the
    name of the variable to which the return value shall be assigned.
 
-   If *repr* is provided, it will be used for the :meth:`~object.__repr__`
-   of the sentinel object. If not provided, ``"<name>"`` will be used.
+   Assigning attributes to a sentinel is deprecated.
 
    Example::
 
-      >>> from typing_extensions import Sentinel, assert_type
-      >>> MISSING = Sentinel('MISSING')
+      >>> from typing_extensions import sentinel, assert_type
+      >>> MISSING = sentinel('MISSING')
       >>> def func(arg: int | MISSING = MISSING) -> None:
       ...     if arg is MISSING:
       ...         assert_type(arg, MISSING)
@@ -1094,6 +1093,18 @@ Sentinel objects
    .. versionadded:: 4.14.0
 
       See :pep:`661`
+
+   .. versionchanged:: 4.16.0
+
+      The implementation of this class has been updated to conform to
+      the accepted version of :pep:`661`.
+
+      Now supports pickle and will be reduced as a singleton.
+      Renamed from `Sentinel` to `sentinel`, `Sentinel` is deprecated.
+      Automatic `repr` string no longer has angle brackets.
+      `repr` parameter was deprecated.
+      `name` as a keyword is deprecated.
+      Subclassing and attribute assignment are deprecated.
 
 
 Pure aliases
