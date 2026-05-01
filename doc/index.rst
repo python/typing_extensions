@@ -815,6 +815,11 @@ Functions
    *format* specifies the format of the annotation and is a member of
    the :class:`Format` enum, defaulting to :attr:`Format.VALUE`.
 
+   .. caution::
+
+      This function may execute arbitrary code contained in annotations.
+      See :ref:`annotations-security` for more information.
+
    .. versionadded:: 4.13.0
 
 .. function:: get_annotations(obj, *, globals=None, locals=None, eval_str=False, format=Format.VALUE)
@@ -833,6 +838,11 @@ Functions
    want to support earlier Python versions, to simply write::
 
       typing_extensions.get_annotations(obj, format=Format.FORWARDREF)
+
+   .. caution::
+
+      This function may execute arbitrary code contained in annotations.
+      See :ref:`annotations-security` for more information.
 
    .. versionadded:: 4.13.0
 
@@ -900,6 +910,11 @@ Functions
    In Python 3.11, this function was changed to support the new
    :py:data:`typing.Required` and :py:data:`typing.NotRequired`.
    ``typing_extensions`` backports these fixes.
+
+   .. caution::
+
+      This function may execute arbitrary code contained in annotations.
+      See :ref:`annotations-security` for more information.
 
    .. versionchanged:: 4.1.0
 
@@ -1056,18 +1071,17 @@ Capsule objects
 Sentinel objects
 ~~~~~~~~~~~~~~~~
 
-.. class:: Sentinel(name, repr=None)
+.. class:: sentinel(name, /)
 
    A type used to define sentinel values. The *name* argument should be the
    name of the variable to which the return value shall be assigned.
 
-   If *repr* is provided, it will be used for the :meth:`~object.__repr__`
-   of the sentinel object. If not provided, ``"<name>"`` will be used.
+   Assigning attributes to a sentinel is deprecated.
 
    Example::
 
-      >>> from typing_extensions import Sentinel, assert_type
-      >>> MISSING = Sentinel('MISSING')
+      >>> from typing_extensions import sentinel, assert_type
+      >>> MISSING = sentinel('MISSING')
       >>> def func(arg: int | MISSING = MISSING) -> None:
       ...     if arg is MISSING:
       ...         assert_type(arg, MISSING)
@@ -1079,6 +1093,18 @@ Sentinel objects
    .. versionadded:: 4.14.0
 
       See :pep:`661`
+
+   .. versionchanged:: 4.16.0
+
+      The implementation of this class has been updated to conform to
+      the accepted version of :pep:`661`.
+
+      Now supports pickle and will be reduced as a singleton.
+      Renamed from `Sentinel` to `sentinel`, `Sentinel` is deprecated.
+      Automatic `repr` string no longer has angle brackets.
+      `repr` parameter was deprecated.
+      `name` as a keyword is deprecated.
+      Subclassing and attribute assignment are deprecated.
 
 
 Pure aliases
@@ -1415,3 +1441,25 @@ If you have any feedback on our security process, please `open an issue
 <https://github.com/python/typing_extensions/issues/new>`__. To report
 an issue privately, use `GitHub's private reporting feature
 <https://github.com/python/typing_extensions/security>`__.
+
+.. _annotations-security:
+
+Introspection of annotations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some functions in this module are designed to introspect annotations at
+runtime. These functions may therefore execute code contained in annotations,
+which can then perform arbitrary operations. For example,
+:func:`get_annotations` may call an arbitrary :term:`annotate function`, and
+:meth:`evaluate_forward_ref` may call :func:`eval` on an arbitrary string. Code contained
+in an annotation might make arbitrary system calls, enter an infinite loop, or perform any
+other operation. This is also true for any access of the :attr:`~object.__annotations__` attribute
+(as of Python 3.14),
+and for various functions in the :mod:`typing` module that work with annotations, such as
+:func:`typing.get_type_hints`.
+
+Any security issue arising from this also applies immediately after importing
+code that may contain untrusted annotations: importing code can always cause arbitrary operations
+to be performed. However, it is unsafe to accept strings or other input from an untrusted source and
+pass them to any of the APIs for introspecting annotations, for example by editing an
+``__annotations__`` dictionary or directly creating a :class:`ForwardRef` object.
