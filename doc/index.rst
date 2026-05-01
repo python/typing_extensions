@@ -65,6 +65,10 @@ version from which features were backported; for example,
 ``typing_extensions`` 3.10.0.0 was meant to reflect ``typing`` as of
 Python 3.10.0. During this period, no changelog was maintained.
 
+In the documentation below, for each object added since version 4.0
+there is a note indicating the version in which it was added. Objects
+for which no such note is present have been present since before version 4.0.
+
 Runtime use of types
 ~~~~~~~~~~~~~~~~~~~~
 
