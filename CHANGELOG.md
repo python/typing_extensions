@@ -1,5 +1,7 @@
 # Unreleased
 
+- Fix setting of `__required_keys__` and `__optional_keys__` when inheriting
+  keys with the same name.
 - Add support for `AsyncIterator`, `io.Reader`, `io.Writer` and `os.PathLike` protocols
   as bases for other protocls.
 - Fix incorrect behaviour on Python 3.9 and Python 3.10 that meant that
