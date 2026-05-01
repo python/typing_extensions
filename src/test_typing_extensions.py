@@ -10,6 +10,7 @@ import importlib
 import inspect
 import io
 import itertools
+import os
 import pickle
 import re
 import subprocess
@@ -3870,7 +3871,13 @@ class ProtocolTests(BaseTestCase):
             class CustomProtocol(TestCase, Protocol):
                 pass
 
+        class CustomPathLikeProtocol(os.PathLike, Protocol):
+            pass
+
         class CustomContextManager(typing.ContextManager, Protocol):
+            pass
+
+        class CustomAsyncIterator(typing.AsyncIterator, Protocol):
             pass
 
     @skip_if_py312b1
@@ -7110,13 +7117,13 @@ class AllTests(BaseTestCase):
             }
         if sys.version_info < (3, 13):
             exclude |= {
-                'NamedTuple', 'Protocol', 'runtime_checkable', 'Generator',
+                'NamedTuple', 'runtime_checkable', 'Generator',
                 'AsyncGenerator', 'ContextManager', 'AsyncContextManager',
                 'ParamSpec', 'TypeVar', 'TypeVarTuple', 'get_type_hints',
             }
         if sys.version_info < (3, 14):
             exclude |= {
-                'TypeAliasType'
+                'TypeAliasType', 'Protocol'
             }
         if not typing_extensions._PEP_728_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}
