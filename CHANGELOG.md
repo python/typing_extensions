@@ -1,6 +1,7 @@
 # Unreleased
 
-- Add support for `AsyncIterator`, `io.Reader`, `io.Writer` and `os.PathLike` protocols.
+- Add support for `AsyncIterator`, `io.Reader`, `io.Writer` and `os.PathLike` protocols
+  as bases for other protocls.
 - Fix incorrect behaviour on Python 3.9 and Python 3.10 that meant that
   calling `isinstance` with `typing_extensions.Concatenate[...]` or
   `typing_extensions.Unpack[...]` as the first argument could have a different
