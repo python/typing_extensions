@@ -3677,14 +3677,14 @@ else:
                 return typing.Union[other, self]
 
 
-# Breakpoint: https://github.com/python/cpython/pull/124795
-if sys.version_info >= (3, 14):
+# Breakpoint: https://github.com/python/cpython/pull/149172
+if sys.version_info >= (3, 15):
     TypeAliasType = typing.TypeAliasType
-# <=3.13
+# <=3.14
 else:
     # Breakpoint: https://github.com/python/cpython/pull/103764
     if sys.version_info >= (3, 12):
-        # 3.12-3.13
+        # 3.12-3.14
         def _is_unionable(obj):
             """Corresponds to is_unionable() in unionobject.c in CPython."""
             return obj is None or isinstance(obj, (
@@ -3797,7 +3797,7 @@ else:
             self.__name__ = name
 
         def __setattr__(self, name: str, value: object, /) -> None:
-            if hasattr(self, "__name__"):
+            if hasattr(self, "__name__") and name != "__module__":
                 self._raise_attribute_error(name)
             super().__setattr__(name, value)
 
@@ -3808,7 +3808,7 @@ else:
             # Match the Python 3.12 error messages exactly
             if name == "__name__":
                 raise AttributeError("readonly attribute")
-            elif name in {"__value__", "__type_params__", "__parameters__", "__module__"}:
+            elif name in {"__value__", "__type_params__", "__parameters__"}:
                 raise AttributeError(
                     f"attribute '{name}' of 'typing.TypeAliasType' objects "
                     "is not writable"
