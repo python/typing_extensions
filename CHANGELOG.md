@@ -18,6 +18,7 @@
   Python 3.9. The `typing` implementation has always raised an error, and the
   `typing_extensions` implementation has raised an error on Python 3.10+ since
   `typing_extensions` v4.6.0. Patch by Brian Schubert.
+- Add `bound` and variance parameters to `TypeVarTuple`.
 
 # Release 4.15.0 (August 25, 2025)
 
