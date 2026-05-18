@@ -7443,7 +7443,7 @@ class NamedTupleTests(BaseTestCase):
 
     def test_same_as_typing_NamedTuple(self):
         self.assertEqual(
-            set(dir(NamedTuple)) - {"__text_signature__"},
+            set(dir(NamedTuple)),
             set(dir(typing.NamedTuple))
         )
         self.assertIs(type(NamedTuple), type(typing.NamedTuple))
