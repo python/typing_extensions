@@ -130,5 +130,5 @@ jobs:
               owner: "python",
               repo: "typing_extensions",
               title: `Daily tests failed on ${new Date().toDateString()}`,
-              body: "Runs listed here: https://github.com/python/typing_extensions/actions/workflows/ci.yml",
+              body: "Run listed here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
             })
