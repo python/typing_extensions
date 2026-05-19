@@ -207,7 +207,7 @@ else:
                 raise TypeError("First parameter 'name' is required")
             if __repr is not _sentinel_placeholder:
                 warnings.warn(
-                    "Passing 'repr' as a position argument is deprecated; "
+                    "Passing 'repr' as a positional argument is deprecated; "
                     "pass it by keyword instead.",
                     DeprecationWarning,
                     stacklevel=2,
