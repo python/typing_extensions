@@ -9606,7 +9606,7 @@ class TestSentinels(BaseTestCase):
         self.assertEqual(repr(sentinel_argument_repr), 'argument_repr')
 
     def test_sentinel_deprecated_keyword_repr(self):
-        sentinel_keyword_repr = sentinel('sentinel_keyword_repr', 'keyword_repr')
+        sentinel_keyword_repr = sentinel('sentinel_keyword_repr', repr='keyword_repr')
 
         self.assertEqual(repr(sentinel_keyword_repr), 'keyword_repr')
 
