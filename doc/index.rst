@@ -1075,12 +1075,12 @@ Capsule objects
 Sentinel objects
 ~~~~~~~~~~~~~~~~
 
-.. class:: sentinel(name, /)
+.. class:: sentinel(name, /, *, repr=None)
 
    A type used to define sentinel values. The *name* argument should be the
    name of the variable to which the return value shall be assigned.
 
-   Assigning attributes to a sentinel is deprecated.
+   Assigning attributes to a sentinel is deprecated (except for __module__).
 
    Example::
 
@@ -1106,7 +1106,7 @@ Sentinel objects
       Now supports pickle and will be reduced as a singleton.
       Renamed from `Sentinel` to `sentinel`, `Sentinel` is deprecated.
       Automatic `repr` string no longer has angle brackets.
-      `repr` parameter was deprecated.
+      `repr` as a positional argument is deprecated.
       `name` as a keyword is deprecated.
       Subclassing and attribute assignment are deprecated.
 
