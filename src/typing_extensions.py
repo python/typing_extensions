@@ -192,7 +192,7 @@ else:
             __repr: typing.Optional[str] = _sentinel_placeholder,
             /,
             *,
-            repr: typing.Optional[str] = _sentinel_placeholder,
+            repr: typing.Optional[str] = None,
             name: str = _sentinel_placeholder,
         ) -> None:
             if name is not _sentinel_placeholder:
@@ -213,8 +213,6 @@ else:
                     stacklevel=2,
                 )
                 repr = __repr
-            if repr is _sentinel_placeholder:
-                repr = None
 
             self.__name__ = __name
             self._repr = repr if repr is not None else __name
