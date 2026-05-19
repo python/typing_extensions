@@ -9600,7 +9600,7 @@ class TestSentinels(BaseTestCase):
         self.assertEqual(repr(sentinel_no_repr), 'sentinel_no_repr')
 
     def test_sentinel_deprecated_argument_repr(self):
-        with self.assertWarnsRegex(DeprecationWarning, r"Passing 'repr' as a position argument is deprecated; pass it by keyword instead."):
+        with self.assertWarnsRegex(DeprecationWarning, r"Passing 'repr' as a positional argument is deprecated; pass it by keyword instead."):
             sentinel_argument_repr = sentinel('sentinel_argument_repr', 'argument_repr')
 
         self.assertEqual(repr(sentinel_argument_repr), 'argument_repr')
