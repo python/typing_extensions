@@ -9599,11 +9599,16 @@ class TestSentinels(BaseTestCase):
         self.assertEqual(sentinel_no_repr.__name__, 'sentinel_no_repr')
         self.assertEqual(repr(sentinel_no_repr), 'sentinel_no_repr')
 
-    def test_sentinel_deprecated_explicit_repr(self):
-        with self.assertWarnsRegex(DeprecationWarning, r"'repr' parameter is deprecated and will be removed"):
-            sentinel_explicit_repr = sentinel('sentinel_explicit_repr', repr='explicit_repr')
+    def test_sentinel_deprecated_argument_repr(self):
+        with self.assertWarnsRegex(DeprecationWarning, r"Passing 'repr' as a position argument is deprecated; pass it by keyword instead."):
+            sentinel_argument_repr = sentinel('sentinel_argument_repr', 'argument_repr')
 
-        self.assertEqual(repr(sentinel_explicit_repr), 'explicit_repr')
+        self.assertEqual(repr(sentinel_argument_repr), 'argument_repr')
+
+    def test_sentinel_deprecated_keyword_repr(self):
+        sentinel_keyword_repr = sentinel('sentinel_keyword_repr', 'keyword_repr')
+
+        self.assertEqual(repr(sentinel_keyword_repr), 'keyword_repr')
 
     @skipIf(sys.version_info < (3, 10), reason='New unions not available in 3.9')
     def test_sentinel_type_expression_union(self):
