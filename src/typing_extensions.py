@@ -214,7 +214,7 @@ else:
                 )
                 repr = __repr
 
-            self.__name__ = __name
+            self._name = __name
             self._repr = repr if repr is not None else __name
 
             # For pickling as a singleton:
@@ -230,7 +230,7 @@ else:
             super().__init_subclass__()
 
         def __setattr__(self, attr: str, value: object) -> None:
-            if attr not in {"__name__", "_repr", "__module__"}:
+            if attr not in {"_name", "_repr", "__module__"}:
                 warnings.warn(
                     f"Setting attribute {attr!r} on sentinel objects is deprecated "
                     "and will be disallowed in Python 3.15.",
@@ -239,7 +239,15 @@ else:
                 )
             super().__setattr__(attr, value)
 
-        def __repr__(self):
+        @property
+        def __name__(self) -> str:
+            return self._name
+
+        @__name__.setter
+        def __name__(self, value: str) -> None:
+            self._name = value
+
+        def __repr__(self) -> str:
             return self._repr
 
         if sys.version_info < (3, 11):

@@ -9660,6 +9660,8 @@ class TestSentinels(BaseTestCase):
             my_sentinel = Sentinel(name="my_sentinel")
         with self.assertWarnsRegex(DeprecationWarning, r"Setting attribute 'foo' on sentinel objects is deprecated"):
             my_sentinel.foo = "bar"
+        with self.assertWarnsRegex(DeprecationWarning, r"Setting attribute '__name__' on sentinel objects is deprecated"):
+            my_sentinel.__name__ = "bar"
 
 
 def load_tests(loader, tests, pattern):
