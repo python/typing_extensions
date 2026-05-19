@@ -189,9 +189,10 @@ else:
         def __init__(
             self,
             __name: str = _sentinel_placeholder,
+            __repr: typing.Optional[str] = _sentinel_placeholder,
             /,
-            repr: typing.Optional[str] = None,
             *,
+            repr: typing.Optional[str] = _sentinel_placeholder,
             name: str = _sentinel_placeholder,
         ) -> None:
             if name is not _sentinel_placeholder:
@@ -204,16 +205,17 @@ else:
                 __name = name
             if __name is _sentinel_placeholder:
                 raise TypeError("First parameter 'name' is required")
-            if repr is not None:
+            if __repr is not _sentinel_placeholder:
                 warnings.warn(
-                    "The 'repr' parameter is deprecated "
-                    "and will be removed in Python 3.15.",
+                    "Passing 'repr' as a position argument is deprecated; "
+                    "pass it by keyword instead.",
                     DeprecationWarning,
                     stacklevel=2,
                 )
+                repr = __repr
 
             self.__name__ = __name
-            self._repr = repr if repr is not None else __name
+            self._repr = repr if repr is not _sentinel_placeholder else __name
 
             # For pickling as a singleton:
             self.__module__ = _caller()
