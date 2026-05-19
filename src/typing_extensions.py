@@ -213,9 +213,11 @@ else:
                     stacklevel=2,
                 )
                 repr = __repr
+            if repr is _sentinel_placeholder:
+                repr = None
 
             self.__name__ = __name
-            self._repr = repr if repr is not _sentinel_placeholder else __name
+            self._repr = repr if repr is not None else __name
 
             # For pickling as a singleton:
             self.__module__ = _caller()
