@@ -8030,11 +8030,7 @@ class NoExtraItemsTests(SentinelTestsMixin, BaseTestCase):
 
     @skipIf(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr(self):
-        if hasattr(typing, 'NoExtraItems'):
-            expected_repr = "typing.NoExtraItems"
-        else:
-            expected_repr = "typing_extensions.NoExtraItems"
-        self.assertEqual(repr(NoExtraItems), expected_repr)
+        self.assertEqual(repr(NoExtraItems), "typing_extensions.NoExtraItems")
 
     @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr_py315(self):
