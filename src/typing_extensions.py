@@ -204,13 +204,6 @@ else:
                 __name = name
             if __name is _sentinel_placeholder:
                 raise TypeError("First parameter 'name' is required")
-            if repr is not None:
-                warnings.warn(
-                    "The 'repr' parameter is deprecated "
-                    "and will be removed in Python 3.15.",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
 
             self.__name__ = __name
             self._repr = repr if repr is not None else __name
