@@ -9560,10 +9560,8 @@ class EvaluateForwardRefTests(BaseTestCase):
 
         import builtins
 
-        old_int = builtins.int
-        self.addCleanup(lambda: setattr(builtins, "int", old_int))
-        builtins.int = dict
-        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), dict)
+        with patch.object(builtins, "int", dict):
+             self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), dict)
 
     def test_nested_strings(self):
         # This variable must have a different name TypeVar
