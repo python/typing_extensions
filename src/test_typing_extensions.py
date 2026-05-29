@@ -134,6 +134,10 @@ TYPING_3_13_0_RC = sys.version_info[:4] >= (3, 13, 0, "candidate")
 
 TYPING_3_14_0 = sys.version_info[:3] >= (3, 14, 0)
 
+TYPING_3_15_0 = sys.version_info[:3] >= (3, 15, 0)
+
+TYPING_3_15_0_BETA_1 = sys.version_info[:5] == (3, 15, 0, 'beta', 1)
+
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
 HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
@@ -1761,8 +1765,6 @@ class GetTypeHintTests(BaseTestCase):
             Optional[annotation]     : Optional[annotation],
             Union[str, None, str]   : Optional[str],
             Unpack[Tuple[int, None]]: Unpack[Tuple[int, None]],
-            # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
-            Unpack[Ts]              : Unpack[Ts],
         }
         # contains a ForwardRef, TypeVar(~prefix) or no expression
         do_not_stringify_cases = {
@@ -1779,6 +1781,12 @@ class GetTypeHintTests(BaseTestCase):
             Union["annotation", T_default]     : Union[annotation, T_default],
             Annotated["annotation", "nested"]  : Annotated[Union[int, None], "data", "nested"],
         }
+        # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
+        if TYPING_3_15_0:
+            # The repr is typing.Unpack[~Ts], which cannot be evaluated.
+            do_not_stringify_cases[Unpack[Ts]] = Unpack[Ts]
+        else:
+            cases[Unpack[Ts]] = Unpack[Ts]
         if TYPING_3_10_0:  # cannot construct UnionTypes before 3.10
             do_not_stringify_cases["str | NoneAlias | StrAlias"] = str | None
             cases[str | None] = Optional[str]
@@ -6599,9 +6607,15 @@ class UnpackTests(BaseTestCase):
         with self.assertRaises(TypeError):
             Unpack()
 
+    @skipIf(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
         self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
+
+    @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
+    def test_repr_py315(self):
+        Ts = TypeVarTuple('Ts')
+        self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[~Ts]')
 
     def test_cannot_subclass_vars(self):
         with self.assertRaises(TypeError):
@@ -6797,9 +6811,15 @@ class TypeVarTupleTests(BaseTestCase):
         Ys = TypeVarTuple('Ys')
         self.assertNotEqual(Xs, Ys)
 
+    @skipIf(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
         self.assertEqual(repr(Ts), 'Ts')
+
+    @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
+    def test_repr_py315(self):
+        Ts = TypeVarTuple('Ts')
+        self.assertEqual(repr(Ts), '~Ts')
 
     def test_no_redefinition(self):
         self.assertNotEqual(TypeVarTuple('Ts'), TypeVarTuple('Ts'))
@@ -7973,7 +7993,6 @@ class SentinelTestsMixin:
         self.assertIsInstance(self.sentinel_type.__doc__, str)
 
     def test_constructor(self):
-        self.assertIs(self.sentinel_type, type(self.sentinel_type)())
         with self.assertRaises(TypeError):
             type(self.sentinel_type)(1)
 
@@ -8009,12 +8028,17 @@ class NoDefaultTests(SentinelTestsMixin, BaseTestCase):
 class NoExtraItemsTests(SentinelTestsMixin, BaseTestCase):
     sentinel_type = NoExtraItems
 
+    @skipIf(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr(self):
         if hasattr(typing, 'NoExtraItems'):
-            mod_name = 'typing'
+            expected_repr = "typing.NoExtraItems"
         else:
-            mod_name = "typing_extensions"
-        self.assertEqual(repr(NoExtraItems), f"{mod_name}.NoExtraItems")
+            expected_repr = "typing_extensions.NoExtraItems"
+        self.assertEqual(repr(NoExtraItems), expected_repr)
+
+    @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
+    def test_repr_py315(self):
+        self.assertEqual(repr(NoExtraItems), "NoExtraItems")
 
 
 class TypeVarInferVarianceTests(BaseTestCase):
@@ -9537,11 +9561,13 @@ class EvaluateForwardRefTests(BaseTestCase):
             float,
         )
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={"int": str}), str)
+
         import builtins
 
-        from test import support
-        with support.swap_attr(builtins, "int", dict):
-            self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), dict)
+        old_int = builtins.int
+        self.addCleanup(lambda: setattr(builtins, "int", old_int))
+        builtins.int = dict
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), dict)
 
     def test_nested_strings(self):
         # This variable must have a different name TypeVar
@@ -9599,10 +9625,9 @@ class TestSentinels(BaseTestCase):
         self.assertEqual(sentinel_no_repr.__name__, 'sentinel_no_repr')
         self.assertEqual(repr(sentinel_no_repr), 'sentinel_no_repr')
 
-    def test_sentinel_deprecated_explicit_repr(self):
-        with self.assertWarnsRegex(DeprecationWarning, r"'repr' parameter is deprecated and will be removed"):
-            sentinel_explicit_repr = sentinel('sentinel_explicit_repr', repr='explicit_repr')
-
+    @skipIf(TYPING_3_15_0_BETA_1, reason="'repr' parameter is not yet available in 3.15.0b1")
+    def test_sentinel_explicit_repr(self):
+        sentinel_explicit_repr = sentinel('sentinel_explicit_repr', repr='explicit_repr')
         self.assertEqual(repr(sentinel_explicit_repr), 'explicit_repr')
 
     @skipIf(sys.version_info < (3, 10), reason='New unions not available in 3.9')
@@ -9644,6 +9669,7 @@ class TestSentinels(BaseTestCase):
             ):
                 self.assertIs(anonymous_sentinel, pickle.loads(pickle.dumps(anonymous_sentinel, protocol=proto)))
 
+    @skipIf(TYPING_3_15_0, reason='Deprecated sentinel APIs were removed in 3.15')
     def test_sentinel_deprecated(self):
         with self.assertWarnsRegex(DeprecationWarning, r"Subclassing sentinel is deprecated"):
             class SentinelSubclass(Sentinel):
@@ -9655,6 +9681,18 @@ class TestSentinels(BaseTestCase):
             my_sentinel = Sentinel(name="my_sentinel")
         with self.assertWarnsRegex(DeprecationWarning, r"Setting attribute 'foo' on sentinel objects is deprecated"):
             my_sentinel.foo = "bar"
+
+    @skipUnless(TYPING_3_15_0, reason='Deprecated sentinel APIs are available before 3.15')
+    def test_sentinel_removed_deprecated_apis(self):
+        with self.assertRaises(TypeError):
+            class SentinelSubclass(Sentinel):
+                pass
+        with self.assertRaises(TypeError):
+            sentinel()
+        with self.assertRaises(TypeError):
+            Sentinel(name="my_sentinel")
+        with self.assertRaises(AttributeError):
+            sentinel('my_sentinel').foo = "bar"
 
 
 def load_tests(loader, tests, pattern):
