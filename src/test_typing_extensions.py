@@ -9619,10 +9619,18 @@ class TestSentinels(BaseTestCase):
         self.assertEqual(sentinel_no_repr.__name__, 'sentinel_no_repr')
         self.assertEqual(repr(sentinel_no_repr), 'sentinel_no_repr')
 
+    @skipIf(TYPING_3_15_0, reason="'Passing 'repr' as a positional argument was removed in 3.15")
+    def test_sentinel_deprecated_argument_repr(self):
+        with self.assertWarnsRegex(DeprecationWarning, r"Passing 'repr' as a positional argument is deprecated; pass it by keyword instead."):
+            sentinel_argument_repr = sentinel('sentinel_argument_repr', 'argument_repr')
+
+        self.assertEqual(repr(sentinel_argument_repr), 'argument_repr')
+
     @skipIf(TYPING_3_15_0_BETA_1, reason="'repr' parameter is not yet available in 3.15.0b1")
-    def test_sentinel_explicit_repr(self):
-        sentinel_explicit_repr = sentinel('sentinel_explicit_repr', repr='explicit_repr')
-        self.assertEqual(repr(sentinel_explicit_repr), 'explicit_repr')
+    def test_sentinel_keyword_repr(self):
+        sentinel_keyword_repr = sentinel('sentinel_keyword_repr', repr='keyword_repr')
+
+        self.assertEqual(repr(sentinel_keyword_repr), 'keyword_repr')
 
     @skipIf(sys.version_info < (3, 10), reason='New unions not available in 3.9')
     def test_sentinel_type_expression_union(self):
@@ -9675,6 +9683,8 @@ class TestSentinels(BaseTestCase):
             my_sentinel = Sentinel(name="my_sentinel")
         with self.assertWarnsRegex(DeprecationWarning, r"Setting attribute 'foo' on sentinel objects is deprecated"):
             my_sentinel.foo = "bar"
+        with self.assertWarnsRegex(DeprecationWarning, r"Setting attribute '__name__' on sentinel objects is deprecated"):
+            my_sentinel.__name__ = "bar"
 
     @skipUnless(TYPING_3_15_0, reason='Deprecated sentinel APIs are available before 3.15')
     def test_sentinel_removed_deprecated_apis(self):
@@ -9687,6 +9697,8 @@ class TestSentinels(BaseTestCase):
             Sentinel(name="my_sentinel")
         with self.assertRaises(AttributeError):
             sentinel('my_sentinel').foo = "bar"
+        with self.assertRaises(AttributeError):
+            sentinel('my_sentinel').__name__ = "bar"
 
 
 def load_tests(loader, tests, pattern):
