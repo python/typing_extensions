@@ -9619,7 +9619,7 @@ class TestSentinels(BaseTestCase):
         self.assertEqual(sentinel_no_repr.__name__, 'sentinel_no_repr')
         self.assertEqual(repr(sentinel_no_repr), 'sentinel_no_repr')
 
-    @skipIf(TYPING_3_15_0_BETA_1, reason="'repr' parameter is not yet available in 3.15.0b1")
+    @skipIf(TYPING_3_15_0, reason="'Passing 'repr' as a positional argument was removed in 3.15")
     def test_sentinel_deprecated_argument_repr(self):
         with self.assertWarnsRegex(DeprecationWarning, r"Passing 'repr' as a positional argument is deprecated; pass it by keyword instead."):
             sentinel_argument_repr = sentinel('sentinel_argument_repr', 'argument_repr')
