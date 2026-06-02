@@ -55,13 +55,17 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      id-token: write  # for codecov upload
+
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
@@ -98,7 +102,7 @@ jobs:
           github.repository == 'python/typing_extensions'
           && (github.event_name == 'push' || github.event_name == 'pull_request')
         with:
-          token: ${{ secrets.CODECOV_ORG_TOKEN }}
+          use_oidc: true
           flags: ${{ matrix.python-version }}
           directory: src
           fail_ci_if_error: true
@@ -122,7 +126,7 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/github-script@v9
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
