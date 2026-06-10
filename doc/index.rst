@@ -170,7 +170,7 @@ Python version in which each feature was added to :py:mod:`typing` and the
    * - :class:`Buffer`
      - 3.12
      - 4.6.0
-     -
+     - :pep:`688`
    * - :class:`CapsuleType`
      - 3.13
      - 4.12.0
@@ -192,7 +192,7 @@ Python version in which each feature was added to :py:mod:`typing` and the
      - 4.15.0
      - :pep:`800`
    * - :func:`evaluate_forward_ref`
-     -
+     - 3.14
      - 4.13.0
      -
    * - :class:`Format`
