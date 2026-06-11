@@ -29,7 +29,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # This should usually point to /3, unless there is a necessity to link to
 # features in future versions of Python.
-intersphinx_mapping = {'py': ('https://docs.python.org/3.14', None)}
+intersphinx_mapping = {'py': ('https://docs.python.org/3', None)}
 
 add_module_names = False
 
