@@ -10,6 +10,7 @@ import importlib
 import inspect
 import io
 import itertools
+import os
 import pickle
 import re
 import subprocess
@@ -102,6 +103,7 @@ from typing_extensions import (
     reveal_type,
     runtime,
     runtime_checkable,
+    sentinel,
     type_repr,
 )
 
@@ -131,6 +133,10 @@ TYPING_3_13_0 = sys.version_info[:3] >= (3, 13, 0)
 TYPING_3_13_0_RC = sys.version_info[:4] >= (3, 13, 0, "candidate")
 
 TYPING_3_14_0 = sys.version_info[:3] >= (3, 14, 0)
+
+TYPING_3_15_0 = sys.version_info[:3] >= (3, 15, 0)
+
+TYPING_3_15_0_BETA_1 = sys.version_info[:5] == (3, 15, 0, 'beta', 1)
 
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
@@ -1759,8 +1765,6 @@ class GetTypeHintTests(BaseTestCase):
             Optional[annotation]     : Optional[annotation],
             Union[str, None, str]   : Optional[str],
             Unpack[Tuple[int, None]]: Unpack[Tuple[int, None]],
-            # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
-            Unpack[Ts]              : Unpack[Ts],
         }
         # contains a ForwardRef, TypeVar(~prefix) or no expression
         do_not_stringify_cases = {
@@ -1777,6 +1781,12 @@ class GetTypeHintTests(BaseTestCase):
             Union["annotation", T_default]     : Union[annotation, T_default],
             Annotated["annotation", "nested"]  : Annotated[Union[int, None], "data", "nested"],
         }
+        # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
+        if TYPING_3_15_0:
+            # The repr is typing.Unpack[~Ts], which cannot be evaluated.
+            do_not_stringify_cases[Unpack[Ts]] = Unpack[Ts]
+        else:
+            cases[Unpack[Ts]] = Unpack[Ts]
         if TYPING_3_10_0:  # cannot construct UnionTypes before 3.10
             do_not_stringify_cases["str | NoneAlias | StrAlias"] = str | None
             cases[str | None] = Optional[str]
@@ -3869,7 +3879,13 @@ class ProtocolTests(BaseTestCase):
             class CustomProtocol(TestCase, Protocol):
                 pass
 
+        class CustomPathLikeProtocol(os.PathLike, Protocol):
+            pass
+
         class CustomContextManager(typing.ContextManager, Protocol):
+            pass
+
+        class CustomAsyncIterator(typing.AsyncIterator, Protocol):
             pass
 
     @skip_if_py312b1
@@ -4641,6 +4657,47 @@ class TypedDictTests(BaseTestCase):
                 ):
                     class Wrong(*bases):
                         pass
+
+    def test_keys_inheritance_with_same_name(self):
+        class NotTotal(TypedDict, total=False):
+            a: int
+
+        class Total(NotTotal):
+            a: int
+
+        self.assertEqual(NotTotal.__required_keys__, frozenset())
+        self.assertEqual(NotTotal.__optional_keys__, frozenset(['a']))
+        self.assertEqual(Total.__required_keys__, frozenset(['a']))
+        self.assertEqual(Total.__optional_keys__, frozenset())
+
+        class Base(TypedDict):
+            a: NotRequired[int]
+            b: Required[int]
+
+        class Child(Base):
+            a: Required[int]
+            b: NotRequired[int]
+
+        self.assertEqual(Base.__required_keys__, frozenset(['b']))
+        self.assertEqual(Base.__optional_keys__, frozenset(['a']))
+        self.assertEqual(Child.__required_keys__, frozenset(['a']))
+        self.assertEqual(Child.__optional_keys__, frozenset(['b']))
+
+    def test_multiple_inheritance_with_same_key(self):
+        class Base1(TypedDict):
+            a: NotRequired[int]
+
+        class Base2(TypedDict):
+            a: Required[str]
+
+        class Child(Base1, Base2):
+            pass
+
+        # Last base wins
+        self.assertEqual(Child.__annotations__, {'a': Required[str]})
+        self.assertEqual(Child.__required_keys__, frozenset(['a']))
+        self.assertEqual(Child.__optional_keys__, frozenset())
+
 
     def test_closed_values(self):
         class Implicit(TypedDict): ...
@@ -6550,9 +6607,15 @@ class UnpackTests(BaseTestCase):
         with self.assertRaises(TypeError):
             Unpack()
 
+    @skipIf(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
         self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
+
+    @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
+    def test_repr_py315(self):
+        Ts = TypeVarTuple('Ts')
+        self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[~Ts]')
 
     def test_cannot_subclass_vars(self):
         with self.assertRaises(TypeError):
@@ -6748,9 +6811,15 @@ class TypeVarTupleTests(BaseTestCase):
         Ys = TypeVarTuple('Ys')
         self.assertNotEqual(Xs, Ys)
 
+    @skipIf(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
         self.assertEqual(repr(Ts), 'Ts')
+
+    @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
+    def test_repr_py315(self):
+        Ts = TypeVarTuple('Ts')
+        self.assertEqual(repr(Ts), '~Ts')
 
     def test_no_redefinition(self):
         self.assertNotEqual(TypeVarTuple('Ts'), TypeVarTuple('Ts'))
@@ -7068,13 +7137,13 @@ class AllTests(BaseTestCase):
             }
         if sys.version_info < (3, 13):
             exclude |= {
-                'NamedTuple', 'Protocol', 'runtime_checkable', 'Generator',
+                'NamedTuple', 'runtime_checkable', 'Generator',
                 'AsyncGenerator', 'ContextManager', 'AsyncContextManager',
                 'ParamSpec', 'TypeVar', 'TypeVarTuple', 'get_type_hints',
             }
-        if sys.version_info < (3, 14):
+        if sys.version_info < (3, 15):
             exclude |= {
-                'TypeAliasType'
+                'TypeAliasType', 'Protocol'
             }
         if not typing_extensions._PEP_728_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}
@@ -7394,7 +7463,7 @@ class NamedTupleTests(BaseTestCase):
 
     def test_same_as_typing_NamedTuple(self):
         self.assertEqual(
-            set(dir(NamedTuple)) - {"__text_signature__"},
+            set(dir(NamedTuple)),
             set(dir(typing.NamedTuple))
         )
         self.assertIs(type(NamedTuple), type(typing.NamedTuple))
@@ -7924,7 +7993,6 @@ class SentinelTestsMixin:
         self.assertIsInstance(self.sentinel_type.__doc__, str)
 
     def test_constructor(self):
-        self.assertIs(self.sentinel_type, type(self.sentinel_type)())
         with self.assertRaises(TypeError):
             type(self.sentinel_type)(1)
 
@@ -7960,12 +8028,13 @@ class NoDefaultTests(SentinelTestsMixin, BaseTestCase):
 class NoExtraItemsTests(SentinelTestsMixin, BaseTestCase):
     sentinel_type = NoExtraItems
 
+    @skipIf(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr(self):
-        if hasattr(typing, 'NoExtraItems'):
-            mod_name = 'typing'
-        else:
-            mod_name = "typing_extensions"
-        self.assertEqual(repr(NoExtraItems), f"{mod_name}.NoExtraItems")
+        self.assertEqual(repr(NoExtraItems), "typing_extensions.NoExtraItems")
+
+    @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
+    def test_repr_py315(self):
+        self.assertEqual(repr(NoExtraItems), "NoExtraItems")
 
 
 class TypeVarInferVarianceTests(BaseTestCase):
@@ -8244,11 +8313,12 @@ class TypeAliasTypeTests(BaseTestCase):
             "attribute '__parameters__' of 'typing.TypeAliasType' objects is not writable",
         ):
             Simple.__parameters__ = (T,)
-        with self.assertRaisesRegex(
-            AttributeError,
-            "attribute '__module__' of 'typing.TypeAliasType' objects is not writable",
-        ):
-            Simple.__module__ = 42
+
+        # __module__ is the exception---it's assignable
+        module_sentinel = object()
+        Simple.__module__ = module_sentinel
+        self.assertIs(Simple.__module__, module_sentinel)
+
         with self.assertRaisesRegex(
             AttributeError,
             "'typing.TypeAliasType' object has no attribute 'some_attribute'",
@@ -9487,11 +9557,11 @@ class EvaluateForwardRefTests(BaseTestCase):
             float,
         )
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), globals={"int": str}), str)
+
         import builtins
 
-        from test import support
-        with support.swap_attr(builtins, "int", dict):
-            self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), dict)
+        with patch.object(builtins, "int", dict):
+             self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), dict)
 
     def test_nested_strings(self):
         # This variable must have a different name TypeVar
@@ -9541,42 +9611,95 @@ class EvaluateForwardRefTests(BaseTestCase):
 
 
 class TestSentinels(BaseTestCase):
+    SENTINEL = sentinel("TestSentinels.SENTINEL")
+
     def test_sentinel_no_repr(self):
-        sentinel_no_repr = Sentinel('sentinel_no_repr')
+        sentinel_no_repr = sentinel('sentinel_no_repr')
 
-        self.assertEqual(sentinel_no_repr._name, 'sentinel_no_repr')
-        self.assertEqual(repr(sentinel_no_repr), '<sentinel_no_repr>')
+        self.assertEqual(sentinel_no_repr.__name__, 'sentinel_no_repr')
+        self.assertEqual(repr(sentinel_no_repr), 'sentinel_no_repr')
 
-    def test_sentinel_explicit_repr(self):
-        sentinel_explicit_repr = Sentinel('sentinel_explicit_repr', repr='explicit_repr')
+    @skipIf(TYPING_3_15_0, reason="'Passing 'repr' as a positional argument was removed in 3.15")
+    def test_sentinel_deprecated_argument_repr(self):
+        with self.assertWarnsRegex(DeprecationWarning, r"Passing 'repr' as a positional argument is deprecated; pass it by keyword instead."):
+            sentinel_argument_repr = sentinel('sentinel_argument_repr', 'argument_repr')
 
-        self.assertEqual(repr(sentinel_explicit_repr), 'explicit_repr')
+        self.assertEqual(repr(sentinel_argument_repr), 'argument_repr')
+
+    @skipIf(TYPING_3_15_0_BETA_1, reason="'repr' parameter is not yet available in 3.15.0b1")
+    def test_sentinel_keyword_repr(self):
+        sentinel_keyword_repr = sentinel('sentinel_keyword_repr', repr='keyword_repr')
+
+        self.assertEqual(repr(sentinel_keyword_repr), 'keyword_repr')
 
     @skipIf(sys.version_info < (3, 10), reason='New unions not available in 3.9')
     def test_sentinel_type_expression_union(self):
-        sentinel = Sentinel('sentinel')
+        sentinel_type = sentinel('sentinel')
 
-        def func1(a: int | sentinel = sentinel): pass
-        def func2(a: sentinel | int = sentinel): pass
+        def func1(a: int | sentinel_type = sentinel_type): pass
+        def func2(a: sentinel_type | int = sentinel_type): pass
 
-        self.assertEqual(func1.__annotations__['a'], Union[int, sentinel])
-        self.assertEqual(func2.__annotations__['a'], Union[sentinel, int])
+        self.assertEqual(func1.__annotations__['a'], Union[int, sentinel_type])
+        self.assertEqual(func2.__annotations__['a'], Union[sentinel_type, int])
 
     def test_sentinel_not_callable(self):
-        sentinel = Sentinel('sentinel')
+        sentinel_ = sentinel('sentinel')
         with self.assertRaisesRegex(
             TypeError,
-            "'Sentinel' object is not callable"
+            "'sentinel' object is not callable"
         ):
+            sentinel_()
+
+    def test_sentinel_copy_identity(self):
+        self.assertIs(self.SENTINEL, copy.copy(self.SENTINEL))
+        self.assertIs(self.SENTINEL, copy.deepcopy(self.SENTINEL))
+
+        anonymous_sentinel = sentinel("anonymous_sentinel")
+        self.assertIs(anonymous_sentinel, copy.copy(anonymous_sentinel))
+        self.assertIs(anonymous_sentinel, copy.deepcopy(anonymous_sentinel))
+
+    def test_sentinel_picklable_qualified(self):
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            self.assertIs(self.SENTINEL, pickle.loads(pickle.dumps(self.SENTINEL, protocol=proto)))
+
+    def test_sentinel_picklable_anonymous(self):
+        anonymous_sentinel = sentinel("anonymous_sentinel")  # Anonymous sentinel can not be pickled
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            with self.assertRaisesRegex(
+                pickle.PicklingError,
+                r"attribute lookup anonymous_sentinel on \w+ failed|not found as \w+.anonymous_sentinel"
+            ):
+                self.assertIs(anonymous_sentinel, pickle.loads(pickle.dumps(anonymous_sentinel, protocol=proto)))
+
+    @skipIf(TYPING_3_15_0, reason='Deprecated sentinel APIs were removed in 3.15')
+    def test_sentinel_deprecated(self):
+        with self.assertWarnsRegex(DeprecationWarning, r"Subclassing sentinel is deprecated"):
+            class SentinelSubclass(Sentinel):
+                pass
+        with self.assertRaisesRegex(TypeError, r"First parameter 'name' is required"):
             sentinel()
 
-    def test_sentinel_not_picklable(self):
-        sentinel = Sentinel('sentinel')
-        with self.assertRaisesRegex(
-            TypeError,
-            "Cannot pickle 'Sentinel' object"
-        ):
-            pickle.dumps(sentinel)
+        with self.assertWarnsRegex(DeprecationWarning, r"Passing 'name' as a keyword argument is deprecated"):
+            my_sentinel = Sentinel(name="my_sentinel")
+        with self.assertWarnsRegex(DeprecationWarning, r"Setting attribute 'foo' on sentinel objects is deprecated"):
+            my_sentinel.foo = "bar"
+        with self.assertWarnsRegex(DeprecationWarning, r"Setting attribute '__name__' on sentinel objects is deprecated"):
+            my_sentinel.__name__ = "bar"
+
+    @skipUnless(TYPING_3_15_0, reason='Deprecated sentinel APIs are available before 3.15')
+    def test_sentinel_removed_deprecated_apis(self):
+        with self.assertRaises(TypeError):
+            class SentinelSubclass(Sentinel):
+                pass
+        with self.assertRaises(TypeError):
+            sentinel()
+        with self.assertRaises(TypeError):
+            Sentinel(name="my_sentinel")
+        with self.assertRaises(AttributeError):
+            sentinel('my_sentinel').foo = "bar"
+        with self.assertRaises(AttributeError):
+            sentinel('my_sentinel').__name__ = "bar"
+
 
 def load_tests(loader, tests, pattern):
     import doctest
