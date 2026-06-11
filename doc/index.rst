@@ -484,7 +484,7 @@ Special typing primitives
       ``default=None`` is passed, and to :data:`NoDefault` if no value is passed.
 
       Previously, passing ``None`` would result in :attr:`!__default__` being set
-      to :py:data:`types.NoneType`, and passing no value for the parameter would
+      to :py:class:`types.NoneType`, and passing no value for the parameter would
       result in :attr:`!__default__` being set to ``None``.
 
    .. versionchanged:: 4.12.0
@@ -495,7 +495,7 @@ Special typing primitives
 .. class:: ParamSpecArgs
            ParamSpecKwargs
 
-   See :py:data:`typing.ParamSpecArgs` and :py:data:`typing.ParamSpecKwargs`.
+   See :py:class:`typing.ParamSpecArgs` and :py:class:`typing.ParamSpecKwargs`.
    In ``typing`` since 3.10.
 
 .. class:: Protocol
@@ -706,7 +706,7 @@ Special typing primitives
       ``default=None`` is passed, and to :data:`NoDefault` if no value is passed.
 
       Previously, passing ``None`` would result in :attr:`!__default__` being set
-      to :py:data:`types.NoneType`, and passing no value for the parameter would
+      to :py:class:`types.NoneType`, and passing no value for the parameter would
       result in :attr:`!__default__` being set to ``None``.
 
    .. versionchanged:: 4.12.0
@@ -737,7 +737,7 @@ Special typing primitives
       ``default=None`` is passed, and to :data:`NoDefault` if no value is passed.
 
       Previously, passing ``None`` would result in :attr:`!__default__` being set
-      to :py:data:`types.NoneType`, and passing no value for the parameter would
+      to :py:class:`types.NoneType`, and passing no value for the parameter would
       result in :attr:`!__default__` being set to ``None``.
 
    .. versionchanged:: 4.12.0
@@ -979,7 +979,7 @@ Functions
    * Raises :exc:`TypeError` when it encounters certain objects that are
      not valid type hints.
    * Replaces type hints that evaluate to :const:`!None` with
-     :data:`types.NoneType`.
+     :class:`types.NoneType`.
    * Supports the :attr:`Format.FORWARDREF` and
      :attr:`Format.STRING` formats.
 
