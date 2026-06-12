@@ -1762,7 +1762,7 @@ class GetTypeHintTests(BaseTestCase):
             annotation              : annotation,
             Optional[int]           : Optional[int],
             Optional[List[str]]     : Optional[List[str]],
-            Optional[annotation]     : Optional[annotation],
+            Optional[annotation]    : Optional[annotation],
             Union[str, None, str]   : Optional[str],
             Unpack[Tuple[int, None]]: Unpack[Tuple[int, None]],
         }
@@ -1780,6 +1780,8 @@ class GetTypeHintTests(BaseTestCase):
             Union[str, "Union[None, StrAlias]"]: Optional[str],
             Union["annotation", T_default]     : Union[annotation, T_default],
             Annotated["annotation", "nested"]  : Annotated[Union[int, None], "data", "nested"],
+            # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
+            Unpack[Ts]                         : Unpack[Ts],
         }
         # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
         if TYPING_3_15_0:
@@ -6610,7 +6612,10 @@ class UnpackTests(BaseTestCase):
     @skipIf(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
-        self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
+        if not hasattr(typing, 'TypeVarTuple') or sys.version_info >= (3, 15):
+            self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[~Ts]')
+        else:
+            self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
 
     @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr_py315(self):
@@ -6814,7 +6819,44 @@ class TypeVarTupleTests(BaseTestCase):
     @skipIf(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
-        self.assertEqual(repr(Ts), 'Ts')
+        Ts_co = TypeVarTuple('Ts_co', covariant=True)
+        Ts_contra = TypeVarTuple('Ts_contra', contravariant=True)
+        Ts_infer = TypeVarTuple('Ts_infer', infer_variance=True)
+        Ts_2 = TypeVarTuple('Ts_2')
+        if not hasattr(typing, 'TypeVarTuple') or sys.version_info >= (3, 15):
+            self.assertEqual(repr(Ts), '~Ts')
+            self.assertEqual(repr(Ts_2), '~Ts_2')
+
+            self.assertEqual(repr(Ts_co), '+Ts_co')
+            self.assertEqual(repr(Ts_contra), '-Ts_contra')
+            self.assertEqual(repr(Ts_infer), 'Ts_infer')
+        else:
+            # On other versions we use typing.TypeVarTuple, but it is not aware of
+            # variance. Not worth creating our own version of TypeVarTuple
+            # for this.
+            self.assertEqual(repr(Ts), 'Ts')
+            self.assertEqual(repr(Ts_2), 'Ts_2')
+
+            self.assertEqual(repr(Ts_co), 'Ts_co')
+            self.assertEqual(repr(Ts_contra), 'Ts_contra')
+            self.assertEqual(repr(Ts_infer), 'Ts_infer')
+
+    def test_variance(self):
+        Ts_co = TypeVarTuple('Ts_co', covariant=True)
+        Ts_contra = TypeVarTuple('Ts_contra', contravariant=True)
+        Ts_infer = TypeVarTuple('Ts_infer', infer_variance=True)
+
+        self.assertIs(Ts_co.__covariant__, True)
+        self.assertIs(Ts_co.__contravariant__, False)
+        self.assertIs(Ts_co.__infer_variance__, False)
+
+        self.assertIs(Ts_contra.__covariant__, False)
+        self.assertIs(Ts_contra.__contravariant__, True)
+        self.assertIs(Ts_contra.__infer_variance__, False)
+
+        self.assertIs(Ts_infer.__covariant__, False)
+        self.assertIs(Ts_infer.__contravariant__, False)
+        self.assertIs(Ts_infer.__infer_variance__, True)
 
     @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
     def test_repr_py315(self):
@@ -7144,6 +7186,10 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 15):
             exclude |= {
                 'TypeAliasType', 'Protocol'
+            }
+        if sys.version_info < (3, 15):
+            exclude |= {
+                'TypeVarTuple'
             }
         if not typing_extensions._PEP_728_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}
