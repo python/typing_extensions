@@ -1750,10 +1750,7 @@ else:
 
 def _set_default(type_param, default):
     type_param.has_default = lambda: default is not NoDefault
-    if default is NoDefault:
-        type_param.__default__ = default
-    else:
-        type_param.__default__ = typing._type_check(default, "Default must be a type.")
+    type_param.__default__ = default
 
 
 def _set_module(typevarlike):
