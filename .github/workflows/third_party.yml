@@ -324,10 +324,10 @@ jobs:
         working-directory: sqlalchemy
         run: |
           set -x
-
+          # TODO: Remove pytest==9.0.3 pin. SQLAlchemy tests fail when using pytest 9.1.0. See #764.
           uvx \
             --with=setuptools \
-            tox -e github-nocext --force-dep="typing-extensions @ file://$(pwd)/../typing-extensions-latest" -- -q --nomemory --notimingintensive
+            tox -e github-nocext --override "testenv:github-nocext.deps+=pytest==9.0.3" --force-dep="typing-extensions @ file://$(pwd)/../typing-extensions-latest" -- -q --nomemory --notimingintensive
 
 
   litestar:
