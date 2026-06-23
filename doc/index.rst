@@ -458,7 +458,8 @@ Special typing primitives
    See :py:class:`typing.ParamSpec` and :pep:`612`. In ``typing`` since 3.10.
 
    The ``typing_extensions`` version adds support for the
-   ``default=`` argument from :pep:`696`.
+   ``default=`` argument from :pep:`696`, and for the ``infer_variance=``,
+   ``covariant=`` and ``contravariant=`` arguments that were added in Python 3.15.
 
    On older Python versions, ``typing_extensions.ParamSpec`` may not work
    correctly with introspection tools like :func:`get_args` and
@@ -491,6 +492,10 @@ Special typing primitives
 
       ParamSpecs now have a ``has_default()`` method, for compatibility
       with :py:class:`typing.ParamSpec` on Python 3.13+.
+
+   .. versionchanged:: 4.16.0
+
+      The ``infer_variance``, ``covariant``, and ``contravariant`` arguments are now supported.
 
 .. class:: ParamSpecArgs
            ParamSpecKwargs
@@ -719,7 +724,8 @@ Special typing primitives
    See :py:class:`typing.TypeVarTuple` and :pep:`646`. In ``typing`` since 3.11.
 
    The ``typing_extensions`` version adds support for the
-   ``default=`` argument from :pep:`696`.
+   ``default=`` argument from :pep:`696`, and for the ``infer_variance=``,
+   ``covariant=`` and ``contravariant=`` arguments that were added in Python 3.15.
 
    .. versionadded:: 4.1.0
 
@@ -750,6 +756,10 @@ Special typing primitives
       It is now disallowed to use a `TypeVar` with a default value after a
       `TypeVarTuple` in a type parameter list. This matches the CPython
       implementation of PEP 696 on Python 3.13+.
+
+   .. versionchanged:: 4.16.0
+
+      The ``infer_variance``, ``covariant``, and ``contravariant`` arguments are now supported.
 
 .. data:: Unpack
 

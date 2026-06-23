@@ -1999,10 +1999,7 @@ else:
             self.__covariant__ = bool(covariant)
             self.__contravariant__ = bool(contravariant)
             self.__infer_variance__ = bool(infer_variance)
-            if bound:
-                self.__bound__ = typing._type_check(bound, 'Bound must be a type.')
-            else:
-                self.__bound__ = None
+            self.__bound__ = bound
             _DefaultMixin.__init__(self, default)
 
             # for pickling:
@@ -2672,7 +2669,7 @@ elif hasattr(typing, "TypeVarTuple"):  # 3.11+
                 tvt = typing.TypeVarTuple(name)
                 _set_default(tvt, default)
 
-            tvt.__bound__ = typing._type_check(bound, "Bound must be a type.")
+            tvt.__bound__ = bound
             tvt.__covariant__ = bool(covariant)
             tvt.__contravariant__ = bool(contravariant)
             tvt.__infer_variance__ = bool(infer_variance)
@@ -2787,10 +2784,7 @@ else:  # <=3.10
             self.__covariant__ = bool(covariant)
             self.__contravariant__ = bool(contravariant)
             self.__infer_variance__ = bool(infer_variance)
-            if bound:
-                self.__bound__ = typing._type_check(bound, 'Bound must be a type.')
-            else:
-                self.__bound__ = None
+            self.__bound__ = bound
             _DefaultMixin.__init__(self, default)
 
             # for pickling:
