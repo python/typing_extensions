@@ -138,6 +138,17 @@ TYPING_3_15_0 = sys.version_info[:3] >= (3, 15, 0)
 
 TYPING_3_15_0_BETA_1 = sys.version_info[:5] == (3, 15, 0, 'beta', 1)
 
+# We cannot control the repr of `TypeVarTuple` on versions of Python
+# where `typing_extensions.TypeVarTuple()` does not return an instance
+# of `typing_extensions.TypeVarTuple`. At time of writing, that's Python
+# versions 3.11-3.14 inclusive (but not 3.10 or 3.15+). The exact version
+# range has changed in the past and may do so again in the future.
+#
+# Note that we do not do an `isinstance()` check here because
+# `typing_extensions.TypeVarTuple` does some trickery to pretend that
+# instances of `typing.TypeVar` are also instances of
+# `typing_extensions.TypeVarTuple` on Python 3.11-3.14.
+# (Possibly we're being a little too clever for our own good there.)
 GOOD_TYPEVARTUPLE_REPR_EXPECTED = (
     type(typing_extensions.TypeVarTuple("Ts"))
     is typing_extensions.TypeVarTuple
