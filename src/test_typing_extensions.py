@@ -138,6 +138,22 @@ TYPING_3_15_0 = sys.version_info[:3] >= (3, 15, 0)
 
 TYPING_3_15_0_BETA_1 = sys.version_info[:5] == (3, 15, 0, 'beta', 1)
 
+# We cannot control the repr of `TypeVarTuple` on versions of Python
+# where `typing_extensions.TypeVarTuple()` does not return an instance
+# of `typing_extensions.TypeVarTuple`. At time of writing, that's Python
+# versions 3.11-3.14 inclusive (but not 3.10 or 3.15+). The exact version
+# range has changed in the past and may do so again in the future.
+#
+# Note that we do not do an `isinstance()` check here because
+# `typing_extensions.TypeVarTuple` does some trickery to pretend that
+# instances of `typing.TypeVar` are also instances of
+# `typing_extensions.TypeVarTuple` on Python 3.11-3.14.
+# (Possibly we're being a little too clever for our own good there.)
+GOOD_TYPEVARTUPLE_REPR_EXPECTED = (
+    type(typing_extensions.TypeVarTuple("Ts"))
+    is typing_extensions.TypeVarTuple
+)
+
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
 HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
@@ -1762,7 +1778,7 @@ class GetTypeHintTests(BaseTestCase):
             annotation              : annotation,
             Optional[int]           : Optional[int],
             Optional[List[str]]     : Optional[List[str]],
-            Optional[annotation]     : Optional[annotation],
+            Optional[annotation]    : Optional[annotation],
             Union[str, None, str]   : Optional[str],
             Unpack[Tuple[int, None]]: Unpack[Tuple[int, None]],
         }
@@ -1780,6 +1796,8 @@ class GetTypeHintTests(BaseTestCase):
             Union[str, "Union[None, StrAlias]"]: Optional[str],
             Union["annotation", T_default]     : Union[annotation, T_default],
             Annotated["annotation", "nested"]  : Annotated[Union[int, None], "data", "nested"],
+            # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
+            Unpack[Ts]                         : Unpack[Ts],
         }
         # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
         if TYPING_3_15_0:
@@ -6607,12 +6625,12 @@ class UnpackTests(BaseTestCase):
         with self.assertRaises(TypeError):
             Unpack()
 
-    @skipIf(TYPING_3_15_0, "repr changed in 3.15")
+    @skipIf(GOOD_TYPEVARTUPLE_REPR_EXPECTED, "TypeVarTuples have a bad repr on this version")
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
         self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
 
-    @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
+    @skipUnless(GOOD_TYPEVARTUPLE_REPR_EXPECTED, "TypeVarTuples have a bad repr on this version")
     def test_repr_py315(self):
         Ts = TypeVarTuple('Ts')
         self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[~Ts]')
@@ -6811,15 +6829,50 @@ class TypeVarTupleTests(BaseTestCase):
         Ys = TypeVarTuple('Ys')
         self.assertNotEqual(Xs, Ys)
 
-    @skipIf(TYPING_3_15_0, "repr changed in 3.15")
+    @skipIf(GOOD_TYPEVARTUPLE_REPR_EXPECTED, "TypeVarTuples have a bad repr on this version")
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
+        Ts_co = TypeVarTuple('Ts_co', covariant=True)
+        Ts_contra = TypeVarTuple('Ts_contra', contravariant=True)
+        Ts_infer = TypeVarTuple('Ts_infer', infer_variance=True)
+        Ts_2 = TypeVarTuple('Ts_2')
         self.assertEqual(repr(Ts), 'Ts')
+        self.assertEqual(repr(Ts_2), 'Ts_2')
 
-    @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
+        self.assertEqual(repr(Ts_co), 'Ts_co')
+        self.assertEqual(repr(Ts_contra), 'Ts_contra')
+        self.assertEqual(repr(Ts_infer), 'Ts_infer')
+
+    @skipUnless(GOOD_TYPEVARTUPLE_REPR_EXPECTED, "TypeVarTuples have a bad repr on this version")
     def test_repr_py315(self):
         Ts = TypeVarTuple('Ts')
+        Ts_co = TypeVarTuple('Ts_co', covariant=True)
+        Ts_contra = TypeVarTuple('Ts_contra', contravariant=True)
+        Ts_infer = TypeVarTuple('Ts_infer', infer_variance=True)
+        Ts_2 = TypeVarTuple('Ts_2')
         self.assertEqual(repr(Ts), '~Ts')
+        self.assertEqual(repr(Ts_2), '~Ts_2')
+
+        self.assertEqual(repr(Ts_co), '+Ts_co')
+        self.assertEqual(repr(Ts_contra), '-Ts_contra')
+        self.assertEqual(repr(Ts_infer), 'Ts_infer')
+
+    def test_variance(self):
+        Ts_co = TypeVarTuple('Ts_co', covariant=True)
+        Ts_contra = TypeVarTuple('Ts_contra', contravariant=True)
+        Ts_infer = TypeVarTuple('Ts_infer', infer_variance=True)
+
+        self.assertIs(Ts_co.__covariant__, True)
+        self.assertIs(Ts_co.__contravariant__, False)
+        self.assertIs(Ts_co.__infer_variance__, False)
+
+        self.assertIs(Ts_contra.__covariant__, False)
+        self.assertIs(Ts_contra.__contravariant__, True)
+        self.assertIs(Ts_contra.__infer_variance__, False)
+
+        self.assertIs(Ts_infer.__covariant__, False)
+        self.assertIs(Ts_infer.__contravariant__, False)
+        self.assertIs(Ts_infer.__infer_variance__, True)
 
     def test_no_redefinition(self):
         self.assertNotEqual(TypeVarTuple('Ts'), TypeVarTuple('Ts'))
@@ -7144,6 +7197,10 @@ class AllTests(BaseTestCase):
         if sys.version_info < (3, 15):
             exclude |= {
                 'TypeAliasType', 'Protocol'
+            }
+        if sys.version_info < (3, 15):
+            exclude |= {
+                'TypeVarTuple'
             }
         if not typing_extensions._PEP_728_IMPLEMENTED:
             exclude |= {'TypedDict', 'is_typeddict'}
