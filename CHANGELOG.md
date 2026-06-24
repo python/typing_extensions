@@ -1,4 +1,4 @@
-# Unreleased
+# Release 4.16.0rc1 (June 24, 2026)
 
 - Make `typing_extensions.TypeAliasType`'s `__module__` attribute writable.
   Backport of CPython PR
