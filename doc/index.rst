@@ -267,9 +267,9 @@ Python version in which each feature was added to :py:mod:`typing` and the
      - 3.11
      - 4.0.0
      - :pep:`673`
-   * - :class:`Sentinel`
-     - 3.14
-     - 4.14.0
+   * - :class:`sentinel`
+     - 3.15
+     - 4.14.0 (originally under the name `Sentinel`)
      - :pep:`661`
    * - :class:`TypeAliasType`
      - 3.12
@@ -453,13 +453,13 @@ Special typing primitives
 
    .. versionadded:: 4.0.0
 
-.. class:: ParamSpec(name, *, default=NoDefault)
+.. class:: ParamSpec(name, *, bound=None, covariant=False,
+                     contravariant=False, infer_variance=False, default=NoDefault)
 
    See :py:class:`typing.ParamSpec` and :pep:`612`. In ``typing`` since 3.10.
 
    The ``typing_extensions`` version adds support for the
-   ``default=`` argument from :pep:`696`, and for the ``infer_variance=``,
-   ``covariant=`` and ``contravariant=`` arguments that were added in Python 3.15.
+   ``default=`` argument from :pep:`696`.
 
    On older Python versions, ``typing_extensions.ParamSpec`` may not work
    correctly with introspection tools like :func:`get_args` and
@@ -495,7 +495,8 @@ Special typing primitives
 
    .. versionchanged:: 4.16.0
 
-      The ``infer_variance``, ``covariant``, and ``contravariant`` arguments are now supported.
+      The ``infer_variance``, ``covariant``, and ``contravariant`` arguments are now
+      officially supported and their validation is improved.
 
 .. class:: ParamSpecArgs
            ParamSpecKwargs
@@ -719,13 +720,14 @@ Special typing primitives
       TypeVars now have a ``has_default()`` method, for compatibility
       with :py:class:`typing.TypeVar` on Python 3.13+.
 
-.. class:: TypeVarTuple(name, *, default=NoDefault)
+.. class:: TypeVarTuple(name, *, bound=None, covariant=False,
+                        contravariant=False, infer_variance=False, default=NoDefault)
 
    See :py:class:`typing.TypeVarTuple` and :pep:`646`. In ``typing`` since 3.11.
 
-   The ``typing_extensions`` version adds support for the
-   ``default=`` argument from :pep:`696`, and for the ``infer_variance=``,
-   ``covariant=`` and ``contravariant=`` arguments that were added in Python 3.15.
+   The ``typing_extensions`` version adds support for the ``default=`` argument
+   from :pep:`696`, and for the ``bound=``, ``infer_variance=``, ``covariant=``
+   and ``contravariant=`` arguments that were added in Python 3.15.
 
    .. versionadded:: 4.1.0
 
@@ -759,7 +761,8 @@ Special typing primitives
 
    .. versionchanged:: 4.16.0
 
-      The ``infer_variance``, ``covariant``, and ``contravariant`` arguments are now supported.
+      The ``bound``, ``infer_variance``, ``covariant``, and ``contravariant``
+      arguments are now supported.
 
 .. data:: Unpack
 
@@ -1288,14 +1291,18 @@ Sentinel objects
    .. versionchanged:: 4.16.0
 
       The implementation of this class has been updated to conform to
-      the accepted version of :pep:`661`.
+      the accepted version of :pep:`661`:
 
-      Now supports pickle and will be reduced as a singleton.
-      Renamed from `Sentinel` to `sentinel`, `Sentinel` is deprecated.
-      Automatic `repr` string no longer has angle brackets.
-      `repr` as a positional argument is deprecated.
-      `name` as a keyword is deprecated.
-      Subclassing and attribute assignment are deprecated.
+      - Sentinels can now be pickled. They are reduced as singletons, which
+        means that they also preserve their identity when copied or deep-copied.
+      - `Sentinel` has been renamed to `sentinel`. `Sentinel` is retained as a
+        soft-deprecated alias, for backwards compatibility.
+      - The default repr of a sentinel `X = sentinel("X")` is now `X`, rather
+        than `<X>`.
+      - Passing `repr` as a positional argument to the constructor is deprecated.
+      - Passing `name` as a keyword argument to the constructor is deprecated.
+      - Subclassing `sentinel` is deprecated.
+      - Assigning arbitrary attributes to a sentinel is deprecated.
 
 
 Pure aliases

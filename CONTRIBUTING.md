@@ -88,6 +88,8 @@ pipx run pre-commit run -a
 
 - Ensure that GitHub Actions reports no errors.
 
+- Check that `CHANGELOG.md` accurately reflects all important changes committed to `main` since the previous release.
+
 - Update the version number in `typing_extensions/pyproject.toml` and in
   `typing_extensions/CHANGELOG.md`.
 

@@ -6,7 +6,7 @@
 - Fix setting of `__required_keys__` and `__optional_keys__` when inheriting
   keys with the same name.
 - Add support for `AsyncIterator`, `io.Reader`, `io.Writer` and `os.PathLike` protocols
-  as bases for other protocls.
+  as bases for other protocols.
 - Fix incorrect behaviour on Python 3.9 and Python 3.10 that meant that
   calling `isinstance` with `typing_extensions.Concatenate[...]` or
   `typing_extensions.Unpack[...]` as the first argument could have a different
@@ -20,7 +20,22 @@
   Python 3.9. The `typing` implementation has always raised an error, and the
   `typing_extensions` implementation has raised an error on Python 3.10+ since
   `typing_extensions` v4.6.0. Patch by Brian Schubert.
-- Add `bound` and variance parameters to `TypeVarTuple`.
+- Add the `bound`, `covariant`, `contravariant`, and `infer_variance` parameters
+  to `TypeVarTuple`.
+- Officially support the `bound`, `covariant`, `contravariant` and `infer_variance`
+  parameters to `ParamSpec`. Improve the validation of these parameters at runtime.
+- Rename `typing_extensions.Sentinel` to `typing_extensions.sentinel`, following the
+  name that has been adopted for `builtins.sentinel` on Python 3.15.
+  `typing_extensions.Sentinel` is retained as a soft-deprecated alias for backwards
+  compatibility.
+- Add support for pickling sentinels.
+- Sentinels now preserve their identity when copied or deep-copied.
+- Deprecate passing `name` as a keyword argument or `repr` as a positional argument
+  to the `sentinel` constructor.
+- The default repr of a sentinel `X = sentinel("X")` is now `X` rather than `<X>`.
+- Deprecate arbitrary attribute assignments to sentinels.
+- Deprecate subclassing sentinels.
+- Add support for Python 3.15.
 
 # Release 4.15.0 (August 25, 2025)
 
