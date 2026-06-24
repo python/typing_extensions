@@ -1301,7 +1301,7 @@ Sentinel objects
         than `<X>`.
       - Passing `repr` as a positional argument to the constructor is deprecated.
       - Passing `name` as a keyword argument to the constructor is deprecated.
-      - Subclassing a sentinel is deprecated.
+      - Subclassing `sentinel` is deprecated.
       - Assigning arbitrary attributes to a sentinel is deprecated.
 
 
