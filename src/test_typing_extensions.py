@@ -138,6 +138,11 @@ TYPING_3_15_0 = sys.version_info[:3] >= (3, 15, 0)
 
 TYPING_3_15_0_BETA_1 = sys.version_info[:5] == (3, 15, 0, 'beta', 1)
 
+GOOD_TYPEVARTUPLE_REPR_EXPECTED = (
+    type(typing_extensions.TypeVarTuple("Ts"))
+    is typing_extensions.TypeVarTuple
+)
+
 # https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
 # versions, but not all
 HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
@@ -6609,15 +6614,12 @@ class UnpackTests(BaseTestCase):
         with self.assertRaises(TypeError):
             Unpack()
 
-    @skipIf(TYPING_3_15_0, "repr changed in 3.15")
+    @skipIf(GOOD_TYPEVARTUPLE_REPR_EXPECTED, "TypeVarTuples have a bad repr on this version")
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
-        if not hasattr(typing, 'TypeVarTuple') or sys.version_info >= (3, 15):
-            self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[~Ts]')
-        else:
-            self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
+        self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[Ts]')
 
-    @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
+    @skipUnless(GOOD_TYPEVARTUPLE_REPR_EXPECTED, "TypeVarTuples have a bad repr on this version")
     def test_repr_py315(self):
         Ts = TypeVarTuple('Ts')
         self.assertEqual(repr(Unpack[Ts]), f'{Unpack.__module__}.Unpack[~Ts]')
@@ -6816,30 +6818,33 @@ class TypeVarTupleTests(BaseTestCase):
         Ys = TypeVarTuple('Ys')
         self.assertNotEqual(Xs, Ys)
 
-    @skipIf(TYPING_3_15_0, "repr changed in 3.15")
+    @skipIf(GOOD_TYPEVARTUPLE_REPR_EXPECTED, "TypeVarTuples have a bad repr on this version")
     def test_repr(self):
         Ts = TypeVarTuple('Ts')
         Ts_co = TypeVarTuple('Ts_co', covariant=True)
         Ts_contra = TypeVarTuple('Ts_contra', contravariant=True)
         Ts_infer = TypeVarTuple('Ts_infer', infer_variance=True)
         Ts_2 = TypeVarTuple('Ts_2')
-        if not hasattr(typing, 'TypeVarTuple') or sys.version_info >= (3, 15):
-            self.assertEqual(repr(Ts), '~Ts')
-            self.assertEqual(repr(Ts_2), '~Ts_2')
+        self.assertEqual(repr(Ts), 'Ts')
+        self.assertEqual(repr(Ts_2), 'Ts_2')
 
-            self.assertEqual(repr(Ts_co), '+Ts_co')
-            self.assertEqual(repr(Ts_contra), '-Ts_contra')
-            self.assertEqual(repr(Ts_infer), 'Ts_infer')
-        else:
-            # On other versions we use typing.TypeVarTuple, but it is not aware of
-            # variance. Not worth creating our own version of TypeVarTuple
-            # for this.
-            self.assertEqual(repr(Ts), 'Ts')
-            self.assertEqual(repr(Ts_2), 'Ts_2')
+        self.assertEqual(repr(Ts_co), 'Ts_co')
+        self.assertEqual(repr(Ts_contra), 'Ts_contra')
+        self.assertEqual(repr(Ts_infer), 'Ts_infer')
 
-            self.assertEqual(repr(Ts_co), 'Ts_co')
-            self.assertEqual(repr(Ts_contra), 'Ts_contra')
-            self.assertEqual(repr(Ts_infer), 'Ts_infer')
+    @skipUnless(GOOD_TYPEVARTUPLE_REPR_EXPECTED, "TypeVarTuples have a bad repr on this version")
+    def test_repr_py315(self):
+        Ts = TypeVarTuple('Ts')
+        Ts_co = TypeVarTuple('Ts_co', covariant=True)
+        Ts_contra = TypeVarTuple('Ts_contra', contravariant=True)
+        Ts_infer = TypeVarTuple('Ts_infer', infer_variance=True)
+        Ts_2 = TypeVarTuple('Ts_2')
+        self.assertEqual(repr(Ts), '~Ts')
+        self.assertEqual(repr(Ts_2), '~Ts_2')
+
+        self.assertEqual(repr(Ts_co), '+Ts_co')
+        self.assertEqual(repr(Ts_contra), '-Ts_contra')
+        self.assertEqual(repr(Ts_infer), 'Ts_infer')
 
     def test_variance(self):
         Ts_co = TypeVarTuple('Ts_co', covariant=True)
@@ -6857,11 +6862,6 @@ class TypeVarTupleTests(BaseTestCase):
         self.assertIs(Ts_infer.__covariant__, False)
         self.assertIs(Ts_infer.__contravariant__, False)
         self.assertIs(Ts_infer.__infer_variance__, True)
-
-    @skipUnless(TYPING_3_15_0, "repr changed in 3.15")
-    def test_repr_py315(self):
-        Ts = TypeVarTuple('Ts')
-        self.assertEqual(repr(Ts), '~Ts')
 
     def test_no_redefinition(self):
         self.assertNotEqual(TypeVarTuple('Ts'), TypeVarTuple('Ts'))
