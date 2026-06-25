@@ -27,9 +27,12 @@ extensions = ['sphinx.ext.intersphinx', '_extensions.gh_link']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-# This should usually point to /3, unless there is a necessity to link to
-# features in future versions of Python.
-intersphinx_mapping = {'py': ('https://docs.python.org/3', None)}
+# Use Python 3.15 for new features and Python 3.14 as a fallback for APIs that
+# were removed in Python 3.15.
+intersphinx_mapping = {
+    'py': ('https://docs.python.org/3.15', None),
+    'py314': ('https://docs.python.org/3.14', None),
+}
 
 add_module_names = False
 

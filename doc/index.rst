@@ -588,6 +588,7 @@ Special typing primitives
    to ``TypedDict``.
 
    Features backported by `typing_extensions` include:
+
    * :py:class:`typing.TypedDict` does not store runtime information about which
      (if any) keys are non-required in Python 3.8, and does not honor the
      *total* keyword with old-style ``TypedDict()`` on Python 3.9.0 and 3.9.1.
@@ -653,6 +654,9 @@ Special typing primitives
       class argument is not provided.
 
       .. versionadded:: 4.10.0
+
+   History
+   -------
 
    .. versionchanged:: 4.3.0
 
@@ -887,9 +891,7 @@ Protocols
 Decorators
 ~~~~~~~~~~
 
-.. decorator:: dataclass_transform(*, eq_default=False, order_default=False,
-                                   kw_only_default=False, frozen_default=False,
-                                   field_specifiers=(), **kwargs)
+.. decorator:: dataclass_transform(*, eq_default=False, order_default=False, kw_only_default=False, frozen_default=False, field_specifiers=(), **kwargs)
 
    See :py:func:`typing.dataclass_transform` and :pep:`681`. In ``typing`` since 3.11.
 
