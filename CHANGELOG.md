@@ -1,6 +1,6 @@
-# Unreleased
+# Release 4.16.0rc2 (June 25, 2026)
 
-- Avoid a `DeprecationWarning` when applying `deprecated` to a coroutine function on
+- Avoid a `DeprecationWarning` when `deprecated` is applied to a coroutine function on
   Python 3.14.0.
 
 # Release 4.16.0rc1 (June 24, 2026)
