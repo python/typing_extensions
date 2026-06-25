@@ -587,14 +587,25 @@ Special typing primitives
    ``typing_extensions`` backports various bug fixes and improvements
    to ``TypedDict``.
 
-   :py:class:`TypedDict` does not store runtime information
-   about which (if any) keys are non-required in Python 3.8, and does not
-   honor the ``total`` keyword with old-style ``TypedDict()`` in Python
-   3.9.0 and 3.9.1. :py:class:`typing.TypedDict` also does not support multiple inheritance
-   with :py:class:`typing.Generic` on Python <3.11, and :py:class:`typing.TypedDict` classes do not
-   consistently have the ``__orig_bases__`` attribute on Python <3.12. The
-   ``typing_extensions`` backport provides all of these features and bugfixes on
-   all Python versions.
+   Features backported by `typing_extensions` include:
+   * :py:class:`typing.TypedDict` does not store runtime information about which
+     (if any) keys are non-required in Python 3.8, and does not honor the
+     *total* keyword with old-style ``TypedDict()`` on Python 3.9.0 and 3.9.1.
+   * :py:class:`typing.TypedDict` does not support multiple inheritance with
+     :py:class:`typing.Generic` on Python <3.11
+   * :py:class:`typing.TypedDict` classes do not consistently have the
+     :attr:`!__orig_bases__` attribute on Python <3.12.
+   * :py:class:`typing.TypedDict` does not expose the
+     :py:attr:`~typing.TypedDict.__readonly_keys__` and
+     :py:attr:`~typing.TypedDict.__mutable_keys__` attributes on Python <3.13.
+   * :py:class:`typing.TypedDict` does not support the *extra_items* or *closed*
+     keyword arguments on Python <3.15, and also does not expose the
+     :py:attr:`~typing.TypedDict.__extra_items__` and
+     :py:attr:`~typing.TypedDict.__closed__` attributes on Python <3.15.
+
+   ``typing_extensions`` also currently includes experimental support for
+   :pep:`764` (inline ``TypedDict``\ s), which is not yet supported in the
+   standard library on any Python version.
 
    Historically, ``TypedDict`` has supported an alternative creation syntax
    where the fields are supplied as keyword arguments (e.g.,
@@ -602,6 +613,9 @@ Special typing primitives
    in Python 3.11 and removed in Python 3.13. ``typing_extensions.TypedDict``
    raises a :py:exc:`DeprecationWarning` when this syntax is used in Python 3.12
    or lower and fails with a :py:exc:`TypeError` in Python 3.13 and higher.
+
+   Introspection attributes
+   ------------------------
 
    ``typing_extensions`` supports the :data:`ReadOnly` qualifier
    introduced by :pep:`705`. It is reflected in the following attributes:
@@ -620,7 +634,7 @@ Special typing primitives
 
       .. versionadded:: 4.9.0
 
-   The ``closed`` and ``extra_items`` keyword arguments introduced by
+   The *closed* and *extra_items* keyword arguments introduced by
    :pep:`728` and supported in Python 3.15 and newer are supported.
 
    For runtime introspection, two attributes can be looked at:

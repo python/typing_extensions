@@ -1131,10 +1131,10 @@ if _NEEDS_SINGLETONMETA:
 
 
 # Update this to something like >=3.13.0b1 if and when
-# PEP 728 is implemented in CPython
-_PEP_728_IMPLEMENTED = False
+# PEP 764 is implemented in CPython
+_PEP_764_IMPLEMENTED = False
 
-if _PEP_728_IMPLEMENTED:
+if _PEP_764_IMPLEMENTED:
     # The standard library TypedDict in Python 3.9.0/1 does not honour the "total"
     # keyword with old-style TypedDict().  See https://bugs.python.org/issue42059
     # The standard library TypedDict below Python 3.11 does not store runtime
@@ -1144,7 +1144,8 @@ if _PEP_728_IMPLEMENTED:
     # to enable better runtime introspection.
     # On 3.13 we deprecate some odd ways of creating TypedDicts.
     # Also on 3.13, PEP 705 adds the ReadOnly[] qualifier.
-    # PEP 728 (still pending) makes more changes.
+    # PEP 728 (Python 3.15+) adds the `extra_items` and `closed` keywords.
+    # PEP 764 (still pending) allows the `TypedDict` special form to be subscripted.
     TypedDict = typing.TypedDict
     _TypedDictMeta = typing._TypedDictMeta
     is_typeddict = typing.is_typeddict
