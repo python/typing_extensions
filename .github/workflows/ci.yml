@@ -100,7 +100,7 @@ jobs:
           cd src
           python --version  # just to make sure we're running the right one
           # Run tests under coverage
-          python -m coverage run -m unittest test_typing_extensions.py
+          python -We -m coverage run -m unittest test_typing_extensions.py
           # Create xml file for Codecov
           coverage xml --rcfile=../pyproject.toml --fail-under=0
 

@@ -1,3 +1,8 @@
+# Unreleased
+
+- Avoid a `DeprecationWarning` when applying `deprecated` to a coroutine function on
+  Python 3.14.0.
+
 # Release 4.16.0rc1 (June 24, 2026)
 
 - Make `typing_extensions.TypeAliasType`'s `__module__` attribute writable.
