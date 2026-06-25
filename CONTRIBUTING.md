@@ -56,6 +56,16 @@ Running these commands in the `src/` directory ensures that the local file
 `typing_extensions.py` is used, instead of any other version of the library you
 may have installed.
 
+# Building the documentation
+
+To build the documentation in nitpicky mode and treat warnings as errors, run:
+
+```
+uvx --from sphinx sphinx-build -n -W -b html doc doc/_build/html
+```
+
+The generated HTML documentation is written to `doc/_build/html`.
+
 # Linting
 
 Linting is done via pre-commit. We recommend running pre-commit via a tool such

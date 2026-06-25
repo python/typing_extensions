@@ -7175,7 +7175,10 @@ class AllTests(BaseTestCase):
         self.assertLessEqual(exclude, actual_names)
 
     def test_typing_extensions_defers_when_possible(self):
-        exclude = set()
+        # These two are currently always different to `typing.TypedDict`
+        # as PEP 764 has not yet been accepted/implemented upstream.
+        exclude = {'TypedDict', 'is_typeddict'}
+
         if sys.version_info < (3, 10):
             exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 10, 1):
@@ -7202,8 +7205,6 @@ class AllTests(BaseTestCase):
             exclude |= {
                 'TypeVarTuple'
             }
-        if not typing_extensions._PEP_728_IMPLEMENTED:
-            exclude |= {'TypedDict', 'is_typeddict'}
         for item in typing_extensions.__all__:
             if item not in exclude and hasattr(typing, item):
                 self.assertIs(
