@@ -1,3 +1,7 @@
+# Release 4.16.0 (July 2, 2025)
+
+No user-facing changes since 4.16.0rc2.
+
 # Release 4.16.0rc2 (June 25, 2026)
 
 - Avoid a `DeprecationWarning` when `deprecated` is applied to a coroutine function on
