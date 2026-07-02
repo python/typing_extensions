@@ -25,9 +25,11 @@ Starting with version 4.0.0, `typing_extensions` uses
 for more detail.
 
 ## Development version
-After a release the version is increased once in [pyproject.toml](/pyproject.toml) and
-appended with a `.dev` suffix, e.g. `4.0.1.dev`.
-Further subsequent updates are not planned between releases.
+
+After a release the patch version is increased in [pyproject.toml](/pyproject.toml) and
+appended with a `.dev0` suffix, e.g. `4.0.1.dev0`.
+
+When a new feature is added we will increase the minor version once between releases. For example, from 4.0.1.dev0 to 4.1.0.dev0.
 
 # Type stubs
 
@@ -111,4 +113,4 @@ pipx run pre-commit run -a
 - Release automation will finish the release. You'll have to manually
   approve the last step before upload.
 
-- After the release has been published on PyPI upgrade the version in number in [pyproject.toml](/pyproject.toml) to a `dev` version of the next planned release. For example, change 4.1.1 to 4.X.X.dev, see also [Development versions](#development-version). # TODO decide on major vs. minor increase.
+- After the release has been published on PyPI upgrade the version in number in [pyproject.toml](/pyproject.toml) to a `dev` version of the next planned release. For example, change 4.1.1 to 4.1.2.dev0, see also [Development versions](#development-version).
