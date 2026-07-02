@@ -58,7 +58,7 @@ jobs:
       - name: Checkout pydantic
         run: git clone --depth=1 https://github.com/pydantic/pydantic.git || git clone --depth=1 https://github.com/pydantic/pydantic.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -91,7 +91,7 @@ jobs:
       - name: Checkout typing_inspect
         run: git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git || git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -126,7 +126,7 @@ jobs:
       - name: Check out pycroscope
         run: git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git || git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -161,7 +161,7 @@ jobs:
       - name: Check out typeguard
         run: git clone --depth=1 https://github.com/agronholm/typeguard.git || git clone --depth=1 https://github.com/agronholm/typeguard.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -199,7 +199,7 @@ jobs:
       - name: Check out typed-argument-parser
         run: git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git || git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -242,7 +242,7 @@ jobs:
       - name: Checkout mypy for stubtest and mypyc tests
         run: git clone --depth=1 https://github.com/python/mypy.git || git clone --depth=1 https://github.com/python/mypy.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -278,7 +278,7 @@ jobs:
       - name: Checkout cattrs
         run: git clone --depth=1 https://github.com/python-attrs/cattrs.git || git clone --depth=1 https://github.com/python-attrs/cattrs.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -316,7 +316,7 @@ jobs:
       - name: Checkout sqlalchemy
         run: git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git || git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -348,7 +348,7 @@ jobs:
       - name: Checkout litestar
         run: git clone --depth=1 https://github.com/litestar-org/litestar.git || git clone --depth=1 https://github.com/litestar-org/litestar.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -405,7 +405,7 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
