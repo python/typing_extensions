@@ -110,5 +110,5 @@ pipx run pre-commit run -a
   approve the last step before upload.
 
 - After the release has been published on PyPI upgrade the patch or rc version number in [pyproject.toml](/pyproject.toml) and append `.dev0`. For example:
-    - 4.1.1 → 4.1.2.dev0
-    - 4.1.1rc1 → 4.1.1rc2.dev0
+    - `4.1.1` → `4.1.2.dev0`
+    - `4.1.1rc1` → `4.1.1rc2.dev0`
