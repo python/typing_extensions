@@ -88,8 +88,8 @@ pipx run pre-commit run -a
 
 # Workflow for PyPI releases
 
-- Make sure to release at least one release candidate (starting with `rc1`) before making a full release. E.g. release `4.2.0rc1` before releasing `4.2.0`.
-  When an urgent hotfix is necessary (and you bump only the patch version), you can skip the release candidates.
+- Make sure that the version in `pyproject.toml` and `CHANGELOG.md` follows the versioning policy outlined in
+  [the documentation](https://typing-extensions.readthedocs.io/en/latest/#versioning-and-backwards-compatibility).
 
 - Ensure that GitHub Actions reports no errors.
 
@@ -97,9 +97,9 @@ pipx run pre-commit run -a
 
 - Update the version number in `typing_extensions/pyproject.toml` and in
   `typing_extensions/CHANGELOG.md` by removing `.dev0` and potentially adding the `rcX` suffix:
-  - `4.1.0.dev0` → `4.1.0rc1`
+  - `4.1.0.dev0` → `4.1.0rc1` for the initial release candidate
   - `4.1.0rc2.dev0` → `4.1.0rc2` or `4.1.0` when making a full release
-  - `4.1.1.dev0` → `4.1.1rc1` or `4.1.1` when making an urgent hotfix
+  - `4.1.1.dev0` → `4.1.1` when making a hotfix release
 
 - Create a new GitHub release at https://github.com/python/typing_extensions/releases/new.
   Details:
@@ -111,4 +111,4 @@ pipx run pre-commit run -a
 
 - After the release has been published on PyPI upgrade the patch or rc version number in [pyproject.toml](/pyproject.toml) and append `.dev0`. For example:
     - `4.1.1` → `4.1.2.dev0`
-    - `4.1.1rc1` → `4.1.1rc2.dev0`
+    - `4.1.0rc1` → `4.1.0rc2.dev0`
