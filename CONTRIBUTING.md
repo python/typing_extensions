@@ -21,7 +21,7 @@ CPython's `main` branch.
 # Versioning scheme
 
 Starting with version 4.0.0, `typing_extensions` uses
-[Semantic Versioning](https://semver.org/). See the documentation
+[Semantic Versioning](https://semver.org/). [See the documentation](https://typing-extensions.readthedocs.io/en/latest/#versioning-and-backwards-compatibility)
 for more detail.
 
 # Type stubs
