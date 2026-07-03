@@ -98,7 +98,7 @@ pipx run pre-commit run -a
 - Update the version number in `typing_extensions/pyproject.toml` and in
   `typing_extensions/CHANGELOG.md` by removing `.dev0` and potentially adding the `rcX` suffix:
   - `4.1.0.dev0` → `4.1.0rc1` for the initial release candidate
-  - `4.1.0rc2.dev0` → `4.1.0rc2` or `4.1.0` when making a full release
+  - `4.1.0rc2.dev0` → `4.1.0rc2` or `4.1.0`, depending on whether the release is a second release candidate or a full release
   - `4.1.1.dev0` → `4.1.1` when making a hotfix release
 
 - Create a new GitHub release at https://github.com/python/typing_extensions/releases/new.
