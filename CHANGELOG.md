@@ -2,6 +2,9 @@
 
 No user-facing changes since 4.16.0rc2.
 
+- Fix `get_type_hints()` raising `TypeError` for a stringified bare `ClassVar`
+  annotation on Python 3.9 and 3.10.
+
 # Release 4.16.0rc2 (June 25, 2026)
 
 - Avoid a `DeprecationWarning` when `deprecated` is applied to a coroutine function on
