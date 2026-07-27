@@ -188,7 +188,7 @@ else:
 
         def __init__(
             self,
-            __name: str = _sentinel_placeholder,
+            __name: LiteralString = _sentinel_placeholder,
             __repr: typing.Optional[str] = _sentinel_placeholder,
             /,
             *,
