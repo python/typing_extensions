@@ -7221,9 +7221,8 @@ class AllTests(BaseTestCase):
     def test_typing_extensions_compiles_with_opt(self):
         file_path = typing_extensions.__file__
         try:
-            subprocess.check_output(f'{sys.executable} -OO {file_path}',
-                                    stderr=subprocess.STDOUT,
-                                    shell=True)
+            subprocess.check_output([sys.executable, '-OO', file_path],
+                                    stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:  # pragma: no cover
             self.fail('Module does not compile with optimize=2 (-OO flag).')
 
