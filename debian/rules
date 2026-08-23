@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+
+export PYBUILD_NAME=typing_extensions
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_test:
+	# Skip tests - test dependencies not packaged

@@ -1,0 +1,9 @@
+python-typing-extensions (4.16.0-1~vitex1) unstable; urgency=medium
+
+  * Initial Debian packaging of upstream 4.16.0 under Vitexus, pinned to
+    the release tag. Required by python3-anyio 4.9.0-1~vitex1.3, which
+    uses the PEP 661 `sentinel` class added in this release (4.14.1 only
+    has the older `Sentinel` capital class), and is blocking fastmcp
+    client imports on mcprack hosts.
+
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Sun, 23 Aug 2026 19:29:22 +0200

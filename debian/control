@@ -1,0 +1,32 @@
+Source: python-typing-extensions
+Section: python
+Priority: optional
+Maintainer: Vítězslav Dvořák <info@vitexsoftware.cz>
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-python,
+ flit,
+ pybuild-plugin-pyproject,
+ python3-all,
+Standards-Version: 4.7.0
+Homepage: https://github.com/python/typing_extensions
+Vcs-Git: https://github.com/Vitexus/python-typing-extensions.git
+Vcs-Browser: https://github.com/Vitexus/python-typing-extensions
+Rules-Requires-Root: no
+
+Package: python3-typing-extensions
+Architecture: all
+Multi-Arch: foreign
+Depends:
+ ${misc:Depends},
+ ${python3:Depends},
+Description: Backported and Experimental Type Hints for Python 3.9+
+ typing_extensions complements the standard-library typing module by
+ providing runtime support for type hints that are only available in
+ newer Python versions, and experimental type-system features proposed
+ in draft PEPs before they are accepted into typing.
+ .
+ This package is fetched under the VitexSoftware Vitexus fork so it can
+ be pinned to a specific upstream release tag (4.16.0), which several
+ other packages (notably python3-anyio) depend on for the PEP 661
+ `sentinel` API.
