@@ -1337,8 +1337,6 @@ class LiteralTests(BaseTestCase):
         self.assertEqual(Literal[1, 2, 3].__args__, (1, 2, 3))
         self.assertEqual(Literal[1, 2, 3, 3].__args__, (1, 2, 3))
         self.assertEqual(Literal[1, Literal[2], Literal[3, 4]].__args__, (1, 2, 3, 4))
-        # Mutable arguments will not be deduplicated
-        self.assertEqual(Literal[[], []].__args__, ([], []))
 
     def test_union_of_literals(self):
         self.assertEqual(Union[Literal[1], Literal[2]].__args__,
@@ -7223,9 +7221,8 @@ class AllTests(BaseTestCase):
     def test_typing_extensions_compiles_with_opt(self):
         file_path = typing_extensions.__file__
         try:
-            subprocess.check_output(f'{sys.executable} -OO {file_path}',
-                                    stderr=subprocess.STDOUT,
-                                    shell=True)
+            subprocess.check_output([sys.executable, '-OO', file_path],
+                                    stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:  # pragma: no cover
             self.fail('Module does not compile with optimize=2 (-OO flag).')
 

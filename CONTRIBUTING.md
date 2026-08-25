@@ -21,13 +21,8 @@ CPython's `main` branch.
 # Versioning scheme
 
 Starting with version 4.0.0, `typing_extensions` uses
-[Semantic Versioning](https://semver.org/). See the documentation
+[Semantic Versioning](https://semver.org/). [See the documentation](https://typing-extensions.readthedocs.io/en/latest/#versioning-and-backwards-compatibility)
 for more detail.
-
-## Development version
-After a release the version is increased once in [pyproject.toml](/pyproject.toml) and
-appended with a `.dev` suffix, e.g. `4.0.1.dev`.
-Further subsequent updates are not planned between releases.
 
 # Type stubs
 
@@ -93,15 +88,18 @@ pipx run pre-commit run -a
 
 # Workflow for PyPI releases
 
-- Make sure you follow the versioning policy in the documentation
-  (e.g., release candidates before any feature release, do not release development versions)
+- Make sure that the version in `pyproject.toml` and `CHANGELOG.md` follows the versioning policy outlined in
+  [the documentation](https://typing-extensions.readthedocs.io/en/latest/#versioning-and-backwards-compatibility).
 
 - Ensure that GitHub Actions reports no errors.
 
 - Check that `CHANGELOG.md` accurately reflects all important changes committed to `main` since the previous release.
 
 - Update the version number in `typing_extensions/pyproject.toml` and in
-  `typing_extensions/CHANGELOG.md`.
+  `typing_extensions/CHANGELOG.md` by removing `.dev0` and potentially adding the `rcX` suffix:
+  - `4.1.0.dev0` → `4.1.0rc1` for the initial release candidate
+  - `4.1.0rc2.dev0` → `4.1.0rc2` or `4.1.0`, depending on whether the release is a second release candidate or a full release
+  - `4.1.1.dev0` → `4.1.1` when making a hotfix release
 
 - Create a new GitHub release at https://github.com/python/typing_extensions/releases/new.
   Details:
@@ -111,4 +109,6 @@ pipx run pre-commit run -a
 - Release automation will finish the release. You'll have to manually
   approve the last step before upload.
 
-- After the release has been published on PyPI upgrade the version in number in [pyproject.toml](/pyproject.toml) to a `dev` version of the next planned release. For example, change 4.1.1 to 4.X.X.dev, see also [Development versions](#development-version). # TODO decide on major vs. minor increase.
+- After the release has been published on PyPI upgrade the patch or rc version number in [pyproject.toml](/pyproject.toml) and append `.dev0`. For example:
+    - `4.1.1` → `4.1.2.dev0`
+    - `4.1.0rc1` → `4.1.0rc2.dev0`

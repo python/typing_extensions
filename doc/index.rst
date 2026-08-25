@@ -269,7 +269,7 @@ Python version in which each feature was added to :py:mod:`typing` and the
      - :pep:`673`
    * - :class:`sentinel`
      - 3.15
-     - 4.14.0 (originally under the name `Sentinel`)
+     - 4.14.0 (originally under the name ``Sentinel``)
      - :pep:`661`
    * - :class:`TypeAliasType`
      - 3.12
@@ -587,7 +587,7 @@ Special typing primitives
    ``typing_extensions`` backports various bug fixes and improvements
    to ``TypedDict``.
 
-   Features backported by `typing_extensions` include:
+   Features backported by ``typing_extensions`` include:
 
    * :py:class:`typing.TypedDict` does not store runtime information about which
      (if any) keys are non-required in Python 3.8, and does not honor the
@@ -773,8 +773,8 @@ Special typing primitives
 
    .. versionchanged:: 4.12.0
 
-      It is now disallowed to use a `TypeVar` with a default value after a
-      `TypeVarTuple` in a type parameter list. This matches the CPython
+      It is now disallowed to use a ``TypeVar`` with a default value after a
+      ``TypeVarTuple`` in a type parameter list. This matches the CPython
       implementation of PEP 696 on Python 3.13+.
 
    .. versionchanged:: 4.16.0
@@ -1311,13 +1311,13 @@ Sentinel objects
 
       - Sentinels can now be pickled. They are reduced as singletons, which
         means that they also preserve their identity when copied or deep-copied.
-      - `Sentinel` has been renamed to `sentinel`. `Sentinel` is retained as a
+      - ``Sentinel`` has been renamed to ``sentinel``. ``Sentinel`` is retained as a
         soft-deprecated alias, for backwards compatibility.
-      - The default repr of a sentinel `X = sentinel("X")` is now `X`, rather
-        than `<X>`.
-      - Passing `repr` as a positional argument to the constructor is deprecated.
-      - Passing `name` as a keyword argument to the constructor is deprecated.
-      - Subclassing `sentinel` is deprecated.
+      - The default repr of a sentinel ``X = sentinel("X")`` is now ``X``, rather
+        than ``<X>``.
+      - Passing ``repr`` as a positional argument to the constructor is deprecated.
+      - Passing ``name`` as a keyword argument to the constructor is deprecated.
+      - Subclassing ``sentinel`` is deprecated.
       - Assigning arbitrary attributes to a sentinel is deprecated.
 
 
