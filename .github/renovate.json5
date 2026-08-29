@@ -1,0 +1,44 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["schedule:monthly", "helpers:pinGitHubActionDigestsToSemver"],
+  "dependencyDashboard": true,
+  "enabledManagers": ["github-actions", "custom.regex", "pre-commit", "pep621"],
+  "pre-commit": {
+    "enabled": true
+  },
+  "minimumReleaseAge": "7 days",
+  "packageRules": [
+    {
+      // Pin versions already in use without waiting for the upgrade cooldown.
+      "matchUpdateTypes": ["pinDigest"],
+      "minimumReleaseAge": null
+    },
+    {
+      // Preserve Python versions, runners, and containers. The custom manager
+      // handles tool inputs so uv's version and checksum are updated together.
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["uses-with", "github-runner", "docker", "container", "service"],
+      "enabled": false
+    },
+    {
+      // Only manage build requirements; preserve Python support and library dependencies.
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["!build-system.requires"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["github-actions", "custom.regex", "pre-commit", "pep621"],
+      "groupName": "CI dependencies"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/(ci|third_party)\\.yml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+version: \"(?<currentValue>[^\"\\r\\n]+)\"(?:\\s+checksum: \"(?<currentDigest>[a-f0-9]{64})\")?"
+      ],
+      "versioningTemplate": "semver"
+    }
+  ]
+}

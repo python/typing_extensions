@@ -30,9 +30,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          # renovate: datasource=github-release-attachments depName=astral-sh/uv
+          version: "0.12.7"
+          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
           python-version: "3.14"
 
       - name: Build docs in nitpicky mode
@@ -119,6 +122,8 @@ jobs:
           github.repository == 'python/typing_extensions'
           && (github.event_name == 'push' || github.event_name == 'pull_request')
         with:
+          # renovate: datasource=github-releases depName=codecov/codecov-cli
+          version: "v11.3.1"
           use_oidc: true
           flags: ${{ matrix.python-version }}
           directory: src
