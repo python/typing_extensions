@@ -51,9 +51,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          # renovate: datasource=github-release-attachments depName=astral-sh/uv
+          version: "0.12.7"
+          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
           python-version: ${{ matrix.python-version }}
       - name: Checkout pydantic
         run: git clone --depth=1 https://github.com/pydantic/pydantic.git || git clone --depth=1 https://github.com/pydantic/pydantic.git
@@ -84,9 +87,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          # renovate: datasource=github-release-attachments depName=astral-sh/uv
+          version: "0.12.7"
+          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
           python-version: ${{ matrix.python-version }}
       - name: Checkout typing_inspect
         run: git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git || git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git
@@ -119,9 +125,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          # renovate: datasource=github-release-attachments depName=astral-sh/uv
+          version: "0.12.7"
+          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
           python-version: ${{ matrix.python-version }}
       - name: Check out pycroscope
         run: git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git || git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git
@@ -154,9 +163,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          # renovate: datasource=github-release-attachments depName=astral-sh/uv
+          version: "0.12.7"
+          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
           python-version: ${{ matrix.python-version }}
       - name: Check out typeguard
         run: git clone --depth=1 https://github.com/agronholm/typeguard.git || git clone --depth=1 https://github.com/agronholm/typeguard.git
@@ -192,9 +204,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          # renovate: datasource=github-release-attachments depName=astral-sh/uv
+          version: "0.12.7"
+          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
           python-version: ${{ matrix.python-version }}
       - name: Check out typed-argument-parser
         run: git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git || git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git
@@ -235,9 +250,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          # renovate: datasource=github-release-attachments depName=astral-sh/uv
+          version: "0.12.7"
+          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
           python-version: ${{ matrix.python-version }}
       - name: Checkout mypy for stubtest and mypyc tests
         run: git clone --depth=1 https://github.com/python/mypy.git || git clone --depth=1 https://github.com/python/mypy.git
@@ -271,9 +289,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          # renovate: datasource=github-release-attachments depName=astral-sh/uv
+          version: "0.12.7"
+          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
           python-version: ${{ matrix.python-version }}
       - name: Checkout cattrs
         run: git clone --depth=1 https://github.com/python-attrs/cattrs.git || git clone --depth=1 https://github.com/python-attrs/cattrs.git
@@ -309,9 +330,12 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          # renovate: datasource=github-release-attachments depName=astral-sh/uv
+          version: "0.12.7"
+          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
           python-version: ${{ matrix.python-version }}
       - name: Checkout sqlalchemy
         run: git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git || git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git
@@ -341,9 +365,12 @@ jobs:
         # As of 2 November 2025 a dependency is missing 3.14 wheels
         python-version: [ "3.11", "3.12", "3.13" ]
     steps:
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          # renovate: datasource=github-release-attachments depName=astral-sh/uv
+          version: "0.12.7"
+          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
           python-version: ${{ matrix.python-version }}
       - name: Checkout litestar
         run: git clone --depth=1 https://github.com/litestar-org/litestar.git || git clone --depth=1 https://github.com/litestar-org/litestar.git
