@@ -1,7 +1,34 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["schedule:monthly", "helpers:pinGitHubActionDigestsToSemver"],
+  "extends": [
+    "config:recommended",
+    "schedule:monthly",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "replacements:all",
+    "abandonments:recommended"
+  ],
+  "configMigration": true,
   "dependencyDashboard": true,
+  "separateMajorMinor": false,
+
+  // By default, Renovate will only create 2 PRs in any single hourly interval.
+  // But we only allow Renovate to create PRs between midnight and 4am on the first
+  // day of each month, so this is not sufficient in general. Per the docs,
+  // 0 means "no limit": <https://docs.renovatebot.com/configuration-options/#prhourlylimit>
+  "prHourlyLimit": 0,
+
+  // Similarly, by default, Renovate will not create any new PRs if it already has 10 open
+  // on this repo, but that isn't generally what we want: we generally want dependency update PRs
+  // for all available dependencies. Per the docs, 0 means "no limit":
+  // <https://docs.renovatebot.com/configuration-options/#prconcurrentlimit>
+  "prConcurrentLimit": 0,
+
+  // Conventions: we generally don't use semantic commits.
+  "semanticCommits": "disabled",
+
+  // These notifications are very noisy.
+  "suppressNotifications": ["prEditedNotification"],
+
   "enabledManagers": ["github-actions", "custom.regex", "pre-commit", "pep621"],
   "pre-commit": {
     "enabled": true
@@ -27,8 +54,16 @@
       "enabled": false
     },
     {
-      "matchManagers": ["github-actions", "custom.regex", "pre-commit", "pep621"],
-      "groupName": "CI dependencies"
+      "matchFileNames": [".pre-commit-config.yaml"],
+      "groupName": "pre-commit dependencies"
+    },
+    {
+      "matchFileNames": [".github/workflows/**"],
+      "groupName": "GitHub Actions dependencies"
+    },
+    {
+      "matchManagers": ["pep621"],
+      "groupName": "Build dependencies"
     }
   ],
   "customManagers": [
