@@ -3,6 +3,14 @@ repos:
     rev: c59bba8fb259db0fec2bbb77ad8ba51ea7341b56  # frozen: v0.15.20
     hooks:
       - id: ruff
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0f34924c4110aca2294a4e4204aac7b3e31803fb  # frozen: 0.12.7
+    hooks:
+      - id: uv-lock
+        description: Check only whether scripts/remove_uv_version_requirement.py.lock is up to date.
+        entry: uv lock --script scripts/remove_uv_version_requirement.py
+        files: ^(\.pre-commit-config\.yaml|pyproject\.toml|scripts/remove_uv_version_requirement\.py(\.lock)?)$
+        args: [--default-index=https://pypi.org/simple, --check, --refresh]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:

@@ -12,6 +12,8 @@ on:
   pull_request:
     paths:
       - ".github/workflows/third_party.yml"
+      - "scripts/remove_uv_version_requirement.py"
+      - "scripts/remove_uv_version_requirement.py.lock"
   workflow_dispatch:
 
 permissions:
@@ -65,6 +67,8 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --locked typing-extensions-latest/scripts/remove_uv_version_requirement.py pydantic
       - name: Run tests with typing_extensions main branch
         working-directory: pydantic
         run: |
@@ -101,6 +105,8 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --locked typing-extensions-latest/scripts/remove_uv_version_requirement.py typing_inspect
       - name: Run tests with typing_extensions main branch
         working-directory: typing_inspect
         run: |
@@ -139,6 +145,8 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --locked typing-extensions-latest/scripts/remove_uv_version_requirement.py pycroscope
       - name: Run tests with typing_extensions main branch
         working-directory: pycroscope
         run: |
@@ -177,6 +185,8 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --locked typing-extensions-latest/scripts/remove_uv_version_requirement.py typeguard
       - name: Run tests with typing_extensions main branch
         env:
           PYTHON_COLORS: 0  # A test fails if tracebacks are colorized
@@ -218,6 +228,8 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --locked typing-extensions-latest/scripts/remove_uv_version_requirement.py typed-argument-parser
       - name: Configure git for typed-argument-parser tests
         # typed-argument parser does this in their CI,
         # and the tests fail unless we do this
@@ -264,6 +276,8 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --locked typing-extensions-latest/scripts/remove_uv_version_requirement.py mypy
       - name: Run tests with typing_extensions main branch
         working-directory: mypy
         run: |
@@ -303,6 +317,8 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --locked typing-extensions-latest/scripts/remove_uv_version_requirement.py cattrs
       - name: Run tests with typing_extensions main branch
         working-directory: cattrs
         run: |
@@ -344,6 +360,8 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --locked typing-extensions-latest/scripts/remove_uv_version_requirement.py sqlalchemy
       - name: Run sqlalchemy tests with typing_extensions main branch
         working-directory: sqlalchemy
         run: |
@@ -379,6 +397,8 @@ jobs:
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --locked typing-extensions-latest/scripts/remove_uv_version_requirement.py litestar
       - name: Run litestar tests with typing_extensions main branch
         working-directory: litestar
         run: |
