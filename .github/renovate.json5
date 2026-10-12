@@ -64,12 +64,6 @@
     {
       "matchManagers": ["pep621"],
       "groupName": "Build dependencies"
-    },
-    {
-      "description": "Update the astral-sh/uv and uv-pre-commit pins in the same PR to keep CI and pre-commit on the same uv version.",
-      "matchManagers": ["custom.regex", "pre-commit"],
-      "matchPackageNames": ["astral-sh/uv", "astral-sh/uv-pre-commit"],
-      "groupName": "uv"
     }
   ],
   "customManagers": [
