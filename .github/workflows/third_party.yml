@@ -53,16 +53,16 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.0"
+          checksum: "1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154"
           python-version: ${{ matrix.python-version }}
       - name: Checkout pydantic
         run: git clone --depth=1 https://github.com/pydantic/pydantic.git || git clone --depth=1 https://github.com/pydantic/pydantic.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -91,16 +91,16 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.0"
+          checksum: "1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154"
           python-version: ${{ matrix.python-version }}
       - name: Checkout typing_inspect
         run: git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git || git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -131,16 +131,16 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.0"
+          checksum: "1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154"
           python-version: ${{ matrix.python-version }}
       - name: Check out pycroscope
         run: git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git || git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -171,16 +171,16 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.0"
+          checksum: "1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154"
           python-version: ${{ matrix.python-version }}
       - name: Check out typeguard
         run: git clone --depth=1 https://github.com/agronholm/typeguard.git || git clone --depth=1 https://github.com/agronholm/typeguard.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -214,16 +214,16 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.0"
+          checksum: "1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154"
           python-version: ${{ matrix.python-version }}
       - name: Check out typed-argument-parser
         run: git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git || git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -262,16 +262,16 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.0"
+          checksum: "1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154"
           python-version: ${{ matrix.python-version }}
       - name: Checkout mypy for stubtest and mypyc tests
         run: git clone --depth=1 https://github.com/python/mypy.git || git clone --depth=1 https://github.com/python/mypy.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -303,16 +303,16 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.0"
+          checksum: "1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154"
           python-version: ${{ matrix.python-version }}
       - name: Checkout cattrs
         run: git clone --depth=1 https://github.com/python-attrs/cattrs.git || git clone --depth=1 https://github.com/python-attrs/cattrs.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -346,16 +346,16 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.0"
+          checksum: "1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154"
           python-version: ${{ matrix.python-version }}
       - name: Checkout sqlalchemy
         run: git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git || git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
@@ -383,16 +383,16 @@ jobs:
         python-version: [ "3.11", "3.12", "3.13" ]
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.0"
+          checksum: "1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154"
           python-version: ${{ matrix.python-version }}
       - name: Checkout litestar
         run: git clone --depth=1 https://github.com/litestar-org/litestar.git || git clone --depth=1 https://github.com/litestar-org/litestar.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
