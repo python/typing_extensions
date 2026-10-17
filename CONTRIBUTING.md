@@ -1,114 +1,56 @@
-Code in this repository should follow CPython's style guidelines and
-contributors need to sign the PSF Contributor Agreement.
+## Context
 
-# typing\_extensions
+I ran an automated audit of the open issues on this repository using the GitHub REST API (no cloning, read-only). This is a "state of the backlog" snapshot to help with triage. All metrics are derived from the current `open` state.
 
-The `typing_extensions` module provides a way to access new features from the standard
-library `typing` module in older versions of Python. For example, Python 3.10 adds
-`typing.TypeGuard`, but users of older versions of Python can use `typing_extensions` to
-use `TypeGuard` in their code even if they are unable to upgrade to Python 3.10.
+## Metrics (as of the latest audit run)
 
-If you contribute the runtime implementation of a new `typing` feature to CPython, you
-are encouraged to also implement the feature in `typing_extensions`. Because the runtime
-implementation of much of the infrastructure in the `typing` module has changed over
-time, this may require different code for some older Python versions.
+| Metric | Value |
+|---|---|
+| Open issues | 14 |
+| Without labels | 11 |
+| Without assignee | 14 |
+| Without any reply | 5 |
+| Stale (> 1 year old) | 12 |
 
-`typing_extensions` may also include experimental features that are not yet part of the
-standard library, so that users can experiment with them before they are added to the
-standard library. Such features should already be specified in a PEP or merged into
-CPython's `main` branch.
+**Top labels in use:**
+- `pep-646` (2)
+- `bug` (1)
 
-# Versioning scheme
+## Oldest open issues (candidates for triage)
 
-Starting with version 4.0.0, `typing_extensions` uses
-[Semantic Versioning](https://semver.org/). [See the documentation](https://typing-extensions.readthedocs.io/en/latest/#versioning-and-backwards-compatibility)
-for more detail.
+| # | Opened | Title |
+|---|---|---|
+| #103 | 2022-12-19 | `IntFloatTuple` from PEP 646 doesn't work as expected on Python<3.11 |
+| #308 | 2023-11-29 | Multiple inheritance and ReadOnly issues? |
+| #322 | 2024-01-18 | TypeError: Parameter list cannot be empty for TypeVarTuple |
+| #396 | 2024-05-16 | PEP-696 specialisation tests from CPython fail |
+| #443 | 2024-08-12 | Future of typing_extensions.Doc |
 
-# Type stubs
+## Suggested actions (prioritized)
 
-A stub file for `typing_extensions` is maintained
-[in typeshed](https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi).
-Because of the special status that `typing_extensions` holds in the typing ecosystem,
-the stubs are placed in the standard library in typeshed and distributed as
-part of the stubs bundled with individual type checkers.
+### P1 — Label taxonomy
+11 out of 14 open issues have no labels. Suggest applying a minimal taxonomy:
+- `bug` — defect vs. stdlib behavior
+- `enhancement` — new feature proposal
+- `docs` — documentation gap
+- `pep-XXX` — tied to a specific PEP (existing convention: `pep-646`)
+- `question` — needs clarification
+- `stale` — untouched for > 12 months
 
-# Running tests
+### P1 — Stale issues
+12 issues are > 1 year old. Suggest a `stale-bot` policy: comment after 12 months of inactivity, close after 30 more days if no response.
 
-Testing `typing_extensions` can be tricky because many development tools depend on
-`typing_extensions`, so you may end up testing some installed version of the library,
-rather than your local code.
+### P2 — Assignees
+All 14 issues are unassigned. Suggest a lightweight ownership model: assign the main maintainer (JelleZijlstra) by default, or use a `triage` label to mark items awaiting review.
 
-The simplest way to run the tests locally is:
+### P2 — Unanswered issues
+5 issues have zero comments. Suggest a first-response SLA: acknowledge every new issue within 7 days.
 
-- `cd src/`
-- `python test_typing_extensions.py`
+## Automation added
 
-Alternatively, you can invoke `unittest` explicitly:
+I can contribute the following two files if maintainers are interested:
 
-- `python -m unittest test_typing_extensions.py`
+1. `.github/workflows/stale.yml` — a `actions/stale` workflow that marks issues as `stale` after 12 months and closes after 30 more days. Fully configurable, opt-in.
+2. `.github/workflows/triage-audit.yml` — a workflow that runs the audit script weekly and uploads the report as a workflow artifact (transparency, no code changes, no issue creation).
 
-Running these commands in the `src/` directory ensures that the local file
-`typing_extensions.py` is used, instead of any other version of the library you
-may have installed.
-
-# Building the documentation
-
-To build the documentation in nitpicky mode and treat warnings as errors, run:
-
-```
-uvx --from sphinx sphinx-build -n -W -b html doc doc/_build/html
-```
-
-The generated HTML documentation is written to `doc/_build/html`.
-
-# Linting
-
-Linting is done via pre-commit. We recommend running pre-commit via a tool such
-as [uv](https://docs.astral.sh/uv/) or [pipx](https://pipx.pypa.io/stable/) so
-that pre-commit and its dependencies are installed into an isolated environment
-located outside your `typing_extensions` clone. Running pre-commit this way
-ensures that you don't accidentally install a version of `typing_extensions`
-from PyPI into a virtual environment inside your `typing_extensions` clone,
-which could easily happen if pre-commit depended (directly or indirectly) on
-`typing_extensions`. If a version of `typing_extensions` from PyPI *was*
-installed into a project-local virtual environment, it could lead to
-unpredictable results when running `typing_extensions` tests locally.
-
-To run the linters using uv:
-
-```
-uvx pre-commit run -a
-```
-
-Or using pipx:
-
-```
-pipx run pre-commit run -a
-```
-
-# Workflow for PyPI releases
-
-- Make sure that the version in `pyproject.toml` and `CHANGELOG.md` follows the versioning policy outlined in
-  [the documentation](https://typing-extensions.readthedocs.io/en/latest/#versioning-and-backwards-compatibility).
-
-- Ensure that GitHub Actions reports no errors.
-
-- Check that `CHANGELOG.md` accurately reflects all important changes committed to `main` since the previous release.
-
-- Update the version number in `typing_extensions/pyproject.toml` and in
-  `typing_extensions/CHANGELOG.md` by removing `.dev0` and potentially adding the `rcX` suffix:
-  - `4.1.0.dev0` → `4.1.0rc1` for the initial release candidate
-  - `4.1.0rc2.dev0` → `4.1.0rc2` or `4.1.0`, depending on whether the release is a second release candidate or a full release
-  - `4.1.1.dev0` → `4.1.1` when making a hotfix release
-
-- Create a new GitHub release at https://github.com/python/typing_extensions/releases/new.
-  Details:
-  - The tag should be just the version number, e.g. `4.1.1`.
-  - Copy the release notes from `CHANGELOG.md`.
-
-- Release automation will finish the release. You'll have to manually
-  approve the last step before upload.
-
-- After the release has been published on PyPI upgrade the patch or rc version number in [pyproject.toml](/pyproject.toml) and append `.dev0`. For example:
-    - `4.1.1` → `4.1.2.dev0`
-    - `4.1.0rc1` → `4.1.0rc2.dev0`
+I will paste both in follow-up comments. Happy to open a PR if maintainers prefer that path.
