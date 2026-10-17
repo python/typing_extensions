@@ -1,0 +1,43 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Stale issue management — opt-in, configurable
+# Marks issues stale after 12 months of inactivity, closes after 30 more days
+# ═══════════════════════════════════════════════════════════════════════════
+name: "Stale Issues"
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # Daily at 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # Issue policy
+          days-before-issue-stale: 365
+          days-before-issue-close: 30
+          stale-issue-label: "stale"
+          stale-issue-message: |
+            This issue has been automatically marked as **stale** because it has not seen any activity in 12 months.
+            It will be closed in 30 days unless there is new activity.
+            If it is still relevant, please comment with an update or any new information.
+          close-issue-message: |
+            This issue is being closed as stale after 12 months without activity.
+            If this is still an issue, please reopen it or open a fresh issue with updated context.
+
+          # PR policy — disabled by default (keep PRs open longer)
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+
+          # Exempt labels — do not touch issues with these
+          exempt-issue-labels: "pinned,security,good first issue,help wanted"
+
+          # Operations
+          operations-per-run: 30
+          remove-stale-when-updated: true
