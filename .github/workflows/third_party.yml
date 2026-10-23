@@ -57,7 +57,7 @@ jobs:
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
           version: "0.13.5"
-          checksum: "2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f"
+          checksum: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
           python-version: ${{ matrix.python-version }}
       - name: Checkout pydantic
         run: git clone --depth=1 https://github.com/pydantic/pydantic.git || git clone --depth=1 https://github.com/pydantic/pydantic.git
@@ -95,7 +95,7 @@ jobs:
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
           version: "0.13.5"
-          checksum: "2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f"
+          checksum: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
           python-version: ${{ matrix.python-version }}
       - name: Checkout typing_inspect
         run: git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git || git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git
@@ -135,7 +135,7 @@ jobs:
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
           version: "0.13.5"
-          checksum: "2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f"
+          checksum: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
           python-version: ${{ matrix.python-version }}
       - name: Check out pycroscope
         run: git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git || git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git
@@ -175,7 +175,7 @@ jobs:
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
           version: "0.13.5"
-          checksum: "2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f"
+          checksum: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
           python-version: ${{ matrix.python-version }}
       - name: Check out typeguard
         run: git clone --depth=1 https://github.com/agronholm/typeguard.git || git clone --depth=1 https://github.com/agronholm/typeguard.git
@@ -218,7 +218,7 @@ jobs:
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
           version: "0.13.5"
-          checksum: "2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f"
+          checksum: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
           python-version: ${{ matrix.python-version }}
       - name: Check out typed-argument-parser
         run: git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git || git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git
@@ -266,7 +266,7 @@ jobs:
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
           version: "0.13.5"
-          checksum: "2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f"
+          checksum: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
           python-version: ${{ matrix.python-version }}
       - name: Checkout mypy for stubtest and mypyc tests
         run: git clone --depth=1 https://github.com/python/mypy.git || git clone --depth=1 https://github.com/python/mypy.git
@@ -307,7 +307,7 @@ jobs:
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
           version: "0.13.5"
-          checksum: "2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f"
+          checksum: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
           python-version: ${{ matrix.python-version }}
       - name: Checkout cattrs
         run: git clone --depth=1 https://github.com/python-attrs/cattrs.git || git clone --depth=1 https://github.com/python-attrs/cattrs.git
@@ -350,7 +350,7 @@ jobs:
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
           version: "0.13.5"
-          checksum: "2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f"
+          checksum: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
           python-version: ${{ matrix.python-version }}
       - name: Checkout sqlalchemy
         run: git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git || git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git
@@ -387,7 +387,7 @@ jobs:
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
           version: "0.13.5"
-          checksum: "2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f"
+          checksum: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
           python-version: ${{ matrix.python-version }}
       - name: Checkout litestar
         run: git clone --depth=1 https://github.com/litestar-org/litestar.git || git clone --depth=1 https://github.com/litestar-org/litestar.git
