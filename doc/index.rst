@@ -143,7 +143,7 @@ Example usage::
 Python version support
 ----------------------
 
-``typing_extensions`` currently supports Python versions 3.9 and higher. In the future,
+``typing_extensions`` currently supports Python versions 3.11 and higher. In the future,
 support for older Python versions will be dropped some time after that version
 reaches end of life.
 
