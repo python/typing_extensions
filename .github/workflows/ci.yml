@@ -58,10 +58,6 @@ jobs:
         # For available versions, see:
         # https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
         python-version:
-          - "3.9"
-          - "3.9.12"
-          - "3.10"
-          - "3.10.4"
           - "3.11"
           - "3.11.0"
           - "3.12"
@@ -69,9 +65,10 @@ jobs:
           - "3.13"
           - "3.13.0"
           - "3.14"
-          - "pypy3.9"
-          - "pypy3.10"
+          - "3.15"
+          - "3.15.0"
           - "pypy3.11"
+          - "pypy3.12"
 
     runs-on: ubuntu-latest
 

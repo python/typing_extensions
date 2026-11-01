@@ -1,3 +1,7 @@
+# Unreleased
+
+- Drop support for Python 3.9 and 3.10.
+
 # Release 4.16.0 (July 2, 2026)
 
 No user-facing changes since 4.16.0rc2.
