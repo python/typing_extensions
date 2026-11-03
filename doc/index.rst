@@ -8,7 +8,7 @@ providing runtime support for type hints as specified by :pep:`484` and subseque
 PEPs. The module serves two related purposes:
 
 - Enable use of new type system features on older Python versions. For example,
-  :py:data:`typing.TypeGuard` is new in Python 3.10, but ``typing_extensions`` allows
+  :py:data:`typing.TypeIs` is new in Python 3.13, but ``typing_extensions`` allows
   users on previous Python versions to use it too.
 - Enable experimentation with type system features proposed in new PEPs before they are accepted and
   added to the :py:mod:`typing` module.
@@ -143,7 +143,7 @@ Example usage::
 Python version support
 ----------------------
 
-``typing_extensions`` currently supports Python versions 3.11 and higher. In the future,
+``typing_extensions`` currently supports Python versions 3.10 and higher. In the future,
 support for older Python versions will be dropped some time after that version
 reaches end of life.
 
