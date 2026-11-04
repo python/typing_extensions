@@ -992,6 +992,11 @@ class Cls:
         pass
 
 class DeprecatedCoroTests(BaseTestCase):
+    @skipUnless(
+        hasattr(asyncio, "coroutines")
+        and hasattr(asyncio.coroutines, "iscoroutinefunction"),
+        "asyncio.coroutines.iscoroutinefunction is unavailable",
+    )
     def test_asyncio_iscoroutinefunction(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
