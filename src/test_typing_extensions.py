@@ -6479,7 +6479,7 @@ class TypeFormTests(BaseTestCase):
         with self.assertRaises(TypeError):
             TypeForm()
         with self.assertRaises(TypeError):
-            TypeForm("too", "many")  # noqa: F821
+            TypeForm("too", "many") # noqa: F821
 
     def test_cannot_init_type(self):
         with self.assertRaises(TypeError):
