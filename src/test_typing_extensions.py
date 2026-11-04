@@ -6479,7 +6479,7 @@ class TypeFormTests(BaseTestCase):
         with self.assertRaises(TypeError):
             TypeForm()
         with self.assertRaises(TypeError):
-            TypeForm(int, str)
+            TypeForm("too", "many")
 
     def test_cannot_init_type(self):
         with self.assertRaises(TypeError):
