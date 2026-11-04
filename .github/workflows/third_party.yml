@@ -12,6 +12,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/third_party.yml"
+      - "scripts/remove_uv_version_requirement.py"
   workflow_dispatch:
 
 permissions:
@@ -52,19 +53,21 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
           python-version: ${{ matrix.python-version }}
       - name: Checkout pydantic
         run: git clone --depth=1 https://github.com/pydantic/pydantic.git || git clone --depth=1 https://github.com/pydantic/pydantic.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --no-project --python '>=3.11' typing-extensions-latest/scripts/remove_uv_version_requirement.py pydantic
       - name: Run tests with typing_extensions main branch
         working-directory: pydantic
         run: |
@@ -88,26 +91,28 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
           python-version: ${{ matrix.python-version }}
       - name: Checkout typing_inspect
         run: git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git || git clone --depth=1 https://github.com/ilevkivskyi/typing_inspect.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --no-project --python '>=3.11' typing-extensions-latest/scripts/remove_uv_version_requirement.py typing_inspect
       - name: Run tests with typing_extensions main branch
         working-directory: typing_inspect
         run: |
           set -x
           uv venv .venv
 
-          uv pip install -r test-requirements.txt --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -r test-requirements.txt --exclude-newer "$(git show -s --format=%cI HEAD)"
           uv pip install -e "typing-extensions @ ../typing-extensions-latest"
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
@@ -126,26 +131,28 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
           python-version: ${{ matrix.python-version }}
       - name: Check out pycroscope
         run: git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git || git clone --depth=1 https://github.com/JelleZijlstra/pycroscope.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --no-project --python '>=3.11' typing-extensions-latest/scripts/remove_uv_version_requirement.py pycroscope
       - name: Run tests with typing_extensions main branch
         working-directory: pycroscope
         run: |
           set -x
           uv venv .venv
 
-          uv pip install -e 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e 'pycroscope[tests] @ .' --exclude-newer "$(git show -s --format=%cI HEAD)"
           uv pip install -e "typing-extensions @ ../typing-extensions-latest"
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
@@ -164,19 +171,21 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
           python-version: ${{ matrix.python-version }}
       - name: Check out typeguard
         run: git clone --depth=1 https://github.com/agronholm/typeguard.git || git clone --depth=1 https://github.com/agronholm/typeguard.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --no-project --python '>=3.11' typing-extensions-latest/scripts/remove_uv_version_requirement.py typeguard
       - name: Run tests with typing_extensions main branch
         env:
           PYTHON_COLORS: 0  # A test fails if tracebacks are colorized
@@ -185,7 +194,7 @@ jobs:
           set -x
           uv venv .venv
 
-          uv pip install -e "typeguard @ ." --group test  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e "typeguard @ ." --group test  --exclude-newer "$(git show -s --format=%cI HEAD)"
           uv pip install -e "typing-extensions @ ../typing-extensions-latest"
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
@@ -205,19 +214,21 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
           python-version: ${{ matrix.python-version }}
       - name: Check out typed-argument-parser
         run: git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git || git clone --depth=1 https://github.com/swansonk14/typed-argument-parser.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --no-project --python '>=3.11' typing-extensions-latest/scripts/remove_uv_version_requirement.py typed-argument-parser
       - name: Configure git for typed-argument-parser tests
         # typed-argument parser does this in their CI,
         # and the tests fail unless we do this
@@ -230,8 +241,8 @@ jobs:
           set -x
           uv venv .venv
 
-          uv pip install -e "typed-argument-parser @ ."  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
-          uv pip install pytest  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -e "typed-argument-parser @ ."  --exclude-newer "$(git show -s --format=%cI HEAD)"
+          uv pip install pytest  --exclude-newer "$(git show -s --format=%cI HEAD)"
           uv pip install -e "typing-extensions @ ../typing-extensions-latest"
 
           printf "\n\nINSTALLED DEPENDENCIES ARE:\n\n"
@@ -251,26 +262,28 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
           python-version: ${{ matrix.python-version }}
       - name: Checkout mypy for stubtest and mypyc tests
         run: git clone --depth=1 https://github.com/python/mypy.git || git clone --depth=1 https://github.com/python/mypy.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --no-project --python '>=3.11' typing-extensions-latest/scripts/remove_uv_version_requirement.py mypy
       - name: Run tests with typing_extensions main branch
         working-directory: mypy
         run: |
           set -x
           uv venv .venv
 
-          uv pip install -r test-requirements.txt  --exclude-newer "$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd HEAD)"
+          uv pip install -r test-requirements.txt  --exclude-newer "$(git show -s --format=%cI HEAD)"
           uv pip install -e .
           uv pip install -e "typing_extensions @ ../typing-extensions-latest"
 
@@ -290,19 +303,21 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
           python-version: ${{ matrix.python-version }}
       - name: Checkout cattrs
         run: git clone --depth=1 https://github.com/python-attrs/cattrs.git || git clone --depth=1 https://github.com/python-attrs/cattrs.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --no-project --python '>=3.11' typing-extensions-latest/scripts/remove_uv_version_requirement.py cattrs
       - name: Run tests with typing_extensions main branch
         working-directory: cattrs
         run: |
@@ -331,19 +346,21 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
           python-version: ${{ matrix.python-version }}
       - name: Checkout sqlalchemy
         run: git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git || git clone -b ${{ matrix.checkout-ref }} --depth=1 https://github.com/sqlalchemy/sqlalchemy.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --no-project --python '>=3.11' typing-extensions-latest/scripts/remove_uv_version_requirement.py sqlalchemy
       - name: Run sqlalchemy tests with typing_extensions main branch
         working-directory: sqlalchemy
         run: |
@@ -366,19 +383,21 @@ jobs:
         python-version: [ "3.11", "3.12", "3.13" ]
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
           python-version: ${{ matrix.python-version }}
       - name: Checkout litestar
         run: git clone --depth=1 https://github.com/litestar-org/litestar.git || git clone --depth=1 https://github.com/litestar-org/litestar.git
       - name: Checkout typing_extensions
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           path: typing-extensions-latest
           persist-credentials: false
+      - name: Remove uv version requirement
+        run: uv run --no-project --python '>=3.11' typing-extensions-latest/scripts/remove_uv_version_requirement.py litestar
       - name: Run litestar tests with typing_extensions main branch
         working-directory: litestar
         run: |

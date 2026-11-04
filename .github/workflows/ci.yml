@@ -26,16 +26,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
         with:
           # renovate: datasource=github-release-attachments depName=astral-sh/uv
-          version: "0.12.7"
-          checksum: "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21"
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
           python-version: "3.14"
 
       - name: Build docs in nitpicky mode
@@ -55,40 +55,59 @@ jobs:
       matrix:
         # We try to test on the earliest available bugfix release of each
         # Python version, because typing sometimes changed between bugfix releases.
+        # For some of these versions, setup-python only provides these builds
+        # on older versions of Ubuntu.
         # For available versions, see:
         # https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
-        python-version:
-          - "3.9"
-          - "3.9.12"
-          - "3.10"
-          - "3.10.4"
-          - "3.11"
-          - "3.11.0"
-          - "3.12"
-          - "3.12.0"
-          - "3.13"
-          - "3.13.0"
-          - "3.14"
-          - "pypy3.9"
-          - "pypy3.10"
-          - "pypy3.11"
+        include:
+          - os: ubuntu-latest
+            python-version: "3.10"
+          - os: ubuntu-24.04
+            python-version: "3.10.4"
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: ubuntu-24.04
+            python-version: "3.11.0"
+          - os: ubuntu-latest
+            python-version: "3.12"
+          - os: ubuntu-24.04
+            python-version: "3.12.0"
+          - os: ubuntu-latest
+            python-version: "3.13"
+          - os: ubuntu-24.04
+            python-version: "3.13.0"
+          - os: ubuntu-latest
+            python-version: "3.14"
+          - os: ubuntu-24.04
+            python-version: "3.14.0"
+          - os: ubuntu-latest
+            python-version: "3.15"
+          - os: ubuntu-latest
+            python-version: "3.15.0"
+          - os: ubuntu-latest
+            python-version: "pypy3.10"
+          - os: ubuntu-latest
+            python-version: "pypy3.11"
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     permissions:
       contents: read
       id-token: write  # for codecov upload
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+          # Test the latest patch release for entries like "3.11", even when
+          # the runner has an older patch release cached.
+          check-latest: true
 
       - name: Install coverage
         run: |
@@ -117,7 +136,7 @@ jobs:
           python -c 'import typing_extensions; import test.__main__' test_typing -v
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.1.1
         if: >-
           github.repository == 'python/typing_extensions'
           && (github.event_name == 'push' || github.event_name == 'pull_request')
