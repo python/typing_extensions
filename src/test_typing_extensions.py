@@ -5646,6 +5646,18 @@ class AnnotatedTests(BaseTestCase):
 
 
 class GetTypeHintsTests(BaseTestCase):
+    def test_get_type_hints_lone_stringified_classvar(self):
+        class Parent:
+            parent: 'ClassVar' = 1
+
+        class Child(Parent):
+            child: 'typing.ClassVar' = 2
+
+        self.assertEqual(
+            get_type_hints(Child, globals()),
+            {'parent': ClassVar, 'child': typing.ClassVar},
+        )
+
     def test_get_type_hints(self):
         def foobar(x: List['X']): ...
         X = Annotated[int, (1, 10)]
