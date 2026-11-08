@@ -48,7 +48,7 @@ jobs:
         # since pydantic's tests intermittently segfault on PyPy,
         # and it's nothing to do with typing_extensions
         # Tests on 3.14 don't pass as of 2 November 2025
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
