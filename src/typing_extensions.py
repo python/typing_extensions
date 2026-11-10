@@ -1602,9 +1602,37 @@ else:  # <=3.13
         - If two dict arguments are passed, they specify globals and
           locals, respectively.
         """
-        hint = typing.get_type_hints(
-            obj, globalns=globalns, localns=localns, include_extras=True
-        )
+        if sys.version_info < (3, 11) and isinstance(obj, type):
+            hint = {}
+            for base in reversed(obj.__mro__):
+                base_globals = (
+                    getattr(sys.modules.get(base.__module__), '__dict__', {})
+                    if globalns is None else globalns
+                )
+                annotations = base.__dict__.get('__annotations__', {})
+                if isinstance(annotations, _types.GetSetDescriptorType):
+                    annotations = {}
+                base_locals = dict(vars(base)) if localns is None else localns
+                if localns is None and globalns is None:
+                    base_globals, base_locals = base_locals, base_globals
+                for name, value in annotations.items():
+                    if value is None:
+                        value = type(None)
+                    elif isinstance(value, str):
+                        evaluated = eval(value, base_globals, base_locals)
+                        if evaluated is ClassVar:
+                            value = evaluated
+                        else:
+                            value = ForwardRef(
+                                value, is_argument=False, is_class=True
+                            )
+                    hint[name] = typing._eval_type(
+                        value, base_globals, base_locals
+                    )
+        else:
+            hint = typing.get_type_hints(
+                obj, globalns=globalns, localns=localns, include_extras=True
+            )
         # Breakpoint: https://github.com/python/cpython/pull/30304
         if sys.version_info < (3, 11):
             _clean_optional(obj, hint, globalns, localns)
