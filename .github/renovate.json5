@@ -1,91 +1,81 @@
 {
-  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  extends: [
-    'config:recommended',
-    'schedule:monthly',
-    'helpers:pinGitHubActionDigestsToSemver',
-    'replacements:all',
-    'abandonments:recommended',
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "schedule:monthly",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "replacements:all",
+    "abandonments:recommended"
   ],
-  configMigration: true,
-  dependencyDashboard: {
-    enabled: true,
+  "configMigration": true,
+  "dependencyDashboard": {
+    "enabled": true
   },
-  separateMajorMinor: false,
-  prHourlyLimit: 0,
-  prConcurrentLimit: 0,
-  semanticCommits: 'disabled',
-  suppressNotifications: [
-    'prEditedNotification',
-  ],
-  enabledManagers: [
-    'github-actions',
-    'custom.regex',
-    'pre-commit',
-    'pep621',
-  ],
-  'pre-commit': {
-    enabled: true,
+  "separateMajorMinor": false,
+
+  // By default, Renovate will only create 2 PRs in any single hourly interval.
+  // But we only allow Renovate to create PRs between midnight and 4am on the first
+  // day of each month, so this is not sufficient in general. Per the docs,
+  // 0 means "no limit": <https://docs.renovatebot.com/configuration-options/#prhourlylimit>
+  "prHourlyLimit": 0,
+
+  // Similarly, by default, Renovate will not create any new PRs if it already has 10 open
+  // on this repo, but that isn't generally what we want: we generally want dependency update PRs
+  // for all available dependencies. Per the docs, 0 means "no limit":
+  // <https://docs.renovatebot.com/configuration-options/#prconcurrentlimit>
+  "prConcurrentLimit": 0,
+
+  // Conventions: we generally don't use semantic commits.
+  "semanticCommits": "disabled",
+
+  // These notifications are very noisy.
+  "suppressNotifications": ["prEditedNotification"],
+
+  "enabledManagers": ["github-actions", "custom.regex", "pre-commit", "pep621"],
+  "pre-commit": {
+    "enabled": true
   },
-  minimumReleaseAge: '7 days',
-  packageRules: [
+  "minimumReleaseAge": "7 days",
+  "packageRules": [
     {
-      matchUpdateTypes: [
-        'pinDigest',
-      ],
-      minimumReleaseAge: null,
+      // Pin versions already in use without waiting for the upgrade cooldown.
+      "matchUpdateTypes": ["pinDigest"],
+      "minimumReleaseAge": null
     },
     {
-      matchManagers: [
-        'github-actions',
-      ],
-      matchDepTypes: [
-        'uses-with',
-        'github-runner',
-        'docker',
-        'container',
-        'service',
-      ],
-      enabled: false,
+      // Preserve Python versions, runners, and containers. The custom manager
+      // handles tool inputs so uv's version and checksum are updated together.
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["uses-with", "github-runner", "docker", "container", "service"],
+      "enabled": false
     },
     {
-      matchManagers: [
-        'pep621',
-      ],
-      matchDepTypes: [
-        '!build-system.requires',
-      ],
-      enabled: false,
+      // Only manage build requirements; preserve Python support and library dependencies.
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["!build-system.requires"],
+      "enabled": false
     },
     {
-      matchFileNames: [
-        '.pre-commit-config.yaml',
-      ],
-      groupName: 'pre-commit dependencies',
+      "matchFileNames": [".pre-commit-config.yaml"],
+      "groupName": "pre-commit dependencies"
     },
     {
-      matchFileNames: [
-        '.github/workflows/**',
-      ],
-      groupName: 'GitHub Actions dependencies',
+      "matchFileNames": [".github/workflows/**"],
+      "groupName": "GitHub Actions dependencies"
     },
     {
-      matchManagers: [
-        'pep621',
-      ],
-      groupName: 'Build dependencies',
-    },
+      "matchManagers": ["pep621"],
+      "groupName": "Build dependencies"
+    }
   ],
-  customManagers: [
+  "customManagers": [
     {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/^\\.github/workflows/(ci|third_party)\\.yml$/',
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/(ci|third_party)\\.yml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+version: \"(?<currentValue>[^\"\\r\\n]+)\"(?:\\s+checksum: \"(?<currentDigest>[a-f0-9]{64})\")?"
       ],
-      matchStrings: [
-        '# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+version: "(?<currentValue>[^"\\r\\n]+)"(?:\\s+checksum: "(?<currentDigest>[a-f0-9]{64})")?',
-      ],
-      versioningTemplate: 'semver',
-    },
-  ],
+      "versioningTemplate": "semver"
+    }
+  ]
 }
