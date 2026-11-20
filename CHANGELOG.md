@@ -1,6 +1,8 @@
 # Unreleased
 
 - Drop support for Python 3.9.
+- Raise a clearer `TypeError` when a non-string name is passed to the functional
+  `TypedDict()` syntax.
 
 # Release 4.16.0 (July 2, 2026)
 

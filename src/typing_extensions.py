@@ -1367,6 +1367,12 @@ else:
         extra_items,
         **kwargs,
     ):
+        if not isinstance(typename, str):
+            raise TypeError(
+                "TypedDict() argument 'typename' must be str, "
+                f"not {type(typename).__name__}"
+            )
+
         if fields is _marker or fields is None:
             if fields is _marker:
                 deprecated_thing = (
