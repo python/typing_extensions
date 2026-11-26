@@ -5984,7 +5984,7 @@ class ParamSpecTests(BaseTestCase):
                 G9 = klass[Concatenate[T, P_2]]
                 self.assertEqual(G9.__args__, (Concatenate[T, P_2], ))
 
-                # This is an invalid form but useful for testing correct subsitution
+                # This is an invalid form but useful for testing correct substitution
                 G10 = klass[int, Concatenate[str, P]]
                 G10args = G10.__args__[0] if sys.version_info >= (3, 10) else G10.__args__
                 self.assertEqual(G10args, (int, Concatenate[str, P], ))
@@ -6049,7 +6049,7 @@ class ParamSpecTests(BaseTestCase):
                     H9 = G9[int, [T]]
                     self.assertEqual(H9.__parameters__, (T,))
 
-                # This is an invalid parameter expression but useful for testing correct subsitution
+                # This is an invalid parameter expression but useful for testing correct substitution
                 G10 = klass[int, Concatenate[str, P]]
                 with self.subTest("Check invalid form substitution"):
                     self.assertEqual(G10.__parameters__, (P, ))
