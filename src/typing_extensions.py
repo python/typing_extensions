@@ -271,16 +271,6 @@ Sentinel = sentinel
 _marker = sentinel("sentinel")
 
 
-# The functions below are modified copies of typing internal helpers.
-# They are needed by _ProtocolMeta and they provide support for PEP 646.
-
-
-def _should_collect_from_parameters(t):
-    return isinstance(
-        t, (typing._GenericAlias, _types.GenericAlias, _types.UnionType)
-    )
-
-
 NoReturn = typing.NoReturn
 
 # Some unconstrained type variables.  These are used by the container types.
@@ -2084,7 +2074,8 @@ if not hasattr(typing, 'Concatenate'):
                     f"Too {'many' if alen > plen else 'few'} arguments for {self};"
                     f" actual {alen}, expected {plen}"
                 )
-
+            # Explicit strict=False for backwards compatibility
+            # and to match CPython's equivalent implementation.
             subst = dict(zip(self.__parameters__, args, strict=False))
             # determine new args
             new_args = []
@@ -3283,7 +3274,9 @@ if hasattr(typing, '_collect_type_vars'):
                                         ' follows type parameter with a default')
 
                 tvars.append(t)
-            if _should_collect_from_parameters(t):
+            if isinstance(t, (typing._GenericAlias,
+                            _types.GenericAlias,
+                            _types.UnionType)):
                 tvars.extend([t for t in t.__parameters__ if t not in tvars])
             elif isinstance(t, tuple):
                 # Collect nested type_vars
@@ -3796,7 +3789,6 @@ else:
                 raise TypeError("Only generic type aliases are subscriptable")
             if not isinstance(parameters, tuple):
                 parameters = (parameters,)
-            # Using 3.9 here will create problems with Concatenate
             return _types.GenericAlias(self, parameters)
 
         def __reduce__(self):

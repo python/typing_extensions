@@ -63,7 +63,6 @@ exclude = []
 
 [tool.ruff]
 line-length = 90
-target-version = "py310"
 
 [tool.ruff.lint]
 select = [
