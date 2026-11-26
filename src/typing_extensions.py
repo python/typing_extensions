@@ -3157,9 +3157,7 @@ if not hasattr(typing, "TypeVarTuple"):
 
                     expect_val = f"at least {elen}"
 
-            # Breakpoint: https://github.com/python/cpython/pull/27515
-            things = "arguments" if sys.version_info >= (3, 10) else "parameters"
-            raise TypeError(f"Too {'many' if alen > elen else 'few'} {things}"
+            raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
                             f" for {cls}; actual {alen}, expected {expect_val}")
 else:
     # Python 3.11+
@@ -3274,9 +3272,10 @@ if hasattr(typing, '_collect_type_vars'):
                                         ' follows type parameter with a default')
 
                 tvars.append(t)
-            if isinstance(t, (typing._GenericAlias,
-                            _types.GenericAlias,
-                            _types.UnionType)):
+            if isinstance(
+                t,
+                (typing._GenericAlias, _types.GenericAlias, _types.UnionType)
+            ):
                 tvars.extend([t for t in t.__parameters__ if t not in tvars])
             elif isinstance(t, tuple):
                 # Collect nested type_vars
