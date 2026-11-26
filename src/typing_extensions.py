@@ -256,13 +256,11 @@ else:
             def __call__(self, *args, **kwargs):
                 raise TypeError(f"{type(self).__name__!r} object is not callable")
 
-        # Breakpoint: https://github.com/python/cpython/pull/21515
-        if sys.version_info >= (3, 10):
-            def __or__(self, other):
-                return typing.Union[self, other]
+        def __or__(self, other):
+            return typing.Union[self, other]
 
-            def __ror__(self, other):
-                return typing.Union[other, self]
+        def __ror__(self, other):
+            return typing.Union[other, self]
 
         def __reduce__(self) -> str:
             """Reduce this sentinel to a singleton."""
@@ -276,15 +274,11 @@ _marker = sentinel("sentinel")
 # The functions below are modified copies of typing internal helpers.
 # They are needed by _ProtocolMeta and they provide support for PEP 646.
 
-# Breakpoint: https://github.com/python/cpython/pull/27342
-if sys.version_info >= (3, 10):
-    def _should_collect_from_parameters(t):
-        return isinstance(
-            t, (typing._GenericAlias, _types.GenericAlias, _types.UnionType)
-        )
-else:
-    def _should_collect_from_parameters(t):
-        return isinstance(t, (typing._GenericAlias, _types.GenericAlias))
+
+def _should_collect_from_parameters(t):
+    return isinstance(
+        t, (typing._GenericAlias, _types.GenericAlias, _types.UnionType)
+    )
 
 
 NoReturn = typing.NoReturn
@@ -1676,57 +1670,9 @@ else:  # <=3.13
             ):
                 hints[name] = original_evaluated
 
-# Python 3.9 has get_origin() and get_args() but those implementations don't support
-# ParamSpecArgs and ParamSpecKwargs, so only Python 3.10's versions will do.
-# Breakpoint: https://github.com/python/cpython/pull/25298
-if sys.version_info >= (3, 10):
-    get_origin = typing.get_origin
-    get_args = typing.get_args
-# 3.9
-else:
-    def get_origin(tp):
-        """Get the unsubscripted version of a type.
 
-        This supports generic types, Callable, Tuple, Union, Literal, Final, ClassVar
-        and Annotated. Return None for unsupported types. Examples::
-
-            get_origin(Literal[42]) is Literal
-            get_origin(int) is None
-            get_origin(ClassVar[int]) is ClassVar
-            get_origin(Generic) is Generic
-            get_origin(Generic[T]) is Generic
-            get_origin(Union[T, int]) is Union
-            get_origin(List[Tuple[T, T]][int]) == list
-            get_origin(P.args) is P
-        """
-        if isinstance(tp, typing._AnnotatedAlias):
-            return Annotated
-        if isinstance(tp, (typing._BaseGenericAlias, _types.GenericAlias,
-                           ParamSpecArgs, ParamSpecKwargs)):
-            return tp.__origin__
-        if tp is typing.Generic:
-            return typing.Generic
-        return None
-
-    def get_args(tp):
-        """Get type arguments with all substitutions performed.
-
-        For unions, basic simplifications used by Union constructor are performed.
-        Examples::
-            get_args(Dict[str, int]) == (str, int)
-            get_args(int) == ()
-            get_args(Union[int, Union[T, int], str][int]) == (int, str)
-            get_args(Union[int, Tuple[T, int]][str]) == (int, Tuple[str, int])
-            get_args(Callable[[], T][int]) == ([], int)
-        """
-        if isinstance(tp, typing._AnnotatedAlias):
-            return (tp.__origin__, *tp.__metadata__)
-        if isinstance(tp, (typing._GenericAlias, _types.GenericAlias)):
-            res = tp.__args__
-            if get_origin(tp) is collections.abc.Callable and res[0] is not Ellipsis:
-                res = (list(res[:-1]), res[-1])
-            return res
-        return ()
+get_origin = typing.get_origin
+get_args = typing.get_args
 
 
 # 3.10+
@@ -2047,10 +1993,6 @@ if not hasattr(typing, 'Concatenate'):
             if arg is None:
                 return type(None)
             if isinstance(arg, str):
-                if sys.version_info <= (3, 9, 6):
-                    return ForwardRef(arg)
-                if sys.version_info <= (3, 9, 7):
-                    return ForwardRef(arg, module=module)
                 return ForwardRef(arg, module=module, is_class=allow_special_forms)
             return arg
     else:
@@ -2143,7 +2085,7 @@ if not hasattr(typing, 'Concatenate'):
                     f" actual {alen}, expected {plen}"
                 )
 
-            subst = dict(zip(self.__parameters__, args))
+            subst = dict(zip(self.__parameters__, args, strict=False))
             # determine new args
             new_args = []
             for arg in self.__args__:
@@ -2222,9 +2164,6 @@ def _create_concatenate_alias(origin, parameters):
     # Remove dummy again
     concatenate.__args__ = tuple(p if p is not _EllipsisDummy else ...
                                     for p in concatenate.__args__)
-    if sys.version_info < (3, 10):
-        # backport needs __args__ adjustment only
-        return concatenate
     concatenate.__parameters__ = tuple(p for p in concatenate.__parameters__
                                         if p is not _EllipsisDummy)
     return concatenate
@@ -3156,24 +3095,18 @@ else:
                     f"a class or callable, not {arg!r}"
                 )
 
-# Breakpoint: https://github.com/python/cpython/pull/23702
-if sys.version_info < (3, 10):
-    def _is_param_expr(arg):
-        return arg is ... or isinstance(
-            arg, (tuple, list, ParamSpec, _ConcatenateGenericAlias)
-        )
-else:
-    def _is_param_expr(arg):
-        return arg is ... or isinstance(
-            arg,
-            (
-                tuple,
-                list,
-                ParamSpec,
-                _ConcatenateGenericAlias,
-                typing._ConcatenateGenericAlias,
-            ),
-        )
+
+def _is_param_expr(arg):
+    return arg is ... or isinstance(
+        arg,
+        (
+            tuple,
+            list,
+            ParamSpec,
+            _ConcatenateGenericAlias,
+            typing._ConcatenateGenericAlias,
+        ),
+    )
 
 
 # We have to do some monkey patching to deal with the dual nature of
@@ -3705,16 +3638,11 @@ else:
         def __reduce__(self):
             return self.__qualname__
 
-        # Breakpoint: https://github.com/python/cpython/pull/21515
-        if sys.version_info >= (3, 10):
-            # PEP 604 methods
-            # It doesn't make sense to have these methods on Python <3.10
+        def __or__(self, other):
+            return typing.Union[self, other]
 
-            def __or__(self, other):
-                return typing.Union[self, other]
-
-            def __ror__(self, other):
-                return typing.Union[other, self]
+        def __ror__(self, other):
+            return typing.Union[other, self]
 
 
 # Breakpoint: https://github.com/python/cpython/pull/149172
@@ -3744,31 +3672,6 @@ else:
                 _types.UnionType,
                 TypeAliasType,
             ))
-
-    if sys.version_info < (3, 10):
-        # Copied and pasted from https://github.com/python/cpython/blob/986a4e1b6fcae7fe7a1d0a26aea446107dd58dd2/Objects/genericaliasobject.c#L568-L582,
-        # so that we emulate the behaviour of `types.GenericAlias`
-        # on the latest versions of CPython
-        _ATTRIBUTE_DELEGATION_EXCLUSIONS = frozenset({
-            "__class__",
-            "__bases__",
-            "__origin__",
-            "__args__",
-            "__unpacked__",
-            "__parameters__",
-            "__typing_unpacked_tuple_args__",
-            "__mro_entries__",
-            "__reduce_ex__",
-            "__reduce__",
-            "__copy__",
-            "__deepcopy__",
-        })
-
-        class _TypeAliasGenericAlias(typing._GenericAlias, _root=True):
-            def __getattr__(self, attr):
-                if attr in _ATTRIBUTE_DELEGATION_EXCLUSIONS:
-                    return object.__getattr__(self, attr)
-                return getattr(self.__origin__, attr)
 
 
     class TypeAliasType:
@@ -3894,16 +3797,7 @@ else:
             if not isinstance(parameters, tuple):
                 parameters = (parameters,)
             # Using 3.9 here will create problems with Concatenate
-            if sys.version_info >= (3, 10):
-                return _types.GenericAlias(self, parameters)
-            type_vars = _collect_type_vars(parameters)
-            parameters = self._check_parameters(parameters)
-            alias = _TypeAliasGenericAlias(self, parameters)
-            # alias.__parameters__ is not complete if Concatenate is present
-            # as it is converted to a list from which no parameters are extracted.
-            if alias.__parameters__ != type_vars:
-                alias.__parameters__ = type_vars
-            return alias
+            return _types.GenericAlias(self, parameters)
 
         def __reduce__(self):
             return self.__name__
@@ -3918,19 +3812,17 @@ else:
         def __call__(self):
             raise TypeError("Type alias is not callable")
 
-        # Breakpoint: https://github.com/python/cpython/pull/21515
-        if sys.version_info >= (3, 10):
-            def __or__(self, right):
-                # For forward compatibility with 3.12, reject Unions
-                # that are not accepted by the built-in Union.
-                if not _is_unionable(right):
-                    return NotImplemented
-                return typing.Union[self, right]
+        def __or__(self, right):
+            # For forward compatibility with 3.12, reject Unions
+            # that are not accepted by the built-in Union.
+            if not _is_unionable(right):
+                return NotImplemented
+            return typing.Union[self, right]
 
-            def __ror__(self, left):
-                if not _is_unionable(left):
-                    return NotImplemented
-                return typing.Union[left, self]
+        def __ror__(self, left):
+            if not _is_unionable(left):
+                return NotImplemented
+            return typing.Union[left, self]
 
 
 if hasattr(typing, "is_protocol"):

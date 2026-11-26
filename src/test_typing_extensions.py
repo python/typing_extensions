@@ -3958,20 +3958,17 @@ class ProtocolTests(BaseTestCase):
         with self.assertRaises(TypeError):
             MemoizedFunc[[int, str, str]]
 
-        if sys.version_info >= (3, 10):
-            # These unfortunately don't pass on 3.9,
-            # due to typing._type_check on older Python versions
-            X = MemoizedFunc[[int, str, str], T, T2]
-            self.assertEqual(X.__parameters__, (T, T2))
-            self.assertEqual(X.__args__, ((int, str, str), T, T2))
+        X = MemoizedFunc[[int, str, str], T, T2]
+        self.assertEqual(X.__parameters__, (T, T2))
+        self.assertEqual(X.__args__, ((int, str, str), T, T2))
 
-            Y = X[bytes, memoryview]
-            self.assertEqual(Y.__parameters__, ())
-            self.assertEqual(Y.__args__, ((int, str, str), bytes, memoryview))
+        Y = X[bytes, memoryview]
+        self.assertEqual(Y.__parameters__, ())
+        self.assertEqual(Y.__args__, ((int, str, str), bytes, memoryview))
 
-            # Regression test; fixing #126 might cause an error here
-            with self.assertRaisesRegex(TypeError, "not a generic class"):
-                Y[int]
+        # Regression test; fixing #126 might cause an error here
+        with self.assertRaisesRegex(TypeError, "not a generic class"):
+            Y[int]
 
     def test_protocol_generic_over_typevartuple(self):
         Ts = TypeVarTuple("Ts")
@@ -6040,8 +6037,6 @@ class ParamSpecTests(BaseTestCase):
                     G9[int]
 
                 with self.subTest("Check list as parameter expression", klass=klass.__name__):
-                    if sys.version_info < (3, 10):
-                        self.skipTest("Cannot pass non-types")
                     G5 = klass[[int, str, T]]
                     self.assertEqual(G5.__parameters__, (T,))
                     self.assertEqual(G5.__args__, ((int, str, T),))
@@ -7182,8 +7177,6 @@ class AllTests(BaseTestCase):
         # as PEP 764 has not yet been accepted/implemented upstream.
         exclude = {'TypedDict', 'is_typeddict'}
 
-        if sys.version_info < (3, 10):
-            exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 10, 1):
             exclude |= {"Literal"}
         if sys.version_info < (3, 11):
@@ -8402,18 +8395,14 @@ class TypeAliasTypeTests(BaseTestCase):
 
     def test_or(self):
         Alias = TypeAliasType("Alias", int)
-        if sys.version_info >= (3, 10):
-            self.assertEqual(Alias | int, Union[Alias, int])
-            self.assertEqual(Alias | None, Union[Alias, None])
-            self.assertEqual(Alias | (int | str), Union[Alias, int | str])
-            self.assertEqual(Alias | list[float], Union[Alias, list[float]])
+        self.assertEqual(Alias | int, Union[Alias, int])
+        self.assertEqual(Alias | None, Union[Alias, None])
+        self.assertEqual(Alias | (int | str), Union[Alias, int | str])
+        self.assertEqual(Alias | list[float], Union[Alias, list[float]])
 
-            if sys.version_info >= (3, 12):
-                Alias2 = typing.TypeAliasType("Alias2", str)
-                self.assertEqual(Alias | Alias2, Union[Alias, Alias2])
-        else:
-            with self.assertRaises(TypeError):
-                Alias | int
+        if sys.version_info >= (3, 12):
+            Alias2 = typing.TypeAliasType("Alias2", str)
+            self.assertEqual(Alias | Alias2, Union[Alias, Alias2])
         # Rejected on all versions
         with self.assertRaises(TypeError):
             Alias | "Ref"
