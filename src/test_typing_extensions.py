@@ -3967,7 +3967,7 @@ class ProtocolTests(BaseTestCase):
         # That means this assertion doesn't pass on 3.11.0,
         # but it passes on all other Python versions
         if sys.version_info[:3] != (3, 11, 0):
-            with self.assertRaisesRegex(TypeError, f"Too few arguments"):
+            with self.assertRaisesRegex(TypeError, "Too few arguments"):
                 MemoizedFunc[int]
 
         X = MemoizedFunc[int, T, T2]
@@ -6002,7 +6002,7 @@ class ParamSpecTests(BaseTestCase):
                 ):
                     G9[int, int]
 
-                with self.assertRaisesRegex(TypeError, f"Too few arguments"):
+                with self.assertRaisesRegex(TypeError, "Too few arguments"):
                     G9[int]
 
                 with self.subTest("Check list as parameter expression", klass=klass.__name__):
@@ -7337,7 +7337,7 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIsInstance(a, G)
                 self.assertEqual(a.x, 3)
 
-                with self.assertRaisesRegex(TypeError, f'Too many arguments'):
+                with self.assertRaisesRegex(TypeError, 'Too many arguments'):
                     G[int, str]
 
     def test_non_generic_subscript_py39_plus(self):
