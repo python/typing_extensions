@@ -150,10 +150,6 @@ GOOD_TYPEVARTUPLE_REPR_EXPECTED = (
     is typing_extensions.TypeVarTuple
 )
 
-# https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
-# versions, but not all
-HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
-
 skip_if_py313_beta_1 = skipIf(
     sys.version_info[:5] == (3, 13, 0, 'beta', 1),
     "Bugfixes will be released in 3.13.0b2"
@@ -1916,18 +1912,11 @@ class GetUtilitiesTestCase(TestCase):
         self.assertEqual(get_args(Callable), ())
         self.assertEqual(get_args(list[int]), (int,))
         self.assertEqual(get_args(list), ())
-        # Support Python versions with and without the fix for
-        # https://bugs.python.org/issue42195
-        # The first variant is for 3.9.2+, the second for 3.9.0 and 1
-        self.assertIn(get_args(collections.abc.Callable[[int], str]),
-                        (([int], str), ([[int]], str)))
-        self.assertIn(get_args(collections.abc.Callable[[], str]),
-                        (([], str), ([[]], str)))
+        self.assertEqual(get_args(collections.abc.Callable[[int], str]), ([int], str))
+        self.assertEqual(get_args(collections.abc.Callable[[], str]), ([], str))
         self.assertEqual(get_args(collections.abc.Callable[..., str]), (..., str))
         P = ParamSpec('P')
-        # In 3.9 we use typing_extensions's hacky implementation
-        # of ParamSpec, which gets incorrectly wrapped in a list
-        self.assertIn(get_args(Callable[P, int]), [(P, int), ([P], int)])
+        self.assertEqual(get_args(Callable[P, int]), (P, int))
         self.assertEqual(get_args(Required[int]), (int,))
         self.assertEqual(get_args(NotRequired[int]), (int,))
         self.assertEqual(get_args(Unpack[Ts]), (Ts,))
@@ -4789,7 +4778,6 @@ class TypedDictTests(BaseTestCase):
         assert is_typeddict(PointDict2D) is True
         assert is_typeddict(PointDict3D) is True
 
-    @skipUnless(HAS_FORWARD_MODULE, "ForwardRef.__forward_module__ was added in 3.9.7")
     def test_get_type_hints_cross_module_subclass(self):
         self.assertNotIn("_DoNotImport", globals())
         self.assertEqual(
@@ -9501,9 +9489,6 @@ class EvaluateForwardRefTests(BaseTestCase):
             evaluate_forward_ref(typing.ForwardRef("alias"), owner=Gen, locals={"alias": str}), str
         )
 
-    @skipUnless(
-        HAS_FORWARD_MODULE, "Needs module 'forward' to test forward references"
-    )
     def test_fwdref_with_module(self):
         self.assertIs(
             evaluate_forward_ref(typing.ForwardRef("Counter", module="collections")), collections.Counter
@@ -9519,8 +9504,7 @@ class EvaluateForwardRefTests(BaseTestCase):
 
     def test_fwdref_to_builtin(self):
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), int)
-        if HAS_FORWARD_MODULE:
-            self.assertIs(evaluate_forward_ref(typing.ForwardRef("int", module="collections")), int)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int", module="collections")), int)
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), owner=str), int)
 
         # builtins are still searched with explicit globals
