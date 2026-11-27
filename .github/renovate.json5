@@ -8,7 +8,9 @@
     "abandonments:recommended"
   ],
   "configMigration": true,
-  "dependencyDashboard": true,
+  "dependencyDashboard": {
+    "enabled": true
+  },
   "separateMajorMinor": false,
 
   // By default, Renovate will only create 2 PRs in any single hourly interval.
