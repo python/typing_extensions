@@ -112,10 +112,6 @@ T = TypeVar("T")
 KT = TypeVar("KT")
 VT = TypeVar("VT")
 
-# Flags used to mark tests that only apply after a specific
-# version of the typing module.
-TYPING_3_10_0 = sys.version_info[:3] >= (3, 10, 0)
-
 # 3.11 makes runtime type checks (_type_check) more lenient.
 TYPING_3_11_0 = sys.version_info[:3] >= (3, 11, 0)
 
@@ -153,10 +149,6 @@ GOOD_TYPEVARTUPLE_REPR_EXPECTED = (
     type(typing_extensions.TypeVarTuple("Ts"))
     is typing_extensions.TypeVarTuple
 )
-
-# https://github.com/python/cpython/pull/27017 was backported into some 3.9 and 3.10
-# versions, but not all
-HAS_FORWARD_MODULE = "module" in inspect.signature(typing._type_check).parameters
 
 skip_if_py313_beta_1 = skipIf(
     sys.version_info[:5] == (3, 13, 0, 'beta', 1),
@@ -553,7 +545,6 @@ class BottomTypeTestsMixin:
             pickled = pickle.dumps(self.bottom_type, protocol=proto)
             self.assertIs(self.bottom_type, pickle.loads(pickled))
 
-    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
     def test_or(self):
         self.assertEqual(self.bottom_type | int, Union[self.bottom_type, int])
         self.assertEqual(int | self.bottom_type, Union[int, self.bottom_type])
@@ -1372,7 +1363,6 @@ class LiteralTests(BaseTestCase):
         self.assertEqual(Union[Literal[1], Literal[Ints.B], Literal[True]].__args__,
                          (Literal[1], Literal[Ints.B], Literal[True]))
 
-    @skipUnless(TYPING_3_10_0, "Python 3.10+ required")
     def test_or_type_operator_with_Literal(self):
         self.assertEqual((Literal[1] | Literal[2]).__args__,
                          (Literal[1], Literal[2]))
@@ -1799,6 +1789,8 @@ class GetTypeHintTests(BaseTestCase):
             Union[str, "Union[None, StrAlias]"]: Optional[str],
             Union["annotation", T_default]     : Union[annotation, T_default],
             Annotated["annotation", "nested"]  : Annotated[Union[int, None], "data", "nested"],
+            "str | NoneAlias | StrAlias"       : str | None,
+            str | None                         : Optional[str],
             # Note: A starred *Ts will use typing.Unpack in 3.11+ see Issue #485
             Unpack[Ts]                         : Unpack[Ts],
         }
@@ -1808,9 +1800,6 @@ class GetTypeHintTests(BaseTestCase):
             do_not_stringify_cases[Unpack[Ts]] = Unpack[Ts]
         else:
             cases[Unpack[Ts]] = Unpack[Ts]
-        if TYPING_3_10_0:  # cannot construct UnionTypes before 3.10
-            do_not_stringify_cases["str | NoneAlias | StrAlias"] = str | None
-            cases[str | None] = Optional[str]
         cases.update(do_not_stringify_cases)
         for (annot, expected), none_default, as_str, wrap_optional in itertools.product(
             cases.items(), (False, True), (False, True), (False, True)
@@ -1923,18 +1912,11 @@ class GetUtilitiesTestCase(TestCase):
         self.assertEqual(get_args(Callable), ())
         self.assertEqual(get_args(list[int]), (int,))
         self.assertEqual(get_args(list), ())
-        # Support Python versions with and without the fix for
-        # https://bugs.python.org/issue42195
-        # The first variant is for 3.9.2+, the second for 3.9.0 and 1
-        self.assertIn(get_args(collections.abc.Callable[[int], str]),
-                        (([int], str), ([[int]], str)))
-        self.assertIn(get_args(collections.abc.Callable[[], str]),
-                        (([], str), ([[]], str)))
+        self.assertEqual(get_args(collections.abc.Callable[[int], str]), ([int], str))
+        self.assertEqual(get_args(collections.abc.Callable[[], str]), ([], str))
         self.assertEqual(get_args(collections.abc.Callable[..., str]), (..., str))
         P = ParamSpec('P')
-        # In 3.9 we use typing_extensions's hacky implementation
-        # of ParamSpec, which gets incorrectly wrapped in a list
-        self.assertIn(get_args(Callable[P, int]), [(P, int), ([P], int)])
+        self.assertEqual(get_args(Callable[P, int]), (P, int))
         self.assertEqual(get_args(Required[int]), (int,))
         self.assertEqual(get_args(NotRequired[int]), (int,))
         self.assertEqual(get_args(Unpack[Ts]), (Ts,))
@@ -2257,7 +2239,6 @@ class GeneratorTests(BaseTestCase):
         A.register(B)
         self.assertIsSubclass(B, typing_extensions.Generator)
 
-    @skipIf(sys.version_info < (3, 10), "PEP 604 has yet to be")
     def test_or_and_ror(self):
         self.assertEqual(
             typing_extensions.Generator | typing_extensions.AsyncGenerator,
@@ -2410,7 +2391,6 @@ class NewTypeTests(BaseTestCase):
             class D(UserId):
                 pass
 
-    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
     def test_or(self):
         for cls in (int, self.UserName):
             with self.subTest(cls=cls):
@@ -3644,11 +3624,6 @@ class ProtocolTests(BaseTestCase):
             PR[int]
         with self.assertRaises(TypeError):
             P[int, str]
-        if not TYPING_3_10_0:
-            with self.assertRaises(TypeError):
-                PR[int, 1]
-            with self.assertRaises(TypeError):
-                PR[int, ClassVar]
         class C(PR[int, T]): pass
         self.assertIsInstance(C[str](), C)
 
@@ -3665,9 +3640,6 @@ class ProtocolTests(BaseTestCase):
         self.assertIsSubclass(P, PR)
         with self.assertRaises(TypeError):
             PR[int]
-        if not TYPING_3_10_0:
-            with self.assertRaises(TypeError):
-                PR[int, 1]
         class P1(Protocol, Generic[T]):
             def bar(self, x: T) -> str: ...
         class P2(Generic[T], Protocol):
@@ -3680,9 +3652,6 @@ class ProtocolTests(BaseTestCase):
             def bar(self, x: str) -> str:
                 return x  # pragma: no cover
         self.assertIsInstance(Test(), PSub)
-        if not TYPING_3_10_0:
-            with self.assertRaises(TypeError):
-                PR[int, ClassVar]
 
     if hasattr(typing, "TypeAliasType"):
         exec(textwrap.dedent(
@@ -3958,20 +3927,17 @@ class ProtocolTests(BaseTestCase):
         with self.assertRaises(TypeError):
             MemoizedFunc[[int, str, str]]
 
-        if sys.version_info >= (3, 10):
-            # These unfortunately don't pass on 3.9,
-            # due to typing._type_check on older Python versions
-            X = MemoizedFunc[[int, str, str], T, T2]
-            self.assertEqual(X.__parameters__, (T, T2))
-            self.assertEqual(X.__args__, ((int, str, str), T, T2))
+        X = MemoizedFunc[[int, str, str], T, T2]
+        self.assertEqual(X.__parameters__, (T, T2))
+        self.assertEqual(X.__args__, ((int, str, str), T, T2))
 
-            Y = X[bytes, memoryview]
-            self.assertEqual(Y.__parameters__, ())
-            self.assertEqual(Y.__args__, ((int, str, str), bytes, memoryview))
+        Y = X[bytes, memoryview]
+        self.assertEqual(Y.__parameters__, ())
+        self.assertEqual(Y.__args__, ((int, str, str), bytes, memoryview))
 
-            # Regression test; fixing #126 might cause an error here
-            with self.assertRaisesRegex(TypeError, "not a generic class"):
-                Y[int]
+        # Regression test; fixing #126 might cause an error here
+        with self.assertRaisesRegex(TypeError, "not a generic class"):
+            Y[int]
 
     def test_protocol_generic_over_typevartuple(self):
         Ts = TypeVarTuple("Ts")
@@ -3985,14 +3951,12 @@ class ProtocolTests(BaseTestCase):
         self.assertEqual(MemoizedFunc.__parameters__, (Ts, T, T2))
         self.assertTrue(MemoizedFunc._is_protocol)
 
-        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
-
         # A bug was fixed in 3.11.1
         # (https://github.com/python/cpython/commit/74920aa27d0c57443dd7f704d6272cca9c507ab3)
         # That means this assertion doesn't pass on 3.11.0,
         # but it passes on all other Python versions
         if sys.version_info[:3] != (3, 11, 0):
-            with self.assertRaisesRegex(TypeError, f"Too few {things}"):
+            with self.assertRaisesRegex(TypeError, "Too few arguments"):
                 MemoizedFunc[int]
 
         X = MemoizedFunc[int, T, T2]
@@ -4814,7 +4778,6 @@ class TypedDictTests(BaseTestCase):
         assert is_typeddict(PointDict2D) is True
         assert is_typeddict(PointDict3D) is True
 
-    @skipUnless(HAS_FORWARD_MODULE, "ForwardRef.__forward_module__ was added in 3.9.7")
     def test_get_type_hints_cross_module_subclass(self):
         self.assertNotIn("_DoNotImport", globals())
         self.assertEqual(
@@ -5449,7 +5412,6 @@ class TypedDictTests(BaseTestCase):
     def test_dunder_dict(self):
         self.assertIsInstance(TypedDict.__dict__, dict)
 
-    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
     def test_or(self):
         class TD(TypedDict):
             a: int
@@ -5925,7 +5887,6 @@ class ParamSpecTests(BaseTestCase):
         class Y(Protocol[T, P]):
             pass
 
-        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
         for klass in X, Y:
             with self.subTest(klass=klass.__name__):
                 G1 = klass[int, P_2]
@@ -5942,7 +5903,7 @@ class ParamSpecTests(BaseTestCase):
 
                 with self.assertRaisesRegex(
                     TypeError,
-                    f"Too few {things} for {klass}"
+                    f"Too few arguments for {klass}"
                 ):
                     klass[int]
 
@@ -5965,16 +5926,13 @@ class ParamSpecTests(BaseTestCase):
 
         for klass in Z, ProtoZ:
             with self.subTest(klass=klass.__name__):
-                # Note: For 3.10+ __args__ are nested tuples here ((int, ),) instead of (int, )
                 G6 = klass[int, str, T]
-                G6args = G6.__args__[0] if sys.version_info >= (3, 10) else G6.__args__
-                self.assertEqual(G6args, (int, str, T))
+                self.assertEqual(G6.__args__[0], (int, str, T))
                 self.assertEqual(G6.__parameters__, (T,))
 
                 # P = [int]
                 G7 = klass[int]
-                G7args = G7.__args__[0] if sys.version_info >= (3, 10) else G7.__args__
-                self.assertEqual(G7args, (int,))
+                self.assertEqual(G7.__args__[0], (int,))
                 self.assertEqual(G7.__parameters__, ())
 
                 G8 = klass[Concatenate[T, ...]]
@@ -5986,10 +5944,8 @@ class ParamSpecTests(BaseTestCase):
 
                 # This is an invalid form but useful for testing correct substitution
                 G10 = klass[int, Concatenate[str, P]]
-                G10args = G10.__args__[0] if sys.version_info >= (3, 10) else G10.__args__
-                self.assertEqual(G10args, (int, Concatenate[str, P], ))
+                self.assertEqual(G10.__args__[0], (int, Concatenate[str, P], ))
 
-    @skipUnless(TYPING_3_10_0, "ParamSpec not present before 3.10")
     def test_is_param_expr(self):
         P = ParamSpec("P")
         P_typing = typing.ParamSpec("P_typing")
@@ -6010,7 +5966,6 @@ class ParamSpecTests(BaseTestCase):
         class ProtoZ(Protocol[P]):
             pass
 
-        things = "arguments" if sys.version_info >= (3, 10) else "parameters"
         for klass in Z, ProtoZ:
             with self.subTest(klass=klass.__name__):
                 G8 = klass[Concatenate[T, ...]]
@@ -6028,20 +5983,17 @@ class ParamSpecTests(BaseTestCase):
                 G9 = klass[Concatenate[T, P_2]]
                 self.assertEqual(G9.__parameters__, (T, P_2))
 
-                with self.assertRaisesRegex(TypeError,
-                    "The last parameter to Concatenate should be a ParamSpec variable or ellipsis."
-                    if sys.version_info < (3, 10) else
+                with self.assertRaisesRegex(
+                    TypeError,
                     # from __typing_subst__
                     "Expected a list of types, an ellipsis, ParamSpec, or Concatenate"
                 ):
                     G9[int, int]
 
-                with self.assertRaisesRegex(TypeError, f"Too few {things}"):
+                with self.assertRaisesRegex(TypeError, "Too few arguments"):
                     G9[int]
 
                 with self.subTest("Check list as parameter expression", klass=klass.__name__):
-                    if sys.version_info < (3, 10):
-                        self.skipTest("Cannot pass non-types")
                     G5 = klass[[int, str, T]]
                     self.assertEqual(G5.__parameters__, (T,))
                     self.assertEqual(G5.__args__, ((int, str, T),))
@@ -6057,10 +6009,8 @@ class ParamSpecTests(BaseTestCase):
                     if (3, 10) <= sys.version_info < (3, 11, 3):
                         self.skipTest("3.10-3.11.2 does not substitute Concatenate here")
                     self.assertEqual(H10.__parameters__, ())
-                    H10args = H10.__args__[0] if sys.version_info >= (3, 10) else H10.__args__
-                    self.assertEqual(H10args, (int, (str, int)))
+                    self.assertEqual(H10.__args__[0], (int, (str, int)))
 
-    @skipUnless(TYPING_3_10_0, "ParamSpec not present before 3.10")
     def test_substitution_with_typing_variants(self):
         # verifies substitution and typing._check_generic working with typing variants
         P = ParamSpec("P")
@@ -6169,7 +6119,6 @@ class ConcatenateTests(BaseTestCase):
         self.assertNotEqual(d, c)
         self.assertNotEqual(d, Concatenate)
 
-    @skipUnless(TYPING_3_10_0, "Concatenate not available in <3.10")
     def test_typing_compatibility(self):
         P = ParamSpec('P')
         C1 = Concatenate[int, P][typing.Concatenate[int, P]]
@@ -6234,7 +6183,6 @@ class ConcatenateTests(BaseTestCase):
         ):
             Concatenate[(str,), P]
 
-    @skipUnless(TYPING_3_10_0, "Missing backport to 3.9. See issue #48")
     def test_alias_subscription_with_ellipsis(self):
         P = ParamSpec('P')
         X = Callable[Concatenate[int, P], Any]
@@ -6301,7 +6249,6 @@ class ConcatenateTests(BaseTestCase):
         C3 = Concatenate[str, T, P]
         self.assertEqual(C3[int, [bool]], (str, int, bool))
 
-    @skipUnless(TYPING_3_10_0, "Concatenate not present before 3.10")
     def test_is_param_expr(self):
         P = ParamSpec('P')
         concat = Concatenate[str, P]
@@ -6557,7 +6504,6 @@ class LiteralStringTests(BaseTestCase):
             pickled = pickle.dumps(LiteralString, protocol=proto)
             self.assertIs(LiteralString, pickle.loads(pickled))
 
-    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
     def test_or(self):
         self.assertEqual(LiteralString | int, Union[LiteralString, int])
         self.assertEqual(int | LiteralString, Union[int, LiteralString])
@@ -6612,7 +6558,6 @@ class SelfTests(BaseTestCase):
             pickled = pickle.dumps(Self, protocol=proto)
             self.assertIs(Self, pickle.loads(pickled))
 
-    @skipUnless(TYPING_3_10_0, "PEP 604 has yet to be")
     def test_or(self):
         self.assertEqual(Self | int, Union[Self, int])
         self.assertEqual(int | Self, Union[int, Self])
@@ -7182,8 +7127,6 @@ class AllTests(BaseTestCase):
         # as PEP 764 has not yet been accepted/implemented upstream.
         exclude = {'TypedDict', 'is_typeddict'}
 
-        if sys.version_info < (3, 10):
-            exclude |= {'get_args', 'get_origin'}
         if sys.version_info < (3, 10, 1):
             exclude |= {"Literal"}
         if sys.version_info < (3, 11):
@@ -7382,8 +7325,7 @@ class NamedTupleTests(BaseTestCase):
                 self.assertIsInstance(a, G)
                 self.assertEqual(a.x, 3)
 
-                things = "arguments" if sys.version_info >= (3, 10) else "parameters"
-                with self.assertRaisesRegex(TypeError, f'Too many {things}'):
+                with self.assertRaisesRegex(TypeError, 'Too many arguments'):
                     G[int, str]
 
     def test_non_generic_subscript_py39_plus(self):
@@ -7740,16 +7682,15 @@ class TypeVarTests(BaseTestCase):
         self.assertEqual(Union[X, int].__parameters__, (X,))
         self.assertIs(Union[X, int].__origin__, Union)
 
-    if hasattr(types, "UnionType"):
-        def test_or(self):
-            X = TypeVar('X')
-            # use a string because str doesn't implement
-            # __or__/__ror__ itself
-            self.assertEqual(X | "x", Union[X, "x"])
-            self.assertEqual("x" | X, Union["x", X])
-            # make sure the order is correct
-            self.assertEqual(get_args(X | "x"), (X, EqualToForwardRef("x")))
-            self.assertEqual(get_args("x" | X), (EqualToForwardRef("x"), X))
+    def test_or(self):
+        X = TypeVar('X')
+        # use a string because str doesn't implement
+        # __or__/__ror__ itself
+        self.assertEqual(X | "x", Union[X, "x"])
+        self.assertEqual("x" | X, Union["x", X])
+        # make sure the order is correct
+        self.assertEqual(get_args(X | "x"), (X, EqualToForwardRef("x")))
+        self.assertEqual(get_args("x" | X), (EqualToForwardRef("x"), X))
 
     def test_union_constrained(self):
         A = TypeVar('A', str, bytes)
@@ -7833,11 +7774,10 @@ class TypeVarLikeDefaultsTests(BaseTestCase):
         self.assertEqual(P.__default__, [str, int])
         self.assertTrue(P.has_default())
         self.assertIsInstance(P, ParamSpec)
-        if hasattr(typing, "ParamSpec"):
-            self.assertIsInstance(P, typing.ParamSpec)
-            typing_P = typing.ParamSpec('P')
-            self.assertIsInstance(typing_P, typing.ParamSpec)
-            self.assertIsInstance(typing_P, ParamSpec)
+        self.assertIsInstance(P, typing.ParamSpec)
+        typing_P = typing.ParamSpec('P')
+        self.assertIsInstance(typing_P, typing.ParamSpec)
+        self.assertIsInstance(typing_P, ParamSpec)
 
         class A(Generic[P]): ...
         self.assertEqual(typing.Callable[P, None].__args__, (P, type(None)))
@@ -8402,18 +8342,14 @@ class TypeAliasTypeTests(BaseTestCase):
 
     def test_or(self):
         Alias = TypeAliasType("Alias", int)
-        if sys.version_info >= (3, 10):
-            self.assertEqual(Alias | int, Union[Alias, int])
-            self.assertEqual(Alias | None, Union[Alias, None])
-            self.assertEqual(Alias | (int | str), Union[Alias, int | str])
-            self.assertEqual(Alias | list[float], Union[Alias, list[float]])
+        self.assertEqual(Alias | int, Union[Alias, int])
+        self.assertEqual(Alias | None, Union[Alias, None])
+        self.assertEqual(Alias | (int | str), Union[Alias, int | str])
+        self.assertEqual(Alias | list[float], Union[Alias, list[float]])
 
-            if sys.version_info >= (3, 12):
-                Alias2 = typing.TypeAliasType("Alias2", str)
-                self.assertEqual(Alias | Alias2, Union[Alias, Alias2])
-        else:
-            with self.assertRaises(TypeError):
-                Alias | int
+        if sys.version_info >= (3, 12):
+            Alias2 = typing.TypeAliasType("Alias2", str)
+            self.assertEqual(Alias | Alias2, Union[Alias, Alias2])
         # Rejected on all versions
         with self.assertRaises(TypeError):
             Alias | "Ref"
@@ -8483,13 +8419,8 @@ class TypeAliasTypeTests(BaseTestCase):
         self.assertEqual(callable_concat.__parameters__, (P2,))
         concat_usage = callable_concat[str]
         with self.subTest("get_args of Concatenate in TypeAliasType"):
-            if not TYPING_3_10_0:
-                # args are: ([<class 'int'>, ~P2],)
-                self.skipTest("Nested ParamSpec is not substituted")
             self.assertEqual(get_args(concat_usage), ((int, str),))
         with self.subTest("Equality of parameter_expression without []"):
-            if not TYPING_3_10_0:
-                self.skipTest("Nested list is invalid type form")
             self.assertEqual(concat_usage, callable_concat[[str]])
 
     def test_substitution(self):
@@ -8535,16 +8466,6 @@ class TypeAliasTypeTests(BaseTestCase):
             with self.subTest(index=index, alias=alias):
                 self.assertEqual(get_args(alias), expected_args)
                 self.assertEqual(alias.__parameters__, expected_params)
-
-    # The condition should align with the version of GeneriAlias usage in __getitem__ or be 3.11+
-    @skipIf(TYPING_3_10_0, "Most arguments are allowed in 3.11+ or with GenericAlias")
-    def test_invalid_cases_before_3_10(self):
-        T = TypeVar('T')
-        ListOrSetT = TypeAliasType("ListOrSetT", Union[List[T], Set[T]], type_params=(T,))
-        with self.assertRaises(TypeError):
-            ListOrSetT[Generic[T]]
-        with self.assertRaises(TypeError):
-            ListOrSetT[(Generic[T], )]
 
     def test_unpack_parameter_collection(self):
         Ts = TypeVarTuple("Ts")
@@ -8630,7 +8551,6 @@ class TypeAliasTypeTests(BaseTestCase):
         T4 = TypeAliasType("TypingExtTypeVarTuple", ..., type_params=(textTs,))
         self.assertEqual(T4.__type_params__, (textTs,))
 
-    @skipUnless(TYPING_3_10_0, "typing.ParamSpec is not available before 3.10")
     def test_param_spec_compatibility(self):
         # Regression test to assure compatibility with typing variant
         typingP = typing.ParamSpec("typingP")
@@ -9423,7 +9343,6 @@ class EvaluateForwardRefTests(BaseTestCase):
         why = typing_extensions.ForwardRef('"\'str\'"')
         self.assertIs(typing_extensions.evaluate_forward_ref(why), str)
 
-    @skipUnless(sys.version_info >= (3, 10), "Relies on PEP 604")
     def test_evaluate_forward_ref_nested_pep604(self):
         ref = typing_extensions.ForwardRef("int | list['str']")
         if sys.version_info >= (3, 11):
@@ -9497,8 +9416,7 @@ class EvaluateForwardRefTests(BaseTestCase):
         )
 
     def test_global_constant(self):
-        if sys.version_info[:3] > (3, 10, 0):
-            self.assertTrue(_FORWARD_REF_HAS_CLASS)
+        self.assertTrue(_FORWARD_REF_HAS_CLASS)
 
     def test_forward_ref_fallback(self):
         with self.assertRaises(NameError):
@@ -9571,9 +9489,6 @@ class EvaluateForwardRefTests(BaseTestCase):
             evaluate_forward_ref(typing.ForwardRef("alias"), owner=Gen, locals={"alias": str}), str
         )
 
-    @skipUnless(
-        HAS_FORWARD_MODULE, "Needs module 'forward' to test forward references"
-    )
     def test_fwdref_with_module(self):
         self.assertIs(
             evaluate_forward_ref(typing.ForwardRef("Counter", module="collections")), collections.Counter
@@ -9589,8 +9504,7 @@ class EvaluateForwardRefTests(BaseTestCase):
 
     def test_fwdref_to_builtin(self):
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int")), int)
-        if HAS_FORWARD_MODULE:
-            self.assertIs(evaluate_forward_ref(typing.ForwardRef("int", module="collections")), int)
+        self.assertIs(evaluate_forward_ref(typing.ForwardRef("int", module="collections")), int)
         self.assertIs(evaluate_forward_ref(typing.ForwardRef("int"), owner=str), int)
 
         # builtins are still searched with explicit globals
@@ -9692,7 +9606,6 @@ class TestSentinels(BaseTestCase):
 
         self.assertEqual(repr(sentinel_keyword_repr), 'keyword_repr')
 
-    @skipIf(sys.version_info < (3, 10), reason='New unions not available in 3.9')
     def test_sentinel_type_expression_union(self):
         sentinel_type = sentinel('sentinel')
 
