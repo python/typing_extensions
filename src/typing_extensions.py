@@ -3905,5 +3905,33 @@ globals().update(
 # These are defined unconditionally because they are used in
 # typing-extensions itself.
 Generic = typing.Generic
+
+# Python 3.10 rejects an empty parameter list before checking whether a
+# generic's sole parameter is a TypeVarTuple.
+if not hasattr(typing, "TypeVarTuple"):
+    _generic_class_getitem = typing.Generic.__class_getitem__.__func__
+
+    @typing._tp_cache
+    def _generic_class_getitem_with_empty_typevartuple(cls, params):
+        parameters = getattr(cls, "__parameters__", ())
+        if (
+            isinstance(params, tuple)
+            and not params
+            and len(parameters) == 1
+            and isinstance(parameters[0], TypeVarTuple)
+            and not parameters[0].has_default()
+        ):
+            return typing._GenericAlias(
+                cls,
+                (),
+                _typevar_types=(typing.TypeVar, typing.ParamSpec),
+                _paramspec_tvars=True,
+            )
+        return _generic_class_getitem(cls, params)
+
+    typing.Generic.__class_getitem__ = classmethod(
+        _generic_class_getitem_with_empty_typevartuple
+    )
+
 ForwardRef = typing.ForwardRef
 Annotated = typing.Annotated
