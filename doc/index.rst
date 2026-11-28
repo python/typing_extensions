@@ -369,10 +369,9 @@ Special typing primitives
 
    See :py:data:`typing.Literal` and :pep:`586`. In ``typing`` since 3.8.
 
-   :py:data:`typing.Literal` does not flatten or deduplicate parameters on Python <3.9.1, and a
-   caching bug was fixed in 3.10.1/3.9.8. The ``typing_extensions`` version
-   flattens and deduplicates parameters on all Python versions, and the caching
-   bug is also fixed on all versions.
+   On Python 3.10.0, :py:data:`typing.Literal` has a caching bug that was fixed
+   in Python 3.10.1. The ``typing_extensions`` version avoids this bug on all
+   supported Python versions.
 
    .. versionchanged:: 4.6.0
 
