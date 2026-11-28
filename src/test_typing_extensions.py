@@ -6855,6 +6855,25 @@ class TypeVarTupleTests(BaseTestCase):
             self.assertEqual(t.__args__, (Unpack[Ts],))
         self.assertEqual(t.__parameters__, (Ts,))
 
+    def test_empty_specialization(self):
+        T = TypeVar('T')
+        Ts = TypeVarTuple('Ts')
+
+        class A(Generic[Unpack[Ts]]): ...
+
+        alias = A[()]
+        self.assertEqual(alias.__args__, ())
+        self.assertEqual(alias.__parameters__, ())
+        self.assertIs(get_origin(alias), A)
+        self.assertEqual(get_args(alias), ())
+        self.assertIs(A[()], alias)
+
+        class B(Generic[T, Unpack[Ts]]): ...
+        with self.assertRaises(TypeError):
+            B[()]
+        with self.assertRaises(TypeError):
+            Generic[()]
+
     def test_pickle(self):
         global Ts, Ts_default  # pickle wants to reference the class by name
         Ts = TypeVarTuple('Ts')
